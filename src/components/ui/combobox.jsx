@@ -1,6 +1,8 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronsUpDown, Search } from "lucide-react";
+
 import { cn } from "@/lib/utils";
+
 import {
   Command,
   CommandEmpty,
@@ -8,7 +10,12 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export default function Combobox({
   options = [],
@@ -21,89 +28,148 @@ export default function Combobox({
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const inputRef = useRef(null);
-  const selected = options.find((o) => o.value === value);
 
-  const filteredOptions = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const sorted = [...options].sort((a, b) =>
-      a.label.localeCompare(b.label, "pt-BR", { sensitivity: "base" })
-    );
-    if (!q) return sorted;
-    return sorted.filter((o) => o.label.toLowerCase().includes(q));
-  }, [options, search]);
+  const inputRef = useRef(null);
+
+  const selected = useMemo(
+    () => options.find((item) => item.value === value),
+    [options, value]
+  );
 
   useEffect(() => {
-    if (open && inputRef.current) {
-      inputRef.current.focus();
+    if (selected && !open) {
+      setSearch(selected.label);
     }
-    if (!open) {
+
+    if (!selected && !open) {
       setSearch("");
+    }
+  }, [selected, open]);
+
+  useEffect(() => {
+    if (open) {
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      });
     }
   }, [open]);
 
-  const displayText = selected ? selected.label : "";
+  const filteredOptions = useMemo(() => {
+    const ordered = [...options].sort((a, b) =>
+      a.label.localeCompare(b.label, "pt-BR", {
+        sensitivity: "base",
+      })
+    );
+
+    if (!search.trim()) return ordered;
+
+    return ordered.filter((item) =>
+      item.label.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [options, search]);
+
+  function handleInputChange(e) {
+    const text = e.target.value;
+
+    setSearch(text);
+
+    if (!open) {
+      setOpen(true);
+    }
+
+    if (!text) {
+      onChange("");
+    }
+  }
+
+  function handleSelect(option) {
+    onChange(option.value);
+    setSearch(option.label);
+    setOpen(false);
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <div className="relative w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+
           <input
             ref={inputRef}
-            type="text"
-            value={open ? search : displayText}
-            placeholder={selected ? "" : searchPlaceholder}
-            onChange={(e) => setSearch(e.target.value)}
+            value={search}
+            placeholder={placeholder || searchPlaceholder}
+            onFocus={() => setOpen(true)}
+            onClick={() => setOpen(true)}
+            onChange={handleInputChange}
             className={cn(
-              "w-full h-10 pl-9 pr-9 rounded-md border border-input bg-background text-sm",
-              "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0",
-              "placeholder:text-muted-foreground cursor-pointer",
-              !selected && !open && "text-muted-foreground",
+              "w-full h-10 rounded-md border border-input bg-background",
+              "pl-9 pr-10 text-sm",
+              "focus:outline-none focus:ring-2 focus:ring-ring",
+              "placeholder:text-muted-foreground",
               className
             )}
           />
+
           <button
             type="button"
             tabIndex={-1}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded-sm transition-colors"
+            onClick={() => setOpen((v) => !v)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 hover:bg-muted"
           >
-            <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+            <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
           </button>
         </div>
       </PopoverTrigger>
+
       <PopoverContent
-        className="w-[--radix-popover-trigger-width] p-0"
         align="start"
+        className="w-[--radix-popover-trigger-width] p-0"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <Command shouldFilter={false}>
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
+
             <CommandGroup>
-              {filteredOptions.map((option) => (
-                <CommandItem
-                  key={option.value}
-                  value={option.label}
-                  onSelect={() => {
-                    onChange(option.value === value ? "" : option.value);
-                    setOpen(false);
-                  }}
-                  className="border-b border-border/40 justify-between [&:last-child]:border-b-0"
-                >
-                  <span className="flex items-center gap-2">
-                    <Check
-                      className={cn("h-4 w-4", option.value === value ? "opacity-100" : "opacity-0")}
-                    />
-                    {option.label.replace(/\s*\([^)]*\)\s*$/, "")}
-                  </span>
-                  {(option.label.match(/\(([^)]+)\)/) || [])[1] && (
-                    <span className="text-xs text-muted-foreground font-normal">
-                      {(option.label.match(/\(([^)]+)\)/))[1]}
-                    </span>
-                  )}
-                </CommandItem>
-              ))}
+              {filteredOptions.map((option) => {
+                const match = option.label.match(/\(([^)]+)\)/);
+
+                const secondary = match?.[1];
+
+                const label = option.label.replace(
+                  /\s*\([^)]*\)\s*$/,
+                  ""
+                );
+
+                return (
+                  <CommandItem
+                    key={option.value}
+                    value={option.label}
+                    onSelect={() => handleSelect(option)}
+                    className="flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Check
+                        className={cn(
+                          "h-4 w-4",
+                          option.value === value
+                            ? "opacity-100"
+                            : "opacity-0"
+                        )}
+                      />
+
+                      <span>{label}</span>
+                    </div>
+
+                    {secondary && (
+                      <span className="text-xs text-muted-foreground">
+                        {secondary}
+                      </span>
+                    )}
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           </CommandList>
         </Command>
