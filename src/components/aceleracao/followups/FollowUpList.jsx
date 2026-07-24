@@ -379,7 +379,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
     return mapa;
   }, [remindersConcluidos, reunioesIndex]);
 
-  const filtered = (() => {
+  const filtered = React.useMemo(() => {
     const base = sourceList.filter(r => {
       if (searchTerm && !(r.workshop_name || "").toLowerCase().includes(searchTerm)) return false;
       if (filterPill === "concluidos") return true;
@@ -414,7 +414,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
     }
 
     return base;
-  })();
+  }, [sourceList, searchTerm, filterPill, today, reunioesIndex]);
 
   // Reseta para a primeira página ao trocar filtro/busca/lista
   React.useEffect(() => { setPage(1); }, [searchTerm, filterPill, sourceList.length]);
