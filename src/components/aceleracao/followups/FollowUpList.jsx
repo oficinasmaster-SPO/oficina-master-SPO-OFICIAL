@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Clock, CheckCircle2, StickyNote, CalendarCheck, MessageCircle, Phone, Mail, MapPin, Video, FileText, Target, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { AlertCircle, Clock, CheckCircle2, StickyNote, CalendarCheck, MessageCircle, Phone, Mail, MapPin, Video, FileText, Target, Search, X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import FollowUpCompletedDetailDrawer from "@/components/aceleracao/FollowUpCompletedDetailDrawer";
 import FollowUpConcluidoRow from "@/components/aceleracao/FollowUpConcluidoRow.jsx";
@@ -318,7 +318,15 @@ const CANAL_ICON_MAP = {
 export default function FollowUpList({ reminders, remindersConcluidos = [], today, isLoading, onSelect, filterPill, onFilterPill, seqByReminderId = {}, statsByWorkshopId = {}, onSuporteRapido }) {
   const [selectedCompleted, setSelectedCompleted] = useState(null);
   const [search, setSearch] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const [page, setPage] = useState(1);
+
+  // Feedback visual de busca: indicador ativo por 300ms após última tecla
+  React.useEffect(() => {
+    if (!isSearching) return;
+    const t = setTimeout(() => setIsSearching(false), 300);
+    return () => clearTimeout(t);
+  }, [isSearching, search]);
   const PAGE_SIZE = 20;
   const { byWorkshop: concluidosIndex, byFollowupId: concluidosByFuid, sequenceByFollowupId } = useConcluidosIndex();
   // Extrai todos os ata_ids dos reminders para buscar apenas as ATAs necessárias
@@ -450,18 +458,20 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
         <input
           type="text"
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => { setSearch(e.target.value); setIsSearching(true); }}
           placeholder="Buscar cliente..."
           className="w-full pl-9 pr-9 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent placeholder-gray-400"
         />
-        {search && (
+        {isSearching ? (
+          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
+        ) : search ? (
           <button
             onClick={() => setSearch("")}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
           >
             <X className="w-4 h-4" />
           </button>
-        )}
+        ) : null}
       </div>
 
       {/* Mini metric strip */}
@@ -528,9 +538,34 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
 
       {/* List */}
       {filtered.length === 0 ? (
-        <div className="py-16 flex flex-col items-center justify-center gap-2 text-gray-400">
-          <StickyNote className="w-8 h-8 text-gray-300" />
-          <p className="text-sm">Nenhum follow-up nesta categoria</p>
+        <div className="py-16 flex flex-col items-center justify-center gap-3 text-center">
+          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
+            <StickyNote className="w-8 h-8 text-gray-300" />
+          </div>
+          <p className="text-sm font-medium text-gray-500">
+            {search ? "Nenhum resultado encontrado" : "Nenhum follow-up nesta categoria"}
+          </p>
+          <p className="text-xs text-gray-400 max-w-xs">
+            {search ? "Tente outro termo ou limpe a busca para ver todos." : "Crie um novo follow-up ou atenda um cliente via suporte rápido."}
+          </p>
+          <div className="flex items-center gap-2 mt-1">
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Limpar busca
+              </button>
+            )}
+            {onSuporteRapido && (
+              <button
+                onClick={onSuporteRapido}
+                className="px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+              >
+                🛟 Suporte rápido
+              </button>
+            )}
+          </div>
         </div>
       ) : isConcluidosPill ? (
         /* Layout horizontal tipo planilha para concluídos / críticos / por_empresa */

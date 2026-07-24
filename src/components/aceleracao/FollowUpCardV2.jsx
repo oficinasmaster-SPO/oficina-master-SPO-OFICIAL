@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { AlertCircle, Clock, User } from "lucide-react";
+import { AlertCircle, Clock, User, Calendar, FileText } from "lucide-react";
 
 const AVATAR_COLORS = [
   "bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-purple-500",
@@ -35,11 +35,18 @@ const FollowUpCardV2 = memo(({ reminder, today, onClick }) => {
   const badge = getStatusBadge(reminder, today);
   const avatarColor = getAvatarColor(reminder.workshop_name);
   const initials = getInitials(reminder.workshop_name);
+  const isOverdue = !reminder.is_completed && reminder.reminder_date < today;
+  const isToday = !reminder.is_completed && reminder.reminder_date === today;
+  const borderAccent = isOverdue
+    ? "border-l-4 border-l-red-500"
+    : isToday
+      ? "border-l-4 border-l-amber-500"
+      : "border-l-4 border-l-transparent";
 
   return (
     <button
       onClick={() => onClick?.(reminder)}
-      className="w-full flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors text-left"
+      className={`w-full flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100 ${borderAccent} hover:bg-gray-50 transition-colors text-left`}
     >
       {/* Avatar */}
       <div className={`flex-shrink-0 w-10 h-10 rounded-full ${avatarColor} flex items-center justify-center text-white text-sm font-bold`}>
@@ -48,32 +55,39 @@ const FollowUpCardV2 = memo(({ reminder, today, onClick }) => {
 
       {/* Content */}
       <div className="flex-1 min-w-0">
+        {/* Linha 1: Nome do cliente + badge de urgência */}
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-800 truncate">
+          <span className="text-sm font-bold text-gray-900 truncate tracking-tight">
             {reminder.workshop_name || "Sem cliente"}
           </span>
           {badge && (
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${badge.className}`}>
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 ${badge.className}`}>
               <badge.icon className="w-3 h-3" />
               {badge.label}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1.5 mt-0.5">
-          <User className="w-3 h-3 text-gray-400 flex-shrink-0" />
-          <span className="text-xs text-gray-500 truncate">
+        {/* Linha 2: Metadados secundários discretos */}
+        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-gray-400">
+          <User className="w-3 h-3 flex-shrink-0" />
+          <span className="truncate">
             {reminder.consultor_principal_nome || reminder.consultor_nome || "Sem consultor"}
           </span>
+          {reminder.reminder_date && (
+            <>
+              <span className="text-gray-300">·</span>
+              <Calendar className="w-3 h-3 flex-shrink-0" />
+              <span>{new Date(reminder.reminder_date + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}</span>
+            </>
+          )}
+          {reminder.ata_id && (
+            <>
+              <span className="text-gray-300">·</span>
+              <FileText className="w-3 h-3 flex-shrink-0" />
+              <span className="truncate">ATA</span>
+            </>
+          )}
         </div>
-      </div>
-
-      {/* Date */}
-      <div className="flex-shrink-0 text-right">
-        <span className="text-xs text-gray-400">
-          {reminder.reminder_date
-            ? new Date(reminder.reminder_date + "T00:00:00").toLocaleDateString("pt-BR")
-            : "—"}
-        </span>
       </div>
     </button>
   );
