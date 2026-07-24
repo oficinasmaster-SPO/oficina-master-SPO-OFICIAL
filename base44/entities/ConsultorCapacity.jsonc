@@ -1,0 +1,127 @@
+{
+  "name": "ConsultorCapacity",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID do User consultor (admin/internal)"
+    },
+    "consultor_nome": {
+      "type": "string",
+      "description": "Nome do consultor (cache para exibi\u00e7\u00e3o)"
+    },
+    "consulting_firm_id": {
+      "type": "string",
+      "description": "ID do escrit\u00f3rio de consultoria ao qual o consultor pertence"
+    },
+    "fator_produtividade": {
+      "type": "number",
+      "default": 1.0,
+      "description": "Fator de produtividade relativo (multiplica capacidade_base). Recalculado semanalmente: followups_concluidos_30d / 30"
+    },
+    "capacidade_base": {
+      "type": "integer",
+      "default": 50,
+      "description": "Capacidade base de follow-ups simult\u00e2neos"
+    },
+    "followups_ativos": {
+      "type": "integer",
+      "default": 0,
+      "description": "Quantidade atual de follow-ups ativos (n\u00e3o conclu\u00eddos) atribu\u00eddos ao consultor"
+    },
+    "followups_concluidos_30d": {
+      "type": "integer",
+      "default": 0,
+      "description": "Quantidade de follow-ups conclu\u00eddos nos \u00faltimos 30 dias (base para fator_produtividade)"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o consultor est\u00e1 ativo para receber distribui\u00e7\u00e3o de follow-ups"
+    },
+    "ultima_atualizacao": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp da \u00faltima rec\u00e1lculo de fator_produtividade"
+    }
+  },
+  "required": [
+    "user_id",
+    "consulting_firm_id"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "$and": [
+            {
+              "data.user_id": "{{user.id}}"
+            },
+            {
+              "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
+            }
+          ]
+        },
+        {
+          "$and": [
+            {
+              "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
+            },
+            {
+              "user_condition": {
+                "user_type": "internal"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        }
+      ]
+    }
+  }
+}
