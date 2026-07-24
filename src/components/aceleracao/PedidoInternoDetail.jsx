@@ -6,7 +6,7 @@ import {
   ArrowLeft, CheckCircle, XCircle, Printer, Trash2,
   MessageSquare, FileText, ListChecks,
   AlertTriangle, ArrowUp, Minus, ArrowDown,
-  Clock, CalendarClock, Hash, Building2, Flag,
+  Clock, CalendarClock, Hash, Building2, Flag, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
@@ -127,8 +127,8 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
 
       {/* ── HEADER ────────────────────────────────────────────────────── */}
       <div className="shrink-0 border-b border-gray-200">
-        {/* Linha 1: voltar + código + título + status */}
-        <div className="flex items-start gap-3 px-5 pt-4 pb-2">
+        {/* Linha 1: voltar + código + título + status + fechar */}
+        <div className="flex items-start gap-3 px-5 pt-4 pb-2 border-b border-gray-100">
           <Button variant="ghost" size="sm" onClick={onCancel} className="mt-0.5 h-7 w-7 shrink-0 p-0">
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -143,7 +143,12 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
             </div>
             <h2 className={`text-base font-bold leading-snug ${isReadOnly ? "text-gray-400" : "text-gray-950"}`}>{pedido.titulo}</h2>
           </div>
-          <StatusPill status={pedido.status} />
+          <div className="flex items-center gap-2 mt-0.5">
+            <StatusPill status={pedido.status} />
+            <Button variant="ghost" size="sm" onClick={onCancel} className="h-7 w-7 p-0 text-gray-400 hover:text-gray-600">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Linha 2: meta-row com fotos */}

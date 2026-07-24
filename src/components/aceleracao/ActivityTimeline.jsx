@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
@@ -168,6 +168,8 @@ function TaskCommentInput({ entityType, entityId, workshopId, parentCommentId = 
   const [content, setContent] = useState("");
   const [isInternal, setIsInternal] = useState(false);
   const [attachments, setAttachments] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
@@ -197,17 +199,40 @@ function TaskCommentInput({ entityType, entityId, workshopId, parentCommentId = 
 
   const handleFileUpload = async (files) => {
     if (!files || files.length === 0) return;
-    const uploaded = [];
-    for (const file of files) {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      uploaded.push({
-        file_url,
-        file_name: file.name,
-        file_type: file.type,
-        file_size: file.size,
-      });
+    setIsUploading(true);
+    try {
+      const uploaded = [];
+      for (const file of files) {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        uploaded.push({
+          file_url,
+          file_name: file.name,
+          file_type: file.type,
+          file_size: file.size,
+        });
+      }
+      setAttachments((prev) => [...prev, ...uploaded]);
+    } catch (e) {
+      console.error("Erro no upload:", e);
+    } finally {
+      setIsUploading(false);
     }
-    setAttachments((prev) => [...prev, ...uploaded]);
+  };
+
+  const handlePaste = async (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    const imageFiles = [];
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) imageFiles.push(file);
+      }
+    }
+    if (imageFiles.length > 0) {
+      e.preventDefault();
+      await handleFileUpload(imageFiles);
+    }
   };
 
   const handleSubmit = () => {
@@ -239,7 +264,8 @@ function TaskCommentInput({ entityType, entityId, workshopId, parentCommentId = 
         <Textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="Escreva um comentário... (suporta Markdown)"
+          onPaste={handlePaste}
+          placeholder="Escreva um comentário... (suporta Markdown e Ctrl+V para imagens)"
           className="min-h-[60px] resize-y text-sm"
         />
         {attachments.length > 0 && (
@@ -260,18 +286,32 @@ function TaskCommentInput({ entityType, entityId, workshopId, parentCommentId = 
         )}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <label className="cursor-pointer">
-              <input
-                type="file"
-                multiple
-                className="hidden"
-                onChange={(e) => handleFileUpload(Array.from(e.target.files || []))}
-              />
-              <Button variant="ghost" size="sm" type="button" className="text-gray-500">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+              className="hidden"
+              onChange={(e) => {
+                handleFileUpload(Array.from(e.target.files || []));
+                e.target.value = "";
+              }}
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              className="text-gray-500"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
                 <Paperclip className="w-4 h-4" />
-                Anexar
-              </Button>
-            </label>
+              )}
+              {isUploading ? "Enviando..." : "Anexar"}
+            </Button>
             <label className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-500">
               <input
                 type="checkbox"
