@@ -1,12 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft, CheckCircle, XCircle, Printer, Trash2,
-  MessageSquare, FileText, ListChecks,
+  MessageSquare, FileText, ListChecks, Send,
   AlertTriangle, ArrowUp, Minus, ArrowDown,
-  Clock, CalendarClock, Hash, Building2, Flag, X,
+  Clock, CalendarClock, Hash, Building2, Flag,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
@@ -72,6 +72,7 @@ function InfoField({ label, icon: Icon, children, className = "" }) {
   );
 }
 
+
 // ── Componente principal ───────────────────────────────────────────────────
 export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess, onDelete }) {
   const queryClient = useQueryClient();
@@ -122,13 +123,27 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
     onError: () => toast.error("Erro ao excluir"),
   });
 
+  const NEXT_STATUS = { pendente: "em_analise", em_analise: "aprovado", aprovado: "concluido" };
+  const NEXT_LABEL = { pendente: "Iniciar Análise", em_analise: "Aprovar", aprovado: "Concluir" };
+  const nextStatus = NEXT_STATUS[pedido.status];
+
+  const advanceMutation = useMutation({
+    mutationFn: async () => {
+      const data = { status: nextStatus };
+      if (nextStatus === "concluido") data.data_conclusao = new Date().toISOString();
+      return base44.entities.PedidoInterno.update(pedido.id, data);
+    },
+    onSuccess: () => { toast.success("Status atualizado!"); queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] }); onSuccess?.(); },
+    onError: () => toast.error("Erro ao atualizar status"),
+  });
+
   return (
     <div className="flex h-full min-h-0 flex-col bg-white">
 
       {/* ── HEADER ────────────────────────────────────────────────────── */}
       <div className="shrink-0 border-b border-gray-200">
-        {/* Linha 1: voltar + código + título + status + fechar */}
-        <div className="flex items-start gap-3 px-5 pt-4 pb-2 border-b border-gray-100">
+        {/* Linha 1: voltar + código + título + status */}
+        <div className="flex items-start gap-3 px-5 pt-4 pb-2">
           <Button variant="ghost" size="sm" onClick={onCancel} className="mt-0.5 h-7 w-7 shrink-0 p-0">
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -143,12 +158,7 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
             </div>
             <h2 className={`text-base font-bold leading-snug ${isReadOnly ? "text-gray-400" : "text-gray-950"}`}>{pedido.titulo}</h2>
           </div>
-          <div className="flex items-center gap-2 mt-0.5">
-            <StatusPill status={pedido.status} />
-            <Button variant="ghost" size="sm" onClick={onCancel} className="h-7 w-7 p-0 text-gray-400 hover:text-gray-600">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <StatusPill status={pedido.status} />
         </div>
 
         {/* Linha 2: meta-row com fotos */}
@@ -172,7 +182,9 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
           {slaLabel && (
             <>
               <span className="h-3 w-px bg-gray-200" />
-              <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${isVencido ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"}`}>{slaLabel}</span>
+              <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${isVencido ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"}`}>
+                {isVencido ? `Vencido há ${slaLabel}` : `Aberto há ${slaLabel}`}
+              </span>
             </>
           )}
           <div className="ml-auto flex items-center gap-1 text-gray-400">
@@ -198,7 +210,12 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
             </p>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-3 space-y-3">
-            {/* Timeline */}
+            {pedido.descricao && (
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-gray-400">Descrição</p>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{pedido.descricao}</p>
+              </div>
+            )}
             <ActivityTimeline
               entityType="pedido_interno"
               entityId={pedido.id}
@@ -210,14 +227,6 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
 
         {/* DIREITA: Detalhes + Tarefas */}
         <div className="w-[320px] shrink-0 overflow-y-auto bg-gray-50/50">
-
-          {/* Descrição */}
-          {pedido.descricao && (
-            <div className="border-b border-gray-100 px-4 py-3">
-              <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-gray-400">Descrição</p>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{pedido.descricao}</p>
-            </div>
-          )}
 
           {/* Resposta oficial */}
           {pedido.resposta && (
@@ -234,12 +243,6 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
             <p className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Informações</p>
             <InfoField label="Cliente"    icon={Building2}>{pedido.workshop_nome || "—"}</InfoField>
             <InfoField label="Categoria"  icon={FileText}>{TIPO_PEDIDO_LABELS[pedido.tipo] || pedido.tipo || "—"}</InfoField>
-            <InfoField label="Prioridade" icon={Flag}>
-              <span className="flex items-center gap-1.5">
-                <PriorityIcon prioridade={pedido.prioridade} />
-                {PRIORIDADE_CONFIG[pedido.prioridade]?.label || "—"}
-              </span>
-            </InfoField>
             <InfoField label="Prazo" icon={Clock}>
               {prazoFmt ? <span className={isVencido ? "font-semibold text-red-600" : ""}>{prazoFmt}</span> : "—"}
             </InfoField>
@@ -294,7 +297,9 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
             <Printer className="h-3 w-3" /> Imprimir
           </Button>
           {canDelete && (
-            <Button variant="ghost" size="sm" onClick={() => { if (window.confirm("Tem certeza que deseja excluir este pedido?")) deleteMutation.mutate(); }} disabled={deleteMutation.isPending}
+            <Button variant="ghost" size="sm"
+              onClick={() => { if (window.confirm("Tem certeza que deseja excluir este pedido?")) deleteMutation.mutate(); }}
+              disabled={deleteMutation.isPending}
               className="h-7 gap-1 px-2 text-xs text-red-500 hover:bg-red-50">
               <Trash2 className="h-3 w-3" /> Excluir
             </Button>
@@ -309,10 +314,15 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
               <XCircle className="h-3.5 w-3.5" /> Recusar
             </Button>
           )}
-          {!canRespond || isReadOnly ? (
-            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={onCancel}>Fechar</Button>
+          {canRespond && !isReadOnly && nextStatus ? (
+            <Button size="sm"
+              onClick={() => advanceMutation.mutate()}
+              disabled={advanceMutation.isPending}
+              className="h-7 gap-1 text-xs bg-green-600 hover:bg-green-700">
+              <CheckCircle className="h-3.5 w-3.5" /> {NEXT_LABEL[pedido.status]}
+            </Button>
           ) : (
-            <p className="text-[10px] text-gray-400">Use o stepper para avançar o status</p>
+            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={onCancel}>Fechar</Button>
           )}
         </div>
       </div>
