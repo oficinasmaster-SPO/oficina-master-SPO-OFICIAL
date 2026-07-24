@@ -190,7 +190,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
         ];
       }
       // Ordena por reminder_date para trazer os mais recentes primeiro
-      return base44.entities.FollowUpReminder.filter(query, "-reminder_date", 3000);
+      return base44.entities.FollowUpReminder.filter(query, "-reminder_date", 500);
     },
     staleTime: 2 * 60 * 1000,
   });
@@ -201,7 +201,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
     queryFn: async () => {
       const query = { is_completed: true };
       if (consultorEfetivo) query.consultor_id = consultorEfetivo;
-      return base44.entities.FollowUpReminder.filter(query, "-completed_at", 3000);
+      return base44.entities.FollowUpReminder.filter(query, "-completed_at", 500);
     },
     staleTime: 2 * 60 * 1000,
   });
@@ -209,26 +209,6 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
   // Passa pendentes + concluídos para sequência real (#1/8, não #1/2)
   const allRemindersForSeq = useMemo(() => [...reminders, ...remindersConcluidos], [reminders, remindersConcluidos]);
   const { seqByReminderId, statsByWorkshopId } = useFollowUpSequence(allRemindersForSeq);
-
-  // Debug: Log dos follow-ups carregados
-  useEffect(() => {
-    console.log('[FOLLOWUP TAB] Total reminders carregados:', reminders.length);
-    console.log('[FOLLOWUP TAB] consultorEfetivo:', consultorEfetivo);
-    const guardaChuva = reminders.filter(r => r.origin_type === 'guarda_chuva');
-    console.log(`[FOLLOWUP TAB] 🌂 Guarda-chuva encontrados: ${guardaChuva.length}`, guardaChuva.map(r => ({
-      id: r.id,
-      workshop: r.workshop_name,
-      consultor_id: r.consultor_id,
-      reminder_date: r.reminder_date
-    })));
-    console.log('[FOLLOWUP TAB] Primeiros 10 reminders:', reminders.slice(0, 10).map(r => ({
-      id: r.id,
-      workshop: r.workshop_name,
-      consultor_id: r.consultor_id,
-      reminder_date: r.reminder_date,
-      origin_type: r.origin_type
-    })));
-  }, [reminders, consultorEfetivo]);
 
   // Verificação defensiva de vazamento de tenant
   useEffect(() => {
@@ -259,7 +239,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
       if (consultorEfetivo) {
         query.consultor_id = consultorEfetivo;
       }
-      return base44.entities.FollowUpConcluido.filter(query, "-completedAt", 3000);
+      return base44.entities.FollowUpConcluido.filter(query, "-completedAt", 500);
     },
     staleTime: 2 * 60 * 1000,
   });

@@ -130,8 +130,8 @@ function useReunioesIndex(workshopIds = []) {
       return results;
     },
     enabled: ids.length > 0,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 
   const { data: consultoriaData = [] } = useQuery({
@@ -152,15 +152,39 @@ function useReunioesIndex(workshopIds = []) {
       return results;
     },
     enabled: ids.length > 0,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 
-  // Monta índice por workshop_id
-  const index = {};
-  ids.forEach(wid => {
-    index[wid] = calcRiscoReuniao(wid, contractData, consultoriaData);
-  });
+  // Pré-indexa por workshop_id (Map) — O(n) uma vez, lookup O(1) por workshop
+  const index = React.useMemo(() => {
+    const byWorkshop = {};
+
+    // Indexa ContractAttendance
+    contractData.forEach(a => {
+      const wid = a.workshop_id;
+      if (!wid) return;
+      if (!byWorkshop[wid]) byWorkshop[wid] = { contract: [], consultoria: [] };
+      byWorkshop[wid].contract.push(a);
+    });
+
+    // Indexa ConsultoriaAtendimento
+    consultoriaData.forEach(a => {
+      const wid = a.workshop_id;
+      if (!wid) return;
+      if (!byWorkshop[wid]) byWorkshop[wid] = { contract: [], consultoria: [] };
+      byWorkshop[wid].consultoria.push(a);
+    });
+
+    // Calcula risco para cada workshop usando arrays pré-indexados (O(1) lookup)
+    const result = {};
+    ids.forEach(wid => {
+      const buckets = byWorkshop[wid]?.contract || [];
+      const atendimentos = byWorkshop[wid]?.consultoria || [];
+      result[wid] = calcRiscoReuniao(wid, buckets, atendimentos);
+    });
+    return result;
+  }, [contractData, consultoriaData, ids.join(",")]);
 
   return index;
 }
@@ -211,8 +235,8 @@ function useConcluidosIndex() {
   const { data = [] } = useQuery({
     queryKey: ["follow-up-concluidos-list-index-v2"],
     queryFn: () => base44.entities.FollowUpConcluido.list("-completedAt", 2000),
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const byWorkshop = {};
