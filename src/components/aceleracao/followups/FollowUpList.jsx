@@ -5,6 +5,7 @@ import { format, differenceInDays } from "date-fns";
 import FollowUpCompletedDetailDrawer from "@/components/aceleracao/FollowUpCompletedDetailDrawer";
 import FollowUpConcluidoRow from "@/components/aceleracao/FollowUpConcluidoRow.jsx";
 import FollowUpQueue from "@/components/aceleracao/FollowUpQueue";
+import FollowUpPendenteRow from "@/components/aceleracao/followups/FollowUpPendenteRow";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
@@ -617,15 +618,28 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
           })}
         </div>
       ) : (
-        <FollowUpQueue
-          reminders={filtered}
-          today={today}
-          onSelectReminder={onSelect}
-        />
+        <div className="rounded-lg border border-gray-200 overflow-x-auto bg-white">
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border-b border-gray-200 text-[11px] font-semibold text-gray-500 uppercase tracking-wide min-w-[1100px]">
+            <div className="w-12 flex-shrink-0 text-center">#</div>
+            <div className="w-52 flex-shrink-0">Cliente</div>
+            <div className="flex-1 flex-shrink-0">Tipo / Origem</div>
+            <div className="w-40 flex-shrink-0">Datas</div>
+            <div className="w-32 flex-shrink-0 ml-auto text-right">Status</div>
+          </div>
+          {paginated.map(r => (
+            <FollowUpPendenteRow
+              key={r.id}
+              reminder={r}
+              today={today}
+              seqFU={seqByReminderId[r.id] ?? null}
+              onSelect={onSelect}
+            />
+          ))}
+        </div>
       )}
 
-      {/* Paginação — apenas para modo planilha (concluídos/críticos/por_empresa) */}
-      {isConcluidosPill && filtered.length > PAGE_SIZE && (
+      {/* Paginação — modo planilha (pendentes e concluídos) */}
+      {filtered.length > PAGE_SIZE && (
         <div className="flex items-center justify-between pt-2">
           <span className="text-xs text-gray-400">
             {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} de {filtered.length}
