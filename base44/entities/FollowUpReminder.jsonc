@@ -20,11 +20,28 @@
     },
     "consultor_id": {
       "type": "string",
-      "description": "ID do consultor responsável"
+      "description": "ID do consultor respons\u00e1vel"
     },
     "consultor_nome": {
       "type": "string",
       "description": "Nome do consultor"
+    },
+    "consultor_principal_id": {
+      "type": "string",
+      "description": "ID do consultor principal atribu\u00eddo via round-robin (distribui\u00e7\u00e3o autom\u00e1tica). Pode diferir de consultor_id (quem executou)."
+    },
+    "consultor_principal_nome": {
+      "type": "string",
+      "description": "Nome do consultor principal (cache para exibi\u00e7\u00e3o)"
+    },
+    "atribuicao_automatica": {
+      "type": "boolean",
+      "default": false,
+      "description": "true quando o consultor_principal foi atribu\u00eddo automaticamente pelo round-robin"
+    },
+    "peso_atribuicao": {
+      "type": "number",
+      "description": "Snapshot do SCORE no momento da atribui\u00e7\u00e3o (auditoria do round-robin)"
     },
     "reminder_date": {
       "type": "string",
@@ -33,11 +50,11 @@
     },
     "sequence_number": {
       "type": "integer",
-      "description": "Número da sequência (1, 2, 3 ou 4)"
+      "description": "N\u00famero da sequ\u00eancia (1, 2, 3 ou 4)"
     },
     "days_since_meeting": {
       "type": "integer",
-      "description": "Dias desde a reunião (7, 14, 21, 28)"
+      "description": "Dias desde a reuni\u00e3o (7, 14, 21, 28)"
     },
     "message": {
       "type": "string",
@@ -83,7 +100,7 @@
     },
     "suporte_id": {
       "type": "string",
-      "description": "ID único rastreável do suporte (SUP-{ts}-{rand})"
+      "description": "ID \u00fanico rastre\u00e1vel do suporte (SUP-{ts}-{rand})"
     },
     "suporte_descricao": {
       "type": "string"
@@ -105,11 +122,11 @@
     },
     "origem_ata_titulo": {
       "type": "string",
-      "description": "Cache do título da ata de origem"
+      "description": "Cache do t\u00edtulo da ata de origem"
     },
     "origem_descricao": {
       "type": "string",
-      "description": "Cache do título/descrição do pedido ou tarefa"
+      "description": "Cache do t\u00edtulo/descri\u00e7\u00e3o do pedido ou tarefa"
     },
     "origem_status": {
       "type": "string",
@@ -117,11 +134,11 @@
     },
     "origem_responsavel_id": {
       "type": "string",
-      "description": "ID do responsável pelo pedido/tarefa (quem o CS vai cobrar)"
+      "description": "ID do respons\u00e1vel pelo pedido/tarefa (quem o CS vai cobrar)"
     },
     "origem_responsavel_nome": {
       "type": "string",
-      "description": "Nome do responsável (cache)"
+      "description": "Nome do respons\u00e1vel (cache)"
     },
     "origem_solicitante_nome": {
       "type": "string",
@@ -145,13 +162,6 @@
         {
           "user_condition": {
             "user_type": "internal"
-          }
-        },
-        {
-          "user_condition": {
-            "data": {
-              "user_type": "internal"
-            }
           }
         }
       ]
@@ -183,15 +193,18 @@
           ]
         },
         {
-          "user_condition": {
-            "user_type": "internal"
-          }
+          "$and": [
+            {
+              "data.consultor_principal_id": "{{user.id}}"
+            },
+            {
+              "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
+            }
+          ]
         },
         {
           "user_condition": {
-            "data": {
-              "user_type": "internal"
-            }
+            "user_type": "internal"
           }
         }
       ]
@@ -223,15 +236,18 @@
           ]
         },
         {
-          "user_condition": {
-            "user_type": "internal"
-          }
+          "$and": [
+            {
+              "data.consultor_principal_id": "{{user.id}}"
+            },
+            {
+              "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
+            }
+          ]
         },
         {
           "user_condition": {
-            "data": {
-              "user_type": "internal"
-            }
+            "user_type": "internal"
           }
         }
       ]
@@ -246,13 +262,6 @@
         {
           "user_condition": {
             "user_type": "internal"
-          }
-        },
-        {
-          "user_condition": {
-            "data": {
-              "user_type": "internal"
-            }
           }
         }
       ]
