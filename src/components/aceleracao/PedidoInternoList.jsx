@@ -132,7 +132,7 @@ function ClientBadge({ name }) {
    ═══════════════════════════════════════════════════════════════════════════ */
 export function ColumnHeaders() {
   return (
-    <div className={`flex items-center ${COL.gap} ${COL.px} border-t border-gray-200 bg-gray-50/80 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400`}>
+    <div className={`flex items-center ${COL.gap} ${COL.px} border-b border-gray-200 bg-gray-50 py-2.5 text-[10px] font-bold uppercase tracking-widest text-gray-500`}>
       <span className={COL.avatar} />
       <span className={COL.solicitante}>Solicitante</span>
       <span className={COL.titulo}>Título do chamado</span>
@@ -151,7 +151,7 @@ function GroupHeader({ group, count, collapsed, onToggle }) {
   return (
     <button
       onClick={onToggle}
-      className="sticky top-0 z-10 flex w-full items-center gap-2.5 border-y border-gray-200 bg-white/95 backdrop-blur-sm px-5 py-3 text-left transition-colors hover:bg-gray-50/60"
+      className="sticky top-0 z-10 flex w-full items-center gap-2.5 border-b border-gray-200 bg-gray-50 px-5 py-3 text-left transition-colors hover:bg-gray-100/60"
     >
       {collapsed
         ? <ChevronRight className="h-4 w-4 text-gray-400" />
@@ -178,27 +178,21 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
   const aName  = getName(pedido.assignee_id, pedido.assignee_name);
   const aPhoto = getPhoto(pedido.assignee_id);
  
-  const bar =
-    pedido.prioridade === "critica" ? "before:bg-red-500" :
-    pedido.prioridade === "alta"    ? "before:bg-orange-400" : "";
- 
   return (
     <button
       onClick={() => onSelect(pedido)}
       className={`
         group relative flex w-full items-center ${COL.gap} ${COL.px} py-3.5 text-left
-        transition-all border-b border-gray-100
-        hover:bg-blue-50/30
-        before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:rounded-r
-        ${bar}
-        ${isSelected ? "bg-blue-50/50" : ""}
+        transition-colors border-b border-gray-100
+        hover:bg-gray-50/70
+        ${isSelected ? "bg-blue-50/40" : ""}
       `}
     >
       {/* Avatar */}
       <Avatar name={rName} photoUrl={rPhoto} />
  
       {/* Solicitante */}
-      <div className={`${COL.solicitante} border-r border-gray-100 pr-3`}>
+      <div className={COL.solicitante}>
         <p className="font-mono text-[10px] text-gray-400 leading-none mb-0.5">#{pedido.id?.slice(-6).toUpperCase()}</p>
         <p className={`text-[13px] font-semibold leading-tight truncate ${done ? "text-gray-400" : "text-gray-900"}`}>
           {rName}
@@ -214,7 +208,7 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
       </div>
  
       {/* Cliente */}
-      <div className={`${COL.cliente} border-l border-gray-100 pl-4`}>
+      <div className={COL.cliente}>
         <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400 leading-none mb-1">Cliente</p>
         <ClientBadge name={pedido.workshop_nome} />
       </div>
@@ -317,7 +311,7 @@ export default function PedidoInternoList({ pedidos, onSelect, isLoading, select
   });
  
   return (
-    <div>
+    <div className="rounded-xl border border-gray-200 shadow-sm bg-white overflow-hidden">
       {STATUS_GROUPS.map(group => {
         const items = grouped[group.key] || [];
         if (items.length === 0 && !["pendente","em_analise"].includes(group.key)) return null;
@@ -352,4 +346,3 @@ export default function PedidoInternoList({ pedidos, onSelect, isLoading, select
     </div>
   );
 }
- 
