@@ -72,75 +72,6 @@ function InfoField({ label, icon: Icon, children, className = "" }) {
   );
 }
 
-// ── Composer ────────────────────────────────────────────────────────────────
-function ResponseComposer({ pedido, user, queryClient }) {
-  const [text, setText] = useState("");
-  const [mode, setMode] = useState("comentario");
-
-  const postMutation = useMutation({
-    mutationFn: async () => {
-      if (mode === "resposta") {
-        await base44.entities.PedidoInterno.update(pedido.id, {
-          resposta: text,
-          data_primeira_resposta: pedido.data_primeira_resposta || new Date().toISOString(),
-        });
-      } else {
-        await base44.entities.TaskComment.create({
-          entity_type: "pedido_interno",
-          entity_id:   pedido.id,
-          workshop_id: pedido.workshop_id,
-          usuario_id:  user?.id,
-          usuario_nome: user?.full_name || user?.email || "Usuário",
-          comentario:  text,
-          is_internal: false,
-          attachments: [],
-        });
-      }
-    },
-    onSuccess: () => {
-      setText("");
-      toast.success(mode === "resposta" ? "Resposta salva!" : "Comentário adicionado!");
-      queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
-      queryClient.invalidateQueries({ queryKey: ["activity-timeline"] });
-      queryClient.invalidateQueries({ queryKey: ["task-comments"] });
-    },
-    onError: () => toast.error("Erro ao salvar"),
-  });
-
-  return (
-    <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
-      <div className="flex border-b border-gray-100">
-        <button onClick={() => setMode("comentario")}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium ${mode === "comentario" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500"}`}>
-          <MessageSquare className="h-3 w-3" /> Comentário
-        </button>
-        {(user?.role === "admin" || user?.user_type === "internal" || user?.data?.user_type === "internal" || user?.id === pedido.assignee_id) && (
-          <button onClick={() => setMode("resposta")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium ${mode === "resposta" ? "border-b-2 border-green-500 text-green-600" : "text-gray-500"}`}>
-            <CheckCircle className="h-3 w-3" /> Resposta Oficial
-          </button>
-        )}
-      </div>
-      <div className="p-2">
-        <textarea
-          value={text} onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && text.trim()) postMutation.mutate(); }}
-          placeholder={mode === "resposta" ? "Registre a decisão oficial..." : "Comentário... (Ctrl+Enter)"}
-          rows={2}
-          className="w-full resize-none border-0 bg-transparent p-1 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none"
-        />
-        <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-1">
-          <span className="text-[10px] text-gray-400">Ctrl+Enter</span>
-          <Button size="sm" onClick={() => postMutation.mutate()} disabled={!text.trim() || postMutation.isPending}
-            className={`h-6 gap-1 text-[11px] ${mode === "resposta" ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}`}>
-            <Send className="h-2.5 w-2.5" />
-            {postMutation.isPending ? "..." : mode === "resposta" ? "Salvar" : "Comentar"}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ── Componente principal ───────────────────────────────────────────────────
 export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess, onDelete }) {
@@ -192,6 +123,20 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
     onError: () => toast.error("Erro ao excluir"),
   });
 
+  const NEXT_STATUS = { pendente: "em_analise", em_analise: "aprovado", aprovado: "concluido" };
+  const NEXT_LABEL = { pendente: "Iniciar Análise", em_analise: "Aprovar", aprovado: "Concluir" };
+  const nextStatus = NEXT_STATUS[pedido.status];
+
+  const advanceMutation = useMutation({
+    mutationFn: async () => {
+      const data = { status: nextStatus };
+      if (nextStatus === "concluido") data.data_conclusao = new Date().toISOString();
+      return base44.entities.PedidoInterno.update(pedido.id, data);
+    },
+    onSuccess: () => { toast.success("Status atualizado!"); queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] }); onSuccess?.(); },
+    onError: () => toast.error("Erro ao atualizar status"),
+  });
+
   return (
     <div className="flex h-full min-h-0 flex-col bg-white">
 
@@ -237,7 +182,9 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
           {slaLabel && (
             <>
               <span className="h-3 w-px bg-gray-200" />
-              <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${isVencido ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"}`}>{slaLabel}</span>
+              <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${isVencido ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"}`}>
+                {isVencido ? `Vencido há ${slaLabel}` : `Aberto há ${slaLabel}`}
+              </span>
             </>
           )}
           <div className="ml-auto flex items-center gap-1 text-gray-400">
@@ -263,9 +210,12 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
             </p>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-3 space-y-3">
-            {/* Composer */}
-            {!isReadOnly && <ResponseComposer pedido={pedido} user={user} queryClient={queryClient} />}
-            {/* Timeline */}
+            {pedido.descricao && (
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-gray-400">Descrição</p>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{pedido.descricao}</p>
+              </div>
+            )}
             <ActivityTimeline
               entityType="pedido_interno"
               entityId={pedido.id}
@@ -277,14 +227,6 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
 
         {/* DIREITA: Detalhes + Tarefas */}
         <div className="w-[320px] shrink-0 overflow-y-auto bg-gray-50/50">
-
-          {/* Descrição */}
-          {pedido.descricao && (
-            <div className="border-b border-gray-100 px-4 py-3">
-              <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-gray-400">Descrição</p>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{pedido.descricao}</p>
-            </div>
-          )}
 
           {/* Resposta oficial */}
           {pedido.resposta && (
@@ -301,12 +243,6 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
             <p className="text-[10px] font-bold uppercase tracking-wide text-gray-400">Informações</p>
             <InfoField label="Cliente"    icon={Building2}>{pedido.workshop_nome || "—"}</InfoField>
             <InfoField label="Categoria"  icon={FileText}>{TIPO_PEDIDO_LABELS[pedido.tipo] || pedido.tipo || "—"}</InfoField>
-            <InfoField label="Prioridade" icon={Flag}>
-              <span className="flex items-center gap-1.5">
-                <PriorityIcon prioridade={pedido.prioridade} />
-                {PRIORIDADE_CONFIG[pedido.prioridade]?.label || "—"}
-              </span>
-            </InfoField>
             <InfoField label="Prazo" icon={Clock}>
               {prazoFmt ? <span className={isVencido ? "font-semibold text-red-600" : ""}>{prazoFmt}</span> : "—"}
             </InfoField>
@@ -361,7 +297,9 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
             <Printer className="h-3 w-3" /> Imprimir
           </Button>
           {canDelete && (
-            <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending}
+            <Button variant="ghost" size="sm"
+              onClick={() => { if (window.confirm("Tem certeza que deseja excluir este pedido?")) deleteMutation.mutate(); }}
+              disabled={deleteMutation.isPending}
               className="h-7 gap-1 px-2 text-xs text-red-500 hover:bg-red-50">
               <Trash2 className="h-3 w-3" /> Excluir
             </Button>
@@ -376,10 +314,15 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
               <XCircle className="h-3.5 w-3.5" /> Recusar
             </Button>
           )}
-          {!canRespond || isReadOnly ? (
-            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={onCancel}>Fechar</Button>
+          {canRespond && !isReadOnly && nextStatus ? (
+            <Button size="sm"
+              onClick={() => advanceMutation.mutate()}
+              disabled={advanceMutation.isPending}
+              className="h-7 gap-1 text-xs bg-green-600 hover:bg-green-700">
+              <CheckCircle className="h-3.5 w-3.5" /> {NEXT_LABEL[pedido.status]}
+            </Button>
           ) : (
-            <p className="text-[10px] text-gray-400">Use o stepper para avançar o status</p>
+            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={onCancel}>Fechar</Button>
           )}
         </div>
       </div>

@@ -24,6 +24,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
+const IGNORED_FIELDS = new Set([
+  "created_by_id", "is_sample", "updated_date", "created_date",
+  "data_primeira_resposta", "updated_at", "created_at",
+]);
+
 const EVENT_ICONS = {
   created: { icon: Plus, color: "text-blue-500", bg: "bg-blue-50" },
   status_changed: { icon: ArrowRight, color: "text-amber-500", bg: "bg-amber-50" },
@@ -343,11 +348,16 @@ export default function ActivityTimeline({ entityType, entityId, workshopId, max
     return acc;
   }, {});
 
-  // Merge: ActivityLogs + top-level TaskComments, ordenados por timestamp desc
+  const filteredLogs = logs.filter((l) => {
+    if (l.event_type === "field_changed" && l.field_name && IGNORED_FIELDS.has(l.field_name)) return false;
+    if (l.summary && IGNORED_FIELDS.has(l.summary.match(/Campo "([^"]+)"/)?.[1])) return false;
+    return true;
+  });
+
   const timeline = [
-    ...logs.map((l) => ({ type: "log", data: l, sortKey: l.timestamp })),
+    ...filteredLogs.map((l) => ({ type: "log", data: l, sortKey: l.timestamp })),
     ...topLevelComments.map((c) => ({ type: "comment", data: c, sortKey: c.timestamp })),
-  ].sort((a, b) => new Date(b.sortKey) - new Date(a.sortKey));
+  ].sort((a, b) => new Date(a.sortKey) - new Date(b.sortKey));
 
   return (
     <div className="flex flex-col" style={{ maxHeight }}>
