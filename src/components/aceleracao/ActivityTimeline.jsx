@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
@@ -23,6 +23,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
+const IGNORED_FIELDS = new Set([
+  "created_by_id", "is_sample", "updated_date", "created_date",
+  "data_primeira_resposta", "updated_at", "created_at",
+]);
 
 const EVENT_ICONS = {
   created: { icon: Plus, color: "text-blue-500", bg: "bg-blue-50" },
@@ -168,8 +173,6 @@ function TaskCommentInput({ entityType, entityId, workshopId, parentCommentId = 
   const [content, setContent] = useState("");
   const [isInternal, setIsInternal] = useState(false);
   const [attachments, setAttachments] = useState([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef(null);
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
@@ -199,40 +202,17 @@ function TaskCommentInput({ entityType, entityId, workshopId, parentCommentId = 
 
   const handleFileUpload = async (files) => {
     if (!files || files.length === 0) return;
-    setIsUploading(true);
-    try {
-      const uploaded = [];
-      for (const file of files) {
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
-        uploaded.push({
-          file_url,
-          file_name: file.name,
-          file_type: file.type,
-          file_size: file.size,
-        });
-      }
-      setAttachments((prev) => [...prev, ...uploaded]);
-    } catch (e) {
-      console.error("Erro no upload:", e);
-    } finally {
-      setIsUploading(false);
+    const uploaded = [];
+    for (const file of files) {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      uploaded.push({
+        file_url,
+        file_name: file.name,
+        file_type: file.type,
+        file_size: file.size,
+      });
     }
-  };
-
-  const handlePaste = async (e) => {
-    const items = e.clipboardData?.items;
-    if (!items) return;
-    const imageFiles = [];
-    for (const item of items) {
-      if (item.type.startsWith("image/")) {
-        const file = item.getAsFile();
-        if (file) imageFiles.push(file);
-      }
-    }
-    if (imageFiles.length > 0) {
-      e.preventDefault();
-      await handleFileUpload(imageFiles);
-    }
+    setAttachments((prev) => [...prev, ...uploaded]);
   };
 
   const handleSubmit = () => {
@@ -264,8 +244,7 @@ function TaskCommentInput({ entityType, entityId, workshopId, parentCommentId = 
         <Textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          onPaste={handlePaste}
-          placeholder="Escreva um comentário... (suporta Markdown e Ctrl+V para imagens)"
+          placeholder="Escreva um comentário... (suporta Markdown)"
           className="min-h-[60px] resize-y text-sm"
         />
         {attachments.length > 0 && (
@@ -286,32 +265,18 @@ function TaskCommentInput({ entityType, entityId, workshopId, parentCommentId = 
         )}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-              className="hidden"
-              onChange={(e) => {
-                handleFileUpload(Array.from(e.target.files || []));
-                e.target.value = "";
-              }}
-            />
-            <Button
-              variant="ghost"
-              size="sm"
-              type="button"
-              className="text-gray-500"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-            >
-              {isUploading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
+            <label className="cursor-pointer">
+              <input
+                type="file"
+                multiple
+                className="hidden"
+                onChange={(e) => handleFileUpload(Array.from(e.target.files || []))}
+              />
+              <Button variant="ghost" size="sm" type="button" className="text-gray-500">
                 <Paperclip className="w-4 h-4" />
-              )}
-              {isUploading ? "Enviando..." : "Anexar"}
-            </Button>
+                Anexar
+              </Button>
+            </label>
             <label className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-500">
               <input
                 type="checkbox"
@@ -383,11 +348,16 @@ export default function ActivityTimeline({ entityType, entityId, workshopId, max
     return acc;
   }, {});
 
-  // Merge: ActivityLogs + top-level TaskComments, ordenados por timestamp desc
+  const filteredLogs = logs.filter((l) => {
+    if (l.event_type === "field_changed" && l.field_name && IGNORED_FIELDS.has(l.field_name)) return false;
+    if (l.summary && IGNORED_FIELDS.has(l.summary.match(/Campo "([^"]+)"/)?.[1])) return false;
+    return true;
+  });
+
   const timeline = [
-    ...logs.map((l) => ({ type: "log", data: l, sortKey: l.timestamp })),
+    ...filteredLogs.map((l) => ({ type: "log", data: l, sortKey: l.timestamp })),
     ...topLevelComments.map((c) => ({ type: "comment", data: c, sortKey: c.timestamp })),
-  ].sort((a, b) => new Date(b.sortKey) - new Date(a.sortKey));
+  ].sort((a, b) => new Date(a.sortKey) - new Date(b.sortKey));
 
   return (
     <div className="flex flex-col" style={{ maxHeight }}>
