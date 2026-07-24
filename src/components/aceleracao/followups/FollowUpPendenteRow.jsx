@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { AlertCircle, Clock, User, Calendar, FileText, Phone, Mail } from "lucide-react";
+import { AlertCircle, Clock } from "lucide-react";
 import { format } from "date-fns";
 
 const AVATAR_COLORS = [
@@ -21,7 +21,6 @@ function getAvatarColor(name) {
   return AVATAR_COLORS[sum % AVATAR_COLORS.length];
 }
 
-// Mapeia origin_type → label curto para badge
 const ORIGIN_LABELS = {
   ata: "FUAta",
   suporte: "FUSp",
@@ -34,14 +33,24 @@ const ORIGIN_LABELS = {
 };
 
 const ORIGIN_BADGE_STYLES = {
-  FUAta: "bg-purple-50 text-purple-700 border-purple-100",
-  FUSp: "bg-blue-50 text-blue-700 border-blue-100",
-  Tarefa: "bg-orange-50 text-orange-700 border-orange-100",
-  Pedido: "bg-cyan-50 text-cyan-700 border-cyan-100",
-  Sprint: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  Manual: "bg-slate-50 text-slate-600 border-slate-200",
-  "Guarda-chuva": "bg-amber-50 text-amber-700 border-amber-100",
+  FUAta: "bg-purple-50 text-purple-700",
+  FUSp: "bg-blue-50 text-blue-700",
+  Tarefa: "bg-orange-50 text-orange-700",
+  Pedido: "bg-cyan-50 text-cyan-700",
+  Sprint: "bg-emerald-50 text-emerald-700",
+  Manual: "bg-gray-100 text-gray-600",
+  "Guarda-chuva": "bg-amber-50 text-amber-700",
 };
+
+function formatDateTime(dateStr) {
+  if (!dateStr) return "—";
+  try {
+    const s = typeof dateStr === "string" ? dateStr : dateStr.toISOString();
+    return format(new Date(s), "dd/MM/yyyy, HH:mm");
+  } catch {
+    return "—";
+  }
+}
 
 function formatDate(dateStr) {
   if (!dateStr) return "—";
@@ -62,40 +71,34 @@ function getDaysOverdue(reminderDate, today) {
 
 function getStatusInfo(reminder, today) {
   if (reminder.is_completed) {
-    return { label: "Concluído", className: "bg-emerald-50 text-emerald-700 border border-emerald-200" };
+    return { label: "Concluído", className: "bg-emerald-50 text-emerald-700" };
   }
   const daysOverdue = getDaysOverdue(reminder.reminder_date, today);
   if (reminder.reminder_date < today) {
     if (daysOverdue >= 3) {
       return {
         label: `Urgente ${daysOverdue}d`,
-        className: "bg-red-50 text-red-700 border border-red-200",
+        className: "bg-red-50 text-red-700",
         urgent: true,
         days: daysOverdue,
       };
     }
     return {
       label: `Vencido ${daysOverdue}d`,
-      className: "bg-red-50 text-red-700 border border-red-200",
+      className: "bg-red-50 text-red-700",
       days: daysOverdue,
     };
   }
   if (reminder.reminder_date === today) {
-    return { label: "Hoje", className: "bg-amber-50 text-amber-700 border border-amber-200" };
+    return { label: "Hoje", className: "bg-amber-50 text-amber-700" };
   }
-  return { label: "Pendente", className: "bg-slate-100 text-slate-700 border border-slate-200" };
+  return { label: "Pendente", className: "bg-gray-100 text-gray-600" };
 }
 
-const FollowUpPendenteRow = memo(({ reminder, today, seqFU, onSelect }) => {
+const FollowUpPendenteRow = memo(({ reminder, today, seqFU, onSelect, isLast }) => {
   const status = getStatusInfo(reminder, today);
   const isOverdue = !reminder.is_completed && reminder.reminder_date < today;
   const isToday = !reminder.is_completed && reminder.reminder_date === today;
-
-  const borderAccent = isOverdue
-    ? "border-l-4 border-l-red-500"
-    : isToday
-      ? "border-l-4 border-l-amber-400"
-      : "border-l-4 border-l-emerald-500";
 
   const avatarColor = getAvatarColor(reminder.workshop_name);
   const initials = getInitials(reminder.workshop_name);
@@ -103,81 +106,72 @@ const FollowUpPendenteRow = memo(({ reminder, today, seqFU, onSelect }) => {
   const originLabel = ORIGIN_LABELS[reminder.origin_type] || "Manual";
   const originBadgeClass = ORIGIN_BADGE_STYLES[originLabel] || ORIGIN_BADGE_STYLES.Manual;
 
-  const consultor = reminder.consultor_principal_nome || reminder.consultor_nome || "Sem consultor";
-  const originCode = reminder.ata_id || reminder.suporte_id || reminder.origem_descricao || "";
+  const consultor = reminder.consultor_principal_nome || reminder.consultor_nome || "—";
+
+  const rowBorder = isLast ? "" : "border-b border-gray-100";
+  const hoverClass = "hover:bg-gray-50/70 cursor-pointer";
 
   return (
-    <tr
+    <div
       onClick={() => onSelect?.(reminder)}
-      className={`group transition-colors hover:bg-slate-50/80 cursor-pointer ${borderAccent}`}
+      className={`flex items-center px-4 py-3.5 ${rowBorder} ${hoverClass} transition-colors min-w-[1100px]`}
     >
-      {/* Coluna 1: # Sequencial */}
-      <td className="py-2 px-4 w-12 text-center align-middle">
-        <span className="inline-flex items-center justify-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600">
+      {/* # Sequencial */}
+      <div className="w-10 flex-shrink-0 text-center">
+        <span className="text-xs font-medium text-gray-400">
           #{seqFU ?? "—"}
         </span>
-      </td>
+      </div>
 
-      {/* Coluna 2: Cliente (Avatar + Nome) */}
-      <td className="py-2 px-4 align-middle min-w-0">
+      {/* Cliente */}
+      <div className="flex-1 min-w-[180px] flex-shrink-0">
         <div className="flex items-center gap-2.5">
           <div className={`w-8 h-8 rounded-full ${avatarColor} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
             {initials}
           </div>
-          <div className="min-w-0">
-            <p className="text-sm font-bold text-slate-900 truncate leading-tight">
-              {reminder.workshop_name || "Sem cliente"}
-            </p>
-            <p className="text-[11px] text-slate-500 truncate leading-tight">
-              FU #{seqFU ?? "—"} de {seqFU ?? "—"}
-            </p>
-          </div>
+          <span className="text-sm font-semibold text-gray-900 truncate">
+            {reminder.workshop_name || "Sem cliente"}
+          </span>
         </div>
-      </td>
+      </div>
 
-      {/* Coluna 3: Tipo / Origem + Consultor */}
-      <td className="py-2 px-4 align-middle min-w-0">
-        <div className="flex flex-col gap-0.5">
-          <div className="flex items-center gap-1.5">
-            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${originBadgeClass}`}>
-              {originLabel}
-            </span>
-            {originCode && (
-              <span className="text-[11px] text-slate-600 font-medium truncate">
-                {String(originCode).substring(0, 25)}
-              </span>
-            )}
-          </div>
-          <div className="text-[11px] text-slate-500 flex items-center gap-1 truncate">
-            <User className="w-3 h-3 text-slate-400 flex-shrink-0" />
-            <span className="truncate">{consultor}</span>
-          </div>
-        </div>
-      </td>
+      {/* Tipo */}
+      <div className="w-28 flex-shrink-0">
+        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${originBadgeClass}`}>
+          {originLabel}
+        </span>
+      </div>
 
-      {/* Coluna 4: Datas compactas */}
-      <td className="py-2 px-4 align-middle">
-        <div className="flex flex-col text-[11px] text-slate-600 gap-0.5">
-          <div className="flex items-center gap-1">
-            <span className="text-slate-400">Criado:</span>
-            <span>{formatDate(reminder.created_date)}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Calendar className="w-3 h-3 text-slate-400" />
-            <span className="font-semibold text-slate-900">{formatDate(reminder.reminder_date)}</span>
-          </div>
-        </div>
-      </td>
+      {/* Consultor */}
+      <div className="w-44 flex-shrink-0">
+        <span className="text-sm text-gray-700 truncate block">
+          {consultor}
+        </span>
+      </div>
 
-      {/* Coluna 5: Status / Alerta */}
-      <td className="py-2 px-4 text-right align-middle">
+      {/* Data */}
+      <div className="w-36 flex-shrink-0">
+        <span className="text-sm text-gray-600">
+          {formatDate(reminder.reminder_date)}
+        </span>
+      </div>
+
+      {/* Criado em */}
+      <div className="w-36 flex-shrink-0">
+        <span className="text-sm text-gray-500">
+          {formatDateTime(reminder.created_date)}
+        </span>
+      </div>
+
+      {/* Status */}
+      <div className="w-28 flex-shrink-0 text-right ml-auto">
         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold ${status.className}`}>
           {isOverdue && <AlertCircle className="w-3 h-3 mr-1" />}
           {isToday && <Clock className="w-3 h-3 mr-1" />}
           {status.label}
         </span>
-      </td>
-    </tr>
+      </div>
+    </div>
   );
 });
 
