@@ -165,7 +165,7 @@ export default function PedidoInternoDetail({
       {/* ── HEADER ────────────────────────────────────────────────────── */}
       <div className="shrink-0 border-b border-gray-200">
         {/* Linha 1: voltar + código + título + controles (Nav/Editar) + status */}
-        <div className="flex items-start justify-between gap-3 px-5 pt-4 pb-2">
+        <div className="flex items-start justify-between gap-3 px-5 pt-4 pb-2 pr-14">
           
           <div className="flex items-start gap-3 min-w-0">
             <Button variant="ghost" size="sm" onClick={onCancel} className="mt-0.5 h-7 w-7 shrink-0 p-0">
