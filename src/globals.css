@@ -2,6 +2,104 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==========================================================================
+   PEDIDO INTERNO STEPPER - ESTILOS E COREOGRAFIA
+   ========================================================================== */
+
+.stepper-container {
+  --step-duration: 0.5s;
+  --step-delay-bar: 0.1s;
+  --step-delay-glow: 0.5s;
+  --step-delay-pop: 0.8s;
+  --step-delay-shimmer: 1s;
+}
+
+/* ── 1. Cores e Sombras Base ── */
+.step-chip {
+  transition: background 0.4s ease, box-shadow 0.3s ease, color 0.3s ease;
+}
+
+.step-chip--done {
+  background: linear-gradient(180deg, #4ade80 0%, #22c55e 100%);
+  color: #ffffff;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.45), inset 0 -2px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.step-chip--active {
+  background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
+  color: #ffffff;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.5), inset 0 -2px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(37, 99, 235, 0.4), 0 0 2px rgba(59, 130, 246, 0.6), 0 0 8px rgba(59, 130, 246, 0.35), 0 4px 8px rgba(37, 99, 235, 0.20);
+}
+
+.step-chip--future {
+  background: linear-gradient(180deg, #f3f4f6 0%, #d1d5db 100%);
+  color: #6b7280;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.6), inset 0 -1px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+/* ── 2. Coreografia de Transição (.is-animating) ── */
+.is-animating .step-chip--active {
+  transition: background var(--step-duration) ease,
+              box-shadow calc(var(--step-duration) + 0.1s) ease var(--step-delay-glow),
+              color 0.3s ease 0.3s;
+}
+
+.step-track-fill {
+  transition: width 0s; /* Padrão sem animação ao abrir tela */
+}
+.is-animating .step-track-fill {
+  transition: width calc(var(--step-duration) + 0.1s) ease-in-out var(--step-delay-bar);
+}
+
+/* ── 3. Animação: Pop do Check ── */
+@keyframes check-pop-rotate {
+  0% { transform: scale(0.3) rotate(8deg); opacity: 0; }
+  50% { transform: scale(1.1) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.step-check {
+  transform: scale(1) rotate(0deg);
+  opacity: 1;
+}
+
+.is-animating .step-check {
+  animation: check-pop-rotate 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) var(--step-delay-pop) both;
+}
+
+/* ── 4. Animação: Reflexo de Vidro (Shimmer) ── */
+@keyframes shimmer-glass-stepper {
+  0% { left: -20%; }
+  15% { left: 120%; }
+  100% { left: 120%; }
+}
+
+.step-shimmer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 18px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.15) 30%, rgba(255, 255, 255, 0.85) 50%, rgba(255, 255, 255, 0.15) 70%, transparent 100%);
+  transform: skewX(-15deg);
+  animation: shimmer-glass-stepper 5s cubic-bezier(0.4, 0, 0.6, 1) 0s infinite; /* 0s = Roda na hora se tela recém aberta */
+}
+
+.is-animating .step-shimmer {
+  animation-delay: var(--step-delay-shimmer); /* Aguarda delay se for transição */
+}
+
+/* ── 5. Animação: Pulso de Luz (Dot Ativo) ── */
+@keyframes pulse-luma {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+.step-luma {
+  background-color: white;
+  box-shadow: 0 0 6px rgba(255,255,255,0.9);
+  animation: pulse-luma 3s ease-in-out infinite;
+}
+
 @keyframes slide-up {
   from {
     transform: translateY(100%);
