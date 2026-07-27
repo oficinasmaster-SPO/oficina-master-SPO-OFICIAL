@@ -1,248 +1,167 @@
-import React, { useMemo, useEffect, useRef } from "react";
+import { memo, useMemo } from "react";
 import { Check, XCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { usePrevious } from "@/hooks/use-previous";
 
-// ============================================================================
-// HOOKS E UTILS
-// ============================================================================
-function usePrevious(value) {
-  const ref = useRef();
-  useEffect(() => {
-    ref.current = value;
-  }, [value]);
-  return ref.current;
-}
-
-const STEPS = [
+export const PEDIDO_STEPS = [
   { key: "pendente", label: "Pendente" },
   { key: "em_analise", label: "Em Análise" },
   { key: "aprovado", label: "Aprovado" },
   { key: "concluido", label: "Concluído" },
-];
+] as const;
 
-const getClipPath = (isFirst, isLast, chevronDepth = "12px") => {
+export type PedidoStepKey = (typeof PEDIDO_STEPS)[number]["key"];
+export type PedidoStatus = PedidoStepKey | "recusado";
+
+type StepStatus = "done" | "active" | "future";
+
+// Mantemos em pixels exatos para facilitar os cálculos de padding e margem
+const CHEVRON_PX = 12;
+const CHEVRON = `${CHEVRON_PX}px`;
+
+function getClipPath(isFirst: boolean, isLast: boolean) {
   if (isFirst && isLast) return "polygon(0 0, 100% 0, 100% 100%, 0 100%)";
-  if (isFirst) return `polygon(0 0, calc(100% - ${chevronDepth}) 0, 100% 50%, calc(100% - ${chevronDepth}) 100%, 0 100%)`;
-  if (isLast) return `polygon(0 0, 100% 0, 100% 100%, 0 100%, ${chevronDepth} 50%)`;
-  return `polygon(0 0, calc(100% - ${chevronDepth}) 0, 100% 50%, calc(100% - ${chevronDepth}) 100%, 0 100%, ${chevronDepth} 50%)`;
+  if (isFirst)
+    return `polygon(0 0, calc(100% - ${CHEVRON}) 0, 100% 50%, calc(100% - ${CHEVRON}) 100%, 0 100%)`;
+  if (isLast)
+    return `polygon(0 0, 100% 0, 100% 100%, 0 100%, ${CHEVRON} 50%)`;
+  return `polygon(0 0, calc(100% - ${CHEVRON}) 0, 100% 50%, calc(100% - ${CHEVRON}) 100%, 0 100%, ${CHEVRON} 50%)`;
+}
+
+/** Presentation is fully token-driven: each status just picks a CSS class. */
+const STATUS_CLASS: Record<StepStatus, string> = {
+  done: "step-chip--done",
+  active: "step-chip--active",
+  future: "step-chip--future",
 };
 
-// ============================================================================
-// CONFIGURAÇÃO DE ESTILOS E COREOGRAFIA (Frozen & CSS Variables)
-// ============================================================================
-const STYLE_MAP = Object.freeze({
-  done: Object.freeze({
-    background: "linear-gradient(180deg, #4ade80 0%, #22c55e 100%)",
-    color: "#ffffff",
-    boxShadow: "inset 0 1px rgba(255, 255, 255, 0.45), inset 0 -2px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08)",
-    animClass: "step-anim-done",
-  }),
-  active: Object.freeze({
-    background: "linear-gradient(180deg, #60a5fa 0%, #2563eb 100%)",
-    color: "#ffffff",
-    boxShadow: "inset 0 1px rgba(255, 255, 255, 0.5), inset 0 -2px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(37, 99, 235, 0.4), 0 0 2px rgba(59, 130, 246, 0.6), 0 0 8px rgba(59, 130, 246, 0.35), 0 4px 8px rgba(37, 99, 235, 0.20)",
-    animClass: "step-anim-active",
-  }),
-  future: Object.freeze({
-    background: "linear-gradient(180deg, #f3f4f6 0%, #d1d5db 100%)",
-    color: "#6b7280",
-    boxShadow: "inset 0 1px rgba(255, 255, 255, 0.6), inset 0 -1px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04)",
-    animClass: "step-anim-future",
-  }),
-});
+interface StepProps {
+  label: string;
+  status: StepStatus;
+  isFirst: boolean;
+  isLast: boolean;
+  zIndex: number;
+}
 
-const CSS_CHOREOGRAPHY = `
-  .stepper-container {
-    /* Centralizando as variáveis de orquestração */
-    --step-duration: 0.5s;
-    --step-delay-bar: 0.1s;
-    --step-delay-glow: 0.5s;
-    --step-delay-pop: 0.8s;
-    --step-delay-shimmer: 1s;
-  }
-
-  /* --------------------------------------------------------
-   * 1. TRANSIÇÕES DE ESTADO (Apenas rodam se .is-animating)
-   * -------------------------------------------------------- */
-  .is-animating .step-anim-done,
-  .is-animating .step-anim-future {
-    transition: background 0.4s ease, box-shadow 0.3s ease, color 0.3s ease;
-  }
-  
-  .is-animating .step-anim-active {
-    transition: 
-      background var(--step-duration) ease, 
-      box-shadow calc(var(--step-duration) + 0.1s) ease var(--step-delay-glow), 
-      color 0.3s ease 0.3s;
-  }
-
-  .is-animating .progress-bar-anim {
-    transition: width calc(var(--step-duration) + 0.1s) ease-in-out var(--step-delay-bar);
-  }
-
-  /* --------------------------------------------------------
-   * 2. ANIMAÇÕES (Check, Shimmer e Luma)
-   * -------------------------------------------------------- */
-  @keyframes check-pop-rotate {
-    0% { transform: scale(0.3) rotate(8deg); opacity: 0; }
-    50% { transform: scale(1.1) rotate(-2deg); }
-    100% { transform: scale(1) rotate(0deg); opacity: 1; }
-  }
-  
-  .animate-check-pop {
-    /* Estado visual final forçado para quando não há animação */
-    transform: scale(1) rotate(0deg); 
-    opacity: 1;
-  }
-  .is-animating .animate-check-pop {
-    animation: check-pop-rotate 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) var(--step-delay-pop) both;
-  }
-
-  @keyframes shimmer-glass {
-    0% { left: -20%; }
-    15% { left: 120%; }
-    100% { left: 120%; }
-  }
-  
-  .animate-shimmer-glass {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 18px;
-    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.15) 30%, rgba(255, 255, 255, 0.85) 50%, rgba(255, 255, 255, 0.15) 70%, transparent 100%);
-    transform: skewX(-15deg);
-    /* Inicia o loop infinito instantaneamente (0s) se for state inicial */
-    animation: shimmer-glass 5s cubic-bezier(0.4, 0, 0.6, 1) 0s infinite;
-  }
-  .is-animating .animate-shimmer-glass {
-    /* Aguarda o delay coreografado para o primeiro flash */
-    animation-delay: var(--step-delay-shimmer);
-  }
-
-  @keyframes pulse-luma {
-    0%, 100% { opacity: 0.7; }
-    50% { opacity: 1; }
-  }
-  .animate-pulse-luma {
-    animation: pulse-luma 3s ease-in-out infinite;
-  }
-`;
-
-// ============================================================================
-// COMPONENTE: PASSO INDIVIDUAL (Memoizado e Previsível)
-// ============================================================================
-/**
- * Agora recebe `status` explícito ("done", "active", "future")
- * em vez de índices numéricos que mudam, maximizando o React.memo.
- */
-const StepperStep = React.memo(function StepperStep({ step, status, isFirst, isLast, zIndex }) {
-  const currentStyle = STYLE_MAP[status];
+const StepperStep = memo(function StepperStep({
+  label,
+  status,
+  isFirst,
+  isLast,
+  zIndex,
+}: StepProps) {
   const clipPath = useMemo(() => getClipPath(isFirst, isLast), [isFirst, isLast]);
 
   return (
-    <div
-      className={`relative flex-1 items-center justify-center gap-2 h-[46px] flex text-xs font-semibold select-none hover:-translate-y-[1px] hover:brightness-[1.04] ${currentStyle.animClass}`}
-      style={{
-        background: currentStyle.background,
-        color: currentStyle.color,
-        boxShadow: currentStyle.boxShadow,
-        clipPath,
-        paddingLeft: isFirst ? "14px" : "22px",
-        paddingRight: isLast ? "14px" : "22px",
-        marginLeft: isFirst ? 0 : "-7px",
-        zIndex, // Passado limpo, sem lógica de math
-      }}
+    <li
+      className={cn(
+        "step-chip relative flex min-w-0 flex-1 items-center justify-center overflow-hidden",
+        "h-11 px-4 py-2 text-xs font-semibold tracking-wide select-none sm:text-sm transition-all",
+        "hover:-translate-y-[1px] hover:brightness-[1.04]", // Efeito tátil
+        STATUS_CLASS[status]
+      )}
+      style={{ 
+        clipPath, 
+        WebkitClipPath: clipPath, 
+        zIndex,
+        // Geometria: O margin negativo puxa a aba para "dentro" do recorte da anterior
+        marginLeft: isFirst ? undefined : `-${CHEVRON_PX / 2}px`,
+        // Geometria: O padding evita que o texto encoste no corte diagonal
+        paddingLeft: isFirst ? "16px" : `${CHEVRON_PX + 12}px`,
+        paddingRight: isLast ? "16px" : `${CHEVRON_PX + 12}px`,
+      } as React.CSSProperties} // Cast para evitar erros de tipagem no WebkitClipPath
+      aria-current={status === "active" ? "step" : undefined}
     >
-      {status === "active" && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ clipPath }}>
-          <div className="animate-shimmer-glass" />
-        </div>
-      )}
-
+      {status === "active" && <span aria-hidden className="step-shimmer" />}
       {status === "done" && (
-        <div className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-[#15803d] shadow-inner shadow-black/20 animate-check-pop">
-          <Check className="h-2.5 w-2.5 text-white stroke-[3]" />
-        </div>
+        <Check aria-hidden className="step-check mr-1.5 size-4 shrink-0" strokeWidth={3} />
       )}
-      
-      {status === "active" && (
-        <div className="h-2 w-2 shrink-0 rounded-full bg-white shadow-[0_0_6px_rgba(255,255,255,0.9)] animate-pulse-luma" />
-      )}
-      
-      {status === "future" && (
-        <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-gray-400" />
-      )}
-
-      <span className="truncate">{step.label}</span>
-    </div>
+      {status === "active" && <span aria-hidden className="step-luma mr-1.5 size-2 rounded-full" />}
+      <span className="relative z-10 truncate">{label}</span>
+      <span className="sr-only">
+        {status === "done" ? " (concluído)" : status === "active" ? " (etapa atual)" : ""}
+      </span>
+    </li>
   );
 });
 
-// ============================================================================
-// COMPONENTE: BARRA DE PROGRESSO (Sem Memo, pois muda a cada avanço)
-// ============================================================================
-function ProgressBar({ progressPercent }) {
+function ProgressBar({ percent }: { percent: number }) {
   return (
-    <div className="mt-3 flex h-1 w-full overflow-hidden rounded-full bg-gray-200/80 shadow-inner relative">
-      <div
-        className="progress-bar-anim bg-gradient-to-r from-emerald-400 via-green-500 to-emerald-600 shadow-sm relative h-full"
-        style={{ width: `${progressPercent}%` }}
+    <div
+      className="step-track mt-3 h-1.5 w-full overflow-hidden rounded-full relative"
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(percent)}
+      aria-label="Progresso do pedido"
+    >
+      <div 
+        className="step-track-fill h-full rounded-full relative" 
+        style={{ width: `${percent}%` }} 
       >
+        {/* Efeito de brilho na ponta estilo MacOS */}
         <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white/70 to-transparent blur-[0.5px]" />
       </div>
     </div>
   );
 }
 
-// ============================================================================
-// COMPONENTE PRINCIPAL (Memoizado)
-// ============================================================================
-export default React.memo(function PedidoInternoStepper({ pedido }) {
-  // A mágica da memória (TODO resolvido)
-  const previousStatus = usePrevious(pedido.status);
-  
-  // Se for null/undefined, significa que o Drawer acabou de abrir. 
-  // Anima apenas se houve transição de estado durante o ciclo de vida.
-  const shouldAnimate = previousStatus && previousStatus !== pedido.status;
+export interface PedidoInternoStepperProps {
+  status: PedidoStatus;
+  className?: string;
+}
 
-  if (pedido.status === "recusado") {
+export const PedidoInternoStepper = memo(function PedidoInternoStepper({
+  status,
+  className,
+}: PedidoInternoStepperProps) {
+  const previousStatus = usePrevious(status);
+  
+  // Só aplica a classe animada se o status mudar ENQUANTO o drawer estiver aberto.
+  const isAnimating = previousStatus !== undefined && previousStatus !== status;
+
+  const currentIndex = Math.max(
+    0,
+    PEDIDO_STEPS.findIndex((s) => s.key === status),
+  );
+  
+  const percent = ((currentIndex + 1) / PEDIDO_STEPS.length) * 100;
+
+  if (status === "recusado") {
     return (
-      <div className="flex items-center gap-2.5 rounded-xl bg-red-50/90 backdrop-blur-sm border border-red-200 px-4 py-3.5 shadow-sm">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-500 shadow-sm shadow-red-500/30">
-          <XCircle className="h-4 w-4 text-white stroke-[2.5]" />
+      <div
+        className={cn(
+          "step-chip--rejected flex items-center justify-center gap-2.5 rounded-xl px-4 py-3.5 text-sm font-semibold shadow-sm",
+          className,
+        )}
+        role="status"
+      >
+        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-red-500 shadow-sm">
+          <XCircle aria-hidden className="size-4 text-white stroke-[2.5]" />
         </span>
-        <span className="text-sm font-bold text-red-700">Pedido Recusado</span>
+        Pedido Recusado
       </div>
     );
   }
 
-  const currentIndex = Math.max(0, STEPS.findIndex((s) => s.key === pedido.status));
-  const totalSteps = STEPS.length;
-  const progressPercent = ((currentIndex + 1) / totalSteps) * 100;
-
   return (
-    <div className={`w-full stepper-container ${shouldAnimate ? 'is-animating' : ''}`}>
-      <style>{CSS_CHOREOGRAPHY}</style>
-      
-      <div className="flex items-stretch overflow-visible py-1">
-        {STEPS.map((step, idx) => {
-          // Resolvemos o status AQUI, passando propriedades "limpas" para o filho memoizado.
-          const status = idx < currentIndex ? "done" : idx === currentIndex ? "active" : "future";
-          const zIndex = status === "active" ? 40 : totalSteps - idx;
-
-          return (
-            <StepperStep
-              key={step.key}
-              step={step}
-              status={status}
-              isFirst={idx === 0}
-              isLast={idx === totalSteps - 1}
-              zIndex={zIndex}
-            />
-          );
-        })}
-      </div>
-
-      <ProgressBar progressPercent={progressPercent} />
+    <div className={cn("stepper-container w-full", isAnimating && "is-animating", className)}>
+      {/* Removido o gap-px (substituído pela lógica do margin negativo) */}
+      <ol className="flex w-full items-stretch overflow-visible py-1" aria-label="Status do pedido">
+        {PEDIDO_STEPS.map((step, idx) => (
+          <StepperStep
+            key={step.key}
+            label={step.label}
+            status={idx < currentIndex ? "done" : idx === currentIndex ? "active" : "future"}
+            isFirst={idx === 0}
+            isLast={idx === PEDIDO_STEPS.length - 1}
+            zIndex={idx === currentIndex ? 40 : PEDIDO_STEPS.length - idx}
+          />
+        ))}
+      </ol>
+      <ProgressBar percent={percent} />
     </div>
   );
 });
+
+export default PedidoInternoStepper;
