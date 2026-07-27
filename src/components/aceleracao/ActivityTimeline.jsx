@@ -22,7 +22,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import useEmployeeResolver from "@/hooks/useEmployeeResolver";
 
 const IGNORED_FIELDS = new Set([
   "created_by_id", "is_sample", "updated_date", "created_date",
@@ -66,9 +67,10 @@ function getInitials(name) {
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }
 
-function ActivityLogEntry({ log }) {
+function ActivityLogEntry({ log, getName }) {
   const config = EVENT_ICONS[log.event_type] || EVENT_ICONS.field_changed;
   const Icon = config.icon;
+  const resolvedName = getName ? getName(log.actor_id, log.actor_name) : (log.actor_name || "Sistema");
 
   return (
     <div className="flex gap-3 py-3">
@@ -78,7 +80,7 @@ function ActivityLogEntry({ log }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-medium text-gray-900">
-            {log.actor_name || "Sistema"}
+            {resolvedName}
           </span>
           <span className="text-sm text-gray-600">{log.summary}</span>
         </div>
@@ -95,22 +97,25 @@ function ActivityLogEntry({ log }) {
   );
 }
 
-function CommentEntry({ comment, onReply, depth = 0 }) {
+function CommentEntry({ comment, onReply, depth = 0, getName, getPhoto }) {
   const [showReply, setShowReply] = useState(false);
   const isInternal = comment.is_internal;
+  const resolvedName = getName ? getName(comment.author_id, comment.author_name) : (comment.author_name || "Usuário");
+  const photoUrl = getPhoto ? getPhoto(comment.author_id) : null;
 
   return (
     <div className={`py-3 ${depth > 0 ? "ml-11 border-l-2 border-gray-100 pl-4" : ""}`}>
       <div className="flex gap-3">
         <Avatar className="flex-shrink-0 w-8 h-8">
+          {photoUrl && <AvatarImage src={photoUrl} alt={resolvedName} />}
           <AvatarFallback className={isInternal ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"}>
-            {getInitials(comment.author_name)}
+            {getInitials(resolvedName)}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-medium text-gray-900">
-              {comment.author_name || "Usuário"}
+              {resolvedName}
             </span>
             {isInternal && (
               <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
@@ -159,6 +164,8 @@ function CommentEntry({ comment, onReply, depth = 0 }) {
               parentCommentId={comment.id}
               onSubmitted={() => setShowReply(false)}
               compact
+              getName={getName}
+              getPhoto={getPhoto}
             />
           )}
         </div>
@@ -167,7 +174,7 @@ function CommentEntry({ comment, onReply, depth = 0 }) {
   );
 }
 
-function TaskCommentInput({ entityType, entityId, workshopId, parentCommentId = null, onSubmitted, compact = false }) {
+function TaskCommentInput({ entityType, entityId, workshopId, parentCommentId = null, onSubmitted, compact = false, getName, getPhoto }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [content, setContent] = useState("");
@@ -177,7 +184,6 @@ function TaskCommentInput({ entityType, entityId, workshopId, parentCommentId = 
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const comment = await base44.entities.TaskComment.create(data);
-      // Notifica participantes da tarefa/pedido (best-effort, não bloqueia se falhar)
       try {
         await base44.functions.invoke('notificarNovoComentario', {
           entity_type: data.entity_type,
@@ -222,7 +228,7 @@ function TaskCommentInput({ entityType, entityId, workshopId, parentCommentId = 
       entity_id: entityId,
       workshop_id: workshopId,
       author_id: user?.id,
-      author_name: user?.full_name || user?.email,
+      author_name: getName ? getName(user?.id, user?.full_name || user?.email) : (user?.full_name || user?.email),
       content: content.trim(),
       parent_comment_id: parentCommentId,
       attachments,
@@ -233,13 +239,18 @@ function TaskCommentInput({ entityType, entityId, workshopId, parentCommentId = 
 
   return (
     <div className={`flex gap-3 ${compact ? "mt-2" : "mt-4"}`}>
-      {!compact && (
-        <Avatar className="flex-shrink-0 w-8 h-8">
-          <AvatarFallback className="bg-gray-100 text-gray-600">
-            {getInitials(user?.full_name || user?.email)}
-          </AvatarFallback>
-        </Avatar>
-      )}
+      {!compact && (() => {
+        const myName = getName ? getName(user?.id, user?.full_name || user?.email) : (user?.full_name || user?.email);
+        const myPhoto = getPhoto ? getPhoto(user?.id) : null;
+        return (
+          <Avatar className="flex-shrink-0 w-8 h-8">
+            {myPhoto && <AvatarImage src={myPhoto} alt={myName} />}
+            <AvatarFallback className="bg-gray-100 text-gray-600">
+              {getInitials(myName)}
+            </AvatarFallback>
+          </Avatar>
+        );
+      })()}
       <div className="flex-1 space-y-2">
         <Textarea
           value={content}
@@ -308,6 +319,8 @@ function TaskCommentInput({ entityType, entityId, workshopId, parentCommentId = 
 }
 
 export default function ActivityTimeline({ entityType, entityId, workshopId, maxHeight = "600px" }) {
+  const { getName, getPhoto } = useEmployeeResolver();
+
   const { data: logs = [], isLoading: isLoadingLogs } = useQuery({
     queryKey: ["activityLogs", entityType, entityId],
     queryFn: async () => {
@@ -338,7 +351,6 @@ export default function ActivityTimeline({ entityType, entityId, workshopId, max
 
   const isLoading = isLoadingLogs || isLoadingComments;
 
-  // Separar comentários de topo e respostas
   const topLevelComments = comments.filter((c) => !c.parent_comment_id);
   const repliesByParent = comments.reduce((acc, c) => {
     if (c.parent_comment_id) {
@@ -361,7 +373,6 @@ export default function ActivityTimeline({ entityType, entityId, workshopId, max
 
   return (
     <div className="flex flex-col" style={{ maxHeight }}>
-      {/* Timeline */}
       <div className="flex-1 overflow-y-auto scrollbar-thin pr-1">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
@@ -374,7 +385,7 @@ export default function ActivityTimeline({ entityType, entityId, workshopId, max
         ) : (
           timeline.map((entry, idx) => {
             if (entry.type === "log") {
-              return <ActivityLogEntry key={`log-${idx}`} log={entry.data} />;
+              return <ActivityLogEntry key={`log-${idx}`} log={entry.data} getName={getName} />;
             }
             const replies = repliesByParent[entry.data.id] || [];
             return (
@@ -382,9 +393,11 @@ export default function ActivityTimeline({ entityType, entityId, workshopId, max
                 <CommentEntry
                   comment={entry.data}
                   depth={0}
+                  getName={getName}
+                  getPhoto={getPhoto}
                 />
                 {replies.map((reply) => (
-                  <CommentEntry key={reply.id} comment={reply} depth={1} />
+                  <CommentEntry key={reply.id} comment={reply} depth={1} getName={getName} getPhoto={getPhoto} />
                 ))}
               </div>
             );
@@ -392,13 +405,14 @@ export default function ActivityTimeline({ entityType, entityId, workshopId, max
         )}
       </div>
 
-      {/* Comment input */}
       {!isLoading && (
         <div className="border-t border-gray-100 pt-3">
           <TaskCommentInput
             entityType={entityType}
             entityId={entityId}
             workshopId={workshopId}
+            getName={getName}
+            getPhoto={getPhoto}
           />
         </div>
       )}
