@@ -174,7 +174,7 @@ export default function PedidoInternoDetail({
             <div className="min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
                 <span className="flex items-center gap-1 font-mono text-[11px] font-semibold text-gray-400">
-                  <Hash className="h-3 w-3" />{pedido.id?.slice(-8).toUpperCase()}
+                  <Hash className="h-3 w-3" />{pedido.codigo || `#${pedido.id?.slice(-6).toUpperCase()}`}
                 </span>
                 {pedido.tipo && (
                   <><span className="text-gray-300">·</span><span className="text-[11px] text-gray-400 capitalize">{pedido.tipo?.replace(/_/g, " ")}</span></>

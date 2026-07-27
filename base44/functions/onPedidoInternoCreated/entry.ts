@@ -23,6 +23,27 @@ Deno.serve(async (req) => {
       return Response.json({ skipped: true, reason: 'Pedido sem id ou workshop_id' });
     }
 
+    // ── Gerar código sequencial (PED-0001, PED-0002, ...) se ainda não existir ──
+    if (!pedido.codigo) {
+      try {
+        const todos = await base44.asServiceRole.entities.PedidoInterno.list('-created_date', 100000);
+        let maxNum = 0;
+        for (const p of todos || []) {
+          if (p.codigo) {
+            const m = p.codigo.match(/PED-(\d+)/);
+            if (m) {
+              const n = parseInt(m[1], 10);
+              if (n > maxNum) maxNum = n;
+            }
+          }
+        }
+        const novoCodigo = `PED-${String(maxNum + 1).padStart(4, '0')}`;
+        await base44.asServiceRole.entities.PedidoInterno.update(pedido.id, { codigo: novoCodigo });
+      } catch (e) {
+        // não crítico — o pedido segue sem código
+      }
+    }
+
     // Idempotência
     const existentes = await base44.asServiceRole.entities.FollowUpReminder.filter({
       origem_pedido_id: pedido.id,

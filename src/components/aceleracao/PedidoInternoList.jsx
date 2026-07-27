@@ -12,6 +12,7 @@ import PriorityBadge from "@/components/shared/PriorityBadge";
 import useEmployeeResolver from "@/hooks/useEmployeeResolver";
 
 export const COL = {
+  numero: "w-[80px] shrink-0",
   cliente: "w-[170px] shrink-0",
   solicitante: "w-[160px] shrink-0",
   responsavel: "w-[160px] shrink-0",
@@ -108,6 +109,7 @@ function ClientBadge({ name }) {
 export function ColumnHeaders() {
   return (
     <div className={`flex items-center ${COL.gap} ${COL.px} border-t border-gray-200 bg-gray-50/80 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400`}>
+      <span className={COL.numero}>Nº</span>
       <span className={COL.cliente}>Cliente</span>
       <span className={COL.solicitante}>Solicitante</span>
       <span className={COL.responsavel}>Responsável</span>
@@ -148,13 +150,13 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
       onClick={() => onSelect(pedido)}
       className={`group relative flex w-full items-center ${COL.gap} ${COL.px} py-3.5 text-left transition-all border-b border-gray-100 hover:bg-blue-50/30 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:rounded-r ${bar} ${isSelected ? "bg-blue-50/50" : ""}`}
     >
+      <div className={`${COL.numero} font-mono text-[11px] font-semibold ${done ? "text-gray-300" : "text-gray-500"}`}>
+        {pedido.codigo || `#${pedido.id?.slice(-6).toUpperCase()}`}
+      </div>
       <div className={COL.cliente}><ClientBadge name={pedido.workshop_nome} /></div>
       <div className={`${COL.solicitante} flex items-center gap-2`}>
         <MiniAvatar name={rName} photoUrl={rPhoto} />
-        <div className="min-w-0">
-          <p className={`text-[12px] font-medium truncate ${done ? "text-gray-400" : "text-gray-800"}`}>{rName}</p>
-          <p className="font-mono text-[9px] text-gray-400 leading-none">#{pedido.id?.slice(-6).toUpperCase()}</p>
-        </div>
+        <span className={`text-[12px] font-medium truncate ${done ? "text-gray-400" : "text-gray-800"}`}>{rName}</span>
       </div>
       <div className={`${COL.responsavel} flex items-center gap-2`}>
         {aName ? (
@@ -188,6 +190,7 @@ function SkeletonRows() {
           </div>
           {[0,1,2].map(r => (
             <div key={r} className={`flex items-center ${COL.gap} ${COL.px} py-3.5 border-b border-gray-100 animate-pulse`}>
+              <div className={COL.numero}><div className="h-4 w-14 rounded bg-gray-100" /></div>
               <div className={COL.cliente}><div className="h-5 w-28 rounded bg-gray-100" /></div>
               <div className={`${COL.solicitante} flex items-center gap-2`}><div className="h-[22px] w-[22px] rounded-full bg-gray-200" /><div className="h-3.5 w-20 rounded bg-gray-200" /></div>
               <div className={`${COL.responsavel} flex items-center gap-2`}><div className="h-[22px] w-[22px] rounded-full bg-gray-200" /><div className="h-3.5 w-20 rounded bg-gray-200" /></div>

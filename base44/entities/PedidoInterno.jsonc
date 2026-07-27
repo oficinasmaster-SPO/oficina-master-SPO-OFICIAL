@@ -2,6 +2,10 @@
   "name": "PedidoInterno",
   "type": "object",
   "properties": {
+    "codigo": {
+      "type": "string",
+      "description": "C\u00f3digo sequencial leg\u00edvel do pedido (ex: PED-0001)"
+    },
     "tipo": {
       "type": "string",
       "enum": [
@@ -15,15 +19,15 @@
     },
     "titulo": {
       "type": "string",
-      "description": "Título do pedido"
+      "description": "T\u00edtulo do pedido"
     },
     "descricao": {
       "type": "string",
-      "description": "Descrição detalhada do pedido"
+      "description": "Descri\u00e7\u00e3o detalhada do pedido"
     },
     "requester_id": {
       "type": "string",
-      "description": "ID do usuário solicitante"
+      "description": "ID do usu\u00e1rio solicitante"
     },
     "requester_name": {
       "type": "string",
@@ -31,11 +35,11 @@
     },
     "assignee_id": {
       "type": "string",
-      "description": "ID do usuário responsável"
+      "description": "ID do usu\u00e1rio respons\u00e1vel"
     },
     "assignee_name": {
       "type": "string",
-      "description": "Nome do responsável"
+      "description": "Nome do respons\u00e1vel"
     },
     "workshop_id": {
       "type": "string",
@@ -48,7 +52,7 @@
     "prazo": {
       "type": "string",
       "format": "date",
-      "description": "Prazo para resolução"
+      "description": "Prazo para resolu\u00e7\u00e3o"
     },
     "status": {
       "type": "string",
@@ -87,7 +91,7 @@
     },
     "resposta": {
       "type": "string",
-      "description": "Resposta/resolução do pedido"
+      "description": "Resposta/resolu\u00e7\u00e3o do pedido"
     },
     "midias_anexas": {
       "type": "array",
@@ -115,7 +119,7 @@
         }
       },
       "default": [],
-      "description": "Mídias, imagens, documentos e links anexados"
+      "description": "M\u00eddias, imagens, documentos e links anexados"
     },
     "arquivos_anexos": {
       "type": "array",
@@ -135,7 +139,7 @@
     "data_conclusao": {
       "type": "string",
       "format": "date-time",
-      "description": "Data de conclusão"
+      "description": "Data de conclus\u00e3o"
     },
     "data_primeira_resposta": {
       "type": "string",
@@ -145,12 +149,12 @@
     "vencido": {
       "type": "boolean",
       "default": false,
-      "description": "Se o pedido está vencido"
+      "description": "Se o pedido est\u00e1 vencido"
     },
     "notificacao_lembrete_enviada": {
       "type": "boolean",
       "default": false,
-      "description": "Se e-mail de lembrete D-1 foi enviado ao responsável"
+      "description": "Se e-mail de lembrete D-1 foi enviado ao respons\u00e1vel"
     },
     "notificacao_vencimento_enviada": {
       "type": "boolean",
@@ -197,7 +201,7 @@
         }
       },
       "default": [],
-      "description": "Histórico de alterações do pedido"
+      "description": "Hist\u00f3rico de altera\u00e7\u00f5es do pedido"
     }
   },
   "required": [
