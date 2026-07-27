@@ -17,7 +17,7 @@ import PedidoInternoStepper from "./PedidoInternoStepper";
 import StatusBadge from "@/components/shared/StatusBadge";
 import PriorityBadge from "@/components/shared/PriorityBadge";
 import useEmployeeResolver from "@/hooks/useEmployeeResolver";
-import AnexoPreviewModal from "./AnexoPreviewModal";
+import AttachmentGallery from "./AttachmentGallery";
 import {
   PEDIDO_STATUS_CONFIG, PRIORIDADE_CONFIG,
   TIPO_PEDIDO_LABELS, IMPACTO_CLIENTE_LABELS,
@@ -81,7 +81,6 @@ export default function PedidoInternoDetail({
 }) {
   const queryClient = useQueryClient();
   const { getName, getPhoto } = useEmployeeResolver();
-  const [previewMedia, setPreviewMedia] = useState(null);
 
   // Navegação por setas do teclado
   useEffect(() => {
@@ -123,10 +122,19 @@ export default function PedidoInternoDetail({
 
   const done = tarefas.filter(t => t.status === "concluida").length;
 
-  // Separação dos anexos
+  // Separação e formatação dos anexos para o padrão do AttachmentGallery
   const medias = pedido?.midias_anexas || [];
-  const imagens = medias.filter(m => m.type === "imagem");
-  const outros = medias.filter(m => m.type !== "imagem");
+  const arquivosFormatados = medias.map(media => ({
+    id: media.id || Math.random().toString(),
+    url: media.url,
+    name: media.nome,
+    type: media.type === "imagem" ? "image" : media.type === "link" ? "link" : "document",
+    mimeType: media.mimeType,
+    size: media.size,
+    extension: media.extension,
+    createdBy: media.createdBy || "Sistema",
+    origin: "Anexo do Pedido"
+  }));
 
   const recusarMutation = useMutation({
     mutationFn: async () => base44.entities.PedidoInterno.update(pedido.id, {
@@ -304,44 +312,9 @@ export default function PedidoInternoDetail({
             </div>
 
             {/* Anexos */}
-            {medias.length > 0 && (
-              <div className="border-b border-gray-100 px-4 py-3">
-                <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-gray-400">
-                  Anexos ({medias.length})
-                </p>
-
-                {imagens.length > 0 && (
-                  <div className="grid grid-cols-3 gap-2 mb-3">
-                    {imagens.map((m, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setPreviewMedia(m)}
-                        className="group relative rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
-                      >
-                        <img src={m.url} alt={m.nome} className="w-full h-16 object-cover group-hover:scale-105 transition-transform" />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {outros.length > 0 && (
-                  <div className="space-y-1.5">
-                    {outros.map((m, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setPreviewMedia(m)}
-                        className="flex w-full items-center gap-2 rounded-lg border border-gray-200 bg-white p-2 text-left hover:bg-gray-100 transition-colors shadow-sm"
-                      >
-                        <FileText className="h-4 w-4 shrink-0 text-gray-400" />
-                        <span className="flex-1 truncate text-xs font-medium text-gray-700">{m.nome}</span>
-                        <span className="text-[10px] text-gray-400 shrink-0">
-                          {m.type === "link" ? "Link" : "Arquivo"}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+            {arquivosFormatados.length > 0 && (
+              <div className="border-b border-gray-100 px-4 py-4">
+                <AttachmentGallery files={arquivosFormatados} />
               </div>
             )}
 
@@ -408,11 +381,6 @@ export default function PedidoInternoDetail({
           </div>
         </div>
       </div>
-
-      {/* ── PREVIEW DE MÍDIA ──────────────────────────────────────────── */}
-      {previewMedia && (
-        <AnexoPreviewModal media={previewMedia} onClose={() => setPreviewMedia(null)} />
-      )}
     </>
   );
 }
