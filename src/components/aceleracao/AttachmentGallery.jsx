@@ -124,7 +124,10 @@ function FileViewerDrawer({ files, currentIndex, onClose, onChangeIndex }) {
   if (!currentFile) return null;
   
   const isImage = currentFile.type === "image" || currentFile.mimeType?.includes("image");
-  const isPdf = currentFile.extension?.toLowerCase() === 'pdf' || currentFile.mimeType?.includes('pdf');
+  const isPdf =
+    currentFile.extension?.toLowerCase() === 'pdf' ||
+    currentFile.mimeType?.includes('pdf') ||
+    currentFile.name?.toLowerCase().endsWith('.pdf'); // Reforço garantido
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
