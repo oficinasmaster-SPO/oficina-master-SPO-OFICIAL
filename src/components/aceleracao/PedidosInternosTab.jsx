@@ -22,7 +22,7 @@ import NovoPedidoModal from "./NovoPedidoModal";
 import BacklogBoard from "./BacklogBoard";
 import PedidoInternoModal from "./PedidoInternoModal";
 import PedidoInternoList, { ColumnHeaders } from "./PedidoInternoList";
-import PedidoInternoDetail from "./PedidoInternoDetail";
+import PedidoInternoDrawer from "./PedidoInternoDrawer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -187,6 +187,15 @@ export default function PedidosInternosTab({ workshopId, user }) {
   }, [selectedPedido, pedidos]);
  
   /* ── Handlers ──────────────────────────────────────────────────────────── */
+  const handleNavigate = useCallback((dir) => {
+    if (!selectedPedido) return;
+    const idx = filteredPedidos.findIndex(p => p.id === selectedPedido.id);
+    const nextIdx = dir === "prev" ? idx - 1 : idx + 1;
+    if (nextIdx >= 0 && nextIdx < filteredPedidos.length) {
+      setSelectedPedido(filteredPedidos[nextIdx]);
+    }
+  }, [selectedPedido, filteredPedidos]);
+
   const handleSelect = useCallback((p) => setSelectedPedido(p), []);
   const handleDetailClose = useCallback(() => {
     setSelectedPedido(null);
@@ -204,18 +213,19 @@ export default function PedidosInternosTab({ workshopId, user }) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
  
-      {/* ── Modal detalhe (wide) ── */}
-      <PedidoInternoModal open={!!selectedPedido} onClose={() => setSelectedPedido(null)} size="wide">
-        {freshSelected && (
-          <PedidoInternoDetail
-            pedido={freshSelected}
-            user={user}
-            onCancel={() => setSelectedPedido(null)}
-            onSuccess={handleDetailClose}
-            onDelete={handleDetailClose}
-          />
-        )}
-      </PedidoInternoModal>
+      {/* ── Drawer de detalhe (substitui o modal antigo) ── */}
+      {freshSelected && (
+        <PedidoInternoDrawer
+          pedido={freshSelected}
+          user={user}
+          totalPedidos={filteredPedidos.length}
+          currentIndex={Math.max(0, filteredPedidos.findIndex(p => p.id === freshSelected.id))}
+          onNavigate={handleNavigate}
+          onClose={() => setSelectedPedido(null)}
+          onEdit={(p) => { setEditingPedido(p); setShowNewForm(true); }}
+          onSuccess={handleDetailClose}
+        />
+      )}
  
       {/* ── Modal NOVO pedido (estética custom) ── */}
       {showNewForm && !editingPedido && (
@@ -357,4 +367,3 @@ export default function PedidosInternosTab({ workshopId, user }) {
     </div>
   );
 }
- 
