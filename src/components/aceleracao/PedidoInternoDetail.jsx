@@ -124,17 +124,26 @@ export default function PedidoInternoDetail({
 
   // ── Formatação de Anexos para a nova AttachmentGallery ─────────────────
   const medias = pedido?.midias_anexas || [];
-  const arquivosFormatados = medias.map(media => ({
-    id: media.id || Math.random().toString(),
-    url: media.url,
-    name: media.nome,
-    type: media.type === "imagem" ? "image" : media.type === "link" ? "link" : "document",
-    mimeType: media.mimeType,
-    size: media.size,
-    extension: media.extension,
-    createdBy: media.createdBy || "Sistema",
-    origin: "Anexo do Pedido"
-  }));
+  const arquivosFormatados = medias.map(media => {
+    // Nova inteligência: Tenta extrair do NOME primeiro (mais confiável), depois da URL
+    const extNome = media.nome?.split('.').pop()?.toLowerCase();
+    const extUrl = media.url?.split('.').pop()?.split('?')[0]?.toLowerCase();
+
+    // Se a extensão extraída do nome for muito grande, não é extensão.
+    const validExtNome = extNome?.length <= 4 ? extNome : null;
+
+    return {
+      id: media.id || Math.random().toString(),
+      url: media.url,
+      name: media.nome,
+      type: media.type === "imagem" ? "image" : media.type === "link" ? "link" : "document",
+      mimeType: media.mimeType,
+      size: media.size,
+      extension: media.extension || validExtNome || extUrl || "", // Acha o PDF em qualquer lugar!
+      createdBy: media.createdBy || "Sistema",
+      origin: "Anexo do Pedido"
+    };
+  });
 
   const recusarMutation = useMutation({
     mutationFn: async () => base44.entities.PedidoInterno.update(pedido.id, {
