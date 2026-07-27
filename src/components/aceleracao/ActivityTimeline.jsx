@@ -182,6 +182,7 @@ function TaskCommentInput({ entityType, entityId, workshopId, parentCommentId = 
   const [isInternal, setIsInternal] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = React.useRef(null);
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
@@ -287,24 +288,31 @@ function TaskCommentInput({ entityType, entityId, workshopId, parentCommentId = 
         )}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <label className="cursor-pointer">
-              <input
-                type="file"
-                multiple
-                className="hidden"
-                disabled={isUploading}
-                onChange={(e) => handleFileUpload(Array.from(e.target.files || []))}
-              />
-              <Button variant="ghost" size="sm" type="button" className="text-gray-500" disabled={isUploading}>
-                {isUploading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Paperclip className="w-4 h-4" />
-                )}
-                Anexar
-              </Button>
-            </label>
-            <label className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-500">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              disabled={isUploading}
+              onChange={(e) => handleFileUpload(Array.from(e.target.files || []))}
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              className="text-gray-500"
+              disabled={isUploading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {isUploading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Paperclip className="w-4 h-4" />
+              )}
+              Anexar
+            </Button>
+
+            <label className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-500 ml-2">
               <input
                 type="checkbox"
                 checked={isInternal}
