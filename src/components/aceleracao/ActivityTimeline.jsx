@@ -24,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import useEmployeeResolver from "@/hooks/useEmployeeResolver";
+import { toast } from "sonner";
 
 const IGNORED_FIELDS = new Set([
   "created_by_id", "is_sample", "updated_date", "created_date",
@@ -180,6 +181,7 @@ function TaskCommentInput({ entityType, entityId, workshopId, parentCommentId = 
   const [content, setContent] = useState("");
   const [isInternal, setIsInternal] = useState(false);
   const [attachments, setAttachments] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
@@ -208,17 +210,25 @@ function TaskCommentInput({ entityType, entityId, workshopId, parentCommentId = 
 
   const handleFileUpload = async (files) => {
     if (!files || files.length === 0) return;
-    const uploaded = [];
-    for (const file of files) {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      uploaded.push({
-        file_url,
-        file_name: file.name,
-        file_type: file.type,
-        file_size: file.size,
-      });
+    setIsUploading(true);
+    try {
+      const uploaded = [];
+      for (const file of files) {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        uploaded.push({
+          file_url,
+          file_name: file.name,
+          file_type: file.type,
+          file_size: file.size,
+        });
+      }
+      setAttachments((prev) => [...prev, ...uploaded]);
+    } catch (error) {
+      console.error("Erro ao enviar arquivo:", error);
+      toast.error("Erro ao enviar arquivo");
+    } finally {
+      setIsUploading(false);
     }
-    setAttachments((prev) => [...prev, ...uploaded]);
   };
 
   const handleSubmit = () => {
@@ -281,10 +291,15 @@ function TaskCommentInput({ entityType, entityId, workshopId, parentCommentId = 
                 type="file"
                 multiple
                 className="hidden"
+                disabled={isUploading}
                 onChange={(e) => handleFileUpload(Array.from(e.target.files || []))}
               />
-              <Button variant="ghost" size="sm" type="button" className="text-gray-500">
-                <Paperclip className="w-4 h-4" />
+              <Button variant="ghost" size="sm" type="button" className="text-gray-500" disabled={isUploading}>
+                {isUploading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Paperclip className="w-4 h-4" />
+                )}
                 Anexar
               </Button>
             </label>
