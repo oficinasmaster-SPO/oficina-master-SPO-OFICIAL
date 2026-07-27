@@ -186,6 +186,7 @@ function TaskCommentInput({ entityType, entityId, workshopId, parentCommentId = 
   const createMutation = useMutation({
     mutationFn: async (data) => {
       const comment = await base44.entities.TaskComment.create(data);
+      // Notifica participantes da tarefa/pedido (best-effort, não bloqueia se falhar)
       try {
         await base44.functions.invoke('notificarNovoComentario', {
           entity_type: data.entity_type,
@@ -366,6 +367,7 @@ export default function ActivityTimeline({ entityType, entityId, workshopId, max
 
   const isLoading = isLoadingLogs || isLoadingComments;
 
+  // Separar comentários de topo e respostas
   const topLevelComments = comments.filter((c) => !c.parent_comment_id);
   const repliesByParent = comments.reduce((acc, c) => {
     if (c.parent_comment_id) {
@@ -388,6 +390,7 @@ export default function ActivityTimeline({ entityType, entityId, workshopId, max
 
   return (
     <div className="flex flex-col" style={{ maxHeight }}>
+      {/* Timeline */}
       <div className="flex-1 overflow-y-auto scrollbar-thin pr-1">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
@@ -420,6 +423,7 @@ export default function ActivityTimeline({ entityType, entityId, workshopId, max
         )}
       </div>
 
+      {/* Comment input */}
       {!isLoading && (
         <div className="border-t border-gray-100 pt-3">
           <TaskCommentInput
