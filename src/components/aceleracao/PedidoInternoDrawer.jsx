@@ -1,28 +1,27 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
-  X, Edit2, Trash2, Printer, XCircle, CheckCircle,
-  MessageSquare, StickyNote, ListChecks, FileText,
-  AlertTriangle, ArrowUp, Minus, ArrowDown,
+  X, Edit2, Printer, XCircle, CheckCircle,
+  MessageSquare, ListChecks, FileText,
+  AlertTriangle,
   Clock, CalendarClock, ChevronLeft, ChevronRight,
-  Hash, Flag, Building2,
+  Hash, Building2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ActivityTimeline from "./ActivityTimeline";
 import PedidoInternoStepper from "./PedidoInternoStepper";
+import AnexoPreviewModal from "./AnexoPreviewModal";
+import PriorityBadge from "@/components/shared/PriorityBadge";
 import {
-  PEDIDO_STATUS_CONFIG, PRIORIDADE_CONFIG,
+  PEDIDO_STATUS_CONFIG,
   TIPO_PEDIDO_LABELS, IMPACTO_CLIENTE_LABELS,
 } from "@/components/shared/backlogConstants";
 import StatusBadge from "@/components/shared/StatusBadge";
 
-// ── Helpers visuais ────────────────────────────────────────────────────────
 function Avatar({ name, size = "md" }) {
   const initials = name
     ? name.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase()
@@ -44,13 +43,6 @@ function Avatar({ name, size = "md" }) {
   );
 }
 
-function PriorityIcon({ prioridade, className = "" }) {
-  if (prioridade === "critica") return <AlertTriangle className={`text-red-500 ${className}`} />;
-  if (prioridade === "alta")    return <ArrowUp       className={`text-orange-500 ${className}`} />;
-  if (prioridade === "media")   return <Minus         className={`text-yellow-500 ${className}`} />;
-  return                               <ArrowDown     className={`text-blue-400 ${className}`} />;
-}
-
 const STATUS_PILL_CLS = {
   pendente:   "bg-gray-100 text-gray-700 border-gray-200",
   em_analise: "bg-blue-100 text-blue-700 border-blue-200",
@@ -69,7 +61,6 @@ function StatusPill({ status }) {
   );
 }
 
-// ── Aba ────────────────────────────────────────────────────────────────────
 function Tab({ label, icon: Icon, active, badge, onClick }) {
   return (
     <button
@@ -92,7 +83,6 @@ function Tab({ label, icon: Icon, active, badge, onClick }) {
   );
 }
 
-// ── Campo de detalhe ────────────────────────────────────────────────────────
 function DetailField({ label, icon: Icon, children, className = "" }) {
   if (!children) return null;
   return (
@@ -106,8 +96,10 @@ function DetailField({ label, icon: Icon, children, className = "" }) {
   );
 }
 
-// ── Aba Detalhes ────────────────────────────────────────────────────────────
-function TabDetalhes({ pedido }) {
+function TabDetalhes({ pedido, onPreviewMedia }) {
+  const medias = pedido?.midias_anexas || [];
+  const imagens = medias.filter(m => m.type === "imagem");
+  const outros = medias.filter(m => m.type !== "imagem");
   const prazoFmt = pedido.prazo
     ? format(new Date(pedido.prazo), "dd/MM/yyyy", { locale: ptBR })
     : null;
@@ -117,15 +109,13 @@ function TabDetalhes({ pedido }) {
 
   return (
     <div className="space-y-5 px-5 py-4">
-      {/* Descrição */}
       {pedido.descricao && (
-        <div>
-          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Descrição</p>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{pedido.descricao}</p>
+        <div className="rounded-lg border border-[#e6e6a3] bg-[#FFFF99]/30 p-3">
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-[#999933]">Descrição</p>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#b3b34d]">{pedido.descricao}</p>
         </div>
       )}
 
-      {/* Resposta oficial */}
       {pedido.resposta && (
         <div className={`rounded-xl border p-4 ${
           pedido.status === "recusado"
@@ -141,7 +131,6 @@ function TabDetalhes({ pedido }) {
         </div>
       )}
 
-      {/* Grid de campos */}
       <div className="grid grid-cols-2 gap-x-6 gap-y-4">
         <DetailField label="Cliente" icon={Building2}>
           {pedido.workshop_nome || "—"}
@@ -149,11 +138,8 @@ function TabDetalhes({ pedido }) {
         <DetailField label="Categoria" icon={FileText}>
           {TIPO_PEDIDO_LABELS[pedido.tipo] || pedido.tipo || "—"}
         </DetailField>
-        <DetailField label="Prioridade" icon={Flag}>
-          <span className="flex items-center gap-1.5">
-            <PriorityIcon prioridade={pedido.prioridade} className="h-3.5 w-3.5" />
-            {PRIORIDADE_CONFIG[pedido.prioridade]?.label || "—"}
-          </span>
+        <DetailField label="Prioridade">
+          <PriorityBadge prioridade={pedido.prioridade} />
         </DetailField>
         <DetailField label="Prazo" icon={Clock}>
           {prazoFmt
@@ -173,11 +159,49 @@ function TabDetalhes({ pedido }) {
           </DetailField>
         )}
       </div>
+
+      {medias.length > 0 && (
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-2">
+            Anexos ({medias.length})
+          </p>
+          {imagens.length > 0 && (
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              {imagens.map((m, i) => (
+                <button
+                  key={i}
+                  onClick={() => onPreviewMedia?.(m)}
+                  className="group relative rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                >
+                  <img src={m.url} alt={m.nome} className="w-full h-20 object-cover group-hover:scale-105 transition-transform" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                </button>
+              ))}
+            </div>
+          )}
+          {outros.length > 0 && (
+            <div className="space-y-1.5">
+              {outros.map((m, i) => (
+                <button
+                  key={i}
+                  onClick={() => onPreviewMedia?.(m)}
+                  className="flex w-full items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-2 text-left hover:bg-gray-100 transition-colors"
+                >
+                  <FileText className="h-4 w-4 shrink-0 text-gray-400" />
+                  <span className="flex-1 truncate text-xs font-medium text-gray-700">{m.nome}</span>
+                  <span className="text-[10px] text-gray-400 shrink-0">
+                    {m.type === "link" ? "Link" : "Arquivo"}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
-// ── Aba Tarefas ─────────────────────────────────────────────────────────────
 function TabTarefas({ pedido }) {
   const { data: tarefas = [], isLoading } = useQuery({
     queryKey: ["tarefas-pedido", pedido.id],
@@ -244,22 +268,20 @@ function TabTarefas({ pedido }) {
   );
 }
 
-// ── Componente principal: Drawer ────────────────────────────────────────────
 export default function PedidoInternoDrawer({
   pedido,
   user,
   totalPedidos = 0,
   currentIndex = 0,
-  onNavigate,   // (direction: "prev"|"next") => void
+  onNavigate,
   onClose,
   onEdit,
-  onDelete,
   onSuccess,
 }) {
-  const [activeTab, setActiveTab] = useState("atividade");
-  const queryClient               = useQueryClient();
+  const [activeTab, setActiveTab]     = useState("atividade");
+  const [previewMedia, setPreviewMedia] = useState(null);
+  const queryClient                  = useQueryClient();
 
-  // Contar tarefas para badge
   const { data: tarefas = [] } = useQuery({
     queryKey: ["tarefas-pedido", pedido.id],
     queryFn: async () => {
@@ -271,7 +293,6 @@ export default function PedidoInternoDrawer({
     enabled: !!pedido.id,
   });
 
-  // Fechar com Escape, navegar com setas
   useEffect(() => {
     const handleKey = (e) => {
       if (e.key === "Escape")      onClose();
@@ -285,7 +306,6 @@ export default function PedidoInternoDrawer({
   const isReadOnly  = ["concluido", "recusado"].includes(pedido.status);
   const isInternal  = user?.user_type === "internal" || user?.data?.user_type === "internal";
   const canRespond  = user?.id === pedido.assignee_id || user?.role === "admin" || isInternal;
-  const canDelete   = user?.role === "admin" || isInternal;
   const canEdit     = canRespond;
 
   const criadoEm   = pedido.created_date || pedido.data_criacao;
@@ -299,14 +319,18 @@ export default function PedidoInternoDrawer({
     && !isReadOnly
     && new Date(pedido.prazo) < new Date();
 
-  const deleteMutation = useMutation({
-    mutationFn: async () => base44.entities.PedidoInterno.delete(pedido.id),
-    onSuccess: () => {
-      toast.success("Pedido excluído.");
-      queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
-      onDelete?.();
+  const NEXT_STATUS = { pendente: "em_analise", em_analise: "aprovado", aprovado: "concluido" };
+  const NEXT_LABEL = { pendente: "Iniciar Análise", em_analise: "Aprovar", aprovado: "Concluir" };
+  const nextStatus = NEXT_STATUS[pedido.status];
+
+  const advanceMutation = useMutation({
+    mutationFn: async () => {
+      const data = { status: nextStatus };
+      if (nextStatus === "concluido") data.data_conclusao = new Date().toISOString();
+      return base44.entities.PedidoInterno.update(pedido.id, data);
     },
-    onError: () => toast.error("Erro ao excluir"),
+    onSuccess: () => { toast.success("Status atualizado!"); queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] }); },
+    onError: () => toast.error("Erro ao atualizar status"),
   });
 
   const recusarMutation = useMutation({
@@ -324,29 +348,23 @@ export default function PedidoInternoDrawer({
 
   return (
     <>
-      {/* Overlay */}
       <div
         className="fixed inset-0 z-30 bg-black/10 backdrop-blur-[1px]"
         onClick={onClose}
         aria-hidden
       />
 
-      {/* Drawer */}
       <aside className="fixed right-0 top-0 z-40 flex h-full w-full max-w-[700px] flex-col bg-white shadow-2xl ring-1 ring-black/5 animate-in slide-in-from-right duration-200">
 
-        {/* ── HEADER ────────────────────────────────────────────────────── */}
         <div className="shrink-0 border-b border-gray-200">
-
-          {/* Linha 1: nav + código + status + ações */}
           <div className="flex items-center gap-2 px-4 pt-3 pb-2">
-            {/* Navegação prev/next */}
             {onNavigate && (
               <div className="flex items-center gap-0.5 shrink-0">
                 <button
                   onClick={() => onNavigate("prev")}
                   disabled={currentIndex === 0}
                   className="flex h-6 w-6 items-center justify-center rounded text-gray-400 hover:bg-gray-100 disabled:opacity-30"
-                  title="Pedido anterior (↑)"
+                  title="Pedido anterior"
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
                 </button>
@@ -357,19 +375,16 @@ export default function PedidoInternoDrawer({
                   onClick={() => onNavigate("next")}
                   disabled={currentIndex === totalPedidos - 1}
                   className="flex h-6 w-6 items-center justify-center rounded text-gray-400 hover:bg-gray-100 disabled:opacity-30"
-                  title="Próximo pedido (↓)"
+                  title="Próximo pedido"
                 >
                   <ChevronRight className="h-3.5 w-3.5" />
                 </button>
               </div>
             )}
 
-            {/* Código monospace */}
             <span className="font-mono text-[11px] text-gray-400 shrink-0">
               #{pedido.id?.slice(-8).toUpperCase()}
             </span>
-
-            <StatusPill status={pedido.status} />
 
             <div className="ml-auto flex items-center gap-1">
               {canEdit && onEdit && (
@@ -381,16 +396,6 @@ export default function PedidoInternoDrawer({
                   <Edit2 className="h-3 w-3" /> Editar
                 </Button>
               )}
-              {canDelete && (
-                <Button
-                  variant="ghost" size="sm"
-                  onClick={() => { if (window.confirm("Tem certeza que deseja excluir este pedido?")) deleteMutation.mutate(); }}
-                  disabled={deleteMutation.isPending}
-                  className="h-7 gap-1 px-2 text-xs text-red-500 hover:bg-red-50"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              )}
               <button
                 onClick={onClose}
                 className="flex h-7 w-7 items-center justify-center rounded text-gray-400 hover:bg-gray-100"
@@ -400,18 +405,16 @@ export default function PedidoInternoDrawer({
             </div>
           </div>
 
-          {/* Linha 2: Título */}
-          <div className="px-4 pb-2">
-            <h2 className={`text-base font-bold leading-snug text-gray-950 ${
-              isReadOnly ? "text-gray-400" : ""
+          <div className="flex items-center gap-2 px-4 pb-2">
+            <h2 className={`min-w-0 flex-1 text-base font-bold leading-snug ${
+              isReadOnly ? "text-gray-400" : "text-gray-950"
             }`}>
               {pedido.titulo}
             </h2>
+            <StatusPill status={pedido.status} />
           </div>
 
-          {/* Linha 3: Meta-row — pessoas + SLA + prazo */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 pb-3 text-xs">
-            {/* Solicitante */}
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] uppercase tracking-wide text-gray-400">De</span>
               <Avatar name={pedido.requester_name} size="sm" />
@@ -420,7 +423,6 @@ export default function PedidoInternoDrawer({
 
             <span className="h-3 w-px bg-gray-200" />
 
-            {/* Responsável */}
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] uppercase tracking-wide text-gray-400">Para</span>
               <Avatar name={pedido.assignee_name} size="sm" />
@@ -429,13 +431,8 @@ export default function PedidoInternoDrawer({
 
             <span className="h-3 w-px bg-gray-200" />
 
-            {/* Prioridade */}
-            <div className="flex items-center gap-1">
-              <PriorityIcon prioridade={pedido.prioridade} className="h-3.5 w-3.5" />
-              <span className="text-gray-600">{PRIORIDADE_CONFIG[pedido.prioridade]?.label}</span>
-            </div>
+            <PriorityBadge prioridade={pedido.prioridade} />
 
-            {/* SLA */}
             {slaLabel && (
               <>
                 <span className="h-3 w-px bg-gray-200" />
@@ -449,19 +446,16 @@ export default function PedidoInternoDrawer({
               </>
             )}
 
-            {/* Data */}
             <div className="ml-auto flex items-center gap-1 text-gray-400">
               <CalendarClock className="h-3 w-3" />
               <span className="text-[10px]">{criadoFmt}</span>
             </div>
           </div>
 
-          {/* Linha 4: Stepper clicável */}
           <div className="border-t border-gray-100 px-4 py-2.5">
-            <PedidoInternoStepper pedido={pedido} canEdit={canEdit && !isReadOnly} />
+            <PedidoInternoStepper pedido={pedido} />
           </div>
 
-          {/* Linha 5: Abas */}
           <div className="flex border-t border-gray-100 px-2">
             <Tab
               label="Atividade"
@@ -485,13 +479,9 @@ export default function PedidoInternoDrawer({
           </div>
         </div>
 
-        {/* ── CONTEÚDO DAS ABAS ─────────────────────────────────────────── */}
         <div className="min-h-0 flex-1 overflow-y-auto">
-
-          {/* ATIVIDADE */}
           {activeTab === "atividade" && (
             <div className="flex flex-col gap-4 px-5 py-4">
-              {/* Timeline */}
               <ActivityTimeline
                 entityType="pedido_interno"
                 entityId={pedido.id}
@@ -501,14 +491,11 @@ export default function PedidoInternoDrawer({
             </div>
           )}
 
-          {/* DETALHES */}
-          {activeTab === "detalhes" && <TabDetalhes pedido={pedido} />}
+          {activeTab === "detalhes" && <TabDetalhes pedido={pedido} onPreviewMedia={setPreviewMedia} />}
 
-          {/* TAREFAS */}
           {activeTab === "tarefas" && <TabTarefas pedido={pedido} />}
         </div>
 
-        {/* ── FOOTER DE AÇÕES ───────────────────────────────────────────── */}
         {canRespond && !isReadOnly && (
           <div className="shrink-0 border-t border-gray-200 bg-gray-50 px-4 py-2.5">
             <div className="flex items-center justify-between gap-2">
@@ -520,29 +507,42 @@ export default function PedidoInternoDrawer({
                 >
                   <Printer className="h-3 w-3" /> Imprimir
                 </Button>
-                {/* Recusar: ação destrutiva discreta */}
-                <Button
-                  variant="ghost" size="sm"
-                  onClick={() => {
-                    if (window.confirm("Tem certeza que deseja recusar este pedido?")) {
-                      recusarMutation.mutate();
-                    }
-                  }}
-                  disabled={recusarMutation.isPending}
-                  className="h-7 gap-1 px-2 text-xs text-red-500 hover:bg-red-50"
-                >
-                  <XCircle className="h-3.5 w-3.5" />
-                  Recusar
-                </Button>
+                {pedido.status === "pendente" && (
+                  <Button
+                    variant="ghost" size="sm"
+                    onClick={() => {
+                      if (window.confirm("Esta ação não pode ser desfeita. Deseja recusar este pedido?")) {
+                        recusarMutation.mutate();
+                      }
+                    }}
+                    disabled={recusarMutation.isPending}
+                    className="h-7 gap-1 px-2 text-xs text-red-500 hover:bg-red-50"
+                  >
+                    <XCircle className="h-3.5 w-3.5" />
+                    Recusar
+                  </Button>
+                )}
               </div>
 
-              <p className="text-[10px] text-gray-400">
-                Use o stepper acima para avançar o status
-              </p>
+              {nextStatus && (
+                <Button
+                  size="sm"
+                  onClick={() => advanceMutation.mutate()}
+                  disabled={advanceMutation.isPending}
+                  className="h-8 gap-1.5 px-4 text-xs"
+                >
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  {NEXT_LABEL[pedido.status]}
+                </Button>
+              )}
             </div>
           </div>
         )}
       </aside>
+
+      {previewMedia && (
+        <AnexoPreviewModal media={previewMedia} onClose={() => setPreviewMedia(null)} />
+      )}
     </>
   );
 }
