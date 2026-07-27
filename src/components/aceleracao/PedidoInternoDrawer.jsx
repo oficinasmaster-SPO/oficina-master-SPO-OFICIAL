@@ -22,6 +22,7 @@ import {
 } from "@/components/shared/backlogConstants";
 import StatusBadge from "@/components/shared/StatusBadge";
 
+// ── Helpers visuais ────────────────────────────────────────────────────────
 function Avatar({ name, size = "md" }) {
   const initials = name
     ? name.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase()
@@ -61,6 +62,7 @@ function StatusPill({ status }) {
   );
 }
 
+// ── Aba ────────────────────────────────────────────────────────────────────
 function Tab({ label, icon: Icon, active, badge, onClick }) {
   return (
     <button
@@ -83,6 +85,7 @@ function Tab({ label, icon: Icon, active, badge, onClick }) {
   );
 }
 
+// ── Campo de detalhe ────────────────────────────────────────────────────────
 function DetailField({ label, icon: Icon, children, className = "" }) {
   if (!children) return null;
   return (
@@ -96,6 +99,7 @@ function DetailField({ label, icon: Icon, children, className = "" }) {
   );
 }
 
+// ── Aba Detalhes ────────────────────────────────────────────────────────────
 function TabDetalhes({ pedido, onPreviewMedia }) {
   const medias = pedido?.midias_anexas || [];
   const imagens = medias.filter(m => m.type === "imagem");
@@ -109,6 +113,7 @@ function TabDetalhes({ pedido, onPreviewMedia }) {
 
   return (
     <div className="space-y-5 px-5 py-4">
+      {/* Descrição */}
       {pedido.descricao && (
         <div className="rounded-lg border border-[#e6e6a3] bg-[#FFFF99]/30 p-3">
           <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-[#999933]">Descrição</p>
@@ -116,6 +121,7 @@ function TabDetalhes({ pedido, onPreviewMedia }) {
         </div>
       )}
 
+      {/* Resposta oficial */}
       {pedido.resposta && (
         <div className={`rounded-xl border p-4 ${
           pedido.status === "recusado"
@@ -131,6 +137,7 @@ function TabDetalhes({ pedido, onPreviewMedia }) {
         </div>
       )}
 
+      {/* Grid de campos */}
       <div className="grid grid-cols-2 gap-x-6 gap-y-4">
         <DetailField label="Cliente" icon={Building2}>
           {pedido.workshop_nome || "—"}
@@ -160,11 +167,13 @@ function TabDetalhes({ pedido, onPreviewMedia }) {
         )}
       </div>
 
+      {/* Anexos */}
       {medias.length > 0 && (
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-2">
             Anexos ({medias.length})
           </p>
+
           {imagens.length > 0 && (
             <div className="grid grid-cols-3 gap-2 mb-3">
               {imagens.map((m, i) => (
@@ -179,6 +188,7 @@ function TabDetalhes({ pedido, onPreviewMedia }) {
               ))}
             </div>
           )}
+
           {outros.length > 0 && (
             <div className="space-y-1.5">
               {outros.map((m, i) => (
@@ -202,6 +212,7 @@ function TabDetalhes({ pedido, onPreviewMedia }) {
   );
 }
 
+// ── Aba Tarefas ─────────────────────────────────────────────────────────────
 function TabTarefas({ pedido }) {
   const { data: tarefas = [], isLoading } = useQuery({
     queryKey: ["tarefas-pedido", pedido.id],
@@ -268,12 +279,13 @@ function TabTarefas({ pedido }) {
   );
 }
 
+// ── Componente principal: Drawer ────────────────────────────────────────────
 export default function PedidoInternoDrawer({
   pedido,
   user,
   totalPedidos = 0,
   currentIndex = 0,
-  onNavigate,
+  onNavigate,   // (direction: "prev"|"next") => void
   onClose,
   onEdit,
   onSuccess,
@@ -282,6 +294,7 @@ export default function PedidoInternoDrawer({
   const [previewMedia, setPreviewMedia] = useState(null);
   const queryClient                  = useQueryClient();
 
+  // Contar tarefas para badge
   const { data: tarefas = [] } = useQuery({
     queryKey: ["tarefas-pedido", pedido.id],
     queryFn: async () => {
@@ -293,6 +306,7 @@ export default function PedidoInternoDrawer({
     enabled: !!pedido.id,
   });
 
+  // Fechar com Escape, navegar com setas
   useEffect(() => {
     const handleKey = (e) => {
       if (e.key === "Escape")      onClose();
@@ -348,23 +362,29 @@ export default function PedidoInternoDrawer({
 
   return (
     <>
+      {/* Overlay */}
       <div
         className="fixed inset-0 z-30 bg-black/10 backdrop-blur-[1px]"
         onClick={onClose}
         aria-hidden
       />
 
+      {/* Drawer */}
       <aside className="fixed right-0 top-0 z-40 flex h-full w-full max-w-[700px] flex-col bg-white shadow-2xl ring-1 ring-black/5 animate-in slide-in-from-right duration-200">
 
+        {/* ── HEADER ────────────────────────────────────────────────────── */}
         <div className="shrink-0 border-b border-gray-200">
+
+          {/* Linha 1: nav + código + status + ações */}
           <div className="flex items-center gap-2 px-4 pt-3 pb-2">
+            {/* Navegação prev/next */}
             {onNavigate && (
               <div className="flex items-center gap-0.5 shrink-0">
                 <button
                   onClick={() => onNavigate("prev")}
                   disabled={currentIndex === 0}
                   className="flex h-6 w-6 items-center justify-center rounded text-gray-400 hover:bg-gray-100 disabled:opacity-30"
-                  title="Pedido anterior"
+                  title="Pedido anterior (↑)"
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
                 </button>
@@ -375,13 +395,14 @@ export default function PedidoInternoDrawer({
                   onClick={() => onNavigate("next")}
                   disabled={currentIndex === totalPedidos - 1}
                   className="flex h-6 w-6 items-center justify-center rounded text-gray-400 hover:bg-gray-100 disabled:opacity-30"
-                  title="Próximo pedido"
+                  title="Próximo pedido (↓)"
                 >
                   <ChevronRight className="h-3.5 w-3.5" />
                 </button>
               </div>
             )}
 
+            {/* Código monospace */}
             <span className="font-mono text-[11px] text-gray-400 shrink-0">
               #{pedido.id?.slice(-8).toUpperCase()}
             </span>
@@ -405,6 +426,7 @@ export default function PedidoInternoDrawer({
             </div>
           </div>
 
+          {/* Linha 2: Título + Status */}
           <div className="flex items-center gap-2 px-4 pb-2">
             <h2 className={`min-w-0 flex-1 text-base font-bold leading-snug ${
               isReadOnly ? "text-gray-400" : "text-gray-950"
@@ -414,7 +436,9 @@ export default function PedidoInternoDrawer({
             <StatusPill status={pedido.status} />
           </div>
 
+          {/* Linha 3: Meta-row — pessoas + SLA + prazo */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 pb-3 text-xs">
+            {/* Solicitante */}
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] uppercase tracking-wide text-gray-400">De</span>
               <Avatar name={pedido.requester_name} size="sm" />
@@ -423,6 +447,7 @@ export default function PedidoInternoDrawer({
 
             <span className="h-3 w-px bg-gray-200" />
 
+            {/* Responsável */}
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] uppercase tracking-wide text-gray-400">Para</span>
               <Avatar name={pedido.assignee_name} size="sm" />
@@ -431,8 +456,10 @@ export default function PedidoInternoDrawer({
 
             <span className="h-3 w-px bg-gray-200" />
 
+            {/* Prioridade */}
             <PriorityBadge prioridade={pedido.prioridade} />
 
+            {/* SLA */}
             {slaLabel && (
               <>
                 <span className="h-3 w-px bg-gray-200" />
@@ -446,16 +473,19 @@ export default function PedidoInternoDrawer({
               </>
             )}
 
+            {/* Data */}
             <div className="ml-auto flex items-center gap-1 text-gray-400">
               <CalendarClock className="h-3 w-3" />
               <span className="text-[10px]">{criadoFmt}</span>
             </div>
           </div>
 
+          {/* Linha 4: Stepper clicável */}
           <div className="border-t border-gray-100 px-4 py-2.5">
             <PedidoInternoStepper pedido={pedido} />
           </div>
 
+          {/* Linha 5: Abas */}
           <div className="flex border-t border-gray-100 px-2">
             <Tab
               label="Atividade"
@@ -479,7 +509,10 @@ export default function PedidoInternoDrawer({
           </div>
         </div>
 
+        {/* ── CONTEÚDO DAS ABAS ─────────────────────────────────────────── */}
         <div className="min-h-0 flex-1 overflow-y-auto">
+
+          {/* ATIVIDADE */}
           {activeTab === "atividade" && (
             <div className="flex flex-col gap-4 px-5 py-4">
               <ActivityTimeline
@@ -491,11 +524,14 @@ export default function PedidoInternoDrawer({
             </div>
           )}
 
+          {/* DETALHES */}
           {activeTab === "detalhes" && <TabDetalhes pedido={pedido} onPreviewMedia={setPreviewMedia} />}
 
+          {/* TAREFAS */}
           {activeTab === "tarefas" && <TabTarefas pedido={pedido} />}
         </div>
 
+        {/* ── FOOTER DE AÇÕES ───────────────────────────────────────────── */}
         {canRespond && !isReadOnly && (
           <div className="shrink-0 border-t border-gray-200 bg-gray-50 px-4 py-2.5">
             <div className="flex items-center justify-between gap-2">
