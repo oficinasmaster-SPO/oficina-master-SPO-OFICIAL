@@ -1,23 +1,23 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
-  X, Edit2, Trash2, Printer, XCircle, CheckCircle,
-  MessageSquare, StickyNote, ListChecks, FileText,
-  AlertTriangle, ArrowUp, Minus, ArrowDown,
+  X, Edit2, Printer, XCircle, CheckCircle,
+  MessageSquare, ListChecks, FileText,
+  AlertTriangle,
   Clock, CalendarClock, ChevronLeft, ChevronRight,
-  Hash, Flag, Send, Building2,
+  Hash, Building2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ActivityTimeline from "./ActivityTimeline";
 import PedidoInternoStepper from "./PedidoInternoStepper";
+import AnexoPreviewModal from "./AnexoPreviewModal";
+import PriorityBadge from "@/components/shared/PriorityBadge";
 import {
-  PEDIDO_STATUS_CONFIG, PRIORIDADE_CONFIG,
+  PEDIDO_STATUS_CONFIG,
   TIPO_PEDIDO_LABELS, IMPACTO_CLIENTE_LABELS,
 } from "@/components/shared/backlogConstants";
 import StatusBadge from "@/components/shared/StatusBadge";
@@ -42,13 +42,6 @@ function Avatar({ name, size = "md" }) {
       {initials}
     </span>
   );
-}
-
-function PriorityIcon({ prioridade, className = "" }) {
-  if (prioridade === "critica") return <AlertTriangle className={`text-red-500 ${className}`} />;
-  if (prioridade === "alta")    return <ArrowUp       className={`text-orange-500 ${className}`} />;
-  if (prioridade === "media")   return <Minus         className={`text-yellow-500 ${className}`} />;
-  return                               <ArrowDown     className={`text-blue-400 ${className}`} />;
 }
 
 const STATUS_PILL_CLS = {
@@ -106,117 +99,11 @@ function DetailField({ label, icon: Icon, children, className = "" }) {
   );
 }
 
-// ── Composer de resposta ────────────────────────────────────────────────────
-function ResponseComposer({ pedido, user, onSaved }) {
-  const [text, setText]         = useState("");
-  const [mode, setMode]         = useState("comentario"); // "comentario" | "resposta"
-  const queryClient             = useQueryClient();
-  const textareaRef             = useRef(null);
-
-  const postMutation = useMutation({
-    mutationFn: async () => {
-      if (mode === "resposta") {
-        // Salva como resposta oficial no pedido
-        await base44.entities.PedidoInterno.update(pedido.id, {
-          resposta: text,
-          data_primeira_resposta: pedido.data_primeira_resposta || new Date().toISOString(),
-        });
-      } else {
-        // Salva como TaskComment na timeline
-        const u = user || {};
-        await base44.entities.TaskComment.create({
-          entity_type: "pedido_interno",
-          entity_id:   pedido.id,
-          workshop_id: pedido.workshop_id,
-          usuario_id:  u.id,
-          usuario_nome: u.full_name || u.email || "Usuário",
-          comentario:  text,
-          is_internal: false,
-          attachments: [],
-        });
-      }
-    },
-    onSuccess: () => {
-      setText("");
-      toast.success(mode === "resposta" ? "Resposta salva!" : "Comentário adicionado!");
-      queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
-      queryClient.invalidateQueries({ queryKey: ["activity-timeline"] });
-      queryClient.invalidateQueries({ queryKey: ["task-comments"] });
-      onSaved?.();
-    },
-    onError: () => toast.error("Erro ao salvar"),
-  });
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && text.trim()) {
-      postMutation.mutate();
-    }
-  };
-
-  return (
-    <div className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
-      {/* Modo tabs */}
-      <div className="flex border-b border-gray-100">
-        <button
-          onClick={() => setMode("comentario")}
-          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors
-            ${mode === "comentario"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-500 hover:text-gray-700"}`}
-        >
-          <MessageSquare className="h-3 w-3" /> Comentário
-        </button>
-        {(user?.role === "admin" || user?.user_type === "internal" || user?.data?.user_type === "internal" || user?.id === pedido.assignee_id) && (
-          <button
-            onClick={() => setMode("resposta")}
-            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors
-              ${mode === "resposta"
-                ? "border-b-2 border-green-500 text-green-600"
-                : "text-gray-500 hover:text-gray-700"}`}
-          >
-            <CheckCircle className="h-3 w-3" /> Resposta Oficial
-          </button>
-        )}
-      </div>
-
-      {/* Input */}
-      <div className="p-2">
-        <textarea
-          ref={textareaRef}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={
-            mode === "resposta"
-              ? "Registre a decisão ou encaminhamento oficial..."
-              : "Adicione um comentário... (Ctrl+Enter para enviar)"
-          }
-          rows={3}
-          className="w-full resize-none rounded-lg border-0 bg-transparent p-1 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none"
-        />
-        <div className="flex items-center justify-end gap-2 pt-1 border-t border-gray-100">
-          <span className="text-[10px] text-gray-400">Ctrl+Enter para enviar</span>
-          <Button
-            size="sm"
-            onClick={() => postMutation.mutate()}
-            disabled={!text.trim() || postMutation.isPending}
-            className={`h-7 gap-1.5 text-xs ${
-              mode === "resposta"
-                ? "bg-green-600 hover:bg-green-700"
-                : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            <Send className="h-3 w-3" />
-            {postMutation.isPending ? "Enviando..." : mode === "resposta" ? "Salvar Resposta" : "Comentar"}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── Aba Detalhes ────────────────────────────────────────────────────────────
-function TabDetalhes({ pedido }) {
+function TabDetalhes({ pedido, onPreviewMedia }) {
+  const medias = pedido?.midias_anexas || [];
+  const imagens = medias.filter(m => m.type === "imagem");
+  const outros = medias.filter(m => m.type !== "imagem");
   const prazoFmt = pedido.prazo
     ? format(new Date(pedido.prazo), "dd/MM/yyyy", { locale: ptBR })
     : null;
@@ -228,9 +115,9 @@ function TabDetalhes({ pedido }) {
     <div className="space-y-5 px-5 py-4">
       {/* Descrição */}
       {pedido.descricao && (
-        <div>
-          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Descrição</p>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{pedido.descricao}</p>
+        <div className="rounded-lg border border-[#e6e6a3] bg-[#FFFF99]/30 p-3">
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-[#999933]">Descrição</p>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#b3b34d]">{pedido.descricao}</p>
         </div>
       )}
 
@@ -258,11 +145,8 @@ function TabDetalhes({ pedido }) {
         <DetailField label="Categoria" icon={FileText}>
           {TIPO_PEDIDO_LABELS[pedido.tipo] || pedido.tipo || "—"}
         </DetailField>
-        <DetailField label="Prioridade" icon={Flag}>
-          <span className="flex items-center gap-1.5">
-            <PriorityIcon prioridade={pedido.prioridade} className="h-3.5 w-3.5" />
-            {PRIORIDADE_CONFIG[pedido.prioridade]?.label || "—"}
-          </span>
+        <DetailField label="Prioridade">
+          <PriorityBadge prioridade={pedido.prioridade} />
         </DetailField>
         <DetailField label="Prazo" icon={Clock}>
           {prazoFmt
@@ -282,6 +166,48 @@ function TabDetalhes({ pedido }) {
           </DetailField>
         )}
       </div>
+
+      {/* Anexos */}
+      {medias.length > 0 && (
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-2">
+            Anexos ({medias.length})
+          </p>
+
+          {imagens.length > 0 && (
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              {imagens.map((m, i) => (
+                <button
+                  key={i}
+                  onClick={() => onPreviewMedia?.(m)}
+                  className="group relative rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                >
+                  <img src={m.url} alt={m.nome} className="w-full h-20 object-cover group-hover:scale-105 transition-transform" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {outros.length > 0 && (
+            <div className="space-y-1.5">
+              {outros.map((m, i) => (
+                <button
+                  key={i}
+                  onClick={() => onPreviewMedia?.(m)}
+                  className="flex w-full items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-2 text-left hover:bg-gray-100 transition-colors"
+                >
+                  <FileText className="h-4 w-4 shrink-0 text-gray-400" />
+                  <span className="flex-1 truncate text-xs font-medium text-gray-700">{m.nome}</span>
+                  <span className="text-[10px] text-gray-400 shrink-0">
+                    {m.type === "link" ? "Link" : "Arquivo"}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -362,11 +288,11 @@ export default function PedidoInternoDrawer({
   onNavigate,   // (direction: "prev"|"next") => void
   onClose,
   onEdit,
-  onDelete,
   onSuccess,
 }) {
-  const [activeTab, setActiveTab] = useState("atividade");
-  const queryClient               = useQueryClient();
+  const [activeTab, setActiveTab]     = useState("atividade");
+  const [previewMedia, setPreviewMedia] = useState(null);
+  const queryClient                  = useQueryClient();
 
   // Contar tarefas para badge
   const { data: tarefas = [] } = useQuery({
@@ -394,7 +320,6 @@ export default function PedidoInternoDrawer({
   const isReadOnly  = ["concluido", "recusado"].includes(pedido.status);
   const isInternal  = user?.user_type === "internal" || user?.data?.user_type === "internal";
   const canRespond  = user?.id === pedido.assignee_id || user?.role === "admin" || isInternal;
-  const canDelete   = user?.role === "admin" || isInternal;
   const canEdit     = canRespond;
 
   const criadoEm   = pedido.created_date || pedido.data_criacao;
@@ -408,14 +333,18 @@ export default function PedidoInternoDrawer({
     && !isReadOnly
     && new Date(pedido.prazo) < new Date();
 
-  const deleteMutation = useMutation({
-    mutationFn: async () => base44.entities.PedidoInterno.delete(pedido.id),
-    onSuccess: () => {
-      toast.success("Pedido excluído.");
-      queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
-      onDelete?.();
+  const NEXT_STATUS = { pendente: "em_analise", em_analise: "aprovado", aprovado: "concluido" };
+  const NEXT_LABEL = { pendente: "Iniciar Análise", em_analise: "Aprovar", aprovado: "Concluir" };
+  const nextStatus = NEXT_STATUS[pedido.status];
+
+  const advanceMutation = useMutation({
+    mutationFn: async () => {
+      const data = { status: nextStatus };
+      if (nextStatus === "concluido") data.data_conclusao = new Date().toISOString();
+      return base44.entities.PedidoInterno.update(pedido.id, data);
     },
-    onError: () => toast.error("Erro ao excluir"),
+    onSuccess: () => { toast.success("Status atualizado!"); queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] }); },
+    onError: () => toast.error("Erro ao atualizar status"),
   });
 
   const recusarMutation = useMutation({
@@ -478,8 +407,6 @@ export default function PedidoInternoDrawer({
               #{pedido.id?.slice(-8).toUpperCase()}
             </span>
 
-            <StatusPill status={pedido.status} />
-
             <div className="ml-auto flex items-center gap-1">
               {canEdit && onEdit && (
                 <Button
@@ -488,16 +415,6 @@ export default function PedidoInternoDrawer({
                   className="h-7 gap-1.5 px-2 text-xs text-gray-500"
                 >
                   <Edit2 className="h-3 w-3" /> Editar
-                </Button>
-              )}
-              {canDelete && (
-                <Button
-                  variant="ghost" size="sm"
-                  onClick={() => deleteMutation.mutate()}
-                  disabled={deleteMutation.isPending}
-                  className="h-7 gap-1 px-2 text-xs text-red-500 hover:bg-red-50"
-                >
-                  <Trash2 className="h-3 w-3" />
                 </Button>
               )}
               <button
@@ -509,13 +426,14 @@ export default function PedidoInternoDrawer({
             </div>
           </div>
 
-          {/* Linha 2: Título */}
-          <div className="px-4 pb-2">
-            <h2 className={`text-base font-bold leading-snug text-gray-950 ${
-              isReadOnly ? "text-gray-400" : ""
+          {/* Linha 2: Título + Status */}
+          <div className="flex items-center gap-2 px-4 pb-2">
+            <h2 className={`min-w-0 flex-1 text-base font-bold leading-snug ${
+              isReadOnly ? "text-gray-400" : "text-gray-950"
             }`}>
               {pedido.titulo}
             </h2>
+            <StatusPill status={pedido.status} />
           </div>
 
           {/* Linha 3: Meta-row — pessoas + SLA + prazo */}
@@ -539,10 +457,7 @@ export default function PedidoInternoDrawer({
             <span className="h-3 w-px bg-gray-200" />
 
             {/* Prioridade */}
-            <div className="flex items-center gap-1">
-              <PriorityIcon prioridade={pedido.prioridade} className="h-3.5 w-3.5" />
-              <span className="text-gray-600">{PRIORIDADE_CONFIG[pedido.prioridade]?.label}</span>
-            </div>
+            <PriorityBadge prioridade={pedido.prioridade} />
 
             {/* SLA */}
             {slaLabel && (
@@ -567,7 +482,7 @@ export default function PedidoInternoDrawer({
 
           {/* Linha 4: Stepper clicável */}
           <div className="border-t border-gray-100 px-4 py-2.5">
-            <PedidoInternoStepper pedido={pedido} canEdit={canEdit && !isReadOnly} />
+            <PedidoInternoStepper pedido={pedido} />
           </div>
 
           {/* Linha 5: Abas */}
@@ -600,11 +515,6 @@ export default function PedidoInternoDrawer({
           {/* ATIVIDADE */}
           {activeTab === "atividade" && (
             <div className="flex flex-col gap-4 px-5 py-4">
-              {/* Composer */}
-              {!isReadOnly && (
-                <ResponseComposer pedido={pedido} user={user} />
-              )}
-              {/* Timeline */}
               <ActivityTimeline
                 entityType="pedido_interno"
                 entityId={pedido.id}
@@ -615,7 +525,7 @@ export default function PedidoInternoDrawer({
           )}
 
           {/* DETALHES */}
-          {activeTab === "detalhes" && <TabDetalhes pedido={pedido} />}
+          {activeTab === "detalhes" && <TabDetalhes pedido={pedido} onPreviewMedia={setPreviewMedia} />}
 
           {/* TAREFAS */}
           {activeTab === "tarefas" && <TabTarefas pedido={pedido} />}
@@ -633,29 +543,42 @@ export default function PedidoInternoDrawer({
                 >
                   <Printer className="h-3 w-3" /> Imprimir
                 </Button>
-                {/* Recusar: ação destrutiva discreta */}
-                <Button
-                  variant="ghost" size="sm"
-                  onClick={() => {
-                    if (window.confirm("Tem certeza que deseja recusar este pedido?")) {
-                      recusarMutation.mutate();
-                    }
-                  }}
-                  disabled={recusarMutation.isPending}
-                  className="h-7 gap-1 px-2 text-xs text-red-500 hover:bg-red-50"
-                >
-                  <XCircle className="h-3.5 w-3.5" />
-                  Recusar
-                </Button>
+                {pedido.status === "pendente" && (
+                  <Button
+                    variant="ghost" size="sm"
+                    onClick={() => {
+                      if (window.confirm("Esta ação não pode ser desfeita. Deseja recusar este pedido?")) {
+                        recusarMutation.mutate();
+                      }
+                    }}
+                    disabled={recusarMutation.isPending}
+                    className="h-7 gap-1 px-2 text-xs text-red-500 hover:bg-red-50"
+                  >
+                    <XCircle className="h-3.5 w-3.5" />
+                    Recusar
+                  </Button>
+                )}
               </div>
 
-              <p className="text-[10px] text-gray-400">
-                Use o stepper acima para avançar o status
-              </p>
+              {nextStatus && (
+                <Button
+                  size="sm"
+                  onClick={() => advanceMutation.mutate()}
+                  disabled={advanceMutation.isPending}
+                  className="h-8 gap-1.5 px-4 text-xs"
+                >
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  {NEXT_LABEL[pedido.status]}
+                </Button>
+              )}
             </div>
           </div>
         )}
       </aside>
+
+      {previewMedia && (
+        <AnexoPreviewModal media={previewMedia} onClose={() => setPreviewMedia(null)} />
+      )}
     </>
   );
 }
