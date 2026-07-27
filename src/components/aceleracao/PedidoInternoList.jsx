@@ -1,233 +1,259 @@
-import React, { useMemo } from "react";
-import { Check, XCircle } from "lucide-react";
+/**
+ * PedidoInternoList — Lista agrupada, flush com column headers.
+ * Colunas: Cliente | Solicitante | Responsável | Prioridade | Status | Tempo Aberto
+ */
+import React, { useState, useCallback } from "react";
+import {
+  Clock, ChevronDown, ChevronRight, Search as SearchIcon,
+  ClipboardList, CheckCircle2, XCircle,
+} from "lucide-react";
+import { PEDIDO_STATUS_CONFIG } from "@/components/shared/backlogConstants";
+import PriorityBadge from "@/components/shared/PriorityBadge";
+import useEmployeeResolver from "@/hooks/useEmployeeResolver";
 
-/* ============================================================================
- * TODO (Próxima Sprint):
- * 1. Implementar "memória" de transição (usePrevious).
- *    - Se for a primeira montagem do componente, renderizar o estado final sem animação.
- *    - Se o status mudar durante o uso (mudança real), disparar a coreografia animada.
- *    - Isso evita que o componente re-anime toda vez que um Drawer/Modal é reaberto.
- * 2. Extrair SHIMMER_AND_CHOREOGRAPHY_STYLES para um arquivo global de CSS/Tailwind.
- * ============================================================================ */
+export const COL = {
+  cliente: "w-[170px] shrink-0",
+  solicitante: "w-[160px] shrink-0",
+  responsavel: "w-[160px] shrink-0",
+  prioridade: "w-[110px] shrink-0",
+  status: "w-[120px] shrink-0",
+  sla: "w-[100px] shrink-0",
+  gap: "gap-4",
+  px: "px-5",
+};
 
-const STEPS = [
-  { key: "pendente", label: "Pendente" },
-  { key: "em_analise", label: "Em Análise" },
-  { key: "aprovado", label: "Aprovado" },
-  { key: "concluido", label: "Concluído" },
+const STATUS_GROUPS = [
+  { key: "em_analise", label: "Em Análise",  dot: "bg-blue-500",    defaultCollapsed: false },
+  { key: "pendente",   label: "Pendente",    dot: "bg-amber-500",   defaultCollapsed: false },
+  { key: "aprovado",   label: "Aprovado",    dot: "bg-emerald-500", defaultCollapsed: false },
+  { key: "recusado",   label: "Recusado",    dot: "bg-red-500",     defaultCollapsed: true },
+  { key: "concluido",  label: "Concluído",   dot: "bg-gray-400",    defaultCollapsed: true },
 ];
 
-const getClipPath = (isFirst, isLast, chevronDepth = "12px") => {
-  if (isFirst && isLast) return "polygon(0 0, 100% 0, 100% 100%, 0 100%)";
-  if (isFirst) return `polygon(0 0, calc(100% - ${chevronDepth}) 0, 100% 50%, calc(100% - ${chevronDepth}) 100%, 0 100%)`;
-  if (isLast) return `polygon(0 0, 100% 0, 100% 100%, 0 100%, ${chevronDepth} 50%)`;
-  return `polygon(0 0, calc(100% - ${chevronDepth}) 0, 100% 50%, calc(100% - ${chevronDepth}) 100%, 0 100%, ${chevronDepth} 50%)`;
-};
+function timeSince(d) {
+  if (!d) return null;
+  const ms = Date.now() - new Date(d).getTime();
+  const totalHours = Math.floor(ms / 3600000);
+  const days = Math.floor(totalHours / 24);
+  const hours = totalHours % 24;
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h`;
+  const mins = Math.floor(ms / 60000);
+  return `${mins}min`;
+}
 
-// ============================================================================
-// CONFIGURAÇÃO DE ESTILOS VISUAIS (STYLE_MAP)
-// ============================================================================
-const STYLE_MAP = {
-  done: {
-    background: "linear-gradient(180deg, #4ade80 0%, #22c55e 100%)",
-    color: "#ffffff",
-    boxShadow: `
-      inset 0 1px rgba(255, 255, 255, 0.45),
-      inset 0 -2px rgba(0, 0, 0, 0.12),
-      0 2px 6px rgba(0, 0, 0, 0.08)
-    `,
-    transition: "background 0.4s ease 0s, box-shadow 0.3s ease 0s, color 0.3s ease",
-  },
-  active: {
-    background: "linear-gradient(180deg, #60a5fa 0%, #2563eb 100%)",
-    color: "#ffffff",
-    boxShadow: `
-      inset 0 1px rgba(255, 255, 255, 0.5),
-      inset 0 -2px rgba(0, 0, 0, 0.15),
-      0 0 0 1px rgba(37, 99, 235, 0.4),
-      0 0 2px rgba(59, 130, 246, 0.6),
-      0 0 8px rgba(59, 130, 246, 0.35), /* Glow reduzido de 12px para 8px (Perfil ERP) */
-      0 4px 8px rgba(37, 99, 235, 0.20)
-    `,
-    transition: "background 0.5s ease 0.2s, box-shadow 0.6s ease 0.5s, color 0.3s ease 0.3s",
-  },
-  future: {
-    background: "linear-gradient(180deg, #f3f4f6 0%, #d1d5db 100%)",
-    color: "#6b7280",
-    boxShadow: `
-      inset 0 1px rgba(255, 255, 255, 0.6),
-      inset 0 -1px rgba(0, 0, 0, 0.06),
-      0 1px 3px rgba(0, 0, 0, 0.04)
-    `,
-    transition: "background 0.4s ease 0s, box-shadow 0.3s ease 0s, color 0.3s ease 0s",
-  }
-};
+function slaColor(d) {
+  if (!d) return "text-gray-400";
+  const ms = Date.now() - new Date(d).getTime();
+  const h = ms / 3600000;
+  if (h >= 48) return "text-red-600 font-bold";
+  if (h >= 24) return "text-orange-500 font-semibold";
+  return "text-gray-500";
+}
 
-const SHIMMER_AND_CHOREOGRAPHY_STYLES = `
-  @keyframes shimmer-glass {
-    0% { left: -20%; }
-    15% { left: 120%; }
-    100% { left: 120%; }
-  }
-  .animate-shimmer-glass {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 18px;
-    background: linear-gradient(
-      90deg, 
-      transparent 0%, 
-      rgba(255, 255, 255, 0.15) 30%, 
-      rgba(255, 255, 255, 0.85) 50%,
-      rgba(255, 255, 255, 0.15) 70%, 
-      transparent 100%
-    );
-    animation: shimmer-glass 5s cubic-bezier(0.4, 0, 0.6, 1) 1s infinite;
-    transform: skewX(-15deg);
-  }
+function isOverdue(p) {
+  if (!p.prazo || ["concluido","recusado"].includes(p.status)) return false;
+  return new Date(p.prazo) < new Date();
+}
 
-  @keyframes check-pop-rotate {
-    0% { transform: scale(0.3) rotate(8deg); opacity: 0; }
-    50% { transform: scale(1.1) rotate(-2deg); }
-    100% { transform: scale(1) rotate(0deg); opacity: 1; }
-  }
-  .animate-check-pop {
-    animation: check-pop-rotate 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.8s both;
-  }
+const AV = [
+  "bg-blue-600","bg-violet-600","bg-teal-600","bg-orange-500",
+  "bg-pink-600","bg-cyan-600","bg-indigo-600","bg-amber-600",
+  "bg-rose-600","bg-emerald-600","bg-fuchsia-600","bg-sky-600",
+];
+function pick(n) { return AV[n ? n.charCodeAt(0) % AV.length : 0]; }
+function ini(n) { return n ? n.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase() : "?"; }
 
-  @keyframes pulse-luma {
-    0%, 100% { opacity: 0.7; }
-    50% { opacity: 1; }
-  }
-  .animate-pulse-luma {
-    animation: pulse-luma 3s ease-in-out infinite;
-  }
-`;
-
-// ============================================================================
-// COMPONENTE: PASSO INDIVIDUAL (Memoizado)
-// ============================================================================
-/**
- * @param {{
- *   step: { key: string, label: string },
- *   idx: number,
- *   currentIndex: number,
- *   totalSteps: number
- * }} props
- */
-const StepperStep = React.memo(function StepperStep({ step, idx, currentIndex, totalSteps }) {
-  const isDone = idx < currentIndex;
-  const isActive = idx === currentIndex;
-  const isFirst = idx === 0;
-  const isLast = idx === totalSteps - 1;
-
-  // Lógica limpa: define a chave baseada no estado atual
-  const statusKey = isDone ? "done" : isActive ? "active" : "future";
-  const currentStyle = STYLE_MAP[statusKey];
-
-  const clipPath = useMemo(() => getClipPath(isFirst, isLast), [isFirst, isLast]);
-
-  return (
-    <div
-      className="relative flex items-center justify-center gap-2 text-xs font-semibold select-none hover:-translate-y-[1px] hover:brightness-[1.04]"
-      style={{
-        flex: 1,
-        height: "46px",
-        background: currentStyle.background,
-        color: currentStyle.color,
-        boxShadow: currentStyle.boxShadow,
-        transition: currentStyle.transition,
-        clipPath,
-        paddingLeft: isFirst ? "14px" : "22px",
-        paddingRight: isLast ? "14px" : "22px",
-        marginLeft: isFirst ? 0 : "-7px",
-        zIndex: isActive ? 40 : totalSteps - idx,
-      }}
-    >
-      {isActive && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ clipPath }}>
-          <div className="animate-shimmer-glass" />
-        </div>
-      )}
-
-      {isDone && (
-        <div className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-[#15803d] shadow-inner shadow-black/20 animate-check-pop">
-          <Check className="h-2.5 w-2.5 text-white stroke-[3]" />
-        </div>
-      )}
-      
-      {isActive && (
-        <div className="h-2 w-2 shrink-0 rounded-full bg-white shadow-[0_0_6px_rgba(255,255,255,0.9)] animate-pulse-luma" />
-      )}
-      
-      {!isDone && !isActive && (
-        <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-gray-400" />
-      )}
-
-      <span className="truncate">{step.label}</span>
-    </div>
-  );
-});
-
-// ============================================================================
-// COMPONENTE: BARRA DE PROGRESSO (Memoizado)
-// ============================================================================
-/**
- * @param {{ progressPercent: number }} props
- */
-const ProgressBar = React.memo(function ProgressBar({ progressPercent }) {
-  return (
-    <div className="mt-3 flex h-1 w-full overflow-hidden rounded-full bg-gray-200/80 shadow-inner relative">
-      <div
-        className="bg-gradient-to-r from-emerald-400 via-green-500 to-emerald-600 shadow-sm relative h-full"
-        style={{ 
-          width: `${progressPercent}%`,
-          transition: "width 0.6s ease-in-out 0.1s" 
-        }}
-      >
-        {/* Brilho reduzido (w-6) para um acabamento macOS-like mais sutil e realista */}
-        <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white/70 to-transparent blur-[0.5px]" />
-      </div>
-    </div>
-  );
-});
-
-// ============================================================================
-// COMPONENTE PRINCIPAL (Memoizado)
-// ============================================================================
-export default React.memo(function PedidoInternoStepper({ pedido }) {
-  if (pedido.status === "recusado") {
+function MiniAvatar({ name, photoUrl }) {
+  const i = ini(name), c = pick(name);
+  if (photoUrl) {
     return (
-      <div className="flex items-center gap-2.5 rounded-xl bg-red-50/90 backdrop-blur-sm border border-red-200 px-4 py-3.5 shadow-sm">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-500 shadow-sm shadow-red-500/30">
-          <XCircle className="h-4 w-4 text-white stroke-[2.5]" />
-        </span>
-        <span className="text-sm font-bold text-red-700">Pedido Recusado</span>
+      <span className="relative h-[22px] w-[22px] shrink-0">
+        <img src={photoUrl} alt="" className="h-[22px] w-[22px] rounded-full object-cover ring-1 ring-white" onError={e=>{e.target.style.display="none";}} />
+        <span className={`absolute inset-0 flex items-center justify-center rounded-full text-[8px] font-bold text-white ${c} -z-10`}>{i}</span>
+      </span>
+    );
+  }
+  return <span className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full text-[8px] font-bold text-white ${c}`}>{i}</span>;
+}
+
+const ST = {
+  pendente:   { bg:"bg-amber-100 text-amber-800",    icon: Clock },
+  em_analise: { bg:"bg-blue-100 text-blue-800",      icon: SearchIcon },
+  aprovado:   { bg:"bg-emerald-100 text-emerald-800", icon: CheckCircle2 },
+  recusado:   { bg:"bg-red-100 text-red-800",        icon: XCircle },
+  concluido:  { bg:"bg-gray-100 text-gray-600",      icon: CheckCircle2 },
+};
+function StatusPill({ status }) {
+  const c = ST[status] || ST.pendente; const Icon = c.icon;
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold leading-none ${c.bg}`}>
+      <Icon className="h-3 w-3" />{PEDIDO_STATUS_CONFIG[status]?.label || status}
+    </span>
+  );
+}
+
+const CC = [
+  "bg-fuchsia-100 text-fuchsia-700","bg-sky-100 text-sky-700",
+  "bg-lime-100 text-lime-700","bg-orange-100 text-orange-700",
+  "bg-violet-100 text-violet-700","bg-rose-100 text-rose-700",
+  "bg-teal-100 text-teal-700","bg-cyan-100 text-cyan-700",
+];
+function ClientBadge({ name }) {
+  if (!name) return <span className="text-xs text-gray-300">—</span>;
+  const i = name.split("").reduce((a,c)=>a+c.charCodeAt(0),0) % CC.length;
+  return <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-medium truncate max-w-[150px] ${CC[i]}`}>{name}</span>;
+}
+
+export function ColumnHeaders() {
+  return (
+    <div className={`flex items-center ${COL.gap} ${COL.px} border-t border-gray-200 bg-gray-50/80 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400`}>
+      <span className={COL.cliente}>Cliente</span>
+      <span className={COL.solicitante}>Solicitante</span>
+      <span className={COL.responsavel}>Responsável</span>
+      <span className={`${COL.prioridade} text-center`}>Prioridade</span>
+      <span className={`${COL.status} text-center`}>Status</span>
+      <span className={`${COL.sla} text-right`}>Tempo Aberto</span>
+    </div>
+  );
+}
+
+function GroupHeader({ group, count, collapsed, onToggle }) {
+  return (
+    <button
+      onClick={onToggle}
+      className="sticky top-0 z-10 flex w-full items-center gap-2.5 border-y border-gray-200 bg-white/95 backdrop-blur-sm px-5 py-3 text-left transition-colors hover:bg-gray-50/60"
+    >
+      {collapsed
+        ? <ChevronRight className="h-4 w-4 text-gray-400" />
+        : <ChevronDown  className="h-4 w-4 text-gray-400" />}
+      <span className={`h-2.5 w-2.5 rounded-full ${group.dot}`} />
+      <span className="text-sm font-semibold text-gray-800">{group.label}</span>
+      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-bold text-gray-600 tabular-nums">{count}</span>
+    </button>
+  );
+}
+
+function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
+  const done   = ["concluido","recusado"].includes(pedido.status);
+  const criado = pedido.created_date || pedido.data_criacao;
+  const rName  = getName(pedido.requester_id, pedido.requester_name);
+  const rPhoto = getPhoto(pedido.requester_id);
+  const aName  = getName(pedido.assignee_id, pedido.assignee_name);
+  const aPhoto = getPhoto(pedido.assignee_id);
+  const bar = pedido.prioridade === "critica" ? "before:bg-red-500" : pedido.prioridade === "alta" ? "before:bg-orange-400" : "";
+
+  return (
+    <button
+      onClick={() => onSelect(pedido)}
+      className={`group relative flex w-full items-center ${COL.gap} ${COL.px} py-3.5 text-left transition-all border-b border-gray-100 hover:bg-blue-50/30 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:rounded-r ${bar} ${isSelected ? "bg-blue-50/50" : ""}`}
+    >
+      <div className={COL.cliente}><ClientBadge name={pedido.workshop_nome} /></div>
+      <div className={`${COL.solicitante} flex items-center gap-2`}>
+        <MiniAvatar name={rName} photoUrl={rPhoto} />
+        <div className="min-w-0">
+          <p className={`text-[12px] font-medium truncate ${done ? "text-gray-400" : "text-gray-800"}`}>{rName}</p>
+          <p className="font-mono text-[9px] text-gray-400 leading-none">#{pedido.id?.slice(-6).toUpperCase()}</p>
+        </div>
+      </div>
+      <div className={`${COL.responsavel} flex items-center gap-2`}>
+        {aName ? (
+          <>
+            <MiniAvatar name={aName} photoUrl={aPhoto} />
+            <span className={`text-[12px] font-medium truncate ${done ? "text-gray-400" : "text-gray-700"}`}>{aName}</span>
+          </>
+        ) : (
+          <span className="text-xs text-gray-300">—</span>
+        )}
+      </div>
+      <div className={`${COL.prioridade} flex justify-center`}><PriorityBadge prioridade={pedido.prioridade} /></div>
+      <div className={`${COL.status} flex justify-center`}><StatusPill status={pedido.status} /></div>
+      <div className={`${COL.sla} flex items-center justify-end gap-1`}>
+        <Clock className="h-3 w-3 text-gray-400" />
+        <span className={`text-[11px] tabular-nums ${slaColor(criado)}`}>{timeSince(criado) || "—"}</span>
+      </div>
+    </button>
+  );
+}
+
+function SkeletonRows() {
+  return (
+    <div>
+      {[0,1].map(g => (
+        <React.Fragment key={g}>
+          <div className="flex items-center gap-3 border-y border-gray-200 bg-white px-5 py-3 animate-pulse">
+            <div className="h-2.5 w-2.5 rounded-full bg-gray-300" />
+            <div className="h-4 w-24 rounded bg-gray-200" />
+            <div className="h-4 w-6 rounded-full bg-gray-200" />
+          </div>
+          {[0,1,2].map(r => (
+            <div key={r} className={`flex items-center ${COL.gap} ${COL.px} py-3.5 border-b border-gray-100 animate-pulse`}>
+              <div className={COL.cliente}><div className="h-5 w-28 rounded bg-gray-100" /></div>
+              <div className={`${COL.solicitante} flex items-center gap-2`}><div className="h-[22px] w-[22px] rounded-full bg-gray-200" /><div className="h-3.5 w-20 rounded bg-gray-200" /></div>
+              <div className={`${COL.responsavel} flex items-center gap-2`}><div className="h-[22px] w-[22px] rounded-full bg-gray-200" /><div className="h-3.5 w-20 rounded bg-gray-200" /></div>
+              <div className={`${COL.prioridade} flex justify-center`}><div className="h-5 w-16 rounded-full bg-gray-100" /></div>
+              <div className={`${COL.status} flex justify-center`}><div className="h-6 w-20 rounded-full bg-gray-100" /></div>
+              <div className={`${COL.sla} flex justify-end`}><div className="h-4 w-14 rounded bg-gray-100" /></div>
+            </div>
+          ))}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
+
+export default function PedidoInternoList({ pedidos, onSelect, isLoading, selectedId }) {
+  const { getName, getPhoto } = useEmployeeResolver();
+  const [collapsed, setCollapsed] = useState(() => {
+    const init = {};
+    STATUS_GROUPS.forEach(g => { if (g.defaultCollapsed) init[g.key] = true; });
+    return init;
+  });
+  const toggle = useCallback((k) => setCollapsed(p => ({ ...p, [k]: !p[k] })), []);
+
+  if (isLoading) return <SkeletonRows />;
+
+  if (!pedidos || pedidos.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <ClipboardList className="mb-3 h-12 w-12 text-gray-200" />
+        <p className="text-sm font-medium text-gray-400">Nenhum pedido encontrado</p>
+        <p className="mt-1 text-xs text-gray-300">Ajuste os filtros ou crie um novo pedido</p>
       </div>
     );
   }
 
-  const currentIndex = Math.max(0, STEPS.findIndex((s) => s.key === pedido.status));
-  const totalSteps = STEPS.length;
-  const progressPercent = ((currentIndex + 1) / totalSteps) * 100;
+  const grouped = {};
+  STATUS_GROUPS.forEach(g => { grouped[g.key] = []; });
+  pedidos.forEach(p => { if (grouped[p.status]) grouped[p.status].push(p); });
+  Object.keys(grouped).forEach(k => {
+    grouped[k].sort((a,b) => {
+      const vA = isOverdue(a)?0:1, vB = isOverdue(b)?0:1;
+      if (vA !== vB) return vA - vB;
+      return new Date(b.created_date||0) - new Date(a.created_date||0);
+    });
+  });
 
   return (
-    <div className="w-full">
-      <style>{SHIMMER_AND_CHOREOGRAPHY_STYLES}</style>
-      
-      <div className="flex items-stretch overflow-visible py-1">
-        {STEPS.map((step, idx) => (
-          <StepperStep
-            key={step.key}
-            step={step}
-            idx={idx}
-            currentIndex={currentIndex}
-            totalSteps={totalSteps}
-          />
-        ))}
-      </div>
-
-      <ProgressBar progressPercent={progressPercent} />
+    <div>
+      {STATUS_GROUPS.map(group => {
+        const items = grouped[group.key] || [];
+        if (items.length === 0 && !["pendente","em_analise"].includes(group.key)) return null;
+        return (
+          <div key={group.key}>
+            <GroupHeader group={group} count={items.length} collapsed={!!collapsed[group.key]} onToggle={() => toggle(group.key)} />
+            {!collapsed[group.key] && (
+              items.length === 0 ? (
+                <div className="px-6 py-5 text-sm text-gray-400 italic border-b border-gray-100">Nenhum pedido</div>
+              ) : (
+                items.map(pedido => (
+                  <TicketRow key={pedido.id} pedido={pedido} onSelect={onSelect} isSelected={pedido.id === selectedId} getName={getName} getPhoto={getPhoto} />
+                ))
+              )
+            )}
+          </div>
+        );
+      })}
     </div>
   );
-});
+}
