@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react";
+import React, { memo, useMemo } from "react";
 import { Check, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePrevious } from "@/hooks/use-previous";
@@ -8,18 +8,13 @@ export const PEDIDO_STEPS = [
   { key: "em_analise", label: "Em Análise" },
   { key: "aprovado", label: "Aprovado" },
   { key: "concluido", label: "Concluído" },
-] as const;
-
-export type PedidoStepKey = (typeof PEDIDO_STEPS)[number]["key"];
-export type PedidoStatus = PedidoStepKey | "recusado";
-
-type StepStatus = "done" | "active" | "future";
+];
 
 // Mantemos em pixels exatos para facilitar os cálculos de padding e margem
 const CHEVRON_PX = 12;
 const CHEVRON = `${CHEVRON_PX}px`;
 
-function getClipPath(isFirst: boolean, isLast: boolean) {
+function getClipPath(isFirst, isLast) {
   if (isFirst && isLast) return "polygon(0 0, 100% 0, 100% 100%, 0 100%)";
   if (isFirst)
     return `polygon(0 0, calc(100% - ${CHEVRON}) 0, 100% 50%, calc(100% - ${CHEVRON}) 100%, 0 100%)`;
@@ -28,20 +23,12 @@ function getClipPath(isFirst: boolean, isLast: boolean) {
   return `polygon(0 0, calc(100% - ${CHEVRON}) 0, 100% 50%, calc(100% - ${CHEVRON}) 100%, 0 100%, ${CHEVRON} 50%)`;
 }
 
-/** Presentation is fully token-driven: each status just picks a CSS class. */
-const STATUS_CLASS: Record<StepStatus, string> = {
+/** Configuração puramente guiada por CSS Classes (Performance máxima) */
+const STATUS_CLASS = {
   done: "step-chip--done",
   active: "step-chip--active",
   future: "step-chip--future",
 };
-
-interface StepProps {
-  label: string;
-  status: StepStatus;
-  isFirst: boolean;
-  isLast: boolean;
-  zIndex: number;
-}
 
 const StepperStep = memo(function StepperStep({
   label,
@@ -49,7 +36,7 @@ const StepperStep = memo(function StepperStep({
   isFirst,
   isLast,
   zIndex,
-}: StepProps) {
+}) {
   const clipPath = useMemo(() => getClipPath(isFirst, isLast), [isFirst, isLast]);
 
   return (
@@ -57,7 +44,7 @@ const StepperStep = memo(function StepperStep({
       className={cn(
         "step-chip relative flex min-w-0 flex-1 items-center justify-center overflow-hidden",
         "h-11 px-4 py-2 text-xs font-semibold tracking-wide select-none sm:text-sm transition-all",
-        "hover:-translate-y-[1px] hover:brightness-[1.04]", // Efeito tátil
+        "hover:-translate-y-[1px] hover:brightness-[1.04]",
         STATUS_CLASS[status]
       )}
       style={{ 
@@ -69,7 +56,7 @@ const StepperStep = memo(function StepperStep({
         // Geometria: O padding evita que o texto encoste no corte diagonal
         paddingLeft: isFirst ? "16px" : `${CHEVRON_PX + 12}px`,
         paddingRight: isLast ? "16px" : `${CHEVRON_PX + 12}px`,
-      } as React.CSSProperties} // Cast para evitar erros de tipagem no WebkitClipPath
+      }}
       aria-current={status === "active" ? "step" : undefined}
     >
       {status === "active" && <span aria-hidden className="step-shimmer" />}
@@ -85,7 +72,7 @@ const StepperStep = memo(function StepperStep({
   );
 });
 
-function ProgressBar({ percent }: { percent: number }) {
+function ProgressBar({ percent }) {
   return (
     <div
       className="step-track mt-3 h-1.5 w-full overflow-hidden rounded-full relative"
@@ -106,15 +93,13 @@ function ProgressBar({ percent }: { percent: number }) {
   );
 }
 
-export interface PedidoInternoStepperProps {
-  status: PedidoStatus;
-  className?: string;
-}
-
 export const PedidoInternoStepper = memo(function PedidoInternoStepper({
-  status,
+  pedido,
   className,
-}: PedidoInternoStepperProps) {
+}) {
+  // Ajuste chave: extraindo o status de dentro da prop pedido para evitar undefined.
+  const status = pedido?.status || "pendente";
+  
   const previousStatus = usePrevious(status);
   
   // Só aplica a classe animada se o status mudar ENQUANTO o drawer estiver aberto.
@@ -122,7 +107,7 @@ export const PedidoInternoStepper = memo(function PedidoInternoStepper({
 
   const currentIndex = Math.max(
     0,
-    PEDIDO_STEPS.findIndex((s) => s.key === status),
+    PEDIDO_STEPS.findIndex((s) => s.key === status)
   );
   
   const percent = ((currentIndex + 1) / PEDIDO_STEPS.length) * 100;
@@ -132,7 +117,7 @@ export const PedidoInternoStepper = memo(function PedidoInternoStepper({
       <div
         className={cn(
           "step-chip--rejected flex items-center justify-center gap-2.5 rounded-xl px-4 py-3.5 text-sm font-semibold shadow-sm",
-          className,
+          className
         )}
         role="status"
       >
@@ -146,7 +131,6 @@ export const PedidoInternoStepper = memo(function PedidoInternoStepper({
 
   return (
     <div className={cn("stepper-container w-full", isAnimating && "is-animating", className)}>
-      {/* Removido o gap-px (substituído pela lógica do margin negativo) */}
       <ol className="flex w-full items-stretch overflow-visible py-1" aria-label="Status do pedido">
         {PEDIDO_STEPS.map((step, idx) => (
           <StepperStep
