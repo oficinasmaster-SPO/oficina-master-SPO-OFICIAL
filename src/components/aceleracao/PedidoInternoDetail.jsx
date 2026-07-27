@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
-  ArrowLeft, CheckCircle, XCircle, Printer, Trash2,
+  ArrowLeft, CheckCircle, XCircle, Printer,
   MessageSquare, FileText, ListChecks, Send,
   AlertTriangle, ArrowUp, Minus, ArrowDown,
   Clock, CalendarClock, Hash, Building2, Flag,
@@ -14,6 +14,7 @@ import { ptBR } from "date-fns/locale";
 import ActivityTimeline from "./ActivityTimeline";
 import PedidoInternoStepper from "./PedidoInternoStepper";
 import StatusBadge from "@/components/shared/StatusBadge";
+import PriorityBadge from "@/components/shared/PriorityBadge";
 import useEmployeeResolver from "@/hooks/useEmployeeResolver";
 import {
   PEDIDO_STATUS_CONFIG, PRIORIDADE_CONFIG,
@@ -74,7 +75,7 @@ function InfoField({ label, icon: Icon, children, className = "" }) {
 
 
 // ── Componente principal ───────────────────────────────────────────────────
-export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess, onDelete }) {
+export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess }) {
   const queryClient = useQueryClient();
   const { getName, getPhoto } = useEmployeeResolver();
 
@@ -92,7 +93,6 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
   const isReadOnly = ["concluido", "recusado"].includes(pedido.status);
   const isInternal = user?.user_type === "internal" || user?.data?.user_type === "internal";
   const canRespond = user?.id === pedido.assignee_id || user?.role === "admin" || isInternal;
-  const canDelete  = user?.role === "admin" || isInternal;
 
   const criadoEm  = pedido.created_date || pedido.data_criacao;
   const criadoFmt = criadoEm ? format(new Date(criadoEm), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "—";
@@ -117,12 +117,6 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
     onError: () => toast.error("Erro ao recusar"),
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async () => base44.entities.PedidoInterno.delete(pedido.id),
-    onSuccess: () => { toast.success("Pedido excluído."); queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] }); onDelete?.(); },
-    onError: () => toast.error("Erro ao excluir"),
-  });
-
   const NEXT_STATUS = { pendente: "em_analise", em_analise: "aprovado", aprovado: "concluido" };
   const NEXT_LABEL = { pendente: "Iniciar Análise", em_analise: "Aprovar", aprovado: "Concluir" };
   const nextStatus = NEXT_STATUS[pedido.status];
@@ -133,7 +127,7 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
       if (nextStatus === "concluido") data.data_conclusao = new Date().toISOString();
       return base44.entities.PedidoInterno.update(pedido.id, data);
     },
-    onSuccess: () => { toast.success("Status atualizado!"); queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] }); onSuccess?.(); },
+    onSuccess: () => { toast.success("Status atualizado!"); queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] }); },
     onError: () => toast.error("Erro ao atualizar status"),
   });
 
@@ -175,10 +169,7 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
             <span className="font-medium text-gray-700">{assigneeName}</span>
           </div>
           <span className="h-3 w-px bg-gray-200" />
-          <div className="flex items-center gap-1">
-            <PriorityIcon prioridade={pedido.prioridade} />
-            <span className="text-gray-600">{PRIORIDADE_CONFIG[pedido.prioridade]?.label}</span>
-          </div>
+          <PriorityBadge prioridade={pedido.prioridade} />
           {slaLabel && (
             <>
               <span className="h-3 w-px bg-gray-200" />
@@ -195,7 +186,7 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
 
         {/* Linha 3: Stepper clicável */}
         <div className="border-t border-gray-100 px-5 py-2.5">
-          <PedidoInternoStepper pedido={pedido} canEdit={canRespond && !isReadOnly} />
+          <PedidoInternoStepper pedido={pedido} />
         </div>
       </div>
 
@@ -211,9 +202,9 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-3 space-y-3">
             {pedido.descricao && (
-              <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-                <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-gray-400">Descrição</p>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{pedido.descricao}</p>
+              <div className="rounded-lg border border-[#e6e6a3] bg-[#FFFF99]/30 p-3">
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-[#999933]">Descrição</p>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#b3b34d]">{pedido.descricao}</p>
               </div>
             )}
             <ActivityTimeline
@@ -296,19 +287,11 @@ export default function PedidoInternoDetail({ pedido, user, onCancel, onSuccess,
           <Button variant="ghost" size="sm" onClick={() => window.print()} className="h-7 gap-1 px-2 text-xs text-gray-400">
             <Printer className="h-3 w-3" /> Imprimir
           </Button>
-          {canDelete && (
-            <Button variant="ghost" size="sm"
-              onClick={() => { if (window.confirm("Tem certeza que deseja excluir este pedido?")) deleteMutation.mutate(); }}
-              disabled={deleteMutation.isPending}
-              className="h-7 gap-1 px-2 text-xs text-red-500 hover:bg-red-50">
-              <Trash2 className="h-3 w-3" /> Excluir
-            </Button>
-          )}
         </div>
         <div className="flex items-center gap-2">
-          {canRespond && !isReadOnly && (
+          {canRespond && pedido.status === "pendente" && (
             <Button variant="ghost" size="sm"
-              onClick={() => { if (window.confirm("Recusar este pedido?")) recusarMutation.mutate(); }}
+              onClick={() => { if (window.confirm("Esta ação não pode ser desfeita. Deseja recusar este pedido?")) recusarMutation.mutate(); }}
               disabled={recusarMutation.isPending}
               className="h-7 gap-1 text-xs text-red-500 hover:bg-red-50">
               <XCircle className="h-3.5 w-3.5" /> Recusar
