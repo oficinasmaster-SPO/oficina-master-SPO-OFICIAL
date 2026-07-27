@@ -1,177 +1,118 @@
-import React, { useMemo } from 'react';
-import { 
-  AlertCircle, CheckCircle2, Circle, Clock, 
-  ArrowUp, ArrowDown, AlertTriangle, Eye, Edit2, MoreHorizontal, ArrowRight 
-} from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { ChevronDown, Clock } from 'lucide-react';
 
-/* ── 1. HELPERS VISUAIS (KPIs de Alto Contraste) ─────────────────────────── */
-
-const PrioridadeIndicador = ({ nivel }) => {
-  const norm = nivel?.toLowerCase();
-  if (norm === 'alta' || norm === 'urgente') {
-    return (
-      <div className="flex items-center gap-1.5 text-red-600 font-bold text-xs w-20">
-        <ArrowUp className="h-4 w-4 stroke-[3]" /> Alta
-      </div>
-    );
-  }
-  if (norm === 'critica') {
-    return (
-      <div className="flex items-center gap-1.5 text-purple-700 font-black text-xs w-20">
-        <AlertTriangle className="h-4 w-4 stroke-[3]" /> Crítica
-      </div>
-    );
-  }
-  if (norm === 'media') {
-    return (
-      <div className="flex items-center gap-1.5 text-orange-500 font-semibold text-xs w-20">
-        <div className="h-2 w-2 rounded-full bg-orange-500" /> Média
-      </div>
-    );
-  }
-  // Default / Baixa
+/* Cabeçalho padrão da tabela original */
+export function ColumnHeaders() {
   return (
-    <div className="flex items-center gap-1.5 text-gray-400 font-medium text-xs w-20">
-      <ArrowDown className="h-4 w-4 stroke-[2]" /> Baixa
+    <div className="grid grid-cols-6 items-center px-6 py-2 bg-gray-50 border-b border-gray-200 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+      <div>Solicitante</div>
+      <div>Título do Chamado</div>
+      <div>Cliente</div>
+      <div>Prioridade</div>
+      <div>Status</div>
+      <div className="text-right">SLA / Responsável</div>
     </div>
   );
+}
+
+const PrioridadeBadge = ({ nivel }) => {
+  if (!nivel || nivel === "—" || nivel === "-") return <span className="text-gray-400 text-xs">—</span>;
+  return <span className="text-xs font-medium text-gray-700">{nivel}</span>;
 };
 
-const TempoAbertoSemantico = ({ dataCriacao }) => {
-  // Simulação de cálculo de dias (Substitua pela sua lib de datas, ex: date-fns)
-  const dias = Math.floor(Math.random() * 15); 
-  
-  let config = { color: "text-emerald-600 bg-emerald-50", icon: "🟢", label: dias === 0 ? '2h' : `${dias}d` };
-  
-  if (dias > 3) config = { color: "text-amber-600 bg-amber-50", icon: "🟡", label: `${dias}d` };
-  if (dias > 7) config = { color: "text-orange-600 bg-orange-50 font-bold", icon: "🟠", label: `${dias}d` };
-  if (dias > 10) config = { color: "text-red-600 bg-red-50 font-black ring-1 ring-red-200", icon: "🔴", label: `${dias}d` };
-
-  return (
-    <div className="group/tooltip relative flex items-center justify-end w-20 cursor-help">
-      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs ${config.color}`}>
-        <span className="text-[10px]">{config.icon}</span> {config.label}
-      </span>
-      
-      {/* Tooltip Nativo (Custom) */}
-      <div className="absolute bottom-full right-0 mb-2 hidden w-max flex-col items-center group-hover/tooltip:flex z-50">
-        <div className="rounded bg-gray-900 px-3 py-1.5 text-xs text-white shadow-xl">
-          <p className="font-semibold text-gray-300">Criado em</p>
-          <p>22/07/2026 às 09:14</p>
-        </div>
-        <div className="h-2 w-2 -mt-1 rotate-45 bg-gray-900"></div>
-      </div>
-    </div>
-  );
-};
-
-const StatusBadge = ({ status }) => {
+const StatusPill = ({ status }) => {
   const configs = {
-    pendente: { class: "bg-amber-100 text-amber-800 border-amber-200", label: "Pendente" },
-    em_analise: { class: "bg-blue-100 text-blue-800 border-blue-200", label: "Em Análise" },
-    aprovado: { class: "bg-emerald-100 text-emerald-800 border-emerald-200", label: "Aprovado" },
+    pendente: { bg: "bg-amber-50 text-amber-700 border-amber-200", label: "Pendente" },
+    em_analise: { bg: "bg-blue-50 text-blue-700 border-blue-200", label: "Em Análise" },
+    aprovado: { bg: "bg-emerald-50 text-emerald-700 border-emerald-200", label: "Aprovado" },
   };
-  const c = configs[status] || configs.pendente;
-  
+  const c = configs[status] || { bg: "bg-gray-100 text-gray-700 border-gray-200", label: status };
+
   return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest border ${c.class}`}>
+    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${c.bg}`}>
       {c.label}
     </span>
   );
 };
-
-/* ── 2. COMPONENTE DE LINHA (Rich List Row) ─────────────────────────────── */
 
 const PedidoRow = ({ pedido, onClick, isSelected }) => {
   return (
     <div 
       onClick={() => onClick(pedido)}
       className={`
-        group relative flex items-center gap-6 px-6 py-3 transition-all duration-200 cursor-pointer border-b border-gray-100
-        ${isSelected 
-          ? 'bg-blue-50/60 border-l-4 border-l-blue-600 shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)]' 
-          : 'bg-white border-l-4 border-l-transparent hover:bg-gray-50 hover:shadow-sm hover:z-10 hover:border-l-gray-300'
-        }
+        grid grid-cols-6 items-center px-6 py-3 border-b border-gray-100 cursor-pointer transition-colors
+        ${isSelected ? 'bg-blue-50/70' : 'bg-white hover:bg-gray-50/80'}
       `}
     >
-      {/* Bloco 1: Cliente, Título e ID (O Contexto Principal) */}
-      <div className="flex-1 min-w-[300px] flex flex-col justify-center">
-        <div className="flex items-center gap-2 mb-0.5">
-          <div className="h-2 w-2 rounded-full bg-purple-500 shrink-0" />
-          <span className="text-xs font-bold text-gray-600 uppercase tracking-wide truncate">
-            {pedido.cliente_nome || 'Cliente Não Informado'}
-          </span>
+      {/* Coluna 1: Solicitante + ID */}
+      <div className="flex items-center gap-3">
+        <div className="h-7 w-7 rounded-full bg-gray-900 text-white flex items-center justify-center text-[10px] font-bold shrink-0 shadow-sm">
+          {pedido.solicitante_nome?.charAt(0) || 'S'}
         </div>
-        <span className="text-sm font-bold text-gray-900 truncate pr-4">
-          {pedido.titulo || 'Manutenção de Equipamento'}
-        </span>
-        <span className="text-[11px] font-mono text-gray-400 mt-0.5">
-          #{pedido.id?.slice(-6).toUpperCase() || '000000'}
-        </span>
+        <div className="flex flex-col min-w-0">
+          <span className="text-[11px] font-mono text-gray-400">#{pedido.id?.slice(-6).toUpperCase() || '000000'}</span>
+          <span className="text-xs font-medium text-gray-800 truncate">{pedido.solicitante_nome || 'Usuário'}</span>
+        </div>
       </div>
 
-      {/* Bloco 2: Fluxo de Responsabilidade (Solicitante -> Responsável) */}
-      <div className="hidden lg:flex items-center gap-3 w-[280px] shrink-0">
-        <div className="flex items-center gap-2 max-w-[120px]">
-          <div className="h-[26px] w-[26px] shrink-0 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600 border border-white shadow-sm">
-            {pedido.solicitante_nome?.charAt(0) || 'S'}
-          </div>
-          <div className="flex flex-col truncate">
-            <span className="text-xs font-semibold text-gray-700 truncate">{pedido.solicitante_nome}</span>
-            <span className="text-[9px] text-gray-400 truncate">Comercial</span>
-          </div>
-        </div>
-        
-        <ArrowRight className="h-3 w-3 text-gray-300 shrink-0" />
-        
-        <div className="flex items-center gap-2 max-w-[120px]">
-          <div className="h-[26px] w-[26px] shrink-0 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-700 border border-white shadow-sm">
+      {/* Coluna 2: Título */}
+      <div className="flex flex-col min-w-0 pr-4">
+        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Chamado</span>
+        <span className="text-xs font-semibold text-gray-900 truncate">{pedido.titulo || 'Sem título'}</span>
+      </div>
+
+      {/* Coluna 3: Cliente */}
+      <div className="flex flex-col min-w-0 pr-4">
+        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Cliente</span>
+        {pedido.cliente_nome ? (
+          <span className="inline-block w-max max-w-full truncate rounded-md bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700 border border-purple-100">
+            {pedido.cliente_nome}
+          </span>
+        ) : (
+          <span className="text-xs text-gray-400 italic">Não informado</span>
+        )}
+      </div>
+
+      {/* Coluna 4: Prioridade */}
+      <div>
+        <PrioridadeBadge nivel={pedido.prioridade} />
+      </div>
+
+      {/* Coluna 5: Status */}
+      <div>
+        <StatusPill status={pedido.status} />
+      </div>
+
+      {/* Coluna 6: SLA / Responsável */}
+      <div className="flex items-center justify-end gap-3">
+        <span className="flex items-center gap-1 text-xs text-red-600 font-medium">
+          <Clock className="h-3 w-3" /> 2d
+        </span>
+        <div className="flex items-center gap-2">
+          <div className="h-6 w-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[10px] font-bold shrink-0">
             {pedido.assignee_nome?.charAt(0) || 'R'}
           </div>
-          <div className="flex flex-col truncate">
-            <span className="text-xs font-semibold text-gray-700 truncate">{pedido.assignee_nome || 'Não atribuído'}</span>
-            <span className="text-[9px] text-gray-400 truncate">Técnico</span>
-          </div>
+          <span className="text-xs text-gray-700 truncate max-w-[100px]">{pedido.assignee_nome || 'Não atribuído'}</span>
         </div>
-      </div>
-
-      {/* Bloco 3: KPIs Visuais */}
-      <div className="flex items-center gap-6 shrink-0 pr-4">
-        <PrioridadeIndicador nivel={pedido.prioridade} />
-        <div className="w-[100px] flex justify-center">
-          <StatusBadge status={pedido.status} />
-        </div>
-        <TempoAbertoSemantico dataCriacao={pedido.created_date} />
-      </div>
-
-      {/* Quick Actions (Visível apenas no Hover da linha) */}
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-l from-gray-50 via-gray-50 to-transparent pl-8 py-2">
-        <button className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Visualizar">
-          <Eye className="h-4 w-4" />
-        </button>
-        <button className="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-colors" title="Editar">
-          <Edit2 className="h-4 w-4" />
-        </button>
-        <button className="p-1.5 text-gray-400 hover:text-gray-900 hover:bg-gray-200 rounded-md transition-colors" title="Mais opções">
-          <MoreHorizontal className="h-4 w-4" />
-        </button>
       </div>
     </div>
   );
 };
 
-/* ── 3. LISTA PRINCIPAL (Memoizada & Agrupada) ──────────────────────────── */
-
 export default function PedidoInternoList({ pedidos, onSelect, isLoading, selectedId }) {
+  const [collapsedGroups, setCollapsedGroups] = useState({});
+
+  const toggleGroup = (groupId) => {
+    setCollapsedGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }));
+  };
   
-  // Memoização pesada para evitar re-cálculo de agrupamentos em re-renders simples
   const grupos = useMemo(() => {
     if (!pedidos) return [];
     
     const agrupado = {
       em_analise: { id: 'em_analise', label: 'Em Análise', count: 0, itens: [] },
-      pendente: { id: 'pendente', label: 'Pendentes', count: 0, itens: [] },
-      aprovado: { id: 'aprovado', label: 'Aprovados', count: 0, itens: [] },
+      pendente: { id: 'pendente', label: 'Pendente', count: 0, itens: [] },
+      aprovado: { id: 'aprovado', label: 'Aprovado', count: 0, itens: [] },
     };
 
     pedidos.forEach(p => {
@@ -185,19 +126,12 @@ export default function PedidoInternoList({ pedidos, onSelect, isLoading, select
 
   if (isLoading) {
     return (
-      <div className="p-8">
-        {/* Skeleton com o mesmo layout da Rich Row */}
+      <div className="p-8 space-y-4">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="flex items-center justify-between py-4 border-b border-gray-100 animate-pulse">
-             <div className="space-y-2">
-                <div className="h-3 w-24 bg-gray-200 rounded"></div>
-                <div className="h-4 w-64 bg-gray-200 rounded"></div>
-                <div className="h-2 w-16 bg-gray-200 rounded"></div>
-             </div>
-             <div className="flex gap-4">
-                <div className="h-6 w-20 bg-gray-200 rounded"></div>
-                <div className="h-6 w-20 bg-gray-200 rounded-full"></div>
-             </div>
+          <div key={i} className="flex items-center justify-between py-3 border-b border-gray-100 animate-pulse">
+             <div className="h-4 w-48 bg-gray-200 rounded"></div>
+             <div className="h-4 w-32 bg-gray-200 rounded"></div>
+             <div className="h-4 w-24 bg-gray-200 rounded"></div>
           </div>
         ))}
       </div>
@@ -208,32 +142,36 @@ export default function PedidoInternoList({ pedidos, onSelect, isLoading, select
 
   return (
     <div className="flex flex-col bg-white">
-      {grupos.map((grupo) => (
-        <div key={grupo.id} className="mb-4">
-          
-          {/* Cabeçalho de Agrupamento Estilo Linear (Elegante e espaçado) */}
-          <div className="flex items-center gap-3 px-8 pt-8 pb-3 border-b border-gray-100 bg-white sticky top-0 z-10">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-              {grupo.label}
-            </span>
-            <div className="flex-1 h-px bg-gray-100"></div>
-            <span className="text-xs font-semibold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">
-              {grupo.count}
-            </span>
+      <ColumnHeaders />
+      {grupos.map((grupo) => {
+        const isCollapsed = collapsedGroups[grupo.id];
+
+        return (
+          <div key={grupo.id} className="border-b border-gray-200">
+            <button 
+              onClick={() => toggleGroup(grupo.id)}
+              className="w-full flex items-center gap-2 px-6 py-2.5 bg-gray-50/80 hover:bg-gray-100/80 transition-colors text-left"
+            >
+              <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${isCollapsed ? '-rotate-90' : 'rotate-0'}`} />
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-700">{grupo.label}</span>
+              <span className="rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-bold text-gray-600">{grupo.count}</span>
+            </button>
+            
+            {!isCollapsed && (
+              <div className="flex flex-col">
+                {grupo.itens.map((pedido) => (
+                  <PedidoRow 
+                    key={pedido.id} 
+                    pedido={pedido} 
+                    onClick={onSelect}
+                    isSelected={selectedId === pedido.id}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-          
-          <div className="flex flex-col">
-            {grupo.itens.map((pedido) => (
-              <PedidoRow 
-                key={pedido.id} 
-                pedido={pedido} 
-                onClick={onSelect}
-                isSelected={selectedId === pedido.id}
-              />
-            ))}
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
