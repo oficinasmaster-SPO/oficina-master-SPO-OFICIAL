@@ -17,6 +17,29 @@
   animation: slide-up 0.3s ease-out;
 }
 
+@keyframes shimmer-glass {
+  0% { left: -20%; }
+  15% { left: 120%; }
+  100% { left: 120%; }
+}
+
+.animate-shimmer-glass {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 18px;
+  background: linear-gradient(
+    90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.15) 30%, 
+    rgba(255, 255, 255, 0.85) 50%,
+    rgba(255, 255, 255, 0.15) 70%, 
+    transparent 100%
+  );
+  animation: shimmer-glass 5s cubic-bezier(0.4, 0, 0.6, 1) 1s infinite;
+  transform: skewX(-15deg);
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
