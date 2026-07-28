@@ -157,7 +157,12 @@ export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose,
               <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
                 Consultor Responsável
               </p>
-              <p className="text-sm text-gray-900">{followUp?.consultor_nome || "—"}</p>
+              <p className="text-sm text-gray-900">{followUp?.consultor_principal_nome || followUp?.consultor_nome || "—"}</p>
+              {followUp?.consultor_executor_nome && followUp.consultor_executor_id !== (followUp.consultor_principal_id || followUp.consultor_id) && (
+                <p className="text-xs text-blue-600 mt-1">
+                  Concluído por: {followUp.consultor_executor_nome}
+                </p>
+              )}
             </div>
 
             {/* Data e Hora */}
