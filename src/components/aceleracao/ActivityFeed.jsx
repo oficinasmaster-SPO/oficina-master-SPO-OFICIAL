@@ -1,3 +1,12 @@
+/**
+ * ActivityFeed — Timeline unificada cronológica (Padrão Enterprise SaaS).
+ *
+ * Últimas Correções:
+ * - Fim do Double Scrollbar: Remoção de maxHeight e overflow-y-auto. O componente flui naturalmente.
+ * - Sticky Contexto: Footer se fixa na base da página pai.
+ * - Conteúdo Limitado, Feed Fluido: TimelineContent = max-w-[760px], mas Timeline = w-full.
+ * - Microinterações: Feedback de sucesso no botão de envio e placeholder humanizado.
+ */
 import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -33,6 +42,10 @@ const EVENT_COLORS = {
   reopened:            "bg-yellow-500",
   field_changed:       "bg-slate-400",
 };
+
+// ============================================================================
+// HELPERS VISUAIS E DE DATA
+// ============================================================================
 
 function formatTime(timestamp) {
   if (!timestamp) return "";
@@ -70,14 +83,18 @@ function formatFileSize(bytes) {
   return (bytes / 1048576).toFixed(1) + " MB";
 }
 
-function Timeline({ children }) {
-  return <div className="flex flex-col w-full relative">{children}</div>;
+// ============================================================================
+// DESIGN SYSTEM: TIMELINE ARQUITETURA
+// ============================================================================
+
+function Timeline({ children, className }) {
+  return <div className={cn("flex flex-col w-full relative", className)}>{children}</div>;
 }
 
 function TimelineSection({ label, count, children }) {
   return (
-    <div className="mb-2">
-      <div className="flex items-center gap-3 pt-6 pb-4 select-none relative z-10 px-2 animate-in fade-in">
+    <div className="mb-2 w-full">
+      <div className="flex items-center gap-3 pt-6 pb-4 select-none relative z-10 px-2 animate-in fade-in w-full">
         <div className="w-full h-px bg-slate-200" />
         <span className="text-[12px] font-semibold text-gray-900 shrink-0">
           {label}
@@ -89,7 +106,7 @@ function TimelineSection({ label, count, children }) {
         </span>
         <div className="w-full h-px bg-slate-200" />
       </div>
-      <div className="space-y-1">{children}</div>
+      <div className="space-y-1 w-full">{children}</div>
     </div>
   );
 }
@@ -100,7 +117,7 @@ function TimelineItem({ variant = "default", id, time, showTime = true, isLast, 
     <div
       id={id}
       className={cn(
-        "group relative flex gap-3 rounded-lg transition-colors duration-1000 animate-in fade-in slide-in-from-bottom-2 scroll-mt-24",
+        "group w-full relative flex gap-3 rounded-lg transition-colors duration-1000 animate-in fade-in slide-in-from-bottom-2 scroll-mt-24",
         isNested ? "py-1" : "py-1.5 px-1",
         isHighlighted ? "bg-blue-50/60 transition-none" : "hover:bg-[#3b82f6]/[0.02]"
       )}
@@ -108,14 +125,17 @@ function TimelineItem({ variant = "default", id, time, showTime = true, isLast, 
       {!isLast && !isNested && (
         <div className="absolute left-[70px] top-[30px] bottom-[-6px] w-px bg-slate-200 z-0" />
       )}
+      
       {!isNested && (
         <div className="w-10 pt-1.5 shrink-0 text-right">
           {showTime && <span className="text-[10px] font-normal text-gray-400">{time}</span>}
         </div>
       )}
+      
       {children}
+      
       {actions && (
-        <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white border border-gray-200 rounded-md shadow-sm flex items-center p-0.5 z-20">
+        <div className="absolute right-4 top-2 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white border border-gray-200 rounded-md shadow-sm flex items-center p-0.5 z-20">
           {actions}
         </div>
       )}
@@ -129,15 +149,15 @@ function TimelineNode({ children }) {
   );
 }
 
-function TimelineContent({ children }) {
-  return <div className="flex-1 min-w-0 pb-1">{children}</div>;
+function TimelineContent({ children, className }) {
+  return <div className={cn("flex-1 min-w-0 pb-1", className)}>{children}</div>;
 }
 
 function TimelineSkeleton() {
   return (
     <div className="w-full pt-8 px-2 animate-pulse">
       {[1, 2, 3, 4].map(i => (
-        <div key={i} className="flex gap-3 mb-8">
+        <div key={i} className="flex gap-3 mb-8 w-full max-w-[760px]">
           <div className="w-10 pt-1 shrink-0 text-right">
             <div className="h-2.5 w-8 bg-slate-100 rounded inline-block" />
           </div>
@@ -155,9 +175,14 @@ function TimelineSkeleton() {
   );
 }
 
+// ============================================================================
+// ELEMENTOS DA TIMELINE (Comentários e Logs)
+// ============================================================================
+
 function CommentEntry({ comment, replies = [], getName, getPhoto, allowReply, entityType, entityId, workshopId, isNested = false, isLast = false, onReplyClick, showTime = true, formattedTime, isHighlighted = false }) {
   const [showReplies, setShowReplies] = useState(false);
   const [copied, setCopied] = useState(false);
+  
   const isInternal = comment.is_internal;
   const resolvedName = getName ? getName(comment.author_id, comment.author_name) : (comment.author_name || "Usuário");
   const photoUrl = getPhoto ? getPhoto(comment.author_id) : null;
@@ -266,8 +291,46 @@ function CommentEntry({ comment, replies = [], getName, getPhoto, allowReply, en
       isHighlighted={isHighlighted}
     >
       <TimelineNode>{AvatarNode}</TimelineNode>
-      <TimelineContent>{ContentNode}</TimelineContent>
+      <TimelineContent className="max-w-[760px]">{ContentNode}</TimelineContent>
     </TimelineItem>
+  );
+}
+
+function CommentThread({ comment, replies, getName, getPhoto, allowReply, entityType, entityId, workshopId, isLast, showTime, formattedTime, highlightedId, onSubmitted }) {
+  const [activeReplyId, setActiveReplyId] = useState(null);
+
+  return (
+    <div className="w-full">
+      <CommentEntry
+        comment={comment}
+        replies={replies}
+        getName={getName}
+        getPhoto={getPhoto}
+        allowReply={allowReply}
+        entityType={entityType}
+        entityId={entityId}
+        workshopId={workshopId}
+        isLast={isLast && activeReplyId !== comment.id}
+        onReplyClick={(id) => setActiveReplyId(activeReplyId === id ? null : id)}
+        showTime={showTime}
+        formattedTime={formattedTime}
+        isHighlighted={highlightedId === comment.id}
+      />
+      {activeReplyId === comment.id && (
+        <div className="pl-[82px] pr-2 pb-3 pt-1 animate-in fade-in slide-in-from-top-2 duration-200 relative w-full">
+          {!isLast && <div className="absolute left-[70px] top-0 bottom-0 w-px bg-slate-200 z-0" />}
+          <div className="relative z-10 max-w-[760px]">
+            <CommentInput
+              entityType={entityType} entityId={entityId} workshopId={workshopId}
+              parentCommentId={comment.id}
+              onSubmitted={(newId) => { setActiveReplyId(null); onSubmitted(newId); }}
+              onCancel={() => setActiveReplyId(null)}
+              compact getName={getName} getPhoto={getPhoto}
+            />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -313,7 +376,7 @@ function LogGroupItem({ group, getName, isLast, showTime = true, formattedTime }
           <div className={cn("w-[9px] h-[9px] rounded-full ring-[3px] ring-white", dotColor)} />
         </div>
       </TimelineNode>
-      <TimelineContent>
+      <TimelineContent className="max-w-[760px]">
         <div className="flex flex-wrap items-baseline gap-x-1.5 pt-1">
           <span className="text-[13px] font-semibold text-gray-900">{resolvedName}</span>
           <span className="text-[13px] text-gray-700">{renderLogSummaries()}</span>
@@ -323,6 +386,10 @@ function LogGroupItem({ group, getName, isLast, showTime = true, formattedTime }
   );
 }
 
+// ============================================================================
+// COMPONENTE DE INPUT 
+// ============================================================================
+
 function CommentInput({ entityType, entityId, workshopId, parentCommentId = null, onSubmitted, onCancel, compact = false, getName, getPhoto }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -331,9 +398,8 @@ function CommentInput({ entityType, entityId, workshopId, parentCommentId = null
   const [attachments, setAttachments] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   
-  // Novo estado para controlar o feedback visual de sucesso
+  // Feedback visual de sucesso
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  
   const textareaRef = useRef(null);
 
   const autoResize = useCallback(() => {
@@ -360,20 +426,13 @@ function CommentInput({ entityType, entityId, workshopId, parentCommentId = null
     },
     onSuccess: (newComment) => {
       queryClient.invalidateQueries({ queryKey: ["taskComments", entityType, entityId] });
-      
-      // Limpa os campos imediatamente para a UI ficar pronta de novo
       setContent(""); 
       setAttachments([]); 
       setIsInternal(false);
-      
-      // Aciona o feedback de sucesso no botão
       setSubmitSuccess(true);
       onSubmitted?.(newComment.id);
-
-      // Remove o status de sucesso após 2 segundos
-      setTimeout(() => {
-        setSubmitSuccess(false);
-      }, 2000);
+      
+      setTimeout(() => setSubmitSuccess(false), 2000);
     },
   });
 
@@ -410,7 +469,7 @@ function CommentInput({ entityType, entityId, workshopId, parentCommentId = null
   const hasContent = content.trim().length > 0;
 
   return (
-    <div>
+    <div className="w-full">
       {attachments.length > 0 && (
         <div className="flex flex-wrap gap-2 px-1 pb-2 animate-in fade-in">
           {attachments.map((att, idx) => (
@@ -422,72 +481,70 @@ function CommentInput({ entityType, entityId, workshopId, parentCommentId = null
           ))}
         </div>
       )}
-      <div>
-        <div className={cn("flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white transition-all focus-within:ring-2 focus-within:ring-blue-500/10 focus-within:border-blue-400 px-2 py-1.5")}>
-          <button onClick={() => setIsInternal(!isInternal)}
-            className={cn(
-              "inline-flex items-center gap-1.5 px-2 h-7 rounded-md text-[12px] font-medium transition-colors shrink-0",
-              isInternal ? "text-amber-700 bg-amber-50" : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-            )}
-            title={isInternal ? "Nota interna (clique para desativar)" : "Marcar como nota interna"}>
-            <div className={cn("w-2 h-2 rounded-full", isInternal ? "bg-amber-500" : "border border-gray-400")} /> Interno
-          </button>
-          <label className="cursor-pointer shrink-0">
-            <input type="file" multiple className="hidden" disabled={isUploading} onChange={(e) => handleFileUpload(Array.from(e.target.files || []))} />
-            <span className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
-              {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
-            </span>
-          </label>
-          <div className="w-px h-5 bg-gray-200 shrink-0" />
-          <textarea
-            ref={textareaRef}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={compact ? "Responder..." : "💬 Escreva uma atualização deste pedido..."}
-            rows={1}
-            className="flex-1 min-w-0 resize-none border-0 bg-transparent text-[13px] text-gray-800 placeholder:text-gray-400 placeholder:text-left focus:outline-none focus:ring-0 py-1.5 px-2 leading-[1.4] text-left"
-            style={{ minHeight: "36px", maxHeight: "120px" }}
-          />
-          {onCancel && (<button onClick={onCancel} className="px-2 h-7 rounded-md text-[12px] font-medium text-gray-500 hover:bg-gray-100 transition-colors shrink-0">Cancelar</button>)}
-          <span className="text-[10px] text-gray-300 hidden sm:inline select-none shrink-0">Ctrl+↵</span>
-          <button 
-            onClick={handleSubmit} 
-            disabled={(!hasContent && !submitSuccess) || createMutation.isPending}
-            className={cn(
-              "flex items-center justify-center h-7 p-0 rounded-md transition-all duration-300 shrink-0 overflow-hidden",
-              submitSuccess 
-                ? "bg-emerald-500 text-white shadow-sm px-2.5 w-auto"
-                : hasContent
-                  ? "w-7 bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow"
-                  : "w-7 bg-gray-100 text-gray-300 cursor-default"
-            )}
-            title="Enviar comentário">
-            
-            {createMutation.isPending ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : submitSuccess ? (
-              <div className="flex items-center gap-1.5 whitespace-nowrap animate-in fade-in zoom-in-95 duration-200">
-                <Check className="w-3.5 h-3.5" />
-                <span className="text-[11px] font-medium pr-0.5">Enviado</span>
-              </div>
-            ) : (
-              <Send className="w-3.5 h-3.5 ml-0.5" />
-            )}
-            
-          </button>
-        </div>
+      <div className={cn("max-w-[760px] w-full flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white transition-all focus-within:ring-2 focus-within:ring-blue-500/10 focus-within:border-blue-400 px-2 py-1.5", compact ? "" : "mt-2")}>
+        <button onClick={() => setIsInternal(!isInternal)}
+          className={cn(
+            "inline-flex items-center gap-1.5 px-2 h-7 rounded-md text-[12px] font-medium transition-colors shrink-0",
+            isInternal ? "text-amber-700 bg-amber-50" : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          )}
+          title={isInternal ? "Nota interna (clique para desativar)" : "Marcar como nota interna"}>
+          <div className={cn("w-2 h-2 rounded-full", isInternal ? "bg-amber-500" : "border border-gray-400")} /> Interno
+        </button>
+        <label className="cursor-pointer shrink-0">
+          <input type="file" multiple className="hidden" disabled={isUploading} onChange={(e) => handleFileUpload(Array.from(e.target.files || []))} />
+          <span className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
+            {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+          </span>
+        </label>
+        <div className="w-px h-5 bg-gray-200 shrink-0" />
+        <textarea
+          ref={textareaRef}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={compact ? "Responder..." : "💬 Escreva uma atualização deste pedido..."}
+          rows={1}
+          className="flex-1 min-w-0 resize-none border-0 bg-transparent text-[13px] text-gray-800 placeholder:text-gray-400 placeholder:text-left focus:outline-none focus:ring-0 py-1.5 px-2 leading-[1.4] text-left"
+          style={{ minHeight: "36px", maxHeight: "120px" }}
+        />
+        {onCancel && (<button onClick={onCancel} className="px-2 h-7 rounded-md text-[12px] font-medium text-gray-500 hover:bg-gray-100 transition-colors shrink-0">Cancelar</button>)}
+        <span className="text-[10px] text-gray-300 hidden sm:inline select-none shrink-0">Ctrl+↵</span>
+        
+        <button onClick={handleSubmit} disabled={(!hasContent && !submitSuccess) || createMutation.isPending}
+          className={cn(
+            "flex items-center justify-center h-7 p-0 rounded-md transition-all duration-300 shrink-0 overflow-hidden",
+            submitSuccess 
+              ? "bg-emerald-500 text-white shadow-sm px-2.5 w-auto" 
+              : hasContent
+                ? "w-7 bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow" 
+                : "w-7 bg-gray-100 text-gray-300 cursor-default"
+          )}
+          title="Enviar comentário">
+          {createMutation.isPending ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : submitSuccess ? (
+            <div className="flex items-center gap-1.5 whitespace-nowrap animate-in fade-in zoom-in-95 duration-200">
+              <Check className="w-3.5 h-3.5" />
+              <span className="text-[11px] font-medium pr-0.5">Enviado</span>
+            </div>
+          ) : (
+            <Send className="w-3.5 h-3.5 ml-0.5" />
+          )}
+        </button>
       </div>
     </div>
   );
 }
 
+// ============================================================================
+// COMPONENTE PRINCIPAL (ActivityFeed)
+// ============================================================================
+
 export default function ActivityFeed({
-  entityType, entityId, workshopId, maxHeight = "600px",
+  entityType, entityId, workshopId,
   showLogs = true, showComments = true, showAttachments = true, allowReply = true, compact = false,
 }) {
   const { getName, getPhoto } = useEmployeeResolver();
-  const [activeReplyId, setActiveReplyId] = useState(null);
   const [pendingHighlightId, setPendingHighlightId] = useState(null);
   const [highlightedId, setHighlightedId] = useState(null);
 
@@ -626,82 +683,60 @@ export default function ActivityFeed({
   }, [highlightedId]);
 
   return (
-    <div className="flex flex-col w-full h-full relative">
-      
-      <div className="flex-1 overflow-y-auto overflow-x-hidden pb-4">
-        
-        <div className="w-full max-w-5xl">
-          {isLoading ? (
-            <TimelineSkeleton />
-          ) : timelineByDay.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in px-4">
-              <h3 className="text-[14px] font-medium text-gray-900 mb-1">Nenhuma atividade ainda</h3>
-              <p className="text-[13px] text-gray-500 max-w-[320px] leading-relaxed">
-                Este espaço registrará automaticamente comentários, alterações e todo o histórico deste pedido.
-              </p>
-            </div>
-          ) : (
-            <div className="w-full">
-              {timelineByDay.map((day, dayIdx) => (
-                <TimelineSection key={dayIdx} label={day.label} count={day.elements.length}>
-                  <Timeline>
-                    {day.elements.map((el, elIdx) => {
-                      const isLastElement = dayIdx === timelineByDay.length - 1 && elIdx === day.elements.length - 1;
-                      if (el.type === 'log_group') {
-                        return <LogGroupItem key={"log-" + elIdx} group={el.group} getName={getName} isLast={isLastElement} showTime={el.showTime} formattedTime={el.formattedTime} />;
-                      } else {
-                        return (
-                          <React.Fragment key={"comment-wrap-" + el.comment.id}>
-                            <CommentEntry
-                              comment={el.comment}
-                              replies={repliesByParent[el.comment.id] || []}
-                              getName={getName}
-                              getPhoto={getPhoto}
-                              allowReply={allowReply}
-                              entityType={entityType}
-                              entityId={entityId}
-                              workshopId={workshopId}
-                              isLast={isLastElement && activeReplyId !== el.comment.id}
-                              onReplyClick={(id) => setActiveReplyId(activeReplyId === id ? null : id)}
-                              showTime={el.showTime}
-                              formattedTime={el.formattedTime}
-                              isHighlighted={highlightedId === el.comment.id}
-                            />
-                            {activeReplyId === el.comment.id && (
-                              <div className="pl-[82px] pr-2 pb-3 pt-1 animate-in fade-in slide-in-from-top-2 duration-200 relative">
-                                {!isLastElement && <div className="absolute left-[70px] top-0 bottom-0 w-px bg-slate-200 z-0" />}
-                                <div className="relative z-10">
-                                  <CommentInput
-                                    entityType={entityType} entityId={entityId} workshopId={workshopId}
-                                    parentCommentId={el.comment.id}
-                                    onSubmitted={(newId) => { setActiveReplyId(null); if(newId) setPendingHighlightId(newId); }}
-                                    onCancel={() => setActiveReplyId(null)}
-                                    compact getName={getName} getPhoto={getPhoto}
-                                  />
-                                </div>
-                              </div>
-                            )}
-                          </React.Fragment>
-                        );
-                      }
-                    })}
-                  </Timeline>
-                </TimelineSection>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {showComments && !isLoading && (
-        <div className="shrink-0 pt-3 pb-2 w-full mt-auto sticky bottom-0 z-30 border-t border-gray-100 bg-white">
-          <div className="w-full max-w-5xl">
-            <CommentInput 
-              entityType={entityType} entityId={entityId} workshopId={workshopId}
-              getName={getName} getPhoto={getPhoto}
-              onSubmitted={(newId) => { if(newId) setPendingHighlightId(newId); }}
-            />
+    <div className="flex flex-col w-full relative">
+      <div className="w-full pb-2">
+        {isLoading ? (
+          <TimelineSkeleton />
+        ) : timelineByDay.length === 0 ? (
+          <div className="w-full min-h-[300px] flex flex-col items-center justify-center animate-in fade-in px-4">
+            <h3 className="text-[14px] font-medium text-gray-900 mb-1">Nenhuma atividade ainda</h3>
+            <p className="text-[13px] text-gray-500 max-w-[320px] text-center leading-relaxed">
+              Este espaço registrará automaticamente comentários, alterações e todo o histórico deste pedido.
+            </p>
           </div>
+        ) : (
+          <div className="w-full">
+            {timelineByDay.map((day, dayIdx) => (
+              <TimelineSection key={dayIdx} label={day.label} count={day.elements.length}>
+                <Timeline>
+                  {day.elements.map((el, elIdx) => {
+                    const isLastElement = dayIdx === timelineByDay.length - 1 && elIdx === day.elements.length - 1;
+                    if (el.type === 'log_group') {
+                      return <LogGroupItem key={"log-" + elIdx} group={el.group} getName={getName} isLast={isLastElement} showTime={el.showTime} formattedTime={el.formattedTime} />;
+                    } else {
+                      return (
+                        <CommentThread 
+                          key={"comment-wrap-" + el.comment.id}
+                          comment={el.comment}
+                          replies={repliesByParent[el.comment.id] || []}
+                          getName={getName}
+                          getPhoto={getPhoto}
+                          allowReply={allowReply}
+                          entityType={entityType}
+                          entityId={entityId}
+                          workshopId={workshopId}
+                          isLast={isLastElement}
+                          showTime={el.showTime}
+                          formattedTime={el.formattedTime}
+                          highlightedId={highlightedId}
+                          onSubmitted={(newId) => { if(newId) setPendingHighlightId(newId); }}
+                        />
+                      );
+                    }
+                  })}
+                </Timeline>
+              </TimelineSection>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {showComments && !isLoading && (
+        <div className="pt-3 pb-4 px-2 w-full sticky bottom-0 z-30 bg-white/95 backdrop-blur-sm border-t border-gray-100 shadow-[0_-8px_20px_rgba(0,0,0,0.03)]">
+          <CommentInput entityType={entityType} entityId={entityId} workshopId={workshopId}
+            getName={getName} getPhoto={getPhoto}
+            onSubmitted={(newId) => { if(newId) setPendingHighlightId(newId); }}
+          />
         </div>
       )}
     </div>
