@@ -202,7 +202,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
   const clearFilters = () => { setSearch(""); setStatusFilter("all"); };
  
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[hsl(var(--border-subtle))] shadow-[0_1px_2px_rgba(16,24,40,.04)]">
  
       {/* ── Modal detalhe (wide) ── */}
       <PedidoInternoModal open={!!selectedPedido} onClose={() => setSelectedPedido(null)} size="wide">
@@ -246,7 +246,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
         className="flex min-h-0 flex-1 flex-col"
       >
         {/* ── HEADER FIXO (shrink-0) com shadow que projeta sobre a lista ── */}
-        <div className="shrink-0 border-b border-gray-200 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] z-10 relative">
+        <div className="shrink-0 border-b border-[hsl(var(--border-subtle))] bg-[hsl(var(--surface))] shadow-[0_1px_2px_rgba(16,24,40,.04)] z-10 relative rounded-t-lg">
  
           {/* Linha 1: Tabs + métricas + CTA */}
           <div className="flex items-center gap-4 px-4 py-2">
@@ -288,7 +288,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
  
           {/* Linha 2: Toolbar (só na aba pedidos) */}
           {activeList === "pedidos" && (
-            <div className="flex items-center gap-2 border-t border-gray-100 px-4 py-2">
+            <div className="flex items-center gap-2 border-t border-[hsl(var(--border-subtle))] px-4 py-1.5">
               <ScopeSelector value={scope} onChange={setScope} />
               <div className="flex-1" />
               <div className="relative w-[280px]">
@@ -298,26 +298,26 @@ export default function PedidosInternosTab({ workshopId, user }) {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Buscar por título, ID, cliente ou solicitante…"
-                  className="h-8 w-full rounded-lg border border-gray-200 bg-gray-50/60 pl-8 pr-3 text-xs text-gray-800 placeholder:text-gray-400 focus:border-blue-300 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-200 transition-colors"
+                  className="h-8 w-full rounded-lg border border-[hsl(var(--border-subtle))] bg-[hsl(var(--surface-subtle))] pl-8 pr-3 text-[12.5px] text-gray-800 placeholder:text-gray-400 focus:border-blue-300 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-200 transition-colors"
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-8 w-[140px] shrink-0 rounded-lg text-xs">
+                <SelectTrigger className="h-8 w-[140px] shrink-0 rounded-lg text-[12.5px]">
                   <SelectValue placeholder="Todos status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all" className="text-xs">Todos status</SelectItem>
+                  <SelectItem value="all" className="text-[12.5px]">Todos status</SelectItem>
                   {PEDIDO_STATUS_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>
+                    <SelectItem key={opt.value} value={opt.value} className="text-[12.5px]">{opt.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               {hasFilters && (
-                <button onClick={clearFilters} className="flex h-8 items-center gap-1 rounded-md px-2 text-xs text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+                <button onClick={clearFilters} className="flex h-8 items-center gap-1 rounded-md px-2 text-[12.5px] text-gray-400 hover:bg-[hsl(var(--row-hover))] hover:text-gray-600">
                   <X className="h-3 w-3" /> Limpar
                 </button>
               )}
-              <span className="text-xs tabular-nums text-gray-400">
+              <span className="text-[12.5px] tabular-nums text-gray-400">
                 {filteredPedidos.length} {filteredPedidos.length === 1 ? "pedido" : "pedidos"}
               </span>
             </div>

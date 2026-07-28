@@ -1,38 +1,57 @@
 /**
- * PedidoInternoList — Lista agrupada, flush com column headers.
- * Colunas: Cliente | Solicitante | Responsável | Prioridade | Status | Tempo Aberto
+ * PedidoInternoList — Listagem densa estilo Linear/Jira.
+ * Colunas: Cliente | Pedido | Solicitante | Responsável | Prioridade | Status | Tempo Aberto
  */
 import React, { useState, useCallback } from "react";
 import {
   Clock, ChevronDown, ChevronRight, Search as SearchIcon,
   ClipboardList, CheckCircle2, XCircle,
+  ArrowDown, Minus, ArrowUp, AlertOctagon,
 } from "lucide-react";
 import { PEDIDO_STATUS_CONFIG } from "@/components/shared/backlogConstants";
-import PriorityBadge from "@/components/shared/PriorityBadge";
 import useEmployeeResolver from "@/hooks/useEmployeeResolver";
 
-/* ── Shared grid constants ─────────────────────────────────────────────── */
+/* ── Grid — larguras fixas compartilhadas header ↔ rows ───────────────── */
 export const COL = {
-  cliente: "w-[170px] shrink-0",
-  solicitante: "w-[160px] shrink-0",
-  responsavel: "w-[160px] shrink-0",
-  prioridade: "w-[110px] shrink-0",
-  status: "w-[120px] shrink-0",
-  sla: "w-[100px] shrink-0",
-  gap: "gap-4",
-  px: "px-5",
+  cliente:     "w-[180px] shrink-0",
+  pedido:      "flex-1 min-w-[240px]",
+  solicitante: "w-[170px] shrink-0",
+  responsavel: "w-[170px] shrink-0",
+  prioridade:  "w-[104px] shrink-0",
+  status:      "w-[124px] shrink-0",
+  sla:         "w-[92px] shrink-0",
+  gap:         "gap-4",
+  px:          "px-5",
 };
+
+const MIN_TABLE = "min-w-[1100px]";
 
 /* ── Status groups ─────────────────────────────────────────────────────── */
 const STATUS_GROUPS = [
-  { key: "em_analise", label: "Em Análise",  dot: "bg-blue-500",    defaultCollapsed: false },
-  { key: "pendente",   label: "Pendente",    dot: "bg-amber-500",   defaultCollapsed: false },
-  { key: "aprovado",   label: "Aprovado",    dot: "bg-emerald-500", defaultCollapsed: false },
-  { key: "recusado",   label: "Recusado",    dot: "bg-red-500",     defaultCollapsed: true },
-  { key: "concluido",  label: "Concluído",   dot: "bg-gray-400",    defaultCollapsed: true },
+  { key: "em_analise", label: "Em Análise",  token: "analysis", defaultCollapsed: false },
+  { key: "pendente",   label: "Pendente",    token: "pending",  defaultCollapsed: false },
+  { key: "aprovado",   label: "Aprovado",    token: "approved", defaultCollapsed: false },
+  { key: "recusado",   label: "Recusado",    token: "rejected", defaultCollapsed: true },
+  { key: "concluido",  label: "Concluído",   token: "done",     defaultCollapsed: true },
 ];
 
-/* ── Helpers ───────────────────────────────────────────────────────────── */
+/* ── SLA — 4 níveis ────────────────────────────────────────────────────── */
+function slaLevel(d) {
+  if (!d) return null;
+  const h = (Date.now() - new Date(d).getTime()) / 3600000;
+  if (h < 24)  return "fresh";
+  if (h < 72)  return "warn";
+  if (h < 168) return "high";
+  return "critical";
+}
+
+const SLA_STYLES = {
+  fresh:    "bg-[hsl(var(--sla-fresh-bg))] text-[hsl(var(--sla-fresh))]",
+  warn:     "bg-[hsl(var(--sla-warn-bg))] text-[hsl(var(--sla-warn))]",
+  high:     "bg-[hsl(var(--sla-high-bg))] text-[hsl(var(--sla-high))]",
+  critical: "bg-[hsl(var(--sla-critical-bg))] text-[hsl(var(--sla-critical))]",
+};
+
 function timeSince(d) {
   if (!d) return null;
   const ms = Date.now() - new Date(d).getTime();
@@ -45,102 +64,122 @@ function timeSince(d) {
   return `${mins}min`;
 }
 
-function slaColor(d) {
-  if (!d) return "text-gray-400";
-  const ms = Date.now() - new Date(d).getTime();
-  const h = ms / 3600000;
-  if (h >= 48) return "text-red-600 font-bold";
-  if (h >= 24) return "text-orange-500 font-semibold";
-  return "text-gray-500";
-}
-
 function isOverdue(p) {
   if (!p.prazo || ["concluido","recusado"].includes(p.status)) return false;
   return new Date(p.prazo) < new Date();
 }
 
-/* ── Avatar ────────────────────────────────────────────────────────────── */
-const AV = [
-  "bg-blue-600","bg-violet-600","bg-teal-600","bg-orange-500",
-  "bg-pink-600","bg-cyan-600","bg-indigo-600","bg-amber-600",
-  "bg-rose-600","bg-emerald-600","bg-fuchsia-600","bg-sky-600",
+/* ── Avatar 24px ──────────────────────────────────────────────────────── */
+const AV_COLORS = [
+  "bg-blue-100 text-blue-600","bg-violet-100 text-violet-600",
+  "bg-teal-100 text-teal-600","bg-orange-100 text-orange-600",
+  "bg-pink-100 text-pink-600","bg-cyan-100 text-cyan-600",
+  "bg-indigo-100 text-indigo-600","bg-amber-100 text-amber-600",
 ];
-function pick(n) { return AV[n ? n.charCodeAt(0) % AV.length : 0]; }
-function ini(n) { return n ? n.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase() : "?"; }
+function pickColor(n) { return AV_COLORS[n ? n.charCodeAt(0) % AV_COLORS.length : 0]; }
+function initials(n) { return n ? n.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase() : "?"; }
 
 function MiniAvatar({ name, photoUrl }) {
-  const i = ini(name), c = pick(name);
+  const i = initials(name), c = pickColor(name);
   if (photoUrl) {
     return (
-      <span className="relative h-[22px] w-[22px] shrink-0">
-        <img src={photoUrl} alt="" className="h-[22px] w-[22px] rounded-full object-cover ring-1 ring-white" onError={e=>{e.target.style.display="none";}} />
-        <span className={`absolute inset-0 flex items-center justify-center rounded-full text-[8px] font-bold text-white ${c} -z-10`}>{i}</span>
+      <span className="relative h-6 w-6 shrink-0">
+        <img src={photoUrl} alt="" className="h-6 w-6 rounded-full object-cover" onError={e=>{e.target.style.display="none";}} />
+        <span className={`absolute inset-0 flex items-center justify-center rounded-full text-[9px] font-semibold ${c} -z-10`}>{i}</span>
       </span>
     );
   }
-  return <span className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full text-[8px] font-bold text-white ${c}`}>{i}</span>;
+  return <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold ${c}`}>{i}</span>;
 }
 
-/* ── Status / Client ──────────────────────────────────────────────────── */
-const ST = {
-  pendente:   { bg:"bg-amber-100 text-amber-800",    icon: Clock },
-  em_analise: { bg:"bg-blue-100 text-blue-800",      icon: SearchIcon },
-  aprovado:   { bg:"bg-emerald-100 text-emerald-800", icon: CheckCircle2 },
-  recusado:   { bg:"bg-red-100 text-red-800",        icon: XCircle },
-  concluido:  { bg:"bg-gray-100 text-gray-600",      icon: CheckCircle2 },
+/* ── Prioridade (ícone + label, sem fundo) ─────────────────────────────── */
+const PRIO = {
+  baixa:   { label: "Baixa",   icon: ArrowDown,    cls: "text-gray-400" },
+  media:   { label: "Média",   icon: Minus,         cls: "text-gray-500" },
+  alta:    { label: "Alta",    icon: ArrowUp,       cls: "text-orange-500" },
+  critica: { label: "Crítica", icon: AlertOctagon,  cls: "text-red-500" },
 };
-function StatusPill({ status }) {
-  const c = ST[status] || ST.pendente; const Icon = c.icon;
+function PriorityLabel({ prioridade }) {
+  const cfg = PRIO[prioridade?.toLowerCase()] || PRIO.baixa;
+  const Icon = cfg.icon;
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold leading-none ${c.bg}`}>
-      <Icon className="h-3 w-3" />{PEDIDO_STATUS_CONFIG[status]?.label || status}
+    <span className={`inline-flex items-center gap-1 text-[12px] font-medium ${cfg.cls}`}>
+      <Icon className="h-3.5 w-3.5" />
+      {cfg.label}
     </span>
   );
 }
 
-const CC = [
-  "bg-fuchsia-100 text-fuchsia-700","bg-sky-100 text-sky-700",
-  "bg-lime-100 text-lime-700","bg-orange-100 text-orange-700",
-  "bg-violet-100 text-violet-700","bg-rose-100 text-rose-700",
-  "bg-teal-100 text-teal-700","bg-cyan-100 text-cyan-700",
-];
-function ClientBadge({ name }) {
-  if (!name) return <span className="text-xs text-gray-300">—</span>;
-  const i = name.split("").reduce((a,c)=>a+c.charCodeAt(0),0) % CC.length;
-  return <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-medium truncate max-w-[150px] ${CC[i]}`}>{name}</span>;
+/* ── Status (dot 6px + label, fundo suave via tokens) ──────────────────── */
+const STATUS_TOKENS = {
+  em_analise: "analysis",
+  pendente:   "pending",
+  aprovado:   "approved",
+  recusado:   "rejected",
+  concluido:  "done",
+};
+
+const STATUS_BADGE_STYLES = {
+  em_analise: "bg-[hsl(var(--status-analysis-bg))] text-[hsl(var(--status-analysis))]",
+  pendente:   "bg-[hsl(var(--status-pending-bg))] text-[hsl(var(--status-pending))]",
+  aprovado:   "bg-[hsl(var(--status-approved-bg))] text-[hsl(var(--status-approved))]",
+  recusado:   "bg-[hsl(var(--status-rejected-bg))] text-[hsl(var(--status-rejected))]",
+  concluido:  "bg-[hsl(var(--status-done-bg))] text-[hsl(var(--status-done))]",
+};
+
+const STATUS_DOT_STYLES = {
+  em_analise: "bg-[hsl(var(--status-analysis))]",
+  pendente:   "bg-[hsl(var(--status-pending))]",
+  aprovado:   "bg-[hsl(var(--status-approved))]",
+  recusado:   "bg-[hsl(var(--status-rejected))]",
+  concluido:  "bg-[hsl(var(--status-done))]",
+};
+
+function StatusBadgeLocal({ status }) {
+  const label = PEDIDO_STATUS_CONFIG[status]?.label || status;
+  const badgeCls = STATUS_BADGE_STYLES[status] || STATUS_BADGE_STYLES.concluido;
+  const dotCls = STATUS_DOT_STYLES[status] || STATUS_DOT_STYLES.concluido;
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${badgeCls}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${dotCls}`} />
+      {label}
+    </span>
+  );
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   COLUMN HEADERS
+   COLUMN HEADERS — 36px, sticky
    ═══════════════════════════════════════════════════════════════════════════ */
 export function ColumnHeaders() {
   return (
-    <div className={`flex items-center ${COL.gap} ${COL.px} border-t border-gray-200 bg-gray-50/80 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400`}>
+    <div className={`flex items-center ${COL.gap} ${COL.px} ${MIN_TABLE} h-9 sticky top-0 z-[5] bg-[hsl(var(--surface))] border-b border-[hsl(var(--border-subtle))] text-[11px] font-semibold uppercase tracking-[.06em] text-gray-400 select-none`}>
       <span className={COL.cliente}>Cliente</span>
+      <span className={COL.pedido}>Pedido</span>
       <span className={COL.solicitante}>Solicitante</span>
       <span className={COL.responsavel}>Responsável</span>
       <span className={`${COL.prioridade} text-center`}>Prioridade</span>
       <span className={`${COL.status} text-center`}>Status</span>
-      <span className={`${COL.sla} text-right`}>Tempo Aberto</span>
+      <span className={`${COL.sla} text-right`}>Tempo</span>
     </div>
   );
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   GROUP HEADER
+   GROUP HEADER — 36px
    ═══════════════════════════════════════════════════════════════════════════ */
 function GroupHeader({ group, count, collapsed, onToggle }) {
+  const dotCls = STATUS_DOT_STYLES[group.key] || STATUS_DOT_STYLES.concluido;
   return (
     <button
       onClick={onToggle}
-      className="sticky top-0 z-10 flex w-full items-center gap-2.5 border-y border-gray-200 bg-white/95 backdrop-blur-sm px-5 py-3 text-left transition-colors hover:bg-gray-50/60"
+      className={`flex w-full items-center gap-2.5 ${MIN_TABLE} h-9 bg-[hsl(var(--surface-subtle))] border-y border-[hsl(var(--border-subtle))] px-5 text-left transition-colors hover:bg-[hsl(var(--row-hover))]`}
     >
       {collapsed
-        ? <ChevronRight className="h-4 w-4 text-gray-400" />
-        : <ChevronDown  className="h-4 w-4 text-gray-400" />}
-      <span className={`h-2.5 w-2.5 rounded-full ${group.dot}`} />
-      <span className="text-sm font-semibold text-gray-800">{group.label}</span>
-      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-bold text-gray-600 tabular-nums">
+        ? <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
+        : <ChevronDown  className="h-3.5 w-3.5 text-gray-400" />}
+      <span className={`h-2 w-2 rounded-full ${dotCls}`} />
+      <span className="text-[12px] font-semibold text-gray-700">{group.label}</span>
+      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-bold text-gray-500 tabular-nums">
         {count}
       </span>
     </button>
@@ -148,79 +187,89 @@ function GroupHeader({ group, count, collapsed, onToggle }) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   TICKET ROW — Cliente | Solicitante | Responsável | Prioridade | Status | SLA
+   TICKET ROW — 54px fixo
    ═══════════════════════════════════════════════════════════════════════════ */
 function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
   const done   = ["concluido","recusado"].includes(pedido.status);
   const criado = pedido.created_date || pedido.data_criacao;
+  const level  = slaLevel(criado);
 
   const rName  = getName(pedido.requester_id, pedido.requester_name);
   const rPhoto = getPhoto(pedido.requester_id);
   const aName  = getName(pedido.assignee_id, pedido.assignee_name);
   const aPhoto = getPhoto(pedido.assignee_id);
 
-  const bar =
-    pedido.prioridade === "critica" ? "before:bg-red-500" :
-    pedido.prioridade === "alta"    ? "before:bg-orange-400" : "";
-
   return (
     <button
       onClick={() => onSelect(pedido)}
       className={`
-        group relative flex w-full items-center ${COL.gap} ${COL.px} py-3.5 text-left
-        transition-all border-b border-gray-100
-        hover:bg-blue-50/30
-        before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:rounded-r
-        ${bar}
-        ${isSelected ? "bg-blue-50/50" : ""}
+        group relative flex w-full items-center ${COL.gap} ${COL.px} ${MIN_TABLE}
+        h-[54px] text-left cursor-pointer
+        transition-colors duration-[120ms]
+        border-b border-[hsl(var(--border-subtle))]
+        hover:bg-[hsl(var(--row-hover))]
+        ${isSelected
+          ? "bg-[hsl(var(--row-selected))] before:absolute before:left-0 before:top-1 before:bottom-1 before:w-0.5 before:rounded-r before:bg-[hsl(var(--primary))]"
+          : ""}
       `}
     >
       {/* Cliente */}
-      <div className={COL.cliente}>
-        <ClientBadge name={pedido.workshop_nome} />
+      <div className={`${COL.cliente} truncate text-[13px] text-gray-700`}>
+        {pedido.workshop_nome || "—"}
+      </div>
+
+      {/* Pedido (título + ID) */}
+      <div className={`${COL.pedido} min-w-0`}>
+        <p className={`text-[13.5px] font-semibold tracking-tight truncate ${done ? "text-gray-400" : "text-gray-900"}`}>
+          {pedido.titulo}
+        </p>
+        <p className="text-[11px] text-gray-400 tabular-nums leading-none mt-0.5">
+          #{pedido.id?.slice(-6).toUpperCase()}
+        </p>
       </div>
 
       {/* Solicitante */}
-      <div className={`${COL.solicitante} flex items-center gap-2`}>
+      <div className={`${COL.solicitante} flex items-center gap-2 min-w-0`}>
         <MiniAvatar name={rName} photoUrl={rPhoto} />
-        <div className="min-w-0">
-          <p className={`text-[12px] font-medium truncate ${done ? "text-gray-400" : "text-gray-800"}`}>
-            {rName}
-          </p>
-          <p className="font-mono text-[9px] text-gray-400 leading-none">#{pedido.id?.slice(-6).toUpperCase()}</p>
-        </div>
+        <span className={`text-[13px] truncate ${done ? "text-gray-400" : "text-gray-700"}`}>
+          {rName}
+        </span>
       </div>
 
       {/* Responsável */}
-      <div className={`${COL.responsavel} flex items-center gap-2`}>
+      <div className={`${COL.responsavel} flex items-center gap-2 min-w-0`}>
         {aName ? (
           <>
             <MiniAvatar name={aName} photoUrl={aPhoto} />
-            <span className={`text-[12px] font-medium truncate ${done ? "text-gray-400" : "text-gray-700"}`}>
+            <span className={`text-[13px] truncate ${done ? "text-gray-400" : "text-gray-700"}`}>
               {aName}
             </span>
           </>
         ) : (
-          <span className="text-xs text-gray-300">—</span>
+          <span className="text-[12px] text-gray-300 italic">Não atribuído</span>
         )}
       </div>
 
       {/* Prioridade */}
       <div className={`${COL.prioridade} flex justify-center`}>
-        <PriorityBadge prioridade={pedido.prioridade} />
+        <PriorityLabel prioridade={pedido.prioridade} />
       </div>
 
       {/* Status */}
       <div className={`${COL.status} flex justify-center`}>
-        <StatusPill status={pedido.status} />
+        <StatusBadgeLocal status={pedido.status} />
       </div>
 
-      {/* Tempo Aberto (SLA) */}
-      <div className={`${COL.sla} flex items-center justify-end gap-1`}>
-        <Clock className="h-3 w-3 text-gray-400" />
-        <span className={`text-[11px] tabular-nums ${slaColor(criado)}`}>
-          {timeSince(criado) || "—"}
-        </span>
+      {/* Tempo Aberto — SLA badge */}
+      <div className={`${COL.sla} flex justify-end`}>
+        {level ? (
+          <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold tabular-nums ${SLA_STYLES[level]}`}>
+            <Clock className="h-3 w-3" />
+            {timeSince(criado)}
+          </span>
+        ) : (
+          <span className="text-[11px] text-gray-300">{"—"}</span>
+        )}
       </div>
     </button>
   );
@@ -234,25 +283,29 @@ function SkeletonRows() {
     <div>
       {[0,1].map(g => (
         <React.Fragment key={g}>
-          <div className="flex items-center gap-3 border-y border-gray-200 bg-white px-5 py-3 animate-pulse">
-            <div className="h-2.5 w-2.5 rounded-full bg-gray-300" />
-            <div className="h-4 w-24 rounded bg-gray-200" />
-            <div className="h-4 w-6 rounded-full bg-gray-200" />
+          <div className="flex items-center gap-3 h-9 bg-[hsl(var(--surface-subtle))] border-y border-[hsl(var(--border-subtle))] px-5 animate-pulse">
+            <div className="h-2 w-2 rounded-full bg-gray-300" />
+            <div className="h-3.5 w-24 rounded bg-gray-200" />
+            <div className="h-3.5 w-6 rounded-full bg-gray-200" />
           </div>
           {[0,1,2].map(r => (
-            <div key={r} className={`flex items-center ${COL.gap} ${COL.px} py-3.5 border-b border-gray-100 animate-pulse`}>
-              <div className={`${COL.cliente}`}><div className="h-5 w-28 rounded bg-gray-100" /></div>
+            <div key={r} className={`flex items-center ${COL.gap} ${COL.px} h-[54px] border-b border-[hsl(var(--border-subtle))] animate-pulse`}>
+              <div className={COL.cliente}><div className="h-4 w-28 rounded bg-gray-100" /></div>
+              <div className={COL.pedido}>
+                <div className="h-4 w-40 rounded bg-gray-100 mb-1" />
+                <div className="h-3 w-16 rounded bg-gray-50" />
+              </div>
               <div className={`${COL.solicitante} flex items-center gap-2`}>
-                <div className="h-[22px] w-[22px] rounded-full bg-gray-200" />
-                <div className="h-3.5 w-20 rounded bg-gray-200" />
+                <div className="h-6 w-6 rounded-full bg-gray-200" />
+                <div className="h-3.5 w-20 rounded bg-gray-100" />
               </div>
               <div className={`${COL.responsavel} flex items-center gap-2`}>
-                <div className="h-[22px] w-[22px] rounded-full bg-gray-200" />
-                <div className="h-3.5 w-20 rounded bg-gray-200" />
+                <div className="h-6 w-6 rounded-full bg-gray-200" />
+                <div className="h-3.5 w-20 rounded bg-gray-100" />
               </div>
-              <div className={`${COL.prioridade} flex justify-center`}><div className="h-5 w-16 rounded-full bg-gray-100" /></div>
-              <div className={`${COL.status} flex justify-center`}><div className="h-6 w-20 rounded-full bg-gray-100" /></div>
-              <div className={`${COL.sla} flex justify-end`}><div className="h-4 w-14 rounded bg-gray-100" /></div>
+              <div className={`${COL.prioridade} flex justify-center`}><div className="h-4 w-14 rounded bg-gray-100" /></div>
+              <div className={`${COL.status} flex justify-center`}><div className="h-5 w-20 rounded-full bg-gray-100" /></div>
+              <div className={`${COL.sla} flex justify-end`}><div className="h-5 w-16 rounded-md bg-gray-100" /></div>
             </div>
           ))}
         </React.Fragment>
@@ -313,7 +366,7 @@ export default function PedidoInternoList({ pedidos, onSelect, isLoading, select
             />
             {!collapsed[group.key] && (
               items.length === 0 ? (
-                <div className="px-6 py-5 text-sm text-gray-400 italic border-b border-gray-100">Nenhum pedido</div>
+                <div className={`${COL.px} py-5 text-sm text-gray-400 italic border-b border-[hsl(var(--border-subtle))]`}>Nenhum pedido</div>
               ) : (
                 items.map(pedido => (
                   <TicketRow
