@@ -27,7 +27,7 @@ function ScopeSelector({ value, onChange }) {
   const Icon = current.icon;
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-8 w-[160px] bg-white border-gray-200 shadow-sm text-xs font-medium text-gray-700">
+      <SelectTrigger className="h-8 w-[160px] bg-white border-gray-200 shadow-sm text-[12.5px] font-medium text-gray-700">
         <div className="flex items-center gap-2">
           <Icon className="h-3.5 w-3.5 text-gray-500" />
           <span>{current.label}</span>
@@ -35,7 +35,7 @@ function ScopeSelector({ value, onChange }) {
       </SelectTrigger>
       <SelectContent>
         {SCOPE_OPTIONS.map(opt => (
-          <SelectItem key={opt.key} value={opt.key} className="text-xs">{opt.label}</SelectItem>
+          <SelectItem key={opt.key} value={opt.key} className="text-[12.5px]">{opt.label}</SelectItem>
         ))}
       </SelectContent>
     </Select>
@@ -142,7 +142,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
   const clearFilters = () => { setSearch(""); setStatusFilter("all"); };
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white rounded-lg border border-[hsl(var(--border-subtle))] shadow-[0_1px_2px_rgba(16,24,40,.04)]">
       
       {/* Modais de Detalhe e Criação */}
       <PedidoInternoModal open={!!selectedPedido} onClose={() => setSelectedPedido(null)} size="wide">
@@ -164,7 +164,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
       <Tabs value={activeList} onValueChange={setActiveList} className="flex min-h-0 flex-1 flex-col">
         
         {/* Top Header com Tabs e Métricas Rápidas */}
-        <div className="shrink-0 bg-white px-6 pt-3 border-b border-gray-200 flex items-center justify-between">
+        <div className="shrink-0 bg-[hsl(var(--surface))] px-6 pt-3 border-b border-[hsl(var(--border-subtle))] flex items-center justify-between shadow-[0_1px_2px_rgba(16,24,40,.04)] rounded-t-lg">
           <TabsList className="flex h-9 gap-6 bg-transparent p-0">
             <TabsTrigger value="pedidos" className="h-9 rounded-none border-b-2 border-transparent px-1 pb-2 text-xs font-semibold text-gray-500 hover:text-gray-900 data-[state=active]:border-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-transparent shadow-none">
               Pedidos Internos
@@ -196,7 +196,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
 
         {/* Toolbar de Filtros */}
         {activeList === "pedidos" && (
-          <div className="flex items-center gap-3 px-6 py-2.5 bg-gray-50/50 border-b border-gray-200 shrink-0">
+          <div className="flex items-center gap-3 px-6 py-1.5 bg-gray-50/50 border-t border-[hsl(var(--border-subtle))] shrink-0">
             <ScopeSelector value={scope} onChange={setScope} />
 
             <div className="relative w-[340px]">
@@ -207,27 +207,27 @@ export default function PedidosInternosTab({ workshopId, user }) {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar por título, ID, cliente ou solicitante..."
-                className="h-8 w-full rounded-md border border-gray-200 bg-white pl-9 pr-10 text-xs text-gray-800 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
+                className="h-8 w-full rounded-md border border-[hsl(var(--border-subtle))] bg-[hsl(var(--surface-subtle))] pl-9 pr-10 text-[12.5px] text-gray-800 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
               />
               <div className="absolute right-2 top-1/2 -translate-y-1/2">
                 {!search && <span className="rounded border bg-gray-50 px-1 py-0.5 text-[9px] font-bold text-gray-400">/</span>}
-                {search && <button onClick={clearFilters} className="text-gray-400 hover:text-gray-700"><X className="h-3.5 w-3.5" /></button>}
+                {search && <button onClick={clearFilters} className="text-gray-400 hover:text-gray-700 hover:bg-[hsl(var(--row-hover))] text-[12.5px] rounded"><X className="h-3.5 w-3.5" /></button>}
               </div>
             </div>
 
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-8 w-[140px] bg-white border-gray-200 shadow-sm text-xs font-medium text-gray-700">
+              <SelectTrigger className="h-8 w-[140px] bg-white border-gray-200 shadow-sm text-[12.5px] font-medium text-gray-700">
                 <SelectValue placeholder="Todos status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all" className="text-xs">Todos status</SelectItem>
-                {PEDIDO_STATUS_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>)}
+                <SelectItem value="all" className="text-[12.5px]">Todos status</SelectItem>
+                {PEDIDO_STATUS_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value} className="text-[12.5px]">{opt.label}</SelectItem>)}
               </SelectContent>
             </Select>
 
             <div className="flex-1" />
 
-            <span className="text-xs font-semibold text-gray-400">
+            <span className="text-[12.5px] font-semibold text-gray-400">
               {filteredPedidos.length} {filteredPedidos.length === 1 ? "pedido" : "pedidos"}
             </span>
           </div>
