@@ -41,7 +41,7 @@ const StepperStep = memo(function StepperStep({
     <li
       className={cn(
         "relative flex min-w-0 flex-1 items-center justify-center overflow-hidden",
-        "h-11 px-4 py-2 text-xs font-semibold tracking-wide select-none sm:text-sm transition-all",
+        "h-11 px-4 py-2 text-xs font-semibold tracking-wide select-none sm:text-sm transition-all duration-200",
         "hover:-translate-y-[1px] hover:brightness-[1.04]",
         STATUS_CLASS[status]
       )}
@@ -49,15 +49,16 @@ const StepperStep = memo(function StepperStep({
         clipPath, 
         WebkitClipPath: clipPath, 
         zIndex,
+        filter: status === "active" ? "drop-shadow(0px 2px 6px rgba(37,99,235,0.4))" : undefined,
         marginLeft: isFirst ? undefined : `-${CHEVRON_PX / 2}px`,
         paddingLeft: isFirst ? "16px" : `${CHEVRON_PX + 12}px`,
         paddingRight: isLast ? "16px" : `${CHEVRON_PX + 12}px`,
       }}
       aria-current={status === "active" ? "step" : undefined}
     >
-      {/* Elemento do brilho duplo do Uncharted */}
+      {/* Brilho duplo ativado via CSS limpo e otimizado via GPU */}
       {status === "active" && (
-        <span aria-hidden className="step-shimmer absolute inset-0 pointer-events-none z-0" />
+        <span aria-hidden className="step-shimmer z-0" />
       )}
       
       {status === "done" && (
@@ -65,7 +66,7 @@ const StepperStep = memo(function StepperStep({
       )}
       
       {status === "active" && (
-        <span aria-hidden className="mr-1.5 size-2 shrink-0 rounded-full bg-white animate-pulse" />
+        <span aria-hidden className="mr-1.5 size-2 shrink-0 rounded-full bg-white animate-pulse z-10" />
       )}
       
       <span className="relative z-10 truncate">{label}</span>
