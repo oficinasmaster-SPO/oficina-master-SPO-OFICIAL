@@ -157,6 +157,16 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* ── Anti-layout-shift (dupla compensação) ──
+   Radix (Dialog/Select) usa react-remove-scroll que injeta `padding-right`
+   inline no <body> ao bloquear o scroll, para compensar a remoção da scrollbar.
+   Como o <html> já tem `scrollbar-gutter: stable` (espaço sempre reservado),
+   esse padding duplica o espaço reservado e cria uma faixa vazia à direita.
+   Neutralizamos com !important para sobrepor o estilo inline. */
+body {
+  padding-right: 0 !important;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
