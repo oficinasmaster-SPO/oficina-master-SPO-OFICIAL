@@ -406,7 +406,7 @@ function CommentInput({ entityType, entityId, workshopId, parentCommentId = null
           ))}
         </div>
       )}
-      <div className="w-[90%] mx-auto">
+      <div>
         <div className={cn("flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white transition-all focus-within:ring-2 focus-within:ring-blue-500/10 focus-within:border-blue-400 px-2 py-1.5")}>
           <button onClick={() => setIsInternal(!isInternal)}
             className={cn(
@@ -422,6 +422,7 @@ function CommentInput({ entityType, entityId, workshopId, parentCommentId = null
               {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
             </span>
           </label>
+          <div className="w-px h-5 bg-gray-200 shrink-0" />
           <textarea
             ref={textareaRef}
             value={content}
@@ -429,7 +430,7 @@ function CommentInput({ entityType, entityId, workshopId, parentCommentId = null
             onKeyDown={handleKeyDown}
             placeholder={compact ? "Responder..." : "Digite um comentário..."}
             rows={1}
-            className="flex-1 min-w-0 resize-none border-0 bg-transparent text-[13px] text-gray-800 placeholder:text-gray-400 placeholder:text-center focus:outline-none focus:ring-0 py-1.5 px-2 leading-[1.4] text-left"
+            className="flex-1 min-w-0 resize-none border-0 bg-transparent text-[13px] text-gray-800 placeholder:text-gray-400 placeholder:text-left focus:outline-none focus:ring-0 py-1.5 px-2 leading-[1.4] text-left"
             style={{ minHeight: "36px", maxHeight: "120px" }}
           />
           {onCancel && (<button onClick={onCancel} className="px-2 h-7 rounded-md text-[12px] font-medium text-gray-500 hover:bg-gray-100 transition-colors shrink-0">Cancelar</button>)}
