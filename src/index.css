@@ -153,6 +153,7 @@ button:focus-visible {
     @apply border-border outline-ring/50;
   }
   html {
+    overflow-y: scroll;
     scrollbar-gutter: stable;
   }
   body {
