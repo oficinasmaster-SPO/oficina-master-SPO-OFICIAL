@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
@@ -8,7 +8,6 @@ import {
   ChevronDown, ChevronRight, MoreHorizontal, Copy, FileText,
   Check, Link2, Trash2, Reply
 } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import useEmployeeResolver from "@/hooks/useEmployeeResolver";
@@ -331,6 +330,18 @@ function CommentInput({ entityType, entityId, workshopId, parentCommentId = null
   const [isInternal, setIsInternal] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const textareaRef = useRef(null);
+
+  const autoResize = useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "0";
+    var scrollH = el.scrollHeight;
+    var maxH = 120;
+    el.style.height = Math.min(scrollH, maxH) + "px";
+  }, []);
+
+  useEffect(() => { autoResize(); }, [content, autoResize]);
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
@@ -383,12 +394,9 @@ function CommentInput({ entityType, entityId, workshopId, parentCommentId = null
   const hasContent = content.trim().length > 0;
 
   return (
-    <div className={cn("rounded-lg border border-gray-200 bg-white transition-all focus-within:ring-2 focus-within:ring-blue-500/10 focus-within:border-blue-400", compact ? "" : "mt-3")}>
-      <Textarea value={content} onChange={(e) => setContent(e.target.value)} onKeyDown={handleKeyDown}
-        placeholder={compact ? "Responder..." : "Digite um comentário..."}
-        className="border-0 focus-visible:ring-0 resize-none min-h-[40px] text-[13px] px-3 py-2 text-gray-800 placeholder:text-gray-400" />
+    <div>
       {attachments.length > 0 && (
-        <div className="flex flex-wrap gap-2 px-3 pb-1 animate-in fade-in">
+        <div className="flex flex-wrap gap-2 px-1 pb-2 animate-in fade-in">
           {attachments.map((att, idx) => (
             <span key={idx} className="inline-flex items-center gap-1.5 text-[12px] text-gray-700 bg-gray-50 border border-gray-200 px-2 py-1 rounded-md">
               <FileText className="w-3.5 h-3.5 text-gray-400" />
@@ -398,8 +406,8 @@ function CommentInput({ entityType, entityId, workshopId, parentCommentId = null
           ))}
         </div>
       )}
-      <div className="flex items-center gap-1 px-2 py-1.5">
-        <label className="cursor-pointer">
+      <div className={cn("flex items-end gap-1 rounded-lg border border-gray-200 bg-white transition-all focus-within:ring-2 focus-within:ring-blue-500/10 focus-within:border-blue-400 px-1.5 py-1", compact ? "" : "")}>
+        <label className="cursor-pointer shrink-0">
           <input type="file" multiple className="hidden" disabled={isUploading} onChange={(e) => handleFileUpload(Array.from(e.target.files || []))} />
           <span className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
             {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
@@ -407,26 +415,34 @@ function CommentInput({ entityType, entityId, workshopId, parentCommentId = null
         </label>
         <button onClick={() => setIsInternal(!isInternal)}
           className={cn(
-            "inline-flex items-center gap-1.5 px-2 h-7 rounded-md text-[12px] font-medium transition-colors",
+            "inline-flex items-center gap-1.5 px-2 h-7 rounded-md text-[12px] font-medium transition-colors shrink-0",
             isInternal ? "text-amber-700 bg-amber-50" : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
           )}
           title={isInternal ? "Nota interna (clique para desativar)" : "Marcar como nota interna"}>
           <div className={cn("w-2 h-2 rounded-full", isInternal ? "bg-amber-500" : "border border-gray-400")} /> Interno
         </button>
-        <div className="ml-auto flex items-center gap-1.5">
-          {onCancel && (<button onClick={onCancel} className="px-2 h-7 rounded-md text-[12px] font-medium text-gray-500 hover:bg-gray-100 transition-colors">Cancelar</button>)}
-          <span className="text-[10px] text-gray-300 hidden sm:inline select-none">Ctrl+↵</span>
-          <button onClick={handleSubmit} disabled={!hasContent || createMutation.isPending}
-            className={cn(
-              "flex items-center justify-center w-7 h-7 p-0 rounded-md transition-all duration-200",
-              hasContent
-                ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow"
-                : "bg-gray-100 text-gray-300 cursor-default"
-            )}
-            title="Enviar comentário">
-            {createMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-          </button>
-        </div>
+        <textarea
+          ref={textareaRef}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={compact ? "Responder..." : "Digite um comentário..."}
+          rows={1}
+          className="flex-1 min-w-0 resize-none border-0 bg-transparent text-[13px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-0 py-1.5 px-2 leading-[1.4]"
+          style={{ minHeight: "36px", maxHeight: "120px" }}
+        />
+        {onCancel && (<button onClick={onCancel} className="px-2 h-7 rounded-md text-[12px] font-medium text-gray-500 hover:bg-gray-100 transition-colors shrink-0">Cancelar</button>)}
+        <span className="text-[10px] text-gray-300 hidden sm:inline select-none shrink-0 pb-1.5">Ctrl+↵</span>
+        <button onClick={handleSubmit} disabled={!hasContent || createMutation.isPending}
+          className={cn(
+            "flex items-center justify-center w-7 h-7 p-0 rounded-md transition-all duration-200 shrink-0",
+            hasContent
+              ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow"
+              : "bg-gray-100 text-gray-300 cursor-default"
+          )}
+          title="Enviar comentário">
+          {createMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+        </button>
       </div>
     </div>
   );
@@ -576,7 +592,7 @@ export default function ActivityFeed({
   }, [highlightedId]);
 
   return (
-    <div className="flex flex-col mx-auto w-full max-w-[720px] relative">
+    <div className="flex flex-col w-full max-w-[85%] relative">
       <div className="overflow-x-hidden px-2 pb-2">
         {isLoading ? (
           <TimelineSkeleton />
@@ -639,7 +655,7 @@ export default function ActivityFeed({
         )}
       </div>
       {showComments && !isLoading && (
-        <div className="pt-2 pb-1 px-2 w-full mt-auto bg-white/95 backdrop-blur-sm sticky bottom-0 z-30 shadow-[0_-4px_12px_rgba(0,0,0,0.02)] border-t border-gray-100">
+        <div className="pt-2 pb-1 px-2 w-full mt-auto sticky bottom-0 z-30 border-t border-gray-100 bg-white">
           <CommentInput entityType={entityType} entityId={entityId} workshopId={workshopId}
             getName={getName} getPhoto={getPhoto}
             onSubmitted={(newId) => { if(newId) setPendingHighlightId(newId); }}
