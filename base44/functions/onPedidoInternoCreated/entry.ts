@@ -73,6 +73,20 @@ Deno.serve(async (req) => {
       } catch { /* não crítico */ }
     }
 
+    // ── Buscar Workshop para herdar consultor_principal ──
+    let consultorPrincipalId = null;
+    let consultorPrincipalNome = null;
+    if (pedido.workshop_id) {
+      try {
+        const wsItems = await base44.asServiceRole.entities.Workshop.filter({ id: pedido.workshop_id });
+        const ws = wsItems?.[0];
+        if (ws?.consultor_principal_id) {
+          consultorPrincipalId = ws.consultor_principal_id;
+          consultorPrincipalNome = ws.consultor_principal_nome || null;
+        }
+      } catch { /* não crítico */ }
+    }
+
     const fuData = {
       workshop_id: pedido.workshop_id,
       workshop_name: pedido.workshop_nome || null,
@@ -92,6 +106,8 @@ Deno.serve(async (req) => {
       is_completed: false,
       notes: `Follow-up de pedido interno: ${pedido.titulo || ''}`,
       consulting_firm_id: consultingFirmId,
+      consultor_principal_id: consultorPrincipalId,
+      consultor_principal_nome: consultorPrincipalNome,
     };
 
     const novoFU = await base44.asServiceRole.entities.FollowUpReminder.create(fuData);
