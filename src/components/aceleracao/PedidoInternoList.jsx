@@ -170,17 +170,15 @@ function GroupHeader({ group, count, collapsed, onToggle }) {
       tabIndex={0}
       onClick={onToggle}
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onToggle(); } }}
-      className={`flex items-center ${MIN_TABLE} py-3 px-4 cursor-pointer select-none transition-all duration-150 hover:bg-[hsl(var(--surface-subtle))] ${collapsed ? "opacity-50" : ""}`}
+      className={`flex items-center ${MIN_TABLE} py-2.5 px-4 cursor-pointer select-none transition-all duration-150 bg-gray-50 hover:bg-gray-100 ${collapsed ? "opacity-50" : ""}`}
     >
-      <div className="h-px flex-1 bg-[hsl(var(--border-subtle))]" />
-      <div className="flex items-center gap-2 px-4 shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
         <span className={`h-[7px] w-[7px] rounded-full ${dotCls}`} />
         <span className="text-[12px] font-semibold text-gray-600 tracking-wide">{group.label}</span>
         <span className="text-[11px] text-gray-400 font-medium tabular-nums">
           · {count} {count === 1 ? "pedido" : "pedidos"}
         </span>
       </div>
-      <div className="h-px flex-1 bg-[hsl(var(--border-subtle))]" />
     </div>
   );
 }
