@@ -3,15 +3,15 @@ import {
   FileText, FileImage, FileSpreadsheet, FileArchive, 
   FileAudio, FileVideo, File, Link as LinkIcon, 
   ChevronDown, ChevronRight, Download, Maximize, 
-  RotateCw, RotateCcw, ZoomIn, ZoomOut,
-  ChevronLeft, ExternalLink, X, Loader2, Hand
+  RotateCw, ChevronLeft, ExternalLink, X, Loader2,
+  ZoomIn, ZoomOut, RotateCcw, Hand
 } from "lucide-react";
 
 // ============================================================================
 // IMPORTS DO REACT-PDF
 // ============================================================================
 import { Document, Page, pdfjs } from 'react-pdf';
-// Configuração obrigatória do Worker do Mozilla PDF.js (usando CDN para facilitar)
+// Configuração obrigatória do Worker do Mozilla PDF.js
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 
@@ -23,6 +23,7 @@ const formatBytes = (bytes, decimals = 1) => {
   if (typeof bytes === "string" && /[a-zA-Z]/.test(bytes)) return bytes;
   const numericBytes = Number(bytes);
   if (isNaN(numericBytes) || numericBytes <= 0) return "0 B";
+
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
   const sizes = ["B", "KB", "MB", "GB", "TB"];
@@ -51,27 +52,24 @@ const getFileMeta = (mimeType, extension) => {
   return { icon: File, color: "text-gray-500", bg: "bg-gray-100" };
 };
 
-// ============================================================================
-// COMPONENTE: PDF VIEWER (React-PDF)
-// ============================================================================
-function PdfViewer({ url, name = "documento.pdf" }) {
-  const [numPages, setNumPages] = useState(null);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [scale, setScale] = useState(1.0);
-  const [rotate, setRotate] = useState(0);
 
-  // Estados para Arrastar (Pan / Mãozinha)
+// ============================================================================
+// COMPONENTE: IMAGE VIEWER (Com Pan/Mãozinha, Zoom e Rotação)
+// ============================================================================
+function ImageViewer({ url, name, rotation }) {
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
-
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const containerRef = useRef(null);
 
-  function onDocumentLoadSuccess({ numPages }) {
-    setNumPages(numPages);
-    setPageNumber(1);
-  }
+  // Reseta estado quando a imagem muda
+  useEffect(() => {
+    setScale(1);
+    setPosition({ x: 0, y: 0 });
+  }, [url]);
 
-  // ── 1. LÓGICA DE ZOOM VIA RODA DO MOUSE (Ctrl + Scroll / Pinch) ──
+  // Lógica de Zoom via Roda do Mouse / Pinch (Trackpad)
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -80,7 +78,7 @@ function PdfViewer({ url, name = "documento.pdf" }) {
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
         const delta = e.deltaY < 0 ? 0.15 : -0.15;
-        setScale(prev => Math.min(Math.max(prev + delta, 0.5), 3.0));
+        setScale((prev) => Math.min(Math.max(prev + delta, 0.5), 5.0));
       }
     };
 
@@ -88,7 +86,86 @@ function PdfViewer({ url, name = "documento.pdf" }) {
     return () => container.removeEventListener('wheel', handleWheel);
   }, []);
 
-  // ── 2. LÓGICA DA MÃOZINHA DE ARRASTAR (DRAGGING) ──
+  // Lógica da Mãozinha de Arrastar (Pan / Infinite Canvas)
+  const handleMouseDown = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    setPosition({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y,
+    });
+  };
+
+  const handleMouseUp = () => setIsDragging(false);
+
+  return (
+    <div
+      ref={containerRef}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      className={`w-full h-full flex items-center justify-center overflow-hidden relative select-none bg-gray-50/50 ${
+        isDragging ? 'cursor-grabbing' : 'cursor-grab'
+      }`}
+    >
+      {/* Dica visual flutuante (Desaparece após interação ou sutil na tela) */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 bg-black/60 backdrop-blur-md rounded-full text-white/90 text-[11px] font-medium pointer-events-none z-10 shadow-lg">
+        <Hand className="w-3.5 h-3.5" /> Clique e arraste • Ctrl + Scroll para Zoom
+      </div>
+
+      {/* A imagem centralizada respondendo aos eventos do mouse via Transformações */}
+      <img
+        src={url}
+        alt={name}
+        style={{
+          transform: `translate(${position.x}px, ${position.y}px) scale(${scale}) rotate(${rotation}deg)`,
+          transition: isDragging ? 'none' : 'transform 0.15s ease-out', // Suavidade apenas quando não está arrastando
+        }}
+        className="max-w-full max-h-full object-contain pointer-events-none shadow-md rounded-sm"
+      />
+    </div>
+  );
+}
+
+
+// ============================================================================
+// COMPONENTE: PDF VIEWER (Com Pan/Mãozinha e Zoom no Mouse)
+// ============================================================================
+function PdfViewer({ url, name = "documento.pdf" }) {
+  const [numPages, setNumPages] = useState(null);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [scale, setScale] = useState(1.0);
+  const [rotate, setRotate] = useState(0);
+
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
+  const containerRef = useRef(null);
+
+  function onDocumentLoadSuccess({ numPages }) {
+    setNumPages(numPages);
+    setPageNumber(1);
+  }
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const handleWheel = (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? 0.15 : -0.15;
+        setScale(prev => Math.min(Math.max(prev + delta, 0.5), 3.0));
+      }
+    };
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, []);
+
   const handleMouseDown = (e) => {
     if (!containerRef.current) return;
     setIsDragging(true);
@@ -111,7 +188,6 @@ function PdfViewer({ url, name = "documento.pdf" }) {
 
   const handleMouseUp = () => setIsDragging(false);
 
-  // Handlers de Zoom e Rotação manuais
   const handleZoomIn = () => setScale(prev => Math.min(prev + 0.25, 3.0));
   const handleZoomOut = () => setScale(prev => Math.max(prev - 0.25, 0.5));
   const handleResetZoom = () => { setScale(1.0); setRotate(0); };
@@ -119,104 +195,46 @@ function PdfViewer({ url, name = "documento.pdf" }) {
 
   return (
     <div className="flex flex-col items-center w-full h-full bg-gray-100/70 rounded-lg border border-gray-200 overflow-hidden select-none">
-
-      {/* ── TOOLBAR SUPERIOR ── */}
       <div className="flex flex-wrap items-center justify-between bg-white/95 backdrop-blur border-b border-gray-200 w-full px-4 py-2 shrink-0 z-10 shadow-sm gap-2">
-
-        {/* Paginação */}
         <div className="flex items-center gap-1">
-          <button
-            disabled={pageNumber <= 1}
-            onClick={() => setPageNumber(p => p - 1)}
-            className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 transition-colors"
-            title="Página Anterior"
-          >
+          <button disabled={pageNumber <= 1} onClick={() => setPageNumber(p => p - 1)} className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 transition-colors" title="Página Anterior">
             <ChevronLeft className="w-4 h-4 text-gray-600" />
           </button>
-
           <span className="text-xs font-medium text-gray-600 tabular-nums px-1">
             Página {pageNumber} de {numPages || '--'}
           </span>
-
-          <button
-            disabled={pageNumber >= numPages}
-            onClick={() => setPageNumber(p => p + 1)}
-            className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 transition-colors"
-            title="Próxima Página"
-          >
+          <button disabled={pageNumber >= numPages} onClick={() => setPageNumber(p => p + 1)} className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 transition-colors" title="Próxima Página">
             <ChevronRight className="w-4 h-4 text-gray-600" />
           </button>
         </div>
 
-        {/* Zoom e Controles */}
         <div className="flex items-center gap-1 border-x border-gray-200 px-3">
-          <button
-            disabled={scale <= 0.5}
-            onClick={handleZoomOut}
-            className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 transition-colors text-gray-600"
-            title="Reduzir Zoom (-25%)"
-          >
+          <button disabled={scale <= 0.5} onClick={handleZoomOut} className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 transition-colors text-gray-600" title="Reduzir Zoom (-25%)">
             <ZoomOut className="w-4 h-4" />
           </button>
-
-          <span className="text-xs font-semibold text-gray-700 w-12 text-center tabular-nums">
-            {Math.round(scale * 100)}%
-          </span>
-
-          <button
-            disabled={scale >= 3.0}
-            onClick={handleZoomIn}
-            className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 transition-colors text-gray-600"
-            title="Aumentar Zoom (+25%)"
-          >
+          <span className="text-xs font-semibold text-gray-700 w-12 text-center tabular-nums">{Math.round(scale * 100)}%</span>
+          <button disabled={scale >= 3.0} onClick={handleZoomIn} className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 transition-colors text-gray-600" title="Aumentar Zoom (+25%)">
             <ZoomIn className="w-4 h-4" />
           </button>
-
-          <button
-            onClick={handleResetZoom}
-            className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors ml-1"
-            title="Resetar Posição e Zoom"
-          >
+          <button onClick={handleResetZoom} className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors ml-1" title="Resetar Posição e Zoom">
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
-
-          <button
-            onClick={handleRotate}
-            className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors"
-            title="Rotacionar 90°"
-          >
+          <button onClick={handleRotate} className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors" title="Rotacionar 90°">
             <RotateCw className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Dica visual + Download */}
         <div className="flex items-center gap-3">
           <span className="hidden sm:flex items-center gap-1 text-[11px] text-gray-400 font-medium">
             <Hand className="w-3.5 h-3.5" /> Clique e arraste • Ctrl + Scroll
           </span>
-
-          <a
-            href={url}
-            download={name}
-            className="p-1.5 rounded hover:bg-gray-100 text-gray-600 transition-colors"
-            title="Fazer Download do PDF"
-          >
+          <a href={url} download={name} className="p-1.5 rounded hover:bg-gray-100 text-gray-600 transition-colors" title="Fazer Download do PDF">
             <Download className="w-4 h-4" />
           </a>
         </div>
       </div>
 
-      {/* ── ÁREA DO DOCUMENTO (Com Pan/Mãozinha) ── */}
-      <div
-        ref={containerRef}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        className={`flex-1 overflow-auto w-full flex justify-center p-4 transition-colors ${
-          isDragging ? 'cursor-grabbing' : 'cursor-grab'
-        }`}
-      >
+      <div ref={containerRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} className={`flex-1 overflow-auto w-full flex justify-center p-4 transition-colors ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}>
         <Document
           file={url}
           onLoadSuccess={onDocumentLoadSuccess}
@@ -233,24 +251,25 @@ function PdfViewer({ url, name = "documento.pdf" }) {
             </div>
           }
         >
-          <Page
-            pageNumber={pageNumber}
-            scale={scale}
-            rotate={rotate}
-            renderTextLayer={false}
-            renderAnnotationLayer={false}
-            className="shadow-xl rounded-sm overflow-hidden border border-gray-200 pointer-events-none transition-all duration-150"
-          />
+          <Page pageNumber={pageNumber} scale={scale} rotate={rotate} renderTextLayer={false} renderAnnotationLayer={false} className="shadow-xl rounded-sm overflow-hidden border border-gray-200 pointer-events-none transition-all duration-150" />
         </Document>
       </div>
     </div>
   );
 }
 
+
 // ============================================================================
 // COMPONENTE: DRAWER DE PREVIEW
 // ============================================================================
 function FileViewerDrawer({ files, currentIndex, onClose, onChangeIndex }) {
+  const [rotation, setRotation] = useState(0);
+
+  // Reseta rotação ao trocar de arquivo
+  useEffect(() => {
+    setRotation(0);
+  }, [currentIndex]);
+
   if (!files || files.length === 0 || currentIndex === null) return null;
   const currentFile = files[currentIndex];
   if (!currentFile) return null;
@@ -259,14 +278,14 @@ function FileViewerDrawer({ files, currentIndex, onClose, onChangeIndex }) {
   const isPdf =
     currentFile.extension?.toLowerCase() === 'pdf' ||
     currentFile.mimeType?.includes('pdf') ||
-    currentFile.name?.toLowerCase().endsWith('.pdf'); // Reforço garantido
+    currentFile.name?.toLowerCase().endsWith('.pdf');
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-3xl bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right-8 duration-300">
+      <div className="w-full max-w-4xl bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right-8 duration-300">
         
         {/* Header do Drawer */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 z-20 bg-white">
           <div className="min-w-0 pr-4">
             <h2 className="text-sm font-semibold text-gray-800 truncate">{currentFile.name}</h2>
             <p className="text-xs text-gray-500 mt-0.5">
@@ -278,7 +297,7 @@ function FileViewerDrawer({ files, currentIndex, onClose, onChangeIndex }) {
               <Download className="w-4 h-4" />
             </a>
             {isImage && (
-              <button className="p-2 hover:bg-gray-100 rounded-full transition-colors" title="Rotacionar">
+              <button onClick={() => setRotation(r => r + 90)} className="p-2 hover:bg-gray-100 rounded-full transition-colors" title="Rotacionar">
                 <RotateCw className="w-4 h-4" />
               </button>
             )}
@@ -290,21 +309,23 @@ function FileViewerDrawer({ files, currentIndex, onClose, onChangeIndex }) {
         </div>
 
         {/* Content Viewer */}
-        <div className="flex-1 bg-gray-50/50 p-6 flex items-center justify-center relative overflow-hidden">
+        <div className="flex-1 bg-gray-50/50 flex items-center justify-center relative overflow-hidden">
           
-          {/* Se for Imagem */}
+          {/* Visualizador de Imagem Avançado */}
           {isImage ? (
-            <img src={currentFile.url} alt={currentFile.name} className="max-w-full max-h-full object-contain rounded-md shadow-sm" />
+            <ImageViewer url={currentFile.url} name={currentFile.name} rotation={rotation} />
           ) 
           
-          /* Se for PDF (Usando react-pdf) */
+          /* Visualizador de PDF Avançado */
           : isPdf ? (
-            <PdfViewer url={currentFile.url} name={currentFile.name} />
+            <div className="w-full h-full p-6">
+              <PdfViewer url={currentFile.url} name={currentFile.name} />
+            </div>
           ) 
           
-          /* Fallback para outros arquivos (Excel, Word, Zip, etc) */
+          /* Fallback para outros arquivos */
           : (
-            <div className="flex flex-col items-center justify-center text-gray-400 bg-white border border-gray-200 rounded-xl p-12 shadow-sm">
+            <div className="flex flex-col items-center justify-center text-gray-400 bg-white border border-gray-200 rounded-xl p-12 shadow-sm m-6">
               <File className="w-16 h-16 mb-4 opacity-50" />
               <p className="text-sm font-medium text-gray-600">{currentFile.name}</p>
               <p className="text-xs mt-1">Pré-visualização visual não disponível.</p>
@@ -339,26 +360,10 @@ function FileViewerDrawer({ files, currentIndex, onClose, onChangeIndex }) {
   );
 }
 
+
 // ============================================================================
 // COMPONENTE PRINCIPAL: ATTACHMENT GALLERY 
 // ============================================================================
-/**
- * @typedef {Object} Attachment
- * @property {string} id
- * @property {string} url
- * @property {string} name
- * @property {'image'|'document'|'link'} type
- * @property {string} [mimeType]
- * @property {number} [size]
- * @property {string} [extension]
- * @property {string} [createdBy]
- * @property {string} [createdAt] - ISO Date
- * @property {string} [origin] - Ex: "Solicitação", "Comentário"
- */
-
-/**
- * @param {{ files: Attachment[] }} props
- */
 export default function AttachmentGallery({ files = [] }) {
   const [expanded, setExpanded] = useState({ images: true, documents: true, links: true });
   const [preview, setPreview] = useState({ isOpen: false, list: [], currentIndex: null });
