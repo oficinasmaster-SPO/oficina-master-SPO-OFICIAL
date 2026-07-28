@@ -1,12 +1,3 @@
-/**
- * ActivityFeed — Timeline unificada cronológica (Padrão Enterprise SaaS).
- *
- * Últimas Correções:
- * - Fim do Double Scrollbar: Remoção de maxHeight e overflow-y-auto. O componente flui naturalmente.
- * - Sticky Contexto: Footer se fixa na base da página pai.
- * - Conteúdo Limitado, Feed Fluido: TimelineContent = max-w-[760px], mas Timeline = w-full.
- * - Microinterações: Feedback de sucesso no botão de envio e placeholder humanizado.
- */
 import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -398,7 +389,6 @@ function CommentInput({ entityType, entityId, workshopId, parentCommentId = null
   const [attachments, setAttachments] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   
-  // Feedback visual de sucesso
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const textareaRef = useRef(null);
 
@@ -481,8 +471,9 @@ function CommentInput({ entityType, entityId, workshopId, parentCommentId = null
           ))}
         </div>
       )}
-      {/* ⚠️ Totalmente sem bordas! Apenas integrado ao fundo com espaçamentos refinados */}
-      <div className={cn("max-w-[760px] w-full flex items-center gap-1.5 bg-transparent transition-colors py-1", compact ? "" : "mt-2")}>
+      
+      {/* ⚠️ MUDANÇAS AQUI: bordas arredondadas (rounded-[20px]), paddings bem mais sutis, sombra leve, sem emoji no texto */}
+      <div className={cn("max-w-[760px] w-full flex items-center gap-1.5 rounded-[20px] border border-gray-200/80 bg-white shadow-sm transition-all focus-within:border-gray-300 focus-within:shadow px-1.5 py-1")}>
         
         <button onClick={() => setIsInternal(!isInternal)}
           className={cn(
@@ -492,34 +483,38 @@ function CommentInput({ entityType, entityId, workshopId, parentCommentId = null
           title={isInternal ? "Nota interna (clique para desativar)" : "Marcar como nota interna"}>
           <div className={cn("w-2 h-2 rounded-full", isInternal ? "bg-amber-500" : "border border-gray-400")} /> Interno
         </button>
+        
         <label className="cursor-pointer shrink-0">
           <input type="file" multiple className="hidden" disabled={isUploading} onChange={(e) => handleFileUpload(Array.from(e.target.files || []))} />
           <span className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
             {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
           </span>
         </label>
+        
         <div className="w-px h-5 bg-gray-200 shrink-0" />
+        
         <textarea
           ref={textareaRef}
           value={content}
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={compact ? "Responder..." : "💬 Escreva uma atualização deste pedido..."}
+          placeholder={compact ? "Responder..." : "Escreva uma atualização deste pedido..."}
           rows={1}
-          className="flex-1 min-w-0 resize-none border-0 bg-transparent text-[13px] text-gray-800 placeholder:text-gray-400 placeholder:text-left focus:outline-none focus:ring-0 py-1.5 px-2 leading-[1.4] text-left"
-          style={{ minHeight: "36px", maxHeight: "120px" }}
+          className="flex-1 min-w-0 resize-none border-0 bg-transparent text-[13px] text-gray-800 placeholder:text-gray-400 placeholder:text-left focus:outline-none focus:ring-0 py-1.5 px-1 leading-[1.4] text-left"
+          style={{ minHeight: "32px", maxHeight: "120px" }}
         />
+        
         {onCancel && (<button onClick={onCancel} className="px-2 h-7 rounded-md text-[12px] font-medium text-gray-500 hover:bg-gray-100 transition-colors shrink-0">Cancelar</button>)}
-        <span className="text-[10px] text-gray-300 hidden sm:inline select-none shrink-0">Ctrl+↵</span>
+        <span className="text-[10px] text-gray-300 hidden sm:inline select-none shrink-0 pr-1">Ctrl+↵</span>
         
         <button onClick={handleSubmit} disabled={(!hasContent && !submitSuccess) || createMutation.isPending}
           className={cn(
-            "flex items-center justify-center h-7 p-0 rounded-md transition-all duration-300 shrink-0 overflow-hidden",
+            "flex items-center justify-center h-7 p-0 rounded-[14px] transition-all duration-300 shrink-0 overflow-hidden",
             submitSuccess 
               ? "bg-emerald-500 text-white shadow-sm px-2.5 w-auto" 
               : hasContent
-                ? "w-7 bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow" 
-                : "w-7 bg-gray-100 text-gray-300 cursor-default"
+                ? "w-8 bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow" 
+                : "w-8 bg-gray-100 text-gray-300 cursor-default"
           )}
           title="Enviar comentário">
           {createMutation.isPending ? (
@@ -733,8 +728,9 @@ export default function ActivityFeed({
         )}
       </div>
 
+      {/* ⚠️ MUDANÇA AQUI: paddings reduzidos (pt-2 pb-2) para trazer o input pro chão */}
       {showComments && !isLoading && (
-        <div className="pt-3 pb-4 px-2 w-full sticky bottom-0 z-30 bg-white/95 backdrop-blur-sm border-t border-gray-100 shadow-[0_-8px_20px_rgba(0,0,0,0.03)]">
+        <div className="pt-2 pb-2 px-2 w-full sticky bottom-0 z-30 bg-white/95 backdrop-blur-sm border-t border-gray-100 shadow-[0_-8px_20px_rgba(0,0,0,0.03)]">
           <CommentInput entityType={entityType} entityId={entityId} workshopId={workshopId}
             getName={getName} getPhoto={getPhoto}
             onSubmitted={(newId) => { if(newId) setPendingHighlightId(newId); }}
