@@ -22,6 +22,7 @@ import { useProfileAutoAssignment } from "@/components/hooks/useProfileAutoAssig
 import { useOnDemandPermission } from "@/components/hooks/useOnDemandPermission";
 import { toast } from "sonner";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
+import Avatar from "@/components/ui/Avatar";
 // import ActivityNotificationSettings from "../components/rh/ActivityNotificationSettings"; // Removed
 // import { Settings } from "lucide-react"; // Removed if unused elsewhere
 
@@ -264,20 +265,7 @@ export default function Colaboradores() {
                   return (
                     <tr key={employee.id} className="relative hover:bg-[#F9FAFB] transition-all duration-200 hover:scale-[1.01] hover:shadow-sm hover:z-10 bg-white border-b border-gray-100 last:border-0">
                       <td className="px-6 py-4 text-left">
-                        <div className="w-[44px] h-[44px] flex-shrink-0 rounded-full bg-gray-100 border border-[#FF0000] flex items-center justify-center overflow-hidden">
-                          {employee.profile_picture_url ? (
-                            <img
-                              src={employee.profile_picture_url}
-                              alt={employee.full_name}
-                              width={44}
-                              height={44}
-                              className="w-full h-full rounded-full object-cover"
-                              onError={(e) => { e.target.style.display = 'none'; }}
-                            />
-                          ) : (
-                            <User className="w-5 h-5 text-gray-400" />
-                          )}
-                        </div>
+                        <Avatar src={employee.profile_picture_url} name={employee.full_name} size="md" />
                       </td>
                       <td className="px-6 py-4 text-left">
                         <div className="flex flex-col">
