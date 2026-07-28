@@ -12,6 +12,11 @@ import useEmployeeResolver from "@/hooks/useEmployeeResolver";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+// ============================================================================
+// CONSTANTES DE ARQUITETURA VISUAL
+// ============================================================================
+const CONTENT_WIDTH = "max-w-[760px]";
+
 const IGNORED_FIELDS = new Set([
   "created_by_id", "is_sample", "updated_date", "created_date",
   "data_primeira_resposta", "updated_at", "created_at",
@@ -72,6 +77,12 @@ function formatFileSize(bytes) {
   return (bytes / 1048576).toFixed(1) + " MB";
 }
 
+function getFileExtension(filename) {
+  if (!filename) return "ARQUIVO";
+  const parts = filename.split(".");
+  return parts.length > 1 ? parts.pop().toUpperCase() : "ARQUIVO";
+}
+
 // ============================================================================
 // DESIGN SYSTEM: TIMELINE ARQUITETURA
 // ============================================================================
@@ -82,10 +93,11 @@ function Timeline({ children, className }) {
 
 function TimelineSection({ label, count, children }) {
   return (
-    <div className="mb-2 w-full">
-      <div className="flex items-center gap-3 pt-6 pb-4 select-none relative z-10 px-2 animate-in fade-in w-full">
+    <div className="mb-1 w-full">
+      {/* ⚠️ TimelineSection compacta: gap-2 e pb-1 */}
+      <div className="flex items-center gap-2 pt-4 pb-1 select-none relative z-10 px-2 animate-in fade-in w-full">
         <div className="w-full h-px bg-slate-200" />
-        <span className="text-[12px] font-semibold text-gray-900 shrink-0">
+        <span className="text-[12px] font-semibold text-gray-800 shrink-0">
           {label}
           {count > 0 && (
             <span className="font-normal text-gray-400 ml-1">
@@ -106,18 +118,15 @@ function TimelineItem({ variant = "default", id, time, showTime = true, isLast, 
     <div
       id={id}
       className={cn(
-        "group w-full relative flex gap-3 rounded-lg transition-colors duration-1000 animate-in fade-in slide-in-from-bottom-2 scroll-mt-24",
-        isNested ? "py-1" : "py-1.5 px-1",
-        isHighlighted ? "bg-blue-50/60 transition-none" : "hover:bg-[#3b82f6]/[0.02]"
+        // ⚠️ Hover atualizado para gray-50 estilo Slack
+        "group w-full relative flex gap-3 rounded-lg transition-colors duration-200 animate-in fade-in slide-in-from-bottom-2 scroll-mt-24",
+        isNested ? "py-1.5" : "py-3 px-1",
+        isHighlighted ? "bg-blue-50/60 transition-none" : "hover:bg-gray-50"
       )}
     >
-      {!isLast && !isNested && (
-        <div className="absolute left-[70px] top-[30px] bottom-[-6px] w-px bg-slate-200 z-0" />
-      )}
-      
       {!isNested && (
         <div className="w-10 pt-1.5 shrink-0 text-right">
-          {showTime && <span className="text-[10px] font-normal text-gray-400">{time}</span>}
+          {showTime && <span className="text-[11px] font-normal text-gray-400">{time}</span>}
         </div>
       )}
       
@@ -126,9 +135,14 @@ function TimelineItem({ variant = "default", id, time, showTime = true, isLast, 
   );
 }
 
-function TimelineNode({ children }) {
+function TimelineNode({ children, isLast }) {
   return (
-    <div className="relative z-10 flex w-7 shrink-0 items-start justify-center mt-1">{children}</div>
+    <div className="relative z-10 flex w-9 shrink-0 items-start justify-center mt-0.5">
+      {children}
+      {!isLast && (
+        <div className="absolute top-9 bottom-[-24px] w-px bg-slate-200 z-0" />
+      )}
+    </div>
   );
 }
 
@@ -144,13 +158,13 @@ function TimelineSkeleton() {
           <div className="w-10 pt-1 shrink-0 text-right">
             <div className="h-2.5 w-8 bg-slate-100 rounded inline-block" />
           </div>
-          <div className="w-7 shrink-0 flex justify-center mt-1 relative">
-            <div className="w-7 h-7 bg-slate-100 rounded-full z-10" />
+          <div className="w-9 shrink-0 flex justify-center mt-1 relative">
+            <div className="w-8 h-8 bg-slate-100 rounded-full z-10" />
             {i !== 4 && <div className="absolute top-8 bottom-[-32px] w-px bg-slate-100 z-0" />}
           </div>
-          <div className="flex-1 py-1.5 space-y-3 max-w-[760px]">
+          <div className={cn("flex-1 py-1.5 space-y-3", CONTENT_WIDTH)}>
             <div className="h-3 w-1/4 bg-slate-100 rounded" />
-            <div className="h-3 w-3/4 bg-slate-100 rounded" />
+            <div className="h-4 w-3/4 bg-slate-100 rounded" />
           </div>
         </div>
       ))}
@@ -169,7 +183,7 @@ function CopyButton({ text }) {
     if (!text || copied) return;
     navigator.clipboard.writeText(text);
     setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    setTimeout(() => setCopied(false), 1200);
   };
 
   return (
@@ -177,23 +191,24 @@ function CopyButton({ text }) {
       onClick={handleCopy}
       title="Copiar texto"
       className={cn(
-        "relative flex items-center justify-center w-5 h-5 rounded-[6px] transition-all duration-200 outline-none",
+        // ⚠️ Hit area aumentada para 32px (w-8 h-8) mantendo UX refinada
+        "relative flex items-center justify-center w-8 h-8 rounded-md transition-all duration-200 outline-none opacity-45 hover:opacity-100",
         copied
-          ? "bg-green-500/10 text-green-600 border border-green-200 opacity-100"
-          : "text-gray-300 hover:text-gray-600 hover:bg-gray-100 border border-transparent opacity-40 group-hover:opacity-100"
+          ? "bg-green-50/80 text-green-600 border border-transparent opacity-100"
+          : "text-gray-400 hover:text-gray-600 hover:bg-gray-100 border border-transparent"
       )}
     >
       <Check
         strokeWidth={2.5}
         className={cn(
-          "absolute w-3 h-3 transition-all duration-200",
+          "absolute w-3.5 h-3.5 transition-all duration-200",
           copied ? "opacity-100 scale-100" : "opacity-0 scale-50"
         )}
       />
       <Copy
         strokeWidth={2}
         className={cn(
-          "absolute w-3 h-3 transition-all duration-200",
+          "absolute w-3.5 h-3.5 transition-all duration-200",
           !copied ? "opacity-100 scale-100" : "opacity-0 scale-50"
         )}
       />
@@ -215,51 +230,77 @@ function CommentEntry({ comment, replies = [], getName, getPhoto, allowReply, en
 
   const ContentNode = (
     <div className="pt-0.5 w-full">
-      <div className="flex items-center gap-1.5 mb-0.5 flex-wrap w-full">
-        <span className="text-[13px] font-semibold text-gray-900">{resolvedName}</span>
-        {isInternal && (
-          <>
-            <span className="text-gray-400">·</span>
-            <span className="text-[11px] font-medium text-amber-500">Interno</span>
-          </>
-        )}
-        
-        {/* Ações inlines, sempre visíveis mas em baixa opacidade (40%) até o hover */}
-        <div className="flex items-center gap-0.5 ml-1 transition-opacity duration-200">
-          <CopyButton text={comment.content} />
-          {allowReply && !isNested && (
-            <button
-              onClick={() => onReplyClick(comment.id)}
-              title="Responder"
-              className="flex items-center justify-center w-5 h-5 rounded-[6px] border border-transparent text-gray-300 hover:text-gray-600 hover:bg-gray-100 transition-colors opacity-40 group-hover:opacity-100 outline-none"
-            >
-              <Reply strokeWidth={2} className="w-3 h-3" />
-            </button>
+      
+      {/* ⚠️ Cabeçalho com espaçamento mb-2 para respiro ideal */}
+      <div className="flex items-center justify-between w-full mb-2">
+        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+          <span className="text-[13px] font-semibold text-gray-900">{resolvedName}</span>
+          {isInternal && (
+            <>
+              <span className="text-gray-400">·</span>
+              {/* ⚠️ Badge Interno limpo sem fundo pesado */}
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Interno
+              </span>
+            </>
           )}
+        </div>
+        
+        <div className="ml-3 shrink-0 flex items-center">
+          <CopyButton text={comment.content} />
         </div>
       </div>
       
-      {/* ⚠️ max-w-[760px] aplicado apenas ao texto! O resto do TimelineContent continua fluido */}
-      <div className="text-[13px] text-gray-700 prose prose-sm max-w-[760px] leading-relaxed prose-a:text-blue-600 hover:prose-a:text-blue-700 [&>p]:mb-1 [&>p:last-child]:mb-0">
+      {/* Texto do Comentário */}
+      <div className={cn("text-[14px] font-normal text-gray-800 prose prose-sm max-w-none leading-relaxed prose-a:text-blue-600 hover:prose-a:text-blue-700 [&>p]:mb-1.5 [&>p:last-child]:mb-0", CONTENT_WIDTH)}>
         <ReactMarkdown>{comment.content || ""}</ReactMarkdown>
       </div>
       
+      {/* ⚠️ Rich Cards com microinteração de levitação (translateY e shadow-md) */}
       {comment.attachments && comment.attachments.length > 0 && (
-        <div className="mt-2.5 flex flex-wrap gap-2 max-w-[760px]">
-          {comment.attachments.map((att, idx) => (
-            <a key={idx} href={att.file_url} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-[12px] text-gray-700 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 px-2.5 py-1.5 rounded-md transition-all shadow-sm">
-              <FileText className="w-3.5 h-3.5 text-gray-400" />
-              <span className="font-medium truncate max-w-[150px]">{att.file_name || "arquivo"}</span>
-              {att.file_size && <span className="text-[10px] text-gray-400 shrink-0 ml-1">{formatFileSize(att.file_size)}</span>}
-            </a>
-          ))}
+        <div className={cn("mt-3 flex flex-col gap-2", CONTENT_WIDTH)}>
+          {comment.attachments.map((att, idx) => {
+            const ext = getFileExtension(att.file_name);
+            const sizeStr = formatFileSize(att.file_size);
+            return (
+              <a 
+                key={idx} 
+                href={att.file_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="group/card flex items-center gap-3 p-3 bg-white border border-gray-200/80 hover:border-blue-300 rounded-xl transition-all duration-200 shadow-xs hover:shadow-md hover:-translate-y-[1px] max-w-[340px]"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 group-hover/card:bg-blue-100 transition-colors">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="text-[13px] font-medium text-gray-900 truncate">{att.file_name || "arquivo"}</span>
+                  <span className="text-[11px] text-gray-400 font-medium tracking-wide uppercase mt-0.5">
+                    {ext} {sizeStr && `• ${sizeStr}`}
+                  </span>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      )}
+      
+      {/* ⚠️ Botão Responder com transição de opacidade e underline discreto */}
+      {allowReply && !isNested && (
+        <div className="mt-2.5">
+          <button
+            onClick={() => onReplyClick(comment.id)}
+            title="Responder"
+            className="inline-flex items-center gap-1.5 text-[12px] font-medium text-gray-500 hover:text-blue-600 hover:underline transition-all outline-none opacity-45 hover:opacity-100"
+          >
+            <Reply strokeWidth={2} className="w-3.5 h-3.5" /> Responder
+          </button>
         </div>
       )}
       
       {replyCount > 0 && (
         <button onClick={() => setShowReplies(!showReplies)}
-          className="mt-2 flex items-center gap-1.5 text-[12px] font-semibold text-blue-600 hover:text-blue-700 transition-colors outline-none">
+          className="mt-3 flex items-center gap-1.5 text-[12px] font-semibold text-blue-600 hover:text-blue-700 transition-colors outline-none">
           <ChevronRight className={cn("w-3.5 h-3.5 transition-transform duration-200", showReplies && "rotate-90")} />
           {replyCount} {replyCount === 1 ? "resposta" : "respostas"}
         </button>
@@ -277,7 +318,7 @@ function CommentEntry({ comment, replies = [], getName, getPhoto, allowReply, en
   );
 
   const AvatarNode = (
-    <Avatar className={cn("shrink-0 ring-4 ring-white", isNested ? "w-6 h-6 mt-0.5" : "w-7 h-7")}>
+    <Avatar className={cn("shrink-0 ring-4 ring-white", isNested ? "w-6 h-6 mt-0.5" : "w-8 h-8")}>
       {photoUrl && <AvatarImage src={photoUrl} alt={resolvedName} />}
       <AvatarFallback className={cn("text-[10px] font-bold", isInternal ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700")}>
         {getInitials(resolvedName)}
@@ -294,8 +335,7 @@ function CommentEntry({ comment, replies = [], getName, getPhoto, allowReply, en
       isLast={isLast}
       isHighlighted={isHighlighted}
     >
-      <TimelineNode>{AvatarNode}</TimelineNode>
-      {/* flex-1 para permitir o crescimento do bloco, mantendo o limite apenas no texto */}
+      <TimelineNode isLast={isLast}><AvatarNode /></TimelineNode>
       <TimelineContent className="flex-1">{ContentNode}</TimelineContent>
     </TimelineItem>
   );
@@ -322,10 +362,8 @@ function CommentThread({ comment, replies, getName, getPhoto, allowReply, entity
         isHighlighted={highlightedId === comment.id}
       />
       {activeReplyId === comment.id && (
-        <div className="pl-[82px] pr-2 pb-3 pt-1 animate-in fade-in slide-in-from-top-2 duration-200 relative w-full">
-          {!isLast && <div className="absolute left-[70px] top-0 bottom-0 w-px bg-slate-200 z-0" />}
-          {/* Mantém a restrição na resposta para não ultrapassar a linha do texto original */}
-          <div className="relative z-10 max-w-[760px]">
+        <div className="pl-[52px] pr-2 pb-3 pt-1 animate-in fade-in slide-in-from-top-2 duration-200 relative w-full">
+          <div className={cn(CONTENT_WIDTH)}>
             <CommentInput
               entityType={entityType} entityId={entityId} workshopId={workshopId}
               parentCommentId={comment.id}
@@ -351,13 +389,13 @@ function LogGroupItem({ group, getName, isLast, showTime = true, formattedTime }
     if (itemsCount <= 2 || expanded) {
       return group.items.map((log, idx) => (
         <React.Fragment key={idx}>
-          {idx > 0 && <span className="text-gray-400 font-bold mx-1.5">•</span>}
+          {idx > 0 && <span className="text-gray-300 mx-1">•</span>}
           {log.summary}
           {log.old_value && log.new_value && (
-            <span className="inline-flex items-center gap-1 mx-1.5">
+            <span className="inline-flex items-center gap-1 mx-1">
               <span className="line-through text-gray-400 decoration-gray-300">{log.old_value}</span>
               <ArrowRight className="w-3 h-3 text-gray-400" />
-              <span className="font-medium text-gray-700">{log.new_value}</span>
+              <span className="font-medium text-gray-600">{log.new_value}</span>
             </span>
           )}
         </React.Fragment>
@@ -365,7 +403,7 @@ function LogGroupItem({ group, getName, isLast, showTime = true, formattedTime }
     }
     if (itemsCount > 4 && !expanded) {
       return (
-        <button onClick={() => setExpanded(true)} className="italic text-gray-500 hover:text-gray-800 transition-colors">
+        <button onClick={() => setExpanded(true)} className="italic text-gray-400 hover:text-gray-700 transition-colors">
           alterou {itemsCount} propriedades
         </button>
       );
@@ -375,17 +413,19 @@ function LogGroupItem({ group, getName, isLast, showTime = true, formattedTime }
     return <span className="italic">alterou: {joinedFields}</span>;
   };
 
+  const LogNode = (
+    <div className="flex h-8 w-8 items-center justify-center bg-gray-50 rounded-full shrink-0 border border-gray-100">
+      <div className={cn("w-2 h-2 rounded-full", dotColor)} />
+    </div>
+  );
+
   return (
     <TimelineItem time={formattedTime} showTime={showTime} isLast={isLast}>
-      <TimelineNode>
-        <div className="flex h-7 w-7 items-center justify-center bg-white rounded-full">
-          <div className={cn("w-[9px] h-[9px] rounded-full ring-[3px] ring-white", dotColor)} />
-        </div>
-      </TimelineNode>
+      <TimelineNode isLast={isLast}>{LogNode}</TimelineNode>
       <TimelineContent className="flex-1">
-        <div className="flex flex-wrap items-baseline gap-x-1.5 pt-1 max-w-[760px]">
-          <span className="text-[13px] font-semibold text-gray-900">{resolvedName}</span>
-          <span className="text-[13px] text-gray-700">{renderLogSummaries()}</span>
+        <div className={cn("flex flex-wrap items-baseline gap-x-1.5 pt-2 text-[13px] text-gray-500", CONTENT_WIDTH)}>
+          <span className="font-medium text-gray-700">{resolvedName}</span>
+          <span>{renderLogSummaries()}</span>
         </div>
       </TimelineContent>
     </TimelineItem>
@@ -393,7 +433,7 @@ function LogGroupItem({ group, getName, isLast, showTime = true, formattedTime }
 }
 
 // ============================================================================
-// COMPONENTE DE INPUT (Exportado Separadamente)
+// COMPONENTE DE INPUT (Exportado Separadamente com Padrão Discord-Style)
 // ============================================================================
 
 export function CommentInput({ entityType, entityId, workshopId, parentCommentId = null, onSubmitted, onCancel, compact = false, getName, getPhoto }) {
@@ -437,7 +477,6 @@ export function CommentInput({ entityType, entityId, workshopId, parentCommentId
       setSubmitSuccess(true);
       onSubmitted?.(newComment.id);
       
-      // 1200ms para um feedback snappier e veloz
       setTimeout(() => setSubmitSuccess(false), 1200);
     },
   });
@@ -488,26 +527,10 @@ export function CommentInput({ entityType, entityId, workshopId, parentCommentId
         </div>
       )}
       
-      <div className={cn("max-w-[760px] w-full flex items-center gap-1.5 bg-transparent transition-colors py-1", compact ? "" : "mt-2")}>
+      {/* ⚠️ Card do Editor estruturado no Padrão Discord-Style (Textarea no topo, Ações embaixo) */}
+      <div className={cn("w-full flex flex-col rounded-xl border border-gray-200 bg-white shadow-sm transition-all focus-within:border-gray-400 focus-within:ring-2 focus-within:ring-blue-500/15 p-2.5")}>
         
-        <button onClick={() => setIsInternal(!isInternal)}
-          className={cn(
-            "inline-flex items-center gap-1.5 px-2 h-7 rounded-md text-[12px] font-medium transition-colors shrink-0",
-            isInternal ? "text-amber-700 bg-amber-50" : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-          )}
-          title={isInternal ? "Nota interna (clique para desativar)" : "Marcar como nota interna"}>
-          <div className={cn("w-2 h-2 rounded-full", isInternal ? "bg-amber-500" : "border border-gray-400")} /> Interno
-        </button>
-        
-        <label className="cursor-pointer shrink-0">
-          <input type="file" multiple className="hidden" disabled={isUploading} onChange={(e) => handleFileUpload(Array.from(e.target.files || []))} />
-          <span className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
-            {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
-          </span>
-        </label>
-        
-        {/* Divisória removida para manter minimalista */}
-        
+        {/* Textarea no topo ocupando toda largura */}
         <textarea
           ref={textareaRef}
           value={content}
@@ -515,34 +538,58 @@ export function CommentInput({ entityType, entityId, workshopId, parentCommentId
           onKeyDown={handleKeyDown}
           placeholder={compact ? "Responder..." : "Escreva uma atualização deste pedido..."}
           rows={1}
-          className="flex-1 min-w-0 resize-none border-0 bg-transparent text-[13px] text-gray-800 placeholder:text-gray-400 placeholder:text-left focus:outline-none focus:ring-0 py-1.5 px-1 leading-[1.4] text-left"
-          style={{ minHeight: "32px", maxHeight: "120px" }}
+          className="w-full resize-none border-0 bg-transparent text-[13px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-0 py-1.5 px-1 leading-[1.4] text-left"
+          style={{ minHeight: "40px", maxHeight: "120px" }}
         />
-        
-        {onCancel && (<button onClick={onCancel} className="px-2 h-7 rounded-md text-[12px] font-medium text-gray-500 hover:bg-gray-100 transition-colors shrink-0">Cancelar</button>)}
-        <span className="text-[10px] text-gray-300 hidden sm:inline select-none shrink-0 pr-1">Ctrl+↵</span>
-        
-        <button onClick={handleSubmit} disabled={(!hasContent && !submitSuccess) || createMutation.isPending}
-          className={cn(
-            "flex items-center justify-center h-7 p-0 rounded-[14px] transition-all duration-300 shrink-0 overflow-hidden",
-            submitSuccess 
-              ? "bg-emerald-500 text-white shadow-sm px-2.5 w-auto" 
-              : hasContent
-                ? "w-8 bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow" 
-                : "w-8 bg-gray-100 text-gray-300 cursor-default"
-          )}
-          title="Enviar comentário">
-          {createMutation.isPending ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : submitSuccess ? (
-            <div className="flex items-center gap-1.5 whitespace-nowrap animate-in fade-in zoom-in-95 duration-200">
-              <Check className="w-3.5 h-3.5" />
-              <span className="text-[11px] font-medium pr-0.5">Enviado</span>
-            </div>
-          ) : (
-            <Send className="w-3.5 h-3.5 ml-0.5" />
-          )}
-        </button>
+
+        {/* Barra inferior de ferramentas/ações invertida */}
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100 mt-1">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setIsInternal(!isInternal)}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-2.5 h-7 rounded-md text-[12px] font-medium transition-colors shrink-0",
+                isInternal ? "text-amber-700 bg-amber-50" : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              )}
+              title={isInternal ? "Nota interna (clique para desativar)" : "Marcar como nota interna"}>
+              <div className={cn("w-2 h-2 rounded-full", isInternal ? "bg-amber-500" : "border border-gray-400")} /> Interno
+            </button>
+            
+            <label className="cursor-pointer shrink-0">
+              <input type="file" multiple className="hidden" disabled={isUploading} onChange={(e) => handleFileUpload(Array.from(e.target.files || []))} />
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
+                {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+              </span>
+            </label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {onCancel && (<button onClick={onCancel} className="px-2 h-7 rounded-md text-[12px] font-medium text-gray-500 hover:bg-gray-100 transition-colors shrink-0">Cancelar</button>)}
+            <span className="text-[10px] text-gray-300 hidden sm:inline select-none">Ctrl+↵</span>
+            
+            <button onClick={handleSubmit} disabled={(!hasContent && !submitSuccess) || createMutation.isPending}
+              className={cn(
+                "flex items-center justify-center h-7 p-0 rounded-[8px] transition-all duration-300 shrink-0 overflow-hidden",
+                submitSuccess 
+                  ? "bg-emerald-500 text-white shadow-sm px-2.5 w-auto" 
+                  : hasContent
+                    ? "w-8 bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow" 
+                    : "w-8 bg-gray-100 text-gray-300 cursor-default"
+              )}
+              title="Enviar comentário">
+              {createMutation.isPending ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : submitSuccess ? (
+                <div className="flex items-center gap-1.5 whitespace-nowrap animate-in fade-in zoom-in-95 duration-200">
+                  <Check className="w-3.5 h-3.5" />
+                  <span className="text-[11px] font-medium pr-0.5">Enviado</span>
+                </div>
+              ) : (
+                <Send className="w-3.5 h-3.5 ml-0.5" />
+              )}
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
   );
@@ -695,8 +742,7 @@ export default function ActivityFeed({
   }, [highlightedId]);
 
   return (
-    // Componente raiz sem overflow, crescendo livremente conforme seu pai controla
-    <div className="flex flex-col w-full relative">
+    <div className="flex flex-col w-full relative pb-20">
       <div className="w-full pb-2">
         {isLoading ? (
           <TimelineSkeleton />
@@ -744,8 +790,9 @@ export default function ActivityFeed({
         )}
       </div>
 
+      {/* ⚠️ Footer Fixo no Rodapé (Sticky) com Divisor Discreto border-t border-slate-100 */}
       {showComments && !isLoading && (
-        <div className="w-full bg-white border-t border-gray-100 px-4 py-3">
+        <div className="sticky bottom-0 z-30 w-full bg-white mt-6 pt-4 px-4 border-t border-slate-100">
           <CommentInput entityType={entityType} entityId={entityId} workshopId={workshopId}
             getName={getName} getPhoto={getPhoto}
             onSubmitted={(newId) => { if(newId) setPendingHighlightId(newId); }}
