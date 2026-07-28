@@ -729,10 +729,15 @@ export default function ActivityFeed({
       </div>
 
       {/* ⚠️ MUDANÇA AQUI: paddings reduzidos (pt-2 pb-2) para trazer o input pro chão */}
+      {/* Footer limpo, sem sombras ou blur, apenas fundo sólido e borda fina */}
       {showComments && !isLoading && (
-        <div className="pt-2 pb-2 px-2 w-full sticky bottom-0 z-30 bg-white/95 backdrop-blur-sm border-t border-gray-100 shadow-[0_-8px_20px_rgba(0,0,0,0.03)]">
-          <CommentInput entityType={entityType} entityId={entityId} workshopId={workshopId}
-            getName={getName} getPhoto={getPhoto}
+        <div className="sticky bottom-0 z-30 w-full bg-white border-t border-gray-100 px-4 py-3">
+          <CommentInput 
+            entityType={entityType} 
+            entityId={entityId} 
+            workshopId={workshopId}
+            getName={getName} 
+            getPhoto={getPhoto}
             onSubmitted={(newId) => { if(newId) setPendingHighlightId(newId); }}
           />
         </div>
