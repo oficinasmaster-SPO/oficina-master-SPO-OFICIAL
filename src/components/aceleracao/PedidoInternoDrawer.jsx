@@ -23,26 +23,7 @@ import {
 import StatusBadge from "@/components/shared/StatusBadge";
 
 // ── Helpers visuais ────────────────────────────────────────────────────────
-function Avatar({ name, size = "md" }) {
-  const initials = name
-    ? name.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase()
-    : "?";
-  const COLORS = [
-    "bg-blue-500","bg-violet-500","bg-teal-500","bg-orange-500",
-    "bg-pink-500","bg-cyan-500","bg-indigo-500","bg-amber-500",
-  ];
-  const ci = name ? name.charCodeAt(0) % COLORS.length : 0;
-  const dim = size === "sm"
-    ? "h-5 w-5 text-[9px]"
-    : size === "lg"
-    ? "h-8 w-8 text-sm"
-    : "h-6 w-6 text-[10px]";
-  return (
-    <span className={`inline-flex shrink-0 items-center justify-center rounded-full font-bold text-white ${dim} ${COLORS[ci]}`}>
-      {initials}
-    </span>
-  );
-}
+import Avatar from "@/components/ui/Avatar";
 
 const STATUS_PILL_CLS = {
   pendente:   "bg-gray-100 text-gray-700 border-gray-200",
@@ -441,7 +422,7 @@ export default function PedidoInternoDrawer({
             {/* Solicitante */}
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] uppercase tracking-wide text-gray-400">De</span>
-              <Avatar name={pedido.requester_name} size="sm" />
+              <Avatar name={pedido.requester_name} size="xs" />
               <span className="font-medium text-gray-700">{pedido.requester_name || "—"}</span>
             </div>
 
@@ -450,7 +431,7 @@ export default function PedidoInternoDrawer({
             {/* Responsável */}
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] uppercase tracking-wide text-gray-400">Para</span>
-              <Avatar name={pedido.assignee_name} size="sm" />
+              <Avatar name={pedido.assignee_name} size="xs" />
               <span className="font-medium text-gray-700">{pedido.assignee_name || "—"}</span>
             </div>
 

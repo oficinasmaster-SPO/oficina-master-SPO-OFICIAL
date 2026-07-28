@@ -72,28 +72,8 @@ function isOverdue(p) {
   return new Date(p.prazo) < new Date();
 }
 
-/* ── Avatar 24px ──────────────────────────────────────────────────────── */
-const AV_COLORS = [
-  "bg-blue-100 text-blue-600","bg-violet-100 text-violet-600",
-  "bg-teal-100 text-teal-600","bg-orange-100 text-orange-600",
-  "bg-pink-100 text-pink-600","bg-cyan-100 text-cyan-600",
-  "bg-indigo-100 text-indigo-600","bg-amber-100 text-amber-600",
-];
-function pickColor(n) { return AV_COLORS[n ? n.charCodeAt(0) % AV_COLORS.length : 0]; }
-function initials(n) { return n ? n.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase() : "?"; }
-
-function MiniAvatar({ name, photoUrl }) {
-  const i = initials(name), c = pickColor(name);
-  if (photoUrl) {
-    return (
-      <span className="relative h-6 w-6 shrink-0">
-        <img src={photoUrl} alt="" className="h-6 w-6 rounded-full object-cover" onError={e=>{e.target.style.display="none";}} />
-        <span className={`absolute inset-0 flex items-center justify-center rounded-full text-[9px] font-semibold ${c} -z-10`}>{i}</span>
-      </span>
-    );
-  }
-  return <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold ${c}`}>{i}</span>;
-}
+/* ── Avatar (componente reutilizável) ───────────────────────────────────── */
+import Avatar from "@/components/ui/Avatar";
 
 /* ── Prioridade (ícone + label, sem fundo) ─────────────────────────────── */
 const PRIO = {
@@ -241,7 +221,7 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
 
       {/* Solicitante */}
       <div className={`${COL.solicitante} ${RD} flex items-center gap-2 min-w-0`}>
-        <MiniAvatar name={rName} photoUrl={rPhoto} />
+        <Avatar name={rName} src={rPhoto} size="xs" />
         <span className={`text-[13px] truncate ${done ? "text-gray-400" : "text-gray-700"}`}>
           {rName}
         </span>
@@ -252,7 +232,7 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
         <ArrowRight className="h-4 w-4 text-red-600 shrink-0" />
         {aName ? (
           <>
-            <MiniAvatar name={aName} photoUrl={aPhoto} />
+            <Avatar name={aName} src={aPhoto} size="xs" />
             <span className={`text-[13px] truncate ${done ? "text-gray-400" : "text-gray-700"}`}>
               {aName}
             </span>

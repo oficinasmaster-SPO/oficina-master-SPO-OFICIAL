@@ -38,27 +38,7 @@ function StatusPill({ status }) {
   return <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${cls}`}>{label}</span>;
 }
 
-function AvatarWithPhoto({ name, photoUrl, size = "sm" }) {
-  const initials = name ? name.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase() : "?";
-  const COLORS = ["bg-blue-500","bg-violet-500","bg-teal-500","bg-orange-500","bg-pink-500","bg-cyan-500","bg-indigo-500","bg-amber-500"];
-  const ci = name ? name.charCodeAt(0) % COLORS.length : 0;
-  const dim = size === "md" ? "h-7 w-7 text-[11px]" : "h-5 w-5 text-[9px]";
-
-  if (photoUrl) {
-    return (
-      <span className={`relative ${dim} shrink-0`}>
-        <span className={`absolute inset-0 inline-flex items-center justify-center rounded-full font-bold text-white ${COLORS[ci]}`}>{initials}</span>
-        <img
-          src={photoUrl}
-          alt={name || ""}
-          className={`relative ${dim} rounded-full object-cover ring-1 ring-gray-200`}
-          onError={(e) => { e.target.style.display = "none"; }}
-        />
-      </span>
-    );
-  }
-  return <span className={`inline-flex ${dim} shrink-0 items-center justify-center rounded-full font-bold text-white ${COLORS[ci]}`}>{initials}</span>;
-}
+import Avatar from "@/components/ui/Avatar";
 
 function InfoField({ label, icon: Icon, children, className = "" }) {
   if (!children) return null;
@@ -236,13 +216,13 @@ export default function PedidoInternoDetail({
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 pb-3 text-xs">
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] uppercase tracking-wide text-gray-400">De</span>
-            <AvatarWithPhoto name={requesterName} photoUrl={requesterPhoto} />
+            <Avatar name={requesterName} src={requesterPhoto} size="xs" />
             <span className="font-medium text-gray-700">{requesterName}</span>
           </div>
           <span className="h-3 w-px bg-gray-200" />
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] uppercase tracking-wide text-gray-400">Para</span>
-            <AvatarWithPhoto name={assigneeName} photoUrl={assigneePhoto} />
+            <Avatar name={assigneeName} src={assigneePhoto} size="xs" />
             <span className="font-medium text-gray-700">{assigneeName}</span>
           </div>
           <span className="h-3 w-px bg-gray-200" />

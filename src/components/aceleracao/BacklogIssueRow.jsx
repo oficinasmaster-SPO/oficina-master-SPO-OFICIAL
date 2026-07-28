@@ -71,23 +71,8 @@ function StatusChip({ status }) {
   );
 }
 
-// ── Avatar iniciais ──────────────────────────────────────────────────────────
-function Avatar({ name, size = "sm" }) {
-  const initials = name
-    ? name.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase()
-    : "?";
-  const colors = [
-    "bg-blue-500", "bg-violet-500", "bg-teal-500", "bg-orange-500",
-    "bg-pink-500", "bg-cyan-500", "bg-indigo-500", "bg-amber-500",
-  ];
-  const colorIdx = name ? name.charCodeAt(0) % colors.length : 0;
-  const dim = size === "sm" ? "h-6 w-6 text-[9px]" : "h-7 w-7 text-[10px]";
-  return (
-    <span className={`inline-flex items-center justify-center rounded-full ${dim} font-bold text-white ${colors[colorIdx]} shrink-0`}>
-      {initials}
-    </span>
-  );
-}
+// ── Avatar (componente reutilizável) ─────────────────────────────────────────
+import Avatar from "@/components/ui/Avatar";
 
 // ── Prazo formatado ──────────────────────────────────────────────────────────
 function PrazoCell({ prazo, status }) {
@@ -190,7 +175,7 @@ export default function BacklogIssueRow({ tarefa, onView, isSelected = false }) 
       {/* Col 6 — Avatar assignee (fixo 32px) */}
       <span className="w-8 shrink-0 flex justify-center">
         {tarefa.assignee_name
-          ? <Avatar name={tarefa.assignee_name} />
+          ? <Avatar name={tarefa.assignee_name} size="xs" />
           : <span className="h-6 w-6 rounded-full border border-dashed border-gray-300" />
         }
       </span>

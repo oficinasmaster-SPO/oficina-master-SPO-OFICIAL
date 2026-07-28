@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { getInitials, getAvatarColor } from "@/lib/avatarUtils";
 
 const SIZE_MAP = {
+  xs: "w-5 h-5 text-[9px]",
   sm: "w-7 h-7 text-xs",
   md: "w-11 h-11 text-sm",
   lg: "w-16 h-16 text-lg",
