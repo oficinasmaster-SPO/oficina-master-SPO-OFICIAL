@@ -148,23 +148,16 @@ button:focus-visible {
 
 
 
-/* Fix: impede layout shift quando Radix Select/Dialog aplica overflow:hidden no body.
-   scrollbar-gutter no html reserva o espaço da scrollbar permanentemente.
-   NÃO aplicar no body — quando o Radix injeta overflow:hidden no body, ele vira
-   scroll container e ativa o gutter, criando uma faixa branca vazia. */
+/* SOLUÇÃO LIMPA — anti-layout-shift ao abrir modais/dropdowns */
 html {
+  /* Impede que a tela pule lateralmente entre páginas com e sem scroll */
   overflow-y: scroll;
-  scrollbar-gutter: stable;
 }
 
-/* ── Anti-layout-shift (dupla compensação) ──
-   Radix (Dialog/Select) usa react-remove-scroll que injeta `padding-right`
-   inline no <body> ao bloquear o scroll, para compensar a remoção da scrollbar.
-   Como o <html> já tem `scrollbar-gutter: stable` (espaço sempre reservado),
-   esse padding duplica o espaço reservado e cria uma faixa vazia à direita.
-   Neutralizamos com !important para sobrepor o estilo inline. */
-body {
-  padding-right: 0 !important;
+/* Deixa o react-remove-scroll (Radix) ditar o padding correto quando o
+   scroll está bloqueado, sem interferir no estado normal */
+body[data-scroll-locked] {
+  overflow: hidden !important;
 }
 
 @layer base {
