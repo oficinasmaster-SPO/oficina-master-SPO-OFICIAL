@@ -135,36 +135,46 @@ export default function PedidosInternosTab({ workshopId, user }) {
       <Tabs value={activeList} onValueChange={setActiveList} className="flex min-h-0 flex-1 flex-col">
         
         {/* Top Header com Tabs e Métricas Rápidas */}
-        <div className="shrink-0 bg-[hsl(var(--surface))] px-6 pt-3 border-b border-[hsl(var(--border-subtle))] flex items-center justify-between shadow-[0_1px_2px_rgba(16,24,40,.04)] rounded-t-lg">
-          <TabsList className="flex h-9 gap-6 bg-transparent p-0">
-            <TabsTrigger value="pedidos" className="h-9 rounded-none border-b-2 border-transparent px-1 pb-2 text-xs font-semibold text-gray-500 hover:text-gray-900 data-[state=active]:border-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-transparent shadow-none">
-              Pedidos Internos
-            </TabsTrigger>
-            <TabsTrigger value="backlog" className="h-9 rounded-none border-b-2 border-transparent px-1 pb-2 text-xs font-semibold text-gray-500 hover:text-gray-900 data-[state=active]:border-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-transparent shadow-none">
-              Backlog de Tarefas
-            </TabsTrigger>
-          </TabsList>
+{/* Top Header com Tabs e Métricas Rápidas */}
+<div className="shrink-0 h-14 bg-[hsl(var(--surface))] px-6 border-b border-[hsl(var(--border-subtle))] flex items-center justify-between shadow-[0_1px_2px_rgba(16,24,40,.04)] rounded-t-lg relative">
+  <TabsList className="flex h-9 gap-6 bg-transparent p-0 items-center">
+    <TabsTrigger value="pedidos" className="h-9 rounded-none border-b-2 border-transparent px-1 pb-2 text-xs font-semibold text-gray-500 hover:text-gray-900 data-[state=active]:border-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-transparent shadow-none">
+      Pedidos Internos
+    </TabsTrigger>
+    <TabsTrigger value="backlog" className="h-9 rounded-none border-b-2 border-transparent px-1 pb-2 text-xs font-semibold text-gray-500 hover:text-gray-900 data-[state=active]:border-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-transparent shadow-none">
+      Backlog de Tarefas
+    </TabsTrigger>
+  </TabsList>
 
-          {activeList === "pedidos" &&
-          <div className="flex items-center gap-4">
-              <div className="hidden md:flex items-center gap-3 text-xs font-medium text-gray-600">
-                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-500"></span> {metrics.em_analise} em análise</span>
-                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-500"></span> {metrics.pendentes} pendentes</span>
-                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500"></span> {metrics.aprovados} aprovados</span>
-              </div>
+  {/* Contêiner da direita com tamanho/estrutura preservados para evitar Layout Shift */}
+  <div className="flex items-center gap-4 h-full">
+    {/* Métricas: Usamos opacity-0 e pointer-events-none em vez de sumir com o HTML da página */}
+    <div className={cn(
+      "hidden md:flex items-center gap-3 text-xs font-medium text-gray-600 transition-opacity duration-150",
+      activeList === "pedidos" ? "opacity-100" : "opacity-0 pointer-events-none"
+    )}>
+      <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-500"></span> {metrics.em_analise} em análise</span>
+      <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-500"></span> {metrics.pendentes} pendentes</span>
+      <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500"></span> {metrics.aprovados} aprovados</span>
+    </div>
 
-              <Button
-              onClick={() => {setEditingPedido(null);setShowNewForm(true);}}
-              size="sm"
-              className="h-8 bg-blue-600 hover:bg-blue-600/90 text-[12px] font-medium text-white rounded-md shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-blue-700/50 transition-all px-1">
-              
-  <Plus className="mr-1.5 h-3 w-3 stroke-[2.5]" />
-  Novo Pedido
-</Button>
+    {/* Botão: Também controlado por opacidade para manter o espaço reservado e evitar solavancos */}
+    <div className={cn(
+      "flex items-center h-full transition-opacity duration-150",
+      activeList === "pedidos" ? "opacity-100" : "opacity-0 pointer-events-none"
+    )}>
+      <Button
+        onClick={() => { setEditingPedido(null); setShowNewForm(true); }}
+        size="sm"
+        className="h-8 bg-blue-600 hover:bg-blue-600/90 text-[12px] font-medium text-white rounded-md shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-blue-700/50 transition-all px-3 flex items-center justify-center"
+      >
+        <Plus className="mr-1.5 h-3 w-3 stroke-[2.5]" />
+        Novo Pedido
+      </Button>
+    </div>
+  </div>
+</div>
 
-            </div>
-          }
-        </div>
 
         {/* Toolbar de Filtros */}
         {activeList === "pedidos" &&
