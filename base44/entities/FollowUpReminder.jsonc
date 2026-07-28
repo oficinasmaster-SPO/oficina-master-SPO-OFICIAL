@@ -34,6 +34,14 @@
       "type": "string",
       "description": "Nome do consultor principal (cache para exibi\u00e7\u00e3o)"
     },
+    "consultor_executor_id": {
+      "type": "string",
+      "description": "ID do consultor que efetivamente concluiu o follow-up (pode diferir do consultor principal)"
+    },
+    "consultor_executor_nome": {
+      "type": "string",
+      "description": "Nome do consultor que concluiu o follow-up (cache para exibi\u00e7\u00e3o)"
+    },
     "atribuicao_automatica": {
       "type": "boolean",
       "default": false,
