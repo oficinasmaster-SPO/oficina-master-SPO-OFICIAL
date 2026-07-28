@@ -15,16 +15,16 @@ import OrderFilterBar from "./OrderFilterBar";
 
 export default function PedidosInternosTab({ workshopId, user }) {
   const [selectedPedido, setSelectedPedido] = useState(null);
-  const [editingPedido, setEditingPedido]   = useState(null);
-  const [showNewForm, setShowNewForm]       = useState(false);
-  const [activeList, setActiveList]         = useState("pedidos");
-  const [statusFilter, setStatusFilter]     = useState("all");
-  const [scope, setScope]                   = useState("todos");
-  
-  const [search, setSearch]                 = useState("");
-  const deferredSearch                      = useDeferredValue(search); 
-  const searchInputRef                      = useRef(null);
-  const queryClient                         = useQueryClient();
+  const [editingPedido, setEditingPedido] = useState(null);
+  const [showNewForm, setShowNewForm] = useState(false);
+  const [activeList, setActiveList] = useState("pedidos");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [scope, setScope] = useState("todos");
+
+  const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
+  const searchInputRef = useRef(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -40,25 +40,25 @@ export default function PedidosInternosTab({ workshopId, user }) {
   const { data: pedidos = [], isLoading } = useQuery({
     queryKey: ["pedidos-internos", workshopId],
     queryFn: async () => {
-      const all = workshopId
-        ? await base44.entities.PedidoInterno.filter({ workshop_id: workshopId }, "-created_date")
-        : await base44.entities.PedidoInterno.list("-created_date");
+      const all = workshopId ?
+      await base44.entities.PedidoInterno.filter({ workshop_id: workshopId }, "-created_date") :
+      await base44.entities.PedidoInterno.list("-created_date");
       return all || [];
-    },
+    }
   });
 
   const { data: usuarios = [] } = useQuery({
     queryKey: ["usuarios-sistema"],
-    queryFn: async () => (await base44.entities.User.list()) || [],
+    queryFn: async () => (await base44.entities.User.list()) || []
   });
 
   // Métricas rápidas para o topo (Estilo pílulas sutis)
   const metrics = useMemo(() => {
-    const active = pedidos.filter(p => !["concluido", "recusado"].includes(p.status));
+    const active = pedidos.filter((p) => !["concluido", "recusado"].includes(p.status));
     return {
-      em_analise: active.filter(p => p.status === "em_analise").length,
-      pendentes: active.filter(p => p.status === "pendente").length,
-      aprovados: active.filter(p => p.status === "aprovado").length,
+      em_analise: active.filter((p) => p.status === "em_analise").length,
+      pendentes: active.filter((p) => p.status === "pendente").length,
+      aprovados: active.filter((p) => p.status === "aprovado").length
     };
   }, [pedidos]);
 
@@ -66,30 +66,30 @@ export default function PedidosInternosTab({ workshopId, user }) {
     const userId = user?.id;
     const userEmail = user?.email;
 
-    return pedidos
-      .filter((p) => {
-        if (scope === "para_mim") {
-          const isAssignee = p.assignee_id === userId || (userEmail && p.assignee_id === userEmail);
-          if (!isAssignee) return false;
-        }
-        if (scope === "meus_pedidos") {
-          const isRequester = p.requester_id === userId || (userEmail && p.requester_id === userEmail) || (userEmail && p.created_by === userEmail);
-          if (!isRequester) return false;
-        }
+    return pedidos.
+    filter((p) => {
+      if (scope === "para_mim") {
+        const isAssignee = p.assignee_id === userId || userEmail && p.assignee_id === userEmail;
+        if (!isAssignee) return false;
+      }
+      if (scope === "meus_pedidos") {
+        const isRequester = p.requester_id === userId || userEmail && p.requester_id === userEmail || userEmail && p.created_by === userEmail;
+        if (!isRequester) return false;
+      }
 
-        const q = deferredSearch.toLowerCase();
-        if (q) {
-          const haystack = [
-            p.titulo, p.workshop_nome, p.requester_name, p.cliente_nome,
-            p.assignee_name, p.id?.slice(-6),
-          ].filter(Boolean).join(" ").toLowerCase();
-          if (!haystack.includes(q)) return false;
-        }
+      const q = deferredSearch.toLowerCase();
+      if (q) {
+        const haystack = [
+        p.titulo, p.workshop_nome, p.requester_name, p.cliente_nome,
+        p.assignee_name, p.id?.slice(-6)].
+        filter(Boolean).join(" ").toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
 
-        if (statusFilter !== "all" && p.status !== statusFilter) return false;
-        return true;
-      })
-      .sort((a, b) => new Date(b.created_date || 0) - new Date(a.created_date || 0));
+      if (statusFilter !== "all" && p.status !== statusFilter) return false;
+      return true;
+    }).
+    sort((a, b) => new Date(b.created_date || 0) - new Date(a.created_date || 0));
   }, [pedidos, deferredSearch, statusFilter, scope, user?.id, user?.email]);
 
   const freshSelected = useMemo(() => {
@@ -98,39 +98,39 @@ export default function PedidosInternosTab({ workshopId, user }) {
   }, [selectedPedido, pedidos]);
 
   const handleSelect = useCallback((p) => setSelectedPedido(p), []);
-  
+
   const handleDetailClose = useCallback(() => {
     setSelectedPedido(null);
     queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
   }, [queryClient]);
-  
+
   const handleFormClose = useCallback(() => {
     setShowNewForm(false);
     setEditingPedido(null);
     queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
   }, [queryClient]);
 
-  const clearFilters = () => { setSearch(""); setStatusFilter("all"); };
+  const clearFilters = () => {setSearch("");setStatusFilter("all");};
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white rounded-lg border border-[hsl(var(--border-subtle))] shadow-[0_1px_2px_rgba(16,24,40,.04)]">
       
       {/* Modais de Detalhe e Criação */}
       <PedidoInternoModal open={!!selectedPedido} onClose={() => setSelectedPedido(null)} size="wide">
-        {freshSelected && (
-          <PedidoInternoDetail
-            pedido={freshSelected}
-            user={user}
-            onCancel={() => setSelectedPedido(null)}
-            onSuccess={handleDetailClose}
-            onDelete={handleDetailClose}
-          />
-        )}
+        {freshSelected &&
+        <PedidoInternoDetail
+          pedido={freshSelected}
+          user={user}
+          onCancel={() => setSelectedPedido(null)}
+          onSuccess={handleDetailClose}
+          onDelete={handleDetailClose} />
+
+        }
       </PedidoInternoModal>
 
-      {showNewForm && !editingPedido && (
-        <NovoPedidoModal user={user} onClose={handleFormClose} />
-      )}
+      {showNewForm && !editingPedido &&
+      <NovoPedidoModal user={user} onClose={handleFormClose} />
+      }
 
       <Tabs value={activeList} onValueChange={setActiveList} className="flex min-h-0 flex-1 flex-col">
         
@@ -145,8 +145,8 @@ export default function PedidosInternosTab({ workshopId, user }) {
             </TabsTrigger>
           </TabsList>
 
-          {activeList === "pedidos" && (
-            <div className="flex items-center gap-4">
+          {activeList === "pedidos" &&
+          <div className="flex items-center gap-4">
               <div className="hidden md:flex items-center gap-3 text-xs font-medium text-gray-600">
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-500"></span> {metrics.em_analise} em análise</span>
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-500"></span> {metrics.pendentes} pendentes</span>
@@ -154,42 +154,42 @@ export default function PedidosInternosTab({ workshopId, user }) {
               </div>
 
               <Button
-                onClick={() => { setEditingPedido(null); setShowNewForm(true); }}
-                size="sm"
-                className="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-xs font-bold shadow-sm"
-              >
+              onClick={() => {setEditingPedido(null);setShowNewForm(true);}}
+              size="sm"
+              className="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-xs font-bold shadow-sm">
+              
                 <Plus className="mr-1.5 h-3.5 w-3.5" />
                 Novo Pedido
               </Button>
             </div>
-          )}
+          }
         </div>
 
         {/* Toolbar de Filtros */}
-        {activeList === "pedidos" && (
-          <OrderFilterBar
-            scope={scope}
-            setScope={setScope}
-            search={search}
-            setSearch={setSearch}
-            searchInputRef={searchInputRef}
-            clearFilters={clearFilters}
-            statusFilter={statusFilter}
-            setStatusFilter={setStatusFilter}
-            filteredPedidos={filteredPedidos}
-          />
-        )}
+        {activeList === "pedidos" &&
+        <OrderFilterBar
+          scope={scope}
+          setScope={setScope}
+          search={search}
+          setSearch={setSearch}
+          searchInputRef={searchInputRef}
+          clearFilters={clearFilters}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          filteredPedidos={filteredPedidos} />
+
+        }
 
         {/* 🌟 NOVO: CABEÇALHO FIXO DA LISTA DE PEDIDOS */}
-        {activeList === "pedidos" && (
-          <div className="shrink-0 bg-gray-50/75 border-b border-gray-200 px-6 py-2 grid grid-cols-12 gap-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 select-none">
+        {activeList === "pedidos" &&
+        <div className="shrink-0 bg-gray-50/75 border-b border-gray-200 px-6 py-2 grid grid-cols-12 gap-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 select-none hidden">
             <div className="col-span-3">Cliente / Empresa</div>
             <div className="col-span-3">Título / Serviço</div>
             <div className="col-span-2">Solicitante</div>
             <div className="col-span-2 text-center">Status</div>
             <div className="col-span-2 text-right">Prazo / SLA</div>
           </div>
-        )}
+        }
 
         {/* Conteúdo da Lista de Pedidos */}
         <TabsContent value="pedidos" forceMount className={`mt-0 flex min-h-0 flex-1 flex-col bg-white ${activeList !== "pedidos" ? "hidden" : ""}`}>
@@ -203,6 +203,6 @@ export default function PedidosInternosTab({ workshopId, user }) {
           <BacklogBoard workshopId={workshopId} user={user} />
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    </div>);
+
 }
