@@ -784,16 +784,22 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
 
       // STEP 1 — Atualizar status do FollowUpReminder
       setActiveStepIndex(1);
+      const executorFields = {
+        consultor_executor_id: user?.id || null,
+        consultor_executor_nome: user?.full_name || user?.email || null,
+      };
       if (!followUp._isSuporteLocal) {
         await base44.entities.FollowUpReminder.update(followUp.id, {
           is_completed: true,
           completed_at: new Date().toISOString(),
+          ...executorFields,
         });
       } else {
         // Já criamos acima e vamos marcar como concluído pelo id real
         await base44.entities.FollowUpReminder.update(followUpId, {
           is_completed: true,
           completed_at: new Date().toISOString(),
+          ...executorFields,
         });
       }
       await new Promise(r => setTimeout(r, 650));
@@ -819,6 +825,8 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
             base44.entities.FollowUpReminder.update(fu.id, {
               is_completed: true,
               completed_at: new Date().toISOString(),
+              consultor_executor_id: user?.id || null,
+              consultor_executor_nome: user?.full_name || user?.email || null,
             }),
             base44.entities.FollowUpConcluido.create({
               followup_id: fu.id,

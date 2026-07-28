@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
     }
 
     // ── Guard: verificar se a oficina está ativa ──
-    const workshopId = origem.cliente_id;
+    const workshopId = origem.workshop_id;
     if (workshopId) {
       try {
         const workshopItems = await base44.asServiceRole.entities.Workshop.filter({ id: workshopId });
@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
     // ── Buscar Workshop para herdar consultor_principal ──
     let consultorPrincipalId = null;
     let consultorPrincipalNome = null;
-    const workshopIdOrigem = origem.cliente_id || origem.workshop_id;
+    const workshopIdOrigem = origem.workshop_id;
     if (workshopIdOrigem) {
       try {
         const wsItems = await base44.asServiceRole.entities.Workshop.filter({ id: workshopIdOrigem });
@@ -112,8 +112,8 @@ Deno.serve(async (req) => {
 
     if (tipo === 'tarefa_backlog') {
       fuData = {
-        workshop_id: origem.cliente_id,
-        workshop_name: origem.cliente_nome || null,
+        workshop_id: origem.workshop_id,
+        workshop_name: origem.workshop_nome || null,
         consultor_id: consultorIdFinal,
         consultor_nome: consultorNomeFinal,
         reminder_date: prazoStr,
@@ -135,8 +135,8 @@ Deno.serve(async (req) => {
       };
     } else {
       fuData = {
-        workshop_id: origem.cliente_id,
-        workshop_name: origem.cliente_nome || null,
+        workshop_id: origem.workshop_id,
+        workshop_name: origem.workshop_nome || null,
         consultor_id: consultorIdFinal,
         consultor_nome: consultorNomeFinal,
         reminder_date: prazoStr,

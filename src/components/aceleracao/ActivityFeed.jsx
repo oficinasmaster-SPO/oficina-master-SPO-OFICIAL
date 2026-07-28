@@ -140,7 +140,7 @@ function TimelineSkeleton() {
   return (
     <div className="w-full pt-8 px-2 animate-pulse">
       {[1, 2, 3, 4].map(i => (
-        <div key={i} className="flex gap-3 mb-8 w-full max-w-[760px]">
+        <div key={i} className="flex gap-3 mb-8 w-full">
           <div className="w-10 pt-1 shrink-0 text-right">
             <div className="h-2.5 w-8 bg-slate-100 rounded inline-block" />
           </div>
@@ -148,7 +148,7 @@ function TimelineSkeleton() {
             <div className="w-7 h-7 bg-slate-100 rounded-full z-10" />
             {i !== 4 && <div className="absolute top-8 bottom-[-32px] w-px bg-slate-100 z-0" />}
           </div>
-          <div className="flex-1 py-1.5 space-y-3">
+          <div className="flex-1 py-1.5 space-y-3 max-w-[760px]">
             <div className="h-3 w-1/4 bg-slate-100 rounded" />
             <div className="h-3 w-3/4 bg-slate-100 rounded" />
           </div>
@@ -180,7 +180,7 @@ function CopyButton({ text }) {
         "relative flex items-center justify-center w-5 h-5 rounded-[6px] transition-all duration-200 outline-none",
         copied
           ? "bg-green-500/10 text-green-600 border border-green-200 opacity-100"
-          : "text-gray-300 hover:text-gray-500 hover:bg-gray-100 border border-transparent opacity-0 group-hover:opacity-100"
+          : "text-gray-300 hover:text-gray-600 hover:bg-gray-100 border border-transparent opacity-40 group-hover:opacity-100"
       )}
     >
       <Check
@@ -214,8 +214,8 @@ function CommentEntry({ comment, replies = [], getName, getPhoto, allowReply, en
   const replyCount = replies.length;
 
   const ContentNode = (
-    <div className="pt-0.5">
-      <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+    <div className="pt-0.5 w-full">
+      <div className="flex items-center gap-1.5 mb-0.5 flex-wrap w-full">
         <span className="text-[13px] font-semibold text-gray-900">{resolvedName}</span>
         {isInternal && (
           <>
@@ -224,13 +224,14 @@ function CommentEntry({ comment, replies = [], getName, getPhoto, allowReply, en
           </>
         )}
         
+        {/* Ações inlines, sempre visíveis mas em baixa opacidade (40%) até o hover */}
         <div className="flex items-center gap-0.5 ml-1 transition-opacity duration-200">
           <CopyButton text={comment.content} />
           {allowReply && !isNested && (
             <button
               onClick={() => onReplyClick(comment.id)}
               title="Responder"
-              className="flex items-center justify-center w-5 h-5 rounded-[6px] border border-transparent text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100 outline-none"
+              className="flex items-center justify-center w-5 h-5 rounded-[6px] border border-transparent text-gray-300 hover:text-gray-600 hover:bg-gray-100 transition-colors opacity-40 group-hover:opacity-100 outline-none"
             >
               <Reply strokeWidth={2} className="w-3 h-3" />
             </button>
@@ -238,12 +239,13 @@ function CommentEntry({ comment, replies = [], getName, getPhoto, allowReply, en
         </div>
       </div>
       
-      <div className="text-[13px] text-gray-700 prose prose-sm max-w-none leading-relaxed prose-a:text-blue-600 hover:prose-a:text-blue-700 [&>p]:mb-1 [&>p:last-child]:mb-0">
+      {/* ⚠️ max-w-[760px] aplicado apenas ao texto! O resto do TimelineContent continua fluido */}
+      <div className="text-[13px] text-gray-700 prose prose-sm max-w-[760px] leading-relaxed prose-a:text-blue-600 hover:prose-a:text-blue-700 [&>p]:mb-1 [&>p:last-child]:mb-0">
         <ReactMarkdown>{comment.content || ""}</ReactMarkdown>
       </div>
       
       {comment.attachments && comment.attachments.length > 0 && (
-        <div className="mt-2.5 flex flex-wrap gap-2">
+        <div className="mt-2.5 flex flex-wrap gap-2 max-w-[760px]">
           {comment.attachments.map((att, idx) => (
             <a key={idx} href={att.file_url} target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-[12px] text-gray-700 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 px-2.5 py-1.5 rounded-md transition-all shadow-sm">
@@ -293,7 +295,8 @@ function CommentEntry({ comment, replies = [], getName, getPhoto, allowReply, en
       isHighlighted={isHighlighted}
     >
       <TimelineNode>{AvatarNode}</TimelineNode>
-      <TimelineContent className="max-w-[760px]">{ContentNode}</TimelineContent>
+      {/* flex-1 para permitir o crescimento do bloco, mantendo o limite apenas no texto */}
+      <TimelineContent className="flex-1">{ContentNode}</TimelineContent>
     </TimelineItem>
   );
 }
@@ -321,6 +324,7 @@ function CommentThread({ comment, replies, getName, getPhoto, allowReply, entity
       {activeReplyId === comment.id && (
         <div className="pl-[82px] pr-2 pb-3 pt-1 animate-in fade-in slide-in-from-top-2 duration-200 relative w-full">
           {!isLast && <div className="absolute left-[70px] top-0 bottom-0 w-px bg-slate-200 z-0" />}
+          {/* Mantém a restrição na resposta para não ultrapassar a linha do texto original */}
           <div className="relative z-10 max-w-[760px]">
             <CommentInput
               entityType={entityType} entityId={entityId} workshopId={workshopId}
@@ -378,8 +382,8 @@ function LogGroupItem({ group, getName, isLast, showTime = true, formattedTime }
           <div className={cn("w-[9px] h-[9px] rounded-full ring-[3px] ring-white", dotColor)} />
         </div>
       </TimelineNode>
-      <TimelineContent className="max-w-[760px]">
-        <div className="flex flex-wrap items-baseline gap-x-1.5 pt-1">
+      <TimelineContent className="flex-1">
+        <div className="flex flex-wrap items-baseline gap-x-1.5 pt-1 max-w-[760px]">
           <span className="text-[13px] font-semibold text-gray-900">{resolvedName}</span>
           <span className="text-[13px] text-gray-700">{renderLogSummaries()}</span>
         </div>
@@ -433,7 +437,8 @@ export function CommentInput({ entityType, entityId, workshopId, parentCommentId
       setSubmitSuccess(true);
       onSubmitted?.(newComment.id);
       
-      setTimeout(() => setSubmitSuccess(false), 2000);
+      // 1200ms para um feedback snappier e veloz
+      setTimeout(() => setSubmitSuccess(false), 1200);
     },
   });
 
@@ -483,7 +488,6 @@ export function CommentInput({ entityType, entityId, workshopId, parentCommentId
         </div>
       )}
       
-      {/* BACKGROUND TRANSPARENT, SEM BORDAS */}
       <div className={cn("max-w-[760px] w-full flex items-center gap-1.5 bg-transparent transition-colors py-1", compact ? "" : "mt-2")}>
         
         <button onClick={() => setIsInternal(!isInternal)}
@@ -502,7 +506,7 @@ export function CommentInput({ entityType, entityId, workshopId, parentCommentId
           </span>
         </label>
         
-        <div className="w-px h-5 bg-gray-200 shrink-0" />
+        {/* Divisória removida para manter minimalista */}
         
         <textarea
           ref={textareaRef}
@@ -691,12 +695,13 @@ export default function ActivityFeed({
   }, [highlightedId]);
 
   return (
-    <div className="flex flex-col h-full min-h-0 w-full relative">
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-2">
+    // Componente raiz sem overflow, crescendo livremente conforme seu pai controla
+    <div className="flex flex-col w-full relative">
+      <div className="w-full pb-2">
         {isLoading ? (
           <TimelineSkeleton />
         ) : timelineByDay.length === 0 ? (
-          <div className="w-full h-full flex flex-col items-center justify-center animate-in fade-in px-4">
+          <div className="w-full h-full min-h-[300px] flex flex-col items-center justify-center animate-in fade-in px-4">
             <h3 className="text-[14px] font-medium text-gray-900 mb-1">Nenhuma atividade ainda</h3>
             <p className="text-[13px] text-gray-500 max-w-[320px] text-center leading-relaxed">
               Este espaço registrará automaticamente comentários, alterações e todo o histórico deste pedido.
@@ -740,7 +745,7 @@ export default function ActivityFeed({
       </div>
 
       {showComments && !isLoading && (
-        <div className="shrink-0 w-full bg-white border-t border-gray-100 px-4 py-3">
+        <div className="w-full bg-white border-t border-gray-100 px-4 py-3">
           <CommentInput entityType={entityType} entityId={entityId} workshopId={workshopId}
             getName={getName} getPhoto={getPhoto}
             onSubmitted={(newId) => { if(newId) setPendingHighlightId(newId); }}
