@@ -22,10 +22,26 @@ export default function useEmployeeResolver() {
     staleTime: 5 * 60 * 1000, // cache 5 min
   });
 
+  // Fallback: carrega Users visíveis para resolver nomes quando Employee não existe
+  const { data: users = [] } = useQuery({
+    queryKey: ["users-resolver"],
+    queryFn: async () => {
+      const all = await base44.entities.User.list("full_name", 500);
+      return all || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Map user_id → Employee
   const byUserId = {};
   employees.forEach((e) => {
     if (e.user_id) byUserId[e.user_id] = e;
+  });
+
+  // Map user_id → User (fallback)
+  const userById = {};
+  users.forEach((u) => {
+    if (u.id) userById[u.id] = u;
   });
 
   // Map email → Employee (fallback)
@@ -40,6 +56,11 @@ export default function useEmployeeResolver() {
    */
   const getName = (userId, fallbackName) => {
     if (userId && byUserId[userId]) return byUserId[userId].full_name;
+    // Fallback: tenta resolver via User
+    if (userId && userById[userId]) {
+      const u = userById[userId];
+      return u.full_name || (u.email ? u.email.split("@")[0] : null) || fallbackName || "—";
+    }
     // Tenta pelo fallback como email
     if (fallbackName && fallbackName.includes("@")) {
       const emp = byEmail[fallbackName.toLowerCase()];
@@ -57,6 +78,7 @@ export default function useEmployeeResolver() {
    */
   const getPhoto = (userId) => {
     if (userId && byUserId[userId]) return byUserId[userId].profile_picture_url || null;
+    if (userId && userById[userId]) return userById[userId].photo_url || null;
     return null;
   };
 
