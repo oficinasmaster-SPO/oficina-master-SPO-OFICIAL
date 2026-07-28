@@ -148,12 +148,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ── 5. SELECIONAR: Ordenar por prioridade (menor = melhor) e depois por consultor ──
+    // ── 5. SELECIONAR: consultor principal primeiro, depois por prioridade ──
+    const principalId = workshop.consultor_principal_id;
     const melhorSlot = slotsCandidatos.sort((a, b) => {
-      if (a.prioridade !== b.prioridade) {
-        return a.prioridade - b.prioridade; // Prioridade crescente = melhor
+      if (principalId) {
+        const aIsPrincipal = a.consultor_id === principalId ? 0 : 1;
+        const bIsPrincipal = b.consultor_id === principalId ? 0 : 1;
+        if (aIsPrincipal !== bIsPrincipal) return aIsPrincipal - bIsPrincipal;
       }
-      return a.consultor_nome.localeCompare(b.consultor_nome); // Tie-breaker alfabético
+      if (a.prioridade !== b.prioridade) return a.prioridade - b.prioridade;
+      return a.consultor_nome.localeCompare(b.consultor_nome);
     })[0];
 
     console.log(`✅ Consultor atribuído automaticamente: ${melhorSlot.consultor_nome} em ${melhorSlot.dataHora}`);
