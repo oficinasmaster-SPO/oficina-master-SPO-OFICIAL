@@ -15,7 +15,7 @@ export default function PedidoInternoVisualizador({ pedido }) {
       name: media.nome || media.name || "Arquivo sem nome",
       type: media.type === "imagem" ? "image" : media.type === "link" ? "link" : "document",
       mimeType: media.mimeType,
-      size: media.size,
+      size: media.size || media.bytes || media.tamanho || media.file_size || 0,
       extension: media.extension,
       createdBy: media.createdBy || "Sistema",
       origin: "Pedido Interno"

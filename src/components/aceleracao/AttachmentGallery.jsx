@@ -18,12 +18,15 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/b
 // UTILS & HELPERS
 // ============================================================================
 const formatBytes = (bytes, decimals = 1) => {
-  if (!bytes || bytes === 0) return "0 B";
+  if (bytes === undefined || bytes === null || bytes === "") return "—";
+  if (typeof bytes === "string" && /[a-zA-Z]/.test(bytes)) return bytes;
+  const numericBytes = Number(bytes);
+  if (isNaN(numericBytes) || numericBytes <= 0) return "0 B";
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
   const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+  const i = Math.floor(Math.log(numericBytes) / Math.log(k));
+  return parseFloat((numericBytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
 };
 
 const getDomainName = (url) => {
@@ -138,7 +141,7 @@ function FileViewerDrawer({ files, currentIndex, onClose, onChangeIndex }) {
           <div className="min-w-0 pr-4">
             <h2 className="text-sm font-semibold text-gray-800 truncate">{currentFile.name}</h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              {currentFile.createdBy || "Sistema"} • {formatBytes(currentFile.size)}
+              {currentFile.createdBy || "Sistema"} • {formatBytes(currentFile.size || currentFile.bytes || currentFile.tamanho || currentFile.file_size)}
             </p>
           </div>
           <div className="flex items-center gap-1 text-gray-500 shrink-0">
@@ -316,7 +319,7 @@ export default function AttachmentGallery({ files = [] }) {
                           {doc.extension && <span className="shrink-0 px-1.5 py-0.5 rounded-[4px] bg-gray-100 text-[10px] font-bold text-gray-500 uppercase tracking-wide">{doc.extension}</span>}
                         </div>
                         <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-gray-500 truncate">
-                          <span>{formatBytes(doc.size)}</span>
+                          <span>{formatBytes(doc.size || doc.bytes || doc.tamanho || doc.file_size)}</span>
                           {doc.createdBy && <><span className="w-1 h-1 rounded-full bg-gray-300" /><span className="truncate">Enviado por {doc.createdBy}</span></>}
                           {doc.origin && <><span className="w-1 h-1 rounded-full bg-gray-300" /><span className="truncate text-gray-400">({doc.origin})</span></>}
                         </div>
