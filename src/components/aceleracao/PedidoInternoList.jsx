@@ -247,7 +247,7 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
 
       {/* Responsável (com seta → de ligação) */}
       <div className={`${COL.responsavel} ${RD} flex items-center gap-1.5 min-w-0`}>
-        <ArrowRight className="h-3 w-3 text-gray-300 shrink-0" />
+        <ArrowRight className="h-4 w-4 text-red-600 shrink-0" />
         {aName ? (
           <>
             <MiniAvatar name={aName} photoUrl={aPhoto} />
