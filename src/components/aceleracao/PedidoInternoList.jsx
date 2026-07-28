@@ -130,6 +130,14 @@ const STATUS_DOT_STYLES = {
   concluido:  "bg-[hsl(var(--status-done))]",
 };
 
+const STATUS_BG_STYLES = {
+  em_analise: "bg-blue-50 hover:bg-blue-100",
+  pendente:   "bg-amber-50 hover:bg-amber-100",
+  aprovado:   "bg-emerald-50 hover:bg-emerald-100",
+  recusado:   "bg-red-50 hover:bg-red-100",
+  concluido:  "bg-gray-50 hover:bg-gray-100",
+};
+
 function StatusBadgeLocal({ status }) {
   const label = PEDIDO_STATUS_CONFIG[status]?.label || status;
   const badgeCls = STATUS_BADGE_STYLES[status] || STATUS_BADGE_STYLES.concluido;
@@ -164,14 +172,14 @@ export function ColumnHeaders() {
    ═══════════════════════════════════════════════════════════════════════════ */
 function GroupHeader({ group, count, collapsed, onToggle }) {
   const dotCls = STATUS_DOT_STYLES[group.key] || STATUS_DOT_STYLES.concluido;
+  const bgCls = STATUS_BG_STYLES[group.key] || "bg-gray-50 hover:bg-gray-100";
   return (
     <div
       role="button"
       tabIndex={0}
       onClick={onToggle}
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onToggle(); } }}
-      // Atualizado com a nova cor fixa e o efeito hover personalizado
-      className={`flex items-center ${MIN_TABLE} py-2.5 px-4 cursor-pointer select-none transition-all duration-150 bg-[#ffe984] hover:bg-[#f2db6b] ${collapsed ? "opacity-50" : ""}`}
+      className={`flex items-center ${MIN_TABLE} py-2.5 px-4 cursor-pointer select-none transition-all duration-150 ${bgCls} ${collapsed ? "opacity-50" : ""}`}
     >
       <div className="flex items-center gap-2 shrink-0">
         <span className={`h-[7px] w-[7px] rounded-full ${dotCls}`} />
