@@ -95,7 +95,7 @@ function getStatusInfo(reminder, today) {
   return { label: "Pendente", className: "bg-gray-100 text-gray-600" };
 }
 
-const FollowUpPendenteRow = memo(({ reminder, today, seqFU, onSelect, isLast }) => {
+const FollowUpPendenteRow = memo(({ reminder, today, seqFU, onSelect, isLast, meuId }) => {
   const status = getStatusInfo(reminder, today);
   const isOverdue = !reminder.is_completed && reminder.reminder_date < today;
   const isToday = !reminder.is_completed && reminder.reminder_date === today;
@@ -132,6 +132,11 @@ const FollowUpPendenteRow = memo(({ reminder, today, seqFU, onSelect, isLast }) 
           <span className="text-sm font-semibold text-gray-900 truncate">
             {reminder.workshop_name || "Sem cliente"}
           </span>
+          {meuId && reminder.consultor_principal_id && reminder.consultor_principal_id !== meuId && reminder.consultor_id !== meuId && (
+            <span className="flex-shrink-0 text-[9px] font-medium text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded truncate max-w-[100px]" title={`Consultor: ${reminder.consultor_principal_nome || reminder.consultor_nome}`}>
+              {reminder.consultor_principal_nome || reminder.consultor_nome}
+            </span>
+          )}
         </div>
       </div>
 
