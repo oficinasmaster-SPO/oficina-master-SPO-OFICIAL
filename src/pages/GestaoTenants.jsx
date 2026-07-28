@@ -14,10 +14,14 @@ import { Building2, Briefcase, Plus, Pencil, Trash2, Loader2, ShieldAlert, Searc
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import GerarAtendimentosPlanoButton from '@/components/aceleracao/GerarAtendimentosPlanoButton';
+import ConsultorSelect from '@/components/shared/ConsultorSelect';
+import useConsultoresList from '@/components/hooks/useConsultoresList';
 
 export default function GestaoTenants() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { data: consultoresRaw = [] } = useConsultoresList(user);
+  const consultoresOptions = consultoresRaw.map(c => ({ user_id: c.id, full_name: c.full_name }));
   
   const [activeTab, setActiveTab] = useState("consulting-firms");
   const [isConsultingModalOpen, setIsConsultingModalOpen] = useState(false);
@@ -163,6 +167,23 @@ export default function GestaoTenants() {
     },
     onError: (err) => {
       toast.error(`Erro ao salvar: ${err.message}`);
+    }
+  });
+
+  const assignConsultorMutation = useMutation({
+    mutationFn: async ({ companyId, consultorId }) => {
+      const consultor = consultoresOptions.find(c => c.user_id === consultorId);
+      return await base44.entities.Workshop.update(companyId, {
+        consultor_principal_id: consultorId || null,
+        consultor_principal_nome: consultor?.full_name || ''
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-companies'] });
+      toast.success("Consultor principal atualizado!");
+    },
+    onError: (err) => {
+      toast.error(`Erro ao atualizar consultor: ${err.message}`);
     }
   });
 
@@ -421,6 +442,7 @@ export default function GestaoTenants() {
                         <TableHead>Nome da Oficina</TableHead>
                         <TableHead>Ativo</TableHead>
                         <TableHead>Consultoria Vinculada</TableHead>
+                        <TableHead>Consultor Principal</TableHead>
                         <TableHead>CNPJ</TableHead>
                         <TableHead>Admin (Owner ID)</TableHead>
                         <TableHead>Email Admin</TableHead>
@@ -447,6 +469,14 @@ export default function GestaoTenants() {
                               />
                             </TableCell>
                             <TableCell>{linkedFirm?.name || <span className="text-gray-400 italic">Desconhecida/Sem Vínculo</span>}</TableCell>
+                            <TableCell className="min-w-[200px]">
+                              <ConsultorSelect
+                                usuarios={consultoresOptions}
+                                value={company.consultor_principal_id || ''}
+                                onChange={(consultorId) => assignConsultorMutation.mutate({ companyId: company.id, consultorId })}
+                                placeholder="Sem consultor"
+                              />
+                            </TableCell>
                             <TableCell>{company.cnpj || '-'}</TableCell>
                             <TableCell className="text-xs text-gray-500 font-mono">{company.owner_id}</TableCell>
                             <TableCell>{ownerUser?.email || '-'}</TableCell>
@@ -476,7 +506,7 @@ export default function GestaoTenants() {
                       })}
                       {filteredCompanies.length === 0 && (
                         <TableRow>
-                          <TableCell colSpan={8} className="text-center py-6 text-gray-500">
+                          <TableCell colSpan={9} className="text-center py-6 text-gray-500">
                             Nenhuma oficina encontrada.
                           </TableCell>
                         </TableRow>
