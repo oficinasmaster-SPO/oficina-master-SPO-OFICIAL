@@ -4,12 +4,10 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import ReactMarkdown from "react-markdown";
 import {
-  Paperclip, Loader2, ArrowRight, Edit3, Send,
-  ChevronDown, ChevronRight, MoreHorizontal, Copy, FileText,
-  Check, Link2, Trash2, Reply
+  Paperclip, Loader2, ArrowRight, Send,
+  ChevronRight, Copy, FileText, Check, Reply
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import useEmployeeResolver from "@/hooks/useEmployeeResolver";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -102,7 +100,7 @@ function TimelineSection({ label, count, children }) {
   );
 }
 
-function TimelineItem({ variant = "default", id, time, showTime = true, isLast, actions, isHighlighted = false, children }) {
+function TimelineItem({ variant = "default", id, time, showTime = true, isLast, isHighlighted = false, children }) {
   const isNested = variant === "nested";
   return (
     <div
@@ -124,12 +122,6 @@ function TimelineItem({ variant = "default", id, time, showTime = true, isLast, 
       )}
       
       {children}
-      
-      {actions && (
-        <div className="absolute right-4 top-2 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white border border-gray-200 rounded-md shadow-sm flex items-center p-0.5 z-20">
-          {actions}
-        </div>
-      )}
     </div>
   );
 }
@@ -167,60 +159,63 @@ function TimelineSkeleton() {
 }
 
 // ============================================================================
+// MICRO-INTERAÇÕES
+// ============================================================================
+
+function CopyButton({ text }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (!text || copied) return;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      title="Copiar texto"
+      className={cn(
+        "relative flex items-center justify-center w-5 h-5 rounded-[6px] transition-all duration-200 outline-none",
+        copied
+          ? "bg-green-500/10 text-green-600 border border-green-200 opacity-100"
+          : "text-gray-300 hover:text-gray-500 hover:bg-gray-100 border border-transparent opacity-0 group-hover:opacity-100"
+      )}
+    >
+      <Check
+        strokeWidth={2.5}
+        className={cn(
+          "absolute w-3 h-3 transition-all duration-200",
+          copied ? "opacity-100 scale-100" : "opacity-0 scale-50"
+        )}
+      />
+      <Copy
+        strokeWidth={2}
+        className={cn(
+          "absolute w-3 h-3 transition-all duration-200",
+          !copied ? "opacity-100 scale-100" : "opacity-0 scale-50"
+        )}
+      />
+    </button>
+  );
+}
+
+// ============================================================================
 // ELEMENTOS DA TIMELINE (Comentários e Logs)
 // ============================================================================
 
 function CommentEntry({ comment, replies = [], getName, getPhoto, allowReply, entityType, entityId, workshopId, isNested = false, isLast = false, onReplyClick, showTime = true, formattedTime, isHighlighted = false }) {
   const [showReplies, setShowReplies] = useState(false);
-  const [copied, setCopied] = useState(false);
   
   const isInternal = comment.is_internal;
   const resolvedName = getName ? getName(comment.author_id, comment.author_name) : (comment.author_name || "Usuário");
   const photoUrl = getPhoto ? getPhoto(comment.author_id) : null;
   const replyCount = replies.length;
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(comment.content || "");
-    setCopied(true);
-    toast.success("Comentário copiado!");
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const ActionsMenu = (
-    <>
-      <button onClick={handleCopy} className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors" title="Copiar">
-        {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-      </button>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors" title="Mais opções">
-            <MoreHorizontal className="h-3.5 w-3.5" />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-40 text-xs">
-          <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(window.location.origin + window.location.pathname + "#comment-" + comment.id); toast.success("Link copiado!"); }} className="cursor-pointer text-gray-700">
-            <Link2 className="w-3.5 h-3.5 mr-2" /> Copiar link
-          </DropdownMenuItem>
-          {allowReply && !isNested && (
-            <DropdownMenuItem onClick={() => onReplyClick(comment.id)} className="cursor-pointer text-gray-700">
-              <Reply className="w-3.5 h-3.5 mr-2" /> Responder
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem className="cursor-pointer text-gray-700">
-            <Edit3 className="w-3.5 h-3.5 mr-2" /> Editar
-          </DropdownMenuItem>
-          <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50">
-            <Trash2 className="w-3.5 h-3.5 mr-2" /> Excluir
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
-  );
-
   const ContentNode = (
     <div className="pt-0.5">
-      <div className="flex items-baseline gap-1.5 mb-0.5 flex-wrap">
+      <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
         <span className="text-[13px] font-semibold text-gray-900">{resolvedName}</span>
         {isInternal && (
           <>
@@ -228,10 +223,25 @@ function CommentEntry({ comment, replies = [], getName, getPhoto, allowReply, en
             <span className="text-[11px] font-medium text-amber-500">Interno</span>
           </>
         )}
+        
+        <div className="flex items-center gap-0.5 ml-1 transition-opacity duration-200">
+          <CopyButton text={comment.content} />
+          {allowReply && !isNested && (
+            <button
+              onClick={() => onReplyClick(comment.id)}
+              title="Responder"
+              className="flex items-center justify-center w-5 h-5 rounded-[6px] border border-transparent text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100 outline-none"
+            >
+              <Reply strokeWidth={2} className="w-3 h-3" />
+            </button>
+          )}
+        </div>
       </div>
+      
       <div className="text-[13px] text-gray-700 prose prose-sm max-w-none leading-relaxed prose-a:text-blue-600 hover:prose-a:text-blue-700 [&>p]:mb-1 [&>p:last-child]:mb-0">
         <ReactMarkdown>{comment.content || ""}</ReactMarkdown>
       </div>
+      
       {comment.attachments && comment.attachments.length > 0 && (
         <div className="mt-2.5 flex flex-wrap gap-2">
           {comment.attachments.map((att, idx) => (
@@ -244,13 +254,15 @@ function CommentEntry({ comment, replies = [], getName, getPhoto, allowReply, en
           ))}
         </div>
       )}
+      
       {replyCount > 0 && (
         <button onClick={() => setShowReplies(!showReplies)}
-          className="mt-2 flex items-center gap-1.5 text-[12px] font-semibold text-blue-600 hover:text-blue-700 transition-colors">
+          className="mt-2 flex items-center gap-1.5 text-[12px] font-semibold text-blue-600 hover:text-blue-700 transition-colors outline-none">
           <ChevronRight className={cn("w-3.5 h-3.5 transition-transform duration-200", showReplies && "rotate-90")} />
           {replyCount} {replyCount === 1 ? "resposta" : "respostas"}
         </button>
       )}
+      
       <div className={cn("grid transition-all duration-200 ease-in-out", showReplies ? "grid-rows-[1fr] opacity-100 mt-3" : "grid-rows-[0fr] opacity-0 mt-0")}>
         <div className="overflow-hidden space-y-1.5">
           {replies.map((reply) => (
@@ -278,7 +290,6 @@ function CommentEntry({ comment, replies = [], getName, getPhoto, allowReply, en
       time={formattedTime}
       showTime={showTime}
       isLast={isLast}
-      actions={ActionsMenu}
       isHighlighted={isHighlighted}
     >
       <TimelineNode>{AvatarNode}</TimelineNode>
@@ -378,10 +389,10 @@ function LogGroupItem({ group, getName, isLast, showTime = true, formattedTime }
 }
 
 // ============================================================================
-// COMPONENTE DE INPUT 
+// COMPONENTE DE INPUT (Exportado Separadamente)
 // ============================================================================
 
-function CommentInput({ entityType, entityId, workshopId, parentCommentId = null, onSubmitted, onCancel, compact = false, getName, getPhoto }) {
+export function CommentInput({ entityType, entityId, workshopId, parentCommentId = null, onSubmitted, onCancel, compact = false, getName, getPhoto }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [content, setContent] = useState("");
@@ -472,8 +483,8 @@ function CommentInput({ entityType, entityId, workshopId, parentCommentId = null
         </div>
       )}
       
-      {/* ⚠️ MUDANÇAS AQUI: bordas arredondadas (rounded-[20px]), paddings bem mais sutis, sombra leve, sem emoji no texto */}
-      <div className={cn("max-w-[760px] w-full flex items-center gap-1.5 rounded-[20px] border border-gray-200/80 bg-white shadow-sm transition-all focus-within:border-gray-300 focus-within:shadow px-1.5 py-1")}>
+      {/* BACKGROUND TRANSPARENT, SEM BORDAS */}
+      <div className={cn("max-w-[760px] w-full flex items-center gap-1.5 bg-transparent transition-colors py-1", compact ? "" : "mt-2")}>
         
         <button onClick={() => setIsInternal(!isInternal)}
           className={cn(
@@ -680,12 +691,12 @@ export default function ActivityFeed({
   }, [highlightedId]);
 
   return (
-    <div className="flex flex-col w-full relative">
-      <div className="w-full pb-2">
+    <div className="flex flex-col h-full min-h-0 w-full relative">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-2">
         {isLoading ? (
           <TimelineSkeleton />
         ) : timelineByDay.length === 0 ? (
-          <div className="w-full min-h-[300px] flex flex-col items-center justify-center animate-in fade-in px-4">
+          <div className="w-full h-full flex flex-col items-center justify-center animate-in fade-in px-4">
             <h3 className="text-[14px] font-medium text-gray-900 mb-1">Nenhuma atividade ainda</h3>
             <p className="text-[13px] text-gray-500 max-w-[320px] text-center leading-relaxed">
               Este espaço registrará automaticamente comentários, alterações e todo o histórico deste pedido.
@@ -728,16 +739,10 @@ export default function ActivityFeed({
         )}
       </div>
 
-      {/* ⚠️ MUDANÇA AQUI: paddings reduzidos (pt-2 pb-2) para trazer o input pro chão */}
-      {/* Footer limpo, sem sombras ou blur, apenas fundo sólido e borda fina */}
       {showComments && !isLoading && (
-        <div className="sticky bottom-0 z-30 w-full bg-white border-t border-gray-100 px-4 py-3">
-          <CommentInput 
-            entityType={entityType} 
-            entityId={entityId} 
-            workshopId={workshopId}
-            getName={getName} 
-            getPhoto={getPhoto}
+        <div className="shrink-0 w-full bg-white border-t border-gray-100 px-4 py-3">
+          <CommentInput entityType={entityType} entityId={entityId} workshopId={workshopId}
+            getName={getName} getPhoto={getPhoto}
             onSubmitted={(newId) => { if(newId) setPendingHighlightId(newId); }}
           />
         </div>
