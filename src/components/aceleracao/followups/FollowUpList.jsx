@@ -316,7 +316,7 @@ const CANAL_ICON_MAP = {
   meet:       { icon: Video,          bg: "bg-purple-500", title: "Aguardando retorno via Meet" },
 };
 
-export default function FollowUpList({ reminders, remindersConcluidos = [], today, isLoading, onSelect, filterPill, onFilterPill, seqByReminderId = {}, statsByWorkshopId = {}, onSuporteRapido }) {
+export default function FollowUpList({ reminders, remindersConcluidos = [], today, isLoading, onSelect, filterPill, onFilterPill, seqByReminderId = {}, statsByWorkshopId = {}, onSuporteRapido, meuId }) {
   const [selectedCompleted, setSelectedCompleted] = useState(null);
   const [search, setSearch] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -636,6 +636,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
               seqFU={seqByReminderId[r.id] ?? null}
               onSelect={onSelect}
               isLast={i === paginated.length - 1}
+              meuId={meuId}
             />
           ))}
         </div>
