@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
-import ActivityTimeline from "./ActivityTimeline";
+import ActivityFeed from "./ActivityFeed";
 import TarefaChecklist from "./TarefaChecklist";
 import OrigemPedidoBanner from "./banners/OrigemPedidoBanner";
 import AguardandoClienteBanner from "./banners/AguardandoClienteBanner";
@@ -361,7 +361,7 @@ export default function BacklogDetailDrawer({ tarefa, user, onClose, onEdit }) {
           {/* ATIVIDADE */}
           {activeTab === "atividade" && (
             <div className="px-5 py-4">
-              <ActivityTimeline
+              <ActivityFeed
                 entityType="tarefa_backlog"
                 entityId={tarefa.id}
                 workshopId={tarefa.workshop_id}

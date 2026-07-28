@@ -12,7 +12,7 @@ import {
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import ActivityTimeline from "./ActivityTimeline";
+import ActivityFeed from "./ActivityFeed";
 import PedidoInternoStepper from "./PedidoInternoStepper";
 import StatusBadge from "@/components/shared/StatusBadge";
 import PriorityBadge from "@/components/shared/PriorityBadge";
@@ -279,7 +279,7 @@ export default function PedidoInternoDetail({
                 <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#b3b34d]">{pedido.descricao}</p>
               </div>
             )}
-            <ActivityTimeline
+            <ActivityFeed
               entityType="pedido_interno"
               entityId={pedido.id}
               workshopId={pedido.workshop_id}

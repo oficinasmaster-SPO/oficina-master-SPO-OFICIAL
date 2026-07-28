@@ -12,7 +12,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import OrigemPedidoBanner from "./banners/OrigemPedidoBanner";
 import AguardandoClienteBanner from "./banners/AguardandoClienteBanner";
-import ActivityTimeline from "./ActivityTimeline";
+import ActivityFeed from "./ActivityFeed";
 import TarefaChecklist from "./TarefaChecklist";
 import StatusBadge from "@/components/shared/StatusBadge";
 import PriorityBadge from "@/components/shared/PriorityBadge";
@@ -411,7 +411,7 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ActivityTimeline entityType="tarefa_backlog" entityId={tarefa.id} workshopId={tarefa.workshop_id} />
+          <ActivityFeed entityType="tarefa_backlog" entityId={tarefa.id} workshopId={tarefa.workshop_id} />
         </CardContent>
       </Card>
     </div>

@@ -12,7 +12,7 @@ import {
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import ActivityTimeline from "./ActivityTimeline";
+import ActivityFeed from "./ActivityFeed";
 import PedidoInternoStepper from "./PedidoInternoStepper";
 import AnexoPreviewModal from "./AnexoPreviewModal";
 import PriorityBadge from "@/components/shared/PriorityBadge";
@@ -515,7 +515,7 @@ export default function PedidoInternoDrawer({
           {/* ATIVIDADE */}
           {activeTab === "atividade" && (
             <div className="flex flex-col gap-4 px-5 py-4">
-              <ActivityTimeline
+              <ActivityFeed
                 entityType="pedido_interno"
                 entityId={pedido.id}
                 workshopId={pedido.workshop_id}

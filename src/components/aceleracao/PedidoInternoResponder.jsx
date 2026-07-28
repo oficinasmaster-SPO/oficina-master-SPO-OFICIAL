@@ -13,7 +13,7 @@ import { ptBR } from "date-fns/locale";
 import PedidoInternoVisualizador from "./PedidoInternoVisualizador";
 import PedidoInternoMediaUpload from "./PedidoInternoMediaUpload";
 import TarefaConvertidaBanner from "./banners/TarefaConvertidaBanner";
-import ActivityTimeline from "./ActivityTimeline";
+import ActivityFeed from "./ActivityFeed";
 import StatusBadge from "@/components/shared/StatusBadge";
 import PriorityBadge from "@/components/shared/PriorityBadge";
 import { TIPO_PEDIDO_LABELS } from "@/components/shared/backlogConstants";
@@ -206,7 +206,7 @@ export default function PedidoInternoResponder({ pedido, user, onCancel, onSucce
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ActivityTimeline
+          <ActivityFeed
             entityType="pedido_interno"
             entityId={pedido.id}
             workshopId={pedido.workshop_id}
