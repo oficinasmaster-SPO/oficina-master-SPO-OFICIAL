@@ -1,30 +1,33 @@
 /**
  * PedidoInternoList — Listagem densa estilo Linear/Jira.
- * Colunas: Cliente | Pedido | Solicitante | Responsável | Prioridade | Status | Tempo Aberto
+ * Colunas: Cliente | Pedido | Solicitante → Responsável | Prioridade | Status | Tempo
  */
 import React, { useState, useCallback } from "react";
 import {
-  Clock, ChevronDown, ChevronRight, Search as SearchIcon,
-  ClipboardList, CheckCircle2, XCircle,
+  Clock, ClipboardList, Eye, MoreHorizontal, ArrowRight,
   ArrowDown, Minus, ArrowUp, AlertOctagon,
 } from "lucide-react";
 import { PEDIDO_STATUS_CONFIG } from "@/components/shared/backlogConstants";
 import useEmployeeResolver from "@/hooks/useEmployeeResolver";
 
-/* ── Grid — larguras fixas compartilhadas header ↔ rows ───────────────── */
+/* ── Grid — colunas compactadas (~15% menos espaço), Pedido respira mais ── */
 export const COL = {
-  cliente:     "w-[180px] shrink-0",
-  pedido:      "flex-1 min-w-[240px]",
-  solicitante: "w-[170px] shrink-0",
-  responsavel: "w-[170px] shrink-0",
-  prioridade:  "w-[104px] shrink-0",
-  status:      "w-[124px] shrink-0",
-  sla:         "w-[92px] shrink-0",
-  gap:         "gap-4",
-  px:          "px-5",
+  cliente:     "w-[148px] shrink-0",
+  pedido:      "flex-1 min-w-[270px]",
+  solicitante: "w-[140px] shrink-0",
+  responsavel: "w-[140px] shrink-0",
+  prioridade:  "w-[90px] shrink-0",
+  status:      "w-[112px] shrink-0",
+  sla:         "w-[84px] shrink-0",
+  gap:         "gap-3",
+  px:          "px-4",
 };
 
-const MIN_TABLE = "min-w-[1100px]";
+const MIN_TABLE = "min-w-[1040px]";
+
+/* ── Dividers — header forte, rows quase invisível, desaparecem no hover ── */
+const HD = "border-r border-r-slate-900/5";
+const RD = "border-r border-r-black/[0.04] group-hover:border-r-transparent transition-colors duration-150";
 
 /* ── Status groups ─────────────────────────────────────────────────────── */
 const STATUS_GROUPS = [
@@ -111,14 +114,6 @@ function PriorityLabel({ prioridade }) {
 }
 
 /* ── Status (dot 6px + label, fundo suave via tokens) ──────────────────── */
-const STATUS_TOKENS = {
-  em_analise: "analysis",
-  pendente:   "pending",
-  aprovado:   "approved",
-  recusado:   "rejected",
-  concluido:  "done",
-};
-
 const STATUS_BADGE_STYLES = {
   em_analise: "bg-[hsl(var(--status-analysis-bg))] text-[hsl(var(--status-analysis))]",
   pendente:   "bg-[hsl(var(--status-pending-bg))] text-[hsl(var(--status-pending))]",
@@ -148,46 +143,50 @@ function StatusBadgeLocal({ status }) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   COLUMN HEADERS — 36px, sticky
+   COLUMN HEADERS — 36px, sticky, divisores verticais, tracking largo
    ═══════════════════════════════════════════════════════════════════════════ */
 export function ColumnHeaders() {
   return (
-    <div className={`flex items-center ${COL.gap} ${COL.px} ${MIN_TABLE} h-9 sticky top-0 z-[5] bg-[hsl(var(--surface))] border-b border-[hsl(var(--border-subtle))] text-[11px] font-semibold uppercase tracking-[.06em] text-gray-400 select-none`}>
-      <span className={COL.cliente}>Cliente</span>
-      <span className={COL.pedido}>Pedido</span>
-      <span className={COL.solicitante}>Solicitante</span>
-      <span className={COL.responsavel}>Responsável</span>
-      <span className={`${COL.prioridade} text-center`}>Prioridade</span>
-      <span className={`${COL.status} text-center`}>Status</span>
+    <div className={`flex items-center ${COL.gap} ${COL.px} ${MIN_TABLE} h-9 sticky top-0 z-[5] bg-[hsl(var(--surface))] border-b border-[hsl(var(--border-subtle))] text-[11px] font-semibold uppercase tracking-[.08em] text-gray-500 select-none`}>
+      <span className={`${COL.cliente} ${HD}`}>Cliente</span>
+      <span className={`${COL.pedido} ${HD}`}>Pedido</span>
+      <span className={`${COL.solicitante} ${HD}`}>Solicitante</span>
+      <span className={`${COL.responsavel} ${HD}`}>Responsável</span>
+      <span className={`${COL.prioridade} text-center ${HD}`}>Prioridade</span>
+      <span className={`${COL.status} text-center ${HD}`}>Status</span>
       <span className={`${COL.sla} text-right`}>Tempo</span>
     </div>
   );
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   GROUP HEADER — 36px
+   GROUP HEADER — Elegante: ──── 🔵 Em análise · 3 pedidos ────
    ═══════════════════════════════════════════════════════════════════════════ */
 function GroupHeader({ group, count, collapsed, onToggle }) {
   const dotCls = STATUS_DOT_STYLES[group.key] || STATUS_DOT_STYLES.concluido;
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onToggle}
-      className={`flex w-full items-center gap-2.5 ${MIN_TABLE} h-9 bg-[hsl(var(--surface-subtle))] border-y border-[hsl(var(--border-subtle))] px-5 text-left transition-colors hover:bg-[hsl(var(--row-hover))]`}
+      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onToggle(); } }}
+      className={`flex items-center ${MIN_TABLE} py-3 px-4 cursor-pointer select-none transition-all duration-150 hover:bg-[hsl(var(--surface-subtle))] ${collapsed ? "opacity-50" : ""}`}
     >
-      {collapsed
-        ? <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
-        : <ChevronDown  className="h-3.5 w-3.5 text-gray-400" />}
-      <span className={`h-2 w-2 rounded-full ${dotCls}`} />
-      <span className="text-[12px] font-semibold text-gray-700">{group.label}</span>
-      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-bold text-gray-500 tabular-nums">
-        {count}
-      </span>
-    </button>
+      <div className="h-px flex-1 bg-[hsl(var(--border-subtle))]" />
+      <div className="flex items-center gap-2 px-4 shrink-0">
+        <span className={`h-[7px] w-[7px] rounded-full ${dotCls}`} />
+        <span className="text-[12px] font-semibold text-gray-600 tracking-wide">{group.label}</span>
+        <span className="text-[11px] text-gray-400 font-medium tabular-nums">
+          · {count} {count === 1 ? "pedido" : "pedidos"}
+        </span>
+      </div>
+      <div className="h-px flex-1 bg-[hsl(var(--border-subtle))]" />
+    </div>
   );
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   TICKET ROW — 54px fixo
+   TICKET ROW — 54px, hover forte, divisores, ações no hover
    ═══════════════════════════════════════════════════════════════════════════ */
 function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
   const done   = ["concluido","recusado"].includes(pedido.status);
@@ -200,27 +199,30 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
   const aPhoto = getPhoto(pedido.assignee_id);
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => onSelect(pedido)}
+      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(pedido); } }}
       className={`
         group relative flex w-full items-center ${COL.gap} ${COL.px} ${MIN_TABLE}
-        h-[54px] text-left cursor-pointer
-        transition-colors duration-[120ms]
+        h-[54px] text-left cursor-pointer select-none
+        transition-all duration-150
         border-b border-[hsl(var(--border-subtle))]
-        hover:bg-[hsl(var(--row-hover))]
+        before:absolute before:left-0 before:top-1 before:bottom-1 before:w-0.5 before:rounded-r before:transition-colors before:duration-150
         ${isSelected
-          ? "bg-[hsl(var(--row-selected))] before:absolute before:left-0 before:top-1 before:bottom-1 before:w-0.5 before:rounded-r before:bg-[hsl(var(--primary))]"
-          : ""}
+          ? "bg-[hsl(var(--row-selected))] before:bg-blue-500"
+          : "before:bg-transparent hover:bg-blue-50/60 hover:before:bg-blue-400"}
       `}
     >
       {/* Cliente */}
-      <div className={`${COL.cliente} truncate text-[13px] text-gray-700`}>
+      <div className={`${COL.cliente} ${RD} truncate text-[13px] text-gray-700`}>
         {pedido.workshop_nome || "—"}
       </div>
 
-      {/* Pedido (título + ID) */}
-      <div className={`${COL.pedido} min-w-0`}>
-        <p className={`text-[13.5px] font-semibold tracking-tight truncate ${done ? "text-gray-400" : "text-gray-900"}`}>
+      {/* Pedido (título mais forte + ID) */}
+      <div className={`${COL.pedido} ${RD} min-w-0`}>
+        <p className={`text-[14px] font-semibold tracking-tight truncate ${done ? "text-gray-400" : "text-gray-900"}`}>
           {pedido.titulo}
         </p>
         <p className="text-[11px] text-gray-400 tabular-nums leading-none mt-0.5">
@@ -229,15 +231,16 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
       </div>
 
       {/* Solicitante */}
-      <div className={`${COL.solicitante} flex items-center gap-2 min-w-0`}>
+      <div className={`${COL.solicitante} ${RD} flex items-center gap-2 min-w-0`}>
         <MiniAvatar name={rName} photoUrl={rPhoto} />
         <span className={`text-[13px] truncate ${done ? "text-gray-400" : "text-gray-700"}`}>
           {rName}
         </span>
       </div>
 
-      {/* Responsável */}
-      <div className={`${COL.responsavel} flex items-center gap-2 min-w-0`}>
+      {/* Responsável (com seta → de ligação) */}
+      <div className={`${COL.responsavel} ${RD} flex items-center gap-1.5 min-w-0`}>
+        <ArrowRight className="h-3 w-3 text-gray-300 shrink-0" />
         {aName ? (
           <>
             <MiniAvatar name={aName} photoUrl={aPhoto} />
@@ -251,16 +254,16 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
       </div>
 
       {/* Prioridade */}
-      <div className={`${COL.prioridade} flex justify-center`}>
+      <div className={`${COL.prioridade} ${RD} flex justify-center`}>
         <PriorityLabel prioridade={pedido.prioridade} />
       </div>
 
       {/* Status */}
-      <div className={`${COL.status} flex justify-center`}>
+      <div className={`${COL.status} ${RD} flex justify-center`}>
         <StatusBadgeLocal status={pedido.status} />
       </div>
 
-      {/* Tempo Aberto — SLA badge */}
+      {/* Tempo Aberto — SLA badge alinhado à direita */}
       <div className={`${COL.sla} flex justify-end`}>
         {level ? (
           <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold tabular-nums ${SLA_STYLES[level]}`}>
@@ -271,7 +274,25 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
           <span className="text-[11px] text-gray-300">{"—"}</span>
         )}
       </div>
-    </button>
+
+      {/* Ações — visíveis apenas no hover */}
+      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-blue-50 rounded-md px-1 py-0.5 shadow-sm">
+        <button
+          onClick={e => { e.stopPropagation(); onSelect(pedido); }}
+          className="p-1 rounded hover:bg-blue-100 text-gray-400 hover:text-gray-600 transition-colors"
+          title="Visualizar"
+        >
+          <Eye className="h-3.5 w-3.5" />
+        </button>
+        <button
+          onClick={e => { e.stopPropagation(); }}
+          className="p-1 rounded hover:bg-blue-100 text-gray-400 hover:text-gray-600 transition-colors"
+          title="Mais ações"
+        >
+          <MoreHorizontal className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -283,10 +304,13 @@ function SkeletonRows() {
     <div>
       {[0,1].map(g => (
         <React.Fragment key={g}>
-          <div className="flex items-center gap-3 h-9 bg-[hsl(var(--surface-subtle))] border-y border-[hsl(var(--border-subtle))] px-5 animate-pulse">
-            <div className="h-2 w-2 rounded-full bg-gray-300" />
-            <div className="h-3.5 w-24 rounded bg-gray-200" />
-            <div className="h-3.5 w-6 rounded-full bg-gray-200" />
+          <div className={`flex items-center ${MIN_TABLE} py-3 px-4 animate-pulse`}>
+            <div className="h-px flex-1 bg-gray-100" />
+            <div className="flex items-center gap-2 px-4">
+              <div className="h-2 w-2 rounded-full bg-gray-200" />
+              <div className="h-3.5 w-24 rounded bg-gray-200" />
+            </div>
+            <div className="h-px flex-1 bg-gray-100" />
           </div>
           {[0,1,2].map(r => (
             <div key={r} className={`flex items-center ${COL.gap} ${COL.px} h-[54px] border-b border-[hsl(var(--border-subtle))] animate-pulse`}>
