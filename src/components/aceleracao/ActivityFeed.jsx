@@ -406,43 +406,45 @@ function CommentInput({ entityType, entityId, workshopId, parentCommentId = null
           ))}
         </div>
       )}
-      <div className={cn("flex items-end gap-1 rounded-lg border border-gray-200 bg-white transition-all focus-within:ring-2 focus-within:ring-blue-500/10 focus-within:border-blue-400 px-1.5 py-1", compact ? "" : "")}>
-        <label className="cursor-pointer shrink-0">
-          <input type="file" multiple className="hidden" disabled={isUploading} onChange={(e) => handleFileUpload(Array.from(e.target.files || []))} />
-          <span className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
-            {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
-          </span>
-        </label>
-        <button onClick={() => setIsInternal(!isInternal)}
-          className={cn(
-            "inline-flex items-center gap-1.5 px-2 h-7 rounded-md text-[12px] font-medium transition-colors shrink-0",
-            isInternal ? "text-amber-700 bg-amber-50" : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-          )}
-          title={isInternal ? "Nota interna (clique para desativar)" : "Marcar como nota interna"}>
-          <div className={cn("w-2 h-2 rounded-full", isInternal ? "bg-amber-500" : "border border-gray-400")} /> Interno
-        </button>
-        <textarea
-          ref={textareaRef}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={compact ? "Responder..." : "Digite um comentário..."}
-          rows={1}
-          className="flex-1 min-w-0 resize-none border-0 bg-transparent text-[13px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-0 py-1.5 px-2 leading-[1.4]"
-          style={{ minHeight: "36px", maxHeight: "120px" }}
-        />
-        {onCancel && (<button onClick={onCancel} className="px-2 h-7 rounded-md text-[12px] font-medium text-gray-500 hover:bg-gray-100 transition-colors shrink-0">Cancelar</button>)}
-        <span className="text-[10px] text-gray-300 hidden sm:inline select-none shrink-0 pb-1.5">Ctrl+↵</span>
-        <button onClick={handleSubmit} disabled={!hasContent || createMutation.isPending}
-          className={cn(
-            "flex items-center justify-center w-7 h-7 p-0 rounded-md transition-all duration-200 shrink-0",
-            hasContent
-              ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow"
-              : "bg-gray-100 text-gray-300 cursor-default"
-          )}
-          title="Enviar comentário">
-          {createMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-        </button>
+      <div className="w-[90%] mx-auto">
+        <div className={cn("flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white transition-all focus-within:ring-2 focus-within:ring-blue-500/10 focus-within:border-blue-400 px-2 py-1.5")}>
+          <button onClick={() => setIsInternal(!isInternal)}
+            className={cn(
+              "inline-flex items-center gap-1.5 px-2 h-7 rounded-md text-[12px] font-medium transition-colors shrink-0",
+              isInternal ? "text-amber-700 bg-amber-50" : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            )}
+            title={isInternal ? "Nota interna (clique para desativar)" : "Marcar como nota interna"}>
+            <div className={cn("w-2 h-2 rounded-full", isInternal ? "bg-amber-500" : "border border-gray-400")} /> Interno
+          </button>
+          <label className="cursor-pointer shrink-0">
+            <input type="file" multiple className="hidden" disabled={isUploading} onChange={(e) => handleFileUpload(Array.from(e.target.files || []))} />
+            <span className="inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
+              {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+            </span>
+          </label>
+          <textarea
+            ref={textareaRef}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={compact ? "Responder..." : "Digite um comentário..."}
+            rows={1}
+            className="flex-1 min-w-0 resize-none border-0 bg-transparent text-[13px] text-gray-800 placeholder:text-gray-400 placeholder:text-center focus:outline-none focus:ring-0 py-1.5 px-2 leading-[1.4] text-left"
+            style={{ minHeight: "36px", maxHeight: "120px" }}
+          />
+          {onCancel && (<button onClick={onCancel} className="px-2 h-7 rounded-md text-[12px] font-medium text-gray-500 hover:bg-gray-100 transition-colors shrink-0">Cancelar</button>)}
+          <span className="text-[10px] text-gray-300 hidden sm:inline select-none shrink-0">Ctrl+↵</span>
+          <button onClick={handleSubmit} disabled={!hasContent || createMutation.isPending}
+            className={cn(
+              "flex items-center justify-center w-7 h-7 p-0 rounded-md transition-all duration-200 shrink-0",
+              hasContent
+                ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow"
+                : "bg-gray-100 text-gray-300 cursor-default"
+            )}
+            title="Enviar comentário">
+            {createMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+          </button>
+        </div>
       </div>
     </div>
   );
