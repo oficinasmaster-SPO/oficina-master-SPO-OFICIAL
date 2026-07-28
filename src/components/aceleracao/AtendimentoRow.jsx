@@ -7,6 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_COLORS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
 import { formatDateTimeBR } from "@/utils/timezone";
 import { useAttendanceValidation } from "@/hooks/useAttendanceValidation";
+import useEmployeeResolver from "@/hooks/useEmployeeResolver";
 import { toast } from "sonner";
 
 export default function AtendimentoRow({
@@ -20,6 +21,8 @@ export default function AtendimentoRow({
     atendimento.tipo_atendimento,
     atendimento.data_agendada
   );
+
+  const { getName: resolveEmployeeName } = useEmployeeResolver();
 
   const hasValidationIssues = validation.warnings && validation.warnings.length > 0;
   const rowBgClass = hasValidationIssues
@@ -77,7 +80,7 @@ export default function AtendimentoRow({
           </span>
         ) : (
           <span className="text-sm text-gray-600 truncate block max-w-[110px]" title={atendimento.created_by || '-'}>
-            {consultores.find(c => c.email === atendimento.created_by)?.full_name || atendimento.created_by?.split('@')[0] || '-'}
+            {consultores.find(c => c.email === atendimento.created_by)?.full_name || resolveEmployeeName(null, atendimento.created_by)}
           </span>
         )}
       </td>
