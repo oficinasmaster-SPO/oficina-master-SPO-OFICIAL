@@ -148,12 +148,12 @@ button:focus-visible {
 
 
 
-/* Fix: impede layout shift quando Radix Select/Dialog aplica overflow:hidden no body */
+/* Fix: impede layout shift quando Radix Select/Dialog aplica overflow:hidden no body.
+   scrollbar-gutter no html reserva o espaço da scrollbar permanentemente.
+   NÃO aplicar no body — quando o Radix injeta overflow:hidden no body, ele vira
+   scroll container e ativa o gutter, criando uma faixa branca vazia. */
 html {
   overflow-y: scroll;
-  scrollbar-gutter: stable;
-}
-body {
   scrollbar-gutter: stable;
 }
 
