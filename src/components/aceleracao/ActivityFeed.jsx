@@ -481,7 +481,9 @@ function CommentInput({ entityType, entityId, workshopId, parentCommentId = null
           ))}
         </div>
       )}
-      <div className={cn("max-w-[760px] w-full flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white transition-all focus-within:ring-2 focus-within:ring-blue-500/10 focus-within:border-blue-400 px-2 py-1.5", compact ? "" : "mt-2")}>
+      {/* ⚠️ Totalmente sem bordas! Apenas integrado ao fundo com espaçamentos refinados */}
+      <div className={cn("max-w-[760px] w-full flex items-center gap-1.5 bg-transparent transition-colors py-1", compact ? "" : "mt-2")}>
+        
         <button onClick={() => setIsInternal(!isInternal)}
           className={cn(
             "inline-flex items-center gap-1.5 px-2 h-7 rounded-md text-[12px] font-medium transition-colors shrink-0",
