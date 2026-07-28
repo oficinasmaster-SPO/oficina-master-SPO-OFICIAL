@@ -148,13 +148,18 @@ button:focus-visible {
 
 
 
+/* Fix: impede layout shift quando Radix Select/Dialog aplica overflow:hidden no body */
+html {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+body {
+  scrollbar-gutter: stable;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
-  }
-  html {
-    overflow-y: scroll;
-    scrollbar-gutter: stable;
   }
   body {
     @apply bg-background text-foreground;
