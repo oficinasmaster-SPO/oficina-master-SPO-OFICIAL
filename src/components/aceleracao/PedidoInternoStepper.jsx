@@ -10,7 +10,6 @@ export const PEDIDO_STEPS = [
   { key: "concluido", label: "Concluído" },
 ];
 
-// Mantemos em pixels exatos para facilitar os cálculos de padding e margem
 const CHEVRON_PX = 12;
 const CHEVRON = `${CHEVRON_PX}px`;
 
@@ -23,11 +22,10 @@ function getClipPath(isFirst, isLast) {
   return `polygon(0 0, calc(100% - ${CHEVRON}) 0, 100% 50%, calc(100% - ${CHEVRON}) 100%, 0 100%, ${CHEVRON} 50%)`;
 }
 
-/** Configuração puramente guiada por CSS Classes (Performance máxima) */
 const STATUS_CLASS = {
-  done: "step-chip--done",
-  active: "step-chip--active",
-  future: "step-chip--future",
+  done: "bg-emerald-600 text-white",
+  active: "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)]",
+  future: "bg-slate-100 text-slate-400",
 };
 
 const StepperStep = memo(function StepperStep({
@@ -42,7 +40,7 @@ const StepperStep = memo(function StepperStep({
   return (
     <li
       className={cn(
-        "step-chip relative flex min-w-0 flex-1 items-center justify-center overflow-hidden",
+        "relative flex min-w-0 flex-1 items-center justify-center overflow-hidden",
         "h-11 px-4 py-2 text-xs font-semibold tracking-wide select-none sm:text-sm transition-all",
         "hover:-translate-y-[1px] hover:brightness-[1.04]",
         STATUS_CLASS[status]
@@ -51,20 +49,27 @@ const StepperStep = memo(function StepperStep({
         clipPath, 
         WebkitClipPath: clipPath, 
         zIndex,
-        // Geometria: O margin negativo puxa a aba para "dentro" do recorte da anterior
         marginLeft: isFirst ? undefined : `-${CHEVRON_PX / 2}px`,
-        // Geometria: O padding evita que o texto encoste no corte diagonal
         paddingLeft: isFirst ? "16px" : `${CHEVRON_PX + 12}px`,
         paddingRight: isLast ? "16px" : `${CHEVRON_PX + 12}px`,
       }}
       aria-current={status === "active" ? "step" : undefined}
     >
-      {status === "active" && <span aria-hidden className="step-shimmer" />}
-      {status === "done" && (
-        <Check aria-hidden className="step-check mr-1.5 size-4 shrink-0" strokeWidth={3} />
+      {/* Elemento do brilho duplo do Uncharted */}
+      {status === "active" && (
+        <span aria-hidden className="step-shimmer absolute inset-0 pointer-events-none z-0" />
       )}
-      {status === "active" && <span aria-hidden className="step-luma mr-1.5 size-2 rounded-full" />}
+      
+      {status === "done" && (
+        <Check aria-hidden className="mr-1.5 size-4 shrink-0" strokeWidth={3} />
+      )}
+      
+      {status === "active" && (
+        <span aria-hidden className="mr-1.5 size-2 shrink-0 rounded-full bg-white animate-pulse" />
+      )}
+      
       <span className="relative z-10 truncate">{label}</span>
+      
       <span className="sr-only">
         {status === "done" ? " (concluído)" : status === "active" ? " (etapa atual)" : ""}
       </span>
@@ -75,7 +80,7 @@ const StepperStep = memo(function StepperStep({
 function ProgressBar({ percent }) {
   return (
     <div
-      className="step-track mt-3 h-1.5 w-full overflow-hidden rounded-full relative"
+      className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 relative"
       role="progressbar"
       aria-valuemin={0}
       aria-valuemax={100}
@@ -83,11 +88,10 @@ function ProgressBar({ percent }) {
       aria-label="Progresso do pedido"
     >
       <div 
-        className="step-track-fill h-full rounded-full relative" 
+        className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 relative transition-all duration-500" 
         style={{ width: `${percent}%` }} 
       >
-        {/* Efeito de brilho na ponta estilo MacOS */}
-        <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white/70 to-transparent blur-[0.5px]" />
+        <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white/40 to-transparent blur-[0.5px]" />
       </div>
     </div>
   );
@@ -97,12 +101,8 @@ export const PedidoInternoStepper = memo(function PedidoInternoStepper({
   pedido,
   className,
 }) {
-  // Ajuste chave: extraindo o status de dentro da prop pedido para evitar undefined.
   const status = pedido?.status || "pendente";
-  
   const previousStatus = usePrevious(status);
-  
-  // Só aplica a classe animada se o status mudar ENQUANTO o drawer estiver aberto.
   const isAnimating = previousStatus !== undefined && previousStatus !== status;
 
   const currentIndex = Math.max(
@@ -116,7 +116,7 @@ export const PedidoInternoStepper = memo(function PedidoInternoStepper({
     return (
       <div
         className={cn(
-          "step-chip--rejected flex items-center justify-center gap-2.5 rounded-xl px-4 py-3.5 text-sm font-semibold shadow-sm",
+          "flex items-center justify-center gap-2.5 rounded-xl bg-red-50 border border-red-200 px-4 py-3.5 text-sm font-semibold text-red-700 shadow-sm",
           className
         )}
         role="status"
@@ -130,7 +130,7 @@ export const PedidoInternoStepper = memo(function PedidoInternoStepper({
   }
 
   return (
-    <div className={cn("stepper-container w-full", isAnimating && "is-animating", className)}>
+    <div className={cn("w-full", isAnimating && "animate-pulse", className)}>
       <ol className="flex w-full items-stretch overflow-visible py-1" aria-label="Status do pedido">
         {PEDIDO_STEPS.map((step, idx) => (
           <StepperStep
