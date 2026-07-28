@@ -25,3 +25,11 @@ export function getAvatarColor(name) {
   }
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
+
+/**
+ * Retorna a classe de cor de texto com contraste adequado para o fallback.
+ * Todas as cores da paleta são escuras (500), então o texto é sempre branco.
+ */
+export function getInitialsTextColor(name) {
+  return "text-white";
+}

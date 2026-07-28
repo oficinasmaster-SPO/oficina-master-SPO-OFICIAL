@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Avatar from "@/components/ui/Avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MessageCircle, Save, Loader2, Smartphone } from "lucide-react";
 import { toast } from "sonner";
@@ -180,12 +180,7 @@ export default function AutomacaoIncentivos({ workshop }) {
                       checked={recipient.active}
                       onCheckedChange={() => toggleRecipient(recipient.employee_id)}
                     />
-                    <Avatar className="w-10 h-10">
-                      <AvatarImage src={employees.find(e => e.id === recipient.employee_id)?.profile_picture_url} />
-                      <AvatarFallback className="bg-blue-100 text-blue-700">
-                        {recipient.name?.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    <Avatar src={employees.find(e => e.id === recipient.employee_id)?.profile_picture_url} name={recipient.name} size="sm" className="w-10 h-10" />
                     <div>
                       <Label 
                         htmlFor={`recipient-${recipient.employee_id}`}

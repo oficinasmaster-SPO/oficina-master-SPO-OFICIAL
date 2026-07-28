@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, X, Check, AlertCircle, User, ChevronRight, Download, AlertTriangle } from "lucide-react";
+import Avatar from "@/components/ui/Avatar";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -1187,13 +1188,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
                       const consultor = consultores?.find(c => c.id === formData.consultor_id);
                       return (
                         <div className="flex items-center gap-2.5">
-                          {consultor?.profile_picture_url ? (
-                            <img src={consultor.profile_picture_url} alt={formData.consultor_nome} className="w-9 h-9 rounded-full object-cover border border-gray-200" />
-                          ) : (
-                            <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center border border-blue-200">
-                              <User className="w-4 h-4 text-blue-600" />
-                            </div>
-                          )}
+                          <Avatar src={consultor?.profile_picture_url} name={formData.consultor_nome} size="sm" className="w-9 h-9 border border-gray-200" />
                           <h1 className="text-2xl font-bold text-gray-900 truncate max-w-[200px]" title={formData.consultor_nome}>
                             {formData.consultor_nome}
                           </h1>
@@ -1349,13 +1344,7 @@ export default function RegistrarAtendimento({ isModal = false, onClose, onSaved
                 const consultor = consultores?.find(c => c.id === formData.consultor_id);
                 return (
                   <div className="flex items-center gap-3">
-                    {consultor?.profile_picture_url ? (
-                      <img src={consultor.profile_picture_url} alt={formData.consultor_nome} className="w-10 h-10 rounded-full object-cover border border-gray-200 shadow-sm" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center border border-blue-200 shadow-sm">
-                        <User className="w-5 h-5 text-blue-600" />
-                      </div>
-                    )}
+                    <Avatar src={consultor?.profile_picture_url} name={formData.consultor_nome} size="sm" className="w-10 h-10 border border-gray-200 shadow-sm" />
                     <h1 className="text-3xl font-bold text-gray-900 truncate" title={formData.consultor_nome}>
                       {formData.consultor_nome}
                     </h1>

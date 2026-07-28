@@ -311,6 +311,7 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
                           ) : (
                             <User className="w-8 h-8 text-gray-400" />
                           )}
+                          {/* Widget de upload — mantém img direto por causa do overlay de label */}
                           <label className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
                             {uploadingImage ? (
                               <Loader2 className="w-6 h-6 text-white mb-1 animate-spin" />

@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { base44 } from '@/api/base44Client';
 import { X, Search, Loader2 } from 'lucide-react';
+import Avatar from '@/components/ui/Avatar';
 import { useQuery } from '@tanstack/react-query';
 
 const PLANO_COLORS = {
@@ -217,7 +218,10 @@ export default function ClientSelectorGrid({ onSelect, onClose }) {
 
                   {/* Consultor Principal */}
                   {client.consultorPrincipalNome && (
-                    <p className="text-[10px] text-blue-600 font-medium mt-1 truncate">👤 {client.consultorPrincipalNome}</p>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <Avatar name={client.consultorPrincipalNome} size="xs" />
+                      <p className="text-[10px] text-blue-600 font-medium truncate">{client.consultorPrincipalNome}</p>
+                    </div>
                   )}
                 </button>
               ))}

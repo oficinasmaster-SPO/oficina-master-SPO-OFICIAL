@@ -7,7 +7,7 @@ import { getEffectiveUser } from "@/components/hooks/useImpersonation";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, User, FileText, MessageSquare, AlertTriangle, Award, TrendingUp, FileCheck, Heart, Activity, GraduationCap, BarChart3, Rocket, Target, Shield, BookOpen } from "lucide-react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import Avatar from "@/components/ui/Avatar";
 import { toast } from "sonner";
 import DadosPessoais from "../components/employee/DadosPessoais";
 import RemuneracaoProducao from "../components/employee/RemuneracaoProducao";
@@ -224,12 +224,7 @@ export default function MeuPerfil() {
         <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-6">
           <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
             <div className="flex items-center sm:items-start gap-4 w-full sm:w-auto">
-              <Avatar className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-gray-100 shrink-0">
-                <AvatarImage src={employee.profile_picture_url} />
-                <AvatarFallback className="bg-blue-100 text-blue-700 text-xl font-bold">
-                  {(employee?.full_name || 'U').substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <Avatar src={employee.profile_picture_url} name={employee?.full_name} size="lg" className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-gray-100" />
               <div className="flex-1 min-w-0">
                 <h1 className="text-xl sm:text-3xl font-bold text-gray-900 truncate">{employee.full_name}</h1>
                 <p className="text-sm sm:text-lg text-gray-600">{employee.position}</p>

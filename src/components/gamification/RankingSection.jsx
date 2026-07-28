@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Avatar from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -56,10 +56,7 @@ export default function RankingSection({ internalRankings, nationalRankings, use
                                 }`}>
                                     {index + 1}º
                                 </div>
-                                <Avatar className="w-9 h-9 border-2 border-white shadow-sm flex-shrink-0">
-                                    <AvatarImage src={item.employee?.profile_picture_url} />
-                                    <AvatarFallback className="bg-blue-100 text-blue-700">{item.employee?.full_name?.substring(0, 2).toUpperCase()}</AvatarFallback>
-                                </Avatar>
+                                <Avatar src={item.employee?.profile_picture_url} name={item.employee?.full_name} size="sm" className="w-9 h-9 border-2 border-white shadow-sm" />
                                 <div className="min-w-0">
                                     <p className="text-sm font-semibold text-gray-900 leading-none truncate">
                                         {item.employee?.full_name}
@@ -110,10 +107,7 @@ export default function RankingSection({ internalRankings, nationalRankings, use
                                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-0.5">{item.areaLabel}</p>
                                     {item.leader ? (
                                         <div className="flex items-center gap-2">
-                                            <Avatar className="w-5 h-5">
-                                                <AvatarImage src={item.leader.employee?.profile_picture_url} />
-                                                <AvatarFallback className="text-[9px]">{item.leader.employee?.full_name?.substring(0, 2)}</AvatarFallback>
-                                            </Avatar>
+                                            <Avatar src={item.leader.employee?.profile_picture_url} name={item.leader.employee?.full_name} size="xs" />
                                             <span className="text-sm font-medium text-gray-900 truncate">{item.leader.employee?.full_name}</span>
                                         </div>
                                     ) : (
