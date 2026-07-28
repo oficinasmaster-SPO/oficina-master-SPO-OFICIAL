@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { 
   FileText, FileImage, FileSpreadsheet, FileArchive, 
   FileAudio, FileVideo, File, Link as LinkIcon, 
   ChevronDown, ChevronRight, Download, Maximize, 
   RotateCw, RotateCcw, ZoomIn, ZoomOut,
-  ChevronLeft, ExternalLink, X, Loader2
+  ChevronLeft, ExternalLink, X, Loader2, Hand
 } from "lucide-react";
 
 // ============================================================================
@@ -60,23 +60,70 @@ function PdfViewer({ url, name = "documento.pdf" }) {
   const [scale, setScale] = useState(1.0);
   const [rotate, setRotate] = useState(0);
 
+  // Estados para Arrastar (Pan / Mãozinha)
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
+
+  const containerRef = useRef(null);
+
   function onDocumentLoadSuccess({ numPages }) {
     setNumPages(numPages);
     setPageNumber(1);
   }
 
+  // ── 1. LÓGICA DE ZOOM VIA RODA DO MOUSE (Ctrl + Scroll / Pinch) ──
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? 0.15 : -0.15;
+        setScale(prev => Math.min(Math.max(prev + delta, 0.5), 3.0));
+      }
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, []);
+
+  // ── 2. LÓGICA DA MÃOZINHA DE ARRASTAR (DRAGGING) ──
+  const handleMouseDown = (e) => {
+    if (!containerRef.current) return;
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX,
+      y: e.clientY,
+      scrollLeft: containerRef.current.scrollLeft,
+      scrollTop: containerRef.current.scrollTop,
+    });
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging || !containerRef.current) return;
+    e.preventDefault();
+    const dx = e.clientX - dragStart.x;
+    const dy = e.clientY - dragStart.y;
+    containerRef.current.scrollLeft = dragStart.scrollLeft - dx;
+    containerRef.current.scrollTop = dragStart.scrollTop - dy;
+  };
+
+  const handleMouseUp = () => setIsDragging(false);
+
+  // Handlers de Zoom e Rotação manuais
   const handleZoomIn = () => setScale(prev => Math.min(prev + 0.25, 3.0));
   const handleZoomOut = () => setScale(prev => Math.max(prev - 0.25, 0.5));
   const handleResetZoom = () => { setScale(1.0); setRotate(0); };
   const handleRotate = () => setRotate(prev => (prev + 90) % 360);
 
   return (
-    <div className="flex flex-col items-center w-full h-full bg-gray-100/70 rounded-lg border border-gray-200 overflow-hidden">
+    <div className="flex flex-col items-center w-full h-full bg-gray-100/70 rounded-lg border border-gray-200 overflow-hidden select-none">
 
-      {/* ── TOOLBAR SUPERIOR DO PDF ── */}
+      {/* ── TOOLBAR SUPERIOR ── */}
       <div className="flex flex-wrap items-center justify-between bg-white/95 backdrop-blur border-b border-gray-200 w-full px-4 py-2 shrink-0 z-10 shadow-sm gap-2">
 
-        {/* 1. Paginação */}
+        {/* Paginação */}
         <div className="flex items-center gap-1">
           <button
             disabled={pageNumber <= 1}
@@ -101,7 +148,7 @@ function PdfViewer({ url, name = "documento.pdf" }) {
           </button>
         </div>
 
-        {/* 2. Zoom & Rotação */}
+        {/* Zoom e Controles */}
         <div className="flex items-center gap-1 border-x border-gray-200 px-3">
           <button
             disabled={scale <= 0.5}
@@ -128,7 +175,7 @@ function PdfViewer({ url, name = "documento.pdf" }) {
           <button
             onClick={handleResetZoom}
             className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors ml-1"
-            title="Resetar Zoom e Rotação"
+            title="Resetar Posição e Zoom"
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
@@ -142,19 +189,34 @@ function PdfViewer({ url, name = "documento.pdf" }) {
           </button>
         </div>
 
-        {/* 3. Ações de Download Direto */}
-        <a
-          href={url}
-          download={name}
-          className="p-1.5 rounded hover:bg-gray-100 text-gray-600 transition-colors"
-          title="Fazer Download do PDF"
-        >
-          <Download className="w-4 h-4" />
-        </a>
+        {/* Dica visual + Download */}
+        <div className="flex items-center gap-3">
+          <span className="hidden sm:flex items-center gap-1 text-[11px] text-gray-400 font-medium">
+            <Hand className="w-3.5 h-3.5" /> Clique e arraste • Ctrl + Scroll
+          </span>
+
+          <a
+            href={url}
+            download={name}
+            className="p-1.5 rounded hover:bg-gray-100 text-gray-600 transition-colors"
+            title="Fazer Download do PDF"
+          >
+            <Download className="w-4 h-4" />
+          </a>
+        </div>
       </div>
 
-      {/* ── ÁREA DE LEITURA COM SCROLL ── */}
-      <div className="flex-1 overflow-auto w-full flex justify-center p-4">
+      {/* ── ÁREA DO DOCUMENTO (Com Pan/Mãozinha) ── */}
+      <div
+        ref={containerRef}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        className={`flex-1 overflow-auto w-full flex justify-center p-4 transition-colors ${
+          isDragging ? 'cursor-grabbing' : 'cursor-grab'
+        }`}
+      >
         <Document
           file={url}
           onLoadSuccess={onDocumentLoadSuccess}
@@ -177,7 +239,7 @@ function PdfViewer({ url, name = "documento.pdf" }) {
             rotate={rotate}
             renderTextLayer={false}
             renderAnnotationLayer={false}
-            className="shadow-xl rounded-sm overflow-hidden border border-gray-200 transition-all duration-150"
+            className="shadow-xl rounded-sm overflow-hidden border border-gray-200 pointer-events-none transition-all duration-150"
           />
         </Document>
       </div>
