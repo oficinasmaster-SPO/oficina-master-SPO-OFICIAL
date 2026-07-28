@@ -4,7 +4,7 @@
  */
 import React, { useState, useCallback } from "react";
 import {
-  Clock, ClipboardList, Eye, MoreHorizontal, ArrowRight,
+  Clock, ClipboardList, ArrowRight,
   ArrowDown, Minus, ArrowUp, AlertOctagon,
 } from "lucide-react";
 import { PEDIDO_STATUS_CONFIG } from "@/components/shared/backlogConstants";
@@ -284,23 +284,7 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
         )}
       </div>
 
-      {/* Ações — visíveis apenas no hover */}
-      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-blue-50 rounded-md px-1 py-0.5 shadow-sm">
-        <button
-          onClick={e => { e.stopPropagation(); onSelect(pedido); }}
-          className="p-1 rounded hover:bg-blue-100 text-gray-400 hover:text-gray-600 transition-colors"
-          title="Visualizar"
-        >
-          <Eye className="h-3.5 w-3.5" />
-        </button>
-        <button
-          onClick={e => { e.stopPropagation(); }}
-          className="p-1 rounded hover:bg-blue-100 text-gray-400 hover:text-gray-600 transition-colors"
-          title="Mais ações"
-        >
-          <MoreHorizontal className="h-3.5 w-3.5" />
-        </button>
-      </div>
+
     </div>
   );
 }
