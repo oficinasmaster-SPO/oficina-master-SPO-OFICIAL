@@ -179,7 +179,8 @@ function GroupHeader({ group, count, collapsed, onToggle }) {
       tabIndex={0}
       onClick={onToggle}
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onToggle(); } }}
-      className={`flex items-center ${MIN_TABLE} py-2.5 px-4 cursor-pointer select-none transition-all duration-150 ${bgCls} ${collapsed ? "opacity-50" : ""}`}
+      /* 🌟 Alterado de px-4 para pl-10 pr-4 para empurrar o conteúdo para a direita */
+      className={`flex items-center ${MIN_TABLE} py-2.5 pl-10 pr-4 cursor-pointer select-none transition-all duration-150 ${bgCls} ${collapsed ? "opacity-50" : ""}`}
     >
       <div className="flex items-center gap-2 shrink-0">
         <span className={`h-[7px] w-[7px] rounded-full ${dotCls}`} />
@@ -191,6 +192,7 @@ function GroupHeader({ group, count, collapsed, onToggle }) {
     </div>
   );
 }
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    TICKET ROW — 54px, hover forte, divisores, ações no hover
