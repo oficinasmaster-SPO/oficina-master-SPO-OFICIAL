@@ -2,12 +2,8 @@ import React, { useState, useMemo, useCallback, useDeferredValue, useRef, useEff
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import {
-  Plus, Search, X, ChevronDown, Inbox, Send as SendIcon, Users
-} from "lucide-react";
+import { Plus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PEDIDO_STATUS_OPTIONS } from "@/components/shared/backlogConstants";
 
 import PedidoInternoForm from "./PedidoInternoForm";
 import NovoPedidoModal from "./NovoPedidoModal";
@@ -15,32 +11,7 @@ import BacklogBoard from "./BacklogBoard";
 import PedidoInternoModal from "./PedidoInternoModal";
 import PedidoInternoList from "./PedidoInternoList";
 import PedidoInternoDetail from "./PedidoInternoDetail";
-
-const SCOPE_OPTIONS = [
-  { key: "todos",        label: "Todos os pedidos", icon: Users },
-  { key: "para_mim",     label: "Para mim",         icon: Inbox },
-  { key: "meus_pedidos", label: "Meus pedidos",     icon: SendIcon },
-];
-
-function ScopeSelector({ value, onChange }) {
-  const current = SCOPE_OPTIONS.find(o => o.key === value) || SCOPE_OPTIONS[0];
-  const Icon = current.icon;
-  return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-8 w-[160px] bg-white border-gray-200 shadow-sm text-[12.5px] font-medium text-gray-700">
-        <div className="flex items-center gap-2">
-          <Icon className="h-3.5 w-3.5 text-gray-500" />
-          <span>{current.label}</span>
-        </div>
-      </SelectTrigger>
-      <SelectContent>
-        {SCOPE_OPTIONS.map(opt => (
-          <SelectItem key={opt.key} value={opt.key} className="text-[12.5px]">{opt.label}</SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
+import OrderFilterBar from "./OrderFilterBar";
 
 export default function PedidosInternosTab({ workshopId, user }) {
   const [selectedPedido, setSelectedPedido] = useState(null);
@@ -196,41 +167,17 @@ export default function PedidosInternosTab({ workshopId, user }) {
 
         {/* Toolbar de Filtros */}
         {activeList === "pedidos" && (
-          <div className="flex items-center gap-3 px-6 py-1.5 bg-gray-50/50 border-t border-[hsl(var(--border-subtle))] shrink-0">
-            <ScopeSelector value={scope} onChange={setScope} />
-
-            <div className="relative w-[340px]">
-              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar por título, ID, cliente ou solicitante..."
-                className="h-8 w-full rounded-md border border-[hsl(var(--border-subtle))] bg-[hsl(var(--surface-subtle))] pl-9 pr-10 text-[12.5px] text-gray-800 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
-              />
-              <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                {!search && <span className="rounded border bg-gray-50 px-1 py-0.5 text-[9px] font-bold text-gray-400">/</span>}
-                {search && <button onClick={clearFilters} className="text-gray-400 hover:text-gray-700 hover:bg-[hsl(var(--row-hover))] text-[12.5px] rounded"><X className="h-3.5 w-3.5" /></button>}
-              </div>
-            </div>
-
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-8 w-[140px] bg-white border-gray-200 shadow-sm text-[12.5px] font-medium text-gray-700">
-                <SelectValue placeholder="Todos status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="text-[12.5px]">Todos status</SelectItem>
-                {PEDIDO_STATUS_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value} className="text-[12.5px]">{opt.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-
-            <div className="flex-1" />
-
-            <span className="text-[12.5px] font-semibold text-gray-400">
-              {filteredPedidos.length} {filteredPedidos.length === 1 ? "pedido" : "pedidos"}
-            </span>
-          </div>
+          <OrderFilterBar
+            scope={scope}
+            setScope={setScope}
+            search={search}
+            setSearch={setSearch}
+            searchInputRef={searchInputRef}
+            clearFilters={clearFilters}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            filteredPedidos={filteredPedidos}
+          />
         )}
 
         <TabsContent value="pedidos" forceMount className={`mt-0 flex min-h-0 flex-1 flex-col bg-white ${activeList !== "pedidos" ? "hidden" : ""}`}>
