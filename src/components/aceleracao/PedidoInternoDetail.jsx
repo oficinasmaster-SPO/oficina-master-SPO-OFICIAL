@@ -47,8 +47,13 @@ function AvatarWithPhoto({ name, photoUrl, size = "sm" }) {
   if (photoUrl) {
     return (
       <span className={`relative ${dim} shrink-0`}>
-        <img src={photoUrl} alt={name || ""} className={`${dim} rounded-full object-cover ring-1 ring-gray-200`} onError={(e) => { e.target.style.display = "none"; }} />
-        <span className={`absolute inset-0 inline-flex items-center justify-center rounded-full font-bold text-white ${COLORS[ci]} -z-10`}>{initials}</span>
+        <span className={`absolute inset-0 inline-flex items-center justify-center rounded-full font-bold text-white ${COLORS[ci]}`}>{initials}</span>
+        <img
+          src={photoUrl}
+          alt={name || ""}
+          className={`relative ${dim} rounded-full object-cover ring-1 ring-gray-200`}
+          onError={(e) => { e.target.style.display = "none"; }}
+        />
       </span>
     );
   }
