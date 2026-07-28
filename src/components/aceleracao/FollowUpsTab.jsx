@@ -157,7 +157,7 @@ const TABS = [
   { id: "relatorios", label: "Relatórios" },
 ];
 
-export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
+export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId }) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
@@ -310,20 +310,24 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [] }) {
     );
   }, [searchTerm]);
 
+  const meuId = userId || user?.id;
+
   const listAbertos = useMemo(() => {
     const pending = applySearch(reminders.filter(r => !r.is_completed));
-    // Ordenação por prioridade: vencidos → hoje → futuros (dentro de cada grupo, por data)
     return pending.sort((a, b) => {
-      const aVencido = a.reminder_date < today;
-      const bVencido = b.reminder_date < today;
-      const aHoje = a.reminder_date === today;
-      const bHoje = b.reminder_date === today;
+      // Prioridade 1: follow-ups onde sou consultor_principal ou consultor_id
+      const aMeu = (a.consultor_principal_id === meuId || a.consultor_id === meuId) ? 0 : 1;
+      const bMeu = (b.consultor_principal_id === meuId || b.consultor_id === meuId) ? 0 : 1;
+      if (aMeu !== bMeu) return aMeu - bMeu;
+
+      // Prioridade 2: vencidos → hoje → futuros
       const prioridade = (r) => r.reminder_date < today ? 0 : r.reminder_date === today ? 1 : 2;
       const pa = prioridade(a), pb = prioridade(b);
       if (pa !== pb) return pa - pb;
+
       return (a.reminder_date || "").localeCompare(b.reminder_date || "");
     });
-  }, [reminders, today, searchTerm]);
+  }, [reminders, today, searchTerm, meuId]);
 
   const listAtrasados = useMemo(() =>
     applySearch(reminders.filter(r => !r.is_completed && r.reminder_date < today))
