@@ -113,45 +113,6 @@ export default function PedidosInternosTab({ workshopId, user }) {
   const clearFilters = () => { setSearch(""); setStatusFilter("all"); };
 
   return (
-import React from 'react';
-import { Plus } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'; // Ajuste o caminho se necessário
-import { Button } from '@/components/ui/button'; // Ajuste o caminho se necessário
-import OrderFilterBar from './OrderFilterBar'; // Componente que criamos anteriormente
-import PedidoInternoModal from './PedidoInternoModal';
-import PedidoInternoDetail from './PedidoInternoDetail';
-import NovoPedidoModal from './NovoPedidoModal';
-import PedidoInternoList from './PedidoInternoList';
-import BacklogBoard from './BacklogBoard';
-
-export default function PedidosContainer({
-  selectedPedido,
-  setSelectedPedido,
-  freshSelected,
-  user,
-  handleDetailClose,
-  showNewForm,
-  editingPedido,
-  setEditingPedido,
-  setShowNewForm,
-  handleFormClose,
-  activeList,
-  setActiveList,
-  metrics,
-  scope,
-  setScope,
-  search,
-  setSearch,
-  searchInputRef,
-  clearFilters,
-  statusFilter,
-  setStatusFilter,
-  filteredPedidos,
-  isLoading,
-  handleSelect,
-  workshopId
-}) {
-  return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white rounded-lg border border-[hsl(var(--border-subtle))] shadow-[0_1px_2px_rgba(16,24,40,.04)]">
       
       {/* Modais de Detalhe e Criação */}
@@ -243,8 +204,5 @@ export default function PedidosContainer({
         </TabsContent>
       </Tabs>
     </div>
-  );
-}
-
   );
 }
