@@ -70,14 +70,15 @@ export default function OrderFilterBar({
       <div className="flex-1" />
 
       {/* CONTADOR com container destacado */}
-      <div className="flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-200/80 rounded-md shadow-sm">
-        <span className="text-[12px] font-bold text-gray-700">
-          {filteredPedidos.length}
-        </span>
-        <span className="text-[12px] font-medium text-gray-500">
-          {filteredPedidos.length === 1 ? "pedido" : "pedidos"}
-        </span>
-      </div>
+    <div className="flex items-center gap-1.5 px-3 py-1 -mr-3 bg-white border border-gray-200/80 rounded-md shadow-sm">
+  <span className="text-[12px] font-bold text-gray-700">
+     {filteredPedidos.length}
+  </span>
+  <span className="text-[12px] font-medium text-gray-500">
+    {filteredPedidos.length === 1 ? "pedido" : "pedidos"}
+  </span>
+</div>
+
     </div>
   );
 }
