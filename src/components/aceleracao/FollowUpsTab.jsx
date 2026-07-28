@@ -549,6 +549,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
             seqByReminderId={seqByReminderId}
             statsByWorkshopId={statsByWorkshopId}
             onSuporteRapido={() => setShowSuporteRapido(true)}
+            meuId={meuId}
           />
         )
       )}
