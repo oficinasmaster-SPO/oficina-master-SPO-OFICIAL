@@ -1,12 +1,11 @@
 /**
- * ActivityFeed — Timeline de atividade estilo Jira/Slack.
+ * ActivityFeed — Timeline unificada cronológica (Estilo Jira/Slack moderno).
  *
- * Dois blocos separados:
- *   1. Atividade (logs de sistema) — dot 20px + linha vertical + texto compacto
- *   2. Conversas (comentários) — estilo Slack, respostas colapsáveis
- *
- * Props configuráveis:
- *   showLogs, showComments, showAttachments, allowReply, allowMentions, compact
+ * Mudanças principais:
+ * - Unificação de logs de sistema e comentários numa única stream ordenada por timestamp.
+ * - Linha vertical contínua conectando todos os eventos (sistema e comentários).
+ * - Avatares para comentários e dots coloridos para eventos de sistema integrados na mesma árvore visual.
+ * - Redução de densidade e espaçamentos (padrão compacto).
  */
 import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -63,7 +62,7 @@ function formatTimestamp(timestamp) {
 }
 
 function getDayLabel(timestamp) {
-  if (!timestamp) return "Sem data";
+  if (!timestamp) return "SEM DATA";
   const ts = new Date(timestamp);
   const now = new Date();
   const isToday = ts.toDateString() === now.toDateString();
@@ -104,90 +103,6 @@ function DaySeparator({ label }) {
   );
 }
 
-function SectionHeader({ title, count }) {
-  return (
-    <div className="flex items-center gap-2 py-2 mb-1">
-      <span className="text-[11px] font-semibold uppercase tracking-[.08em] text-gray-500">{title}</span>
-      {count > 0 && (
-        <span className="text-[10px] font-bold text-gray-400 tabular-nums bg-gray-100 rounded-full px-1.5 py-0.5">{count}</span>
-      )}
-    </div>
-  );
-}
-
-function groupConsecutiveLogs(logs) {
-  if (!logs.length) return [];
-  const groups = [];
-  let current = { actor: logs[0].actor_id || logs[0].actor_name, items: [logs[0]], timestamp: logs[0].timestamp };
-  for (let i = 1; i < logs.length; i++) {
-    const log = logs[i];
-    const actor = log.actor_id || log.actor_name;
-    const timeDiff = Math.abs(new Date(log.timestamp) - new Date(current.timestamp)) / 60000;
-    if (actor === current.actor && timeDiff <= 5) {
-      current.items.push(log);
-    } else {
-      groups.push(current);
-      current = { actor, items: [log], timestamp: log.timestamp };
-    }
-  }
-  groups.push(current);
-  return groups;
-}
-
-function LogGroup({ group, isLast, getName }) {
-  const firstLog = group.items[0];
-  const resolvedName = getName ? getName(firstLog.actor_id, firstLog.actor_name) : (firstLog.actor_name || "Sistema");
-  const dotColor = EVENT_COLORS[firstLog.event_type] || EVENT_COLORS.field_changed;
-  const isSingle = group.items.length === 1;
-
-  return (
-    <div className="group relative flex gap-3">
-      <div className="flex flex-col items-center shrink-0 w-5">
-        <div className={`w-[7px] h-[7px] rounded-full ${dotColor} mt-[7px] shrink-0 z-[1] ring-2 ring-white`} />
-        {!isLast && <div className="w-px flex-1 bg-gray-200" />}
-      </div>
-      <div className="flex-1 min-w-0 pb-4">
-        {isSingle ? (
-          <div className="flex items-baseline gap-1.5 flex-wrap">
-            <span className="text-[13px] font-medium text-gray-800">{resolvedName}</span>
-            <span className="text-[13px] text-gray-500">{firstLog.summary}</span>
-            {firstLog.old_value && firstLog.new_value && (
-              <span className="inline-flex items-center gap-1 text-[11px] text-gray-400">
-                <span className="line-through">{firstLog.old_value}</span>
-                <ArrowRight className="w-2.5 h-2.5" />
-                <span className="font-medium text-gray-600">{firstLog.new_value}</span>
-              </span>
-            )}
-            <span className="text-[11px] text-gray-400 ml-auto shrink-0">{formatTimestamp(firstLog.timestamp)}</span>
-          </div>
-        ) : (
-          <div>
-            <div className="flex items-baseline gap-1.5 mb-1">
-              <span className="text-[13px] font-medium text-gray-800">{resolvedName}</span>
-              <span className="text-[11px] text-gray-400 ml-auto shrink-0">{formatTimestamp(firstLog.timestamp)}</span>
-            </div>
-            <ul className="space-y-0.5">
-              {group.items.map((log, idx) => (
-                <li key={idx} className="flex items-center gap-1.5 text-[12px] text-gray-500">
-                  <span className="text-gray-300">•</span>
-                  <span>{log.summary}</span>
-                  {log.old_value && log.new_value && (
-                    <span className="inline-flex items-center gap-1 text-[11px] text-gray-400">
-                      <span className="line-through">{log.old_value}</span>
-                      <ArrowRight className="w-2.5 h-2.5" />
-                      <span className="font-medium text-gray-600">{log.new_value}</span>
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function CommentEntry({ comment, replies = [], getName, getPhoto, allowReply, entityType, entityId, workshopId }) {
   const [showReplies, setShowReplies] = useState(false);
   const [showReplyInput, setShowReplyInput] = useState(false);
@@ -197,9 +112,10 @@ function CommentEntry({ comment, replies = [], getName, getPhoto, allowReply, en
   const replyCount = replies.length;
 
   return (
-    <div className="group/comment relative py-2 px-2 -mx-2 rounded-lg hover:bg-gray-50/80 transition-colors duration-150">
-      <div className="flex gap-2.5">
-        <Avatar className="shrink-0 w-6 h-6 mt-0.5">
+    <div className="group/comment relative py-1.5 px-2 -mx-2 rounded-lg hover:bg-gray-50/80 transition-colors duration-150">
+      <div className="flex gap-3 items-start">
+        {/* Avatar substitui o dot do sistema na timeline vertical */}
+        <Avatar className="shrink-0 w-6 h-6 mt-0.5 z-[1] ring-2 ring-white">
           {photoUrl && <AvatarImage src={photoUrl} alt={resolvedName} />}
           <AvatarFallback className={`text-[9px] font-semibold ${isInternal ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"}`}>
             {getInitials(resolvedName)}
@@ -266,6 +182,60 @@ function CommentEntry({ comment, replies = [], getName, getPhoto, allowReply, en
         <button className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors" title="Mais">
           <MoreHorizontal className="h-3 w-3" />
         </button>
+      </div>
+    </div>
+  );
+}
+
+function LogGroupItem({ group, getName }) {
+  const firstLog = group.items[0];
+  const resolvedName = getName ? getName(firstLog.actor_id, firstLog.actor_name) : (firstLog.actor_name || "Sistema");
+  const dotColor = EVENT_COLORS[firstLog.event_type] || EVENT_COLORS.field_changed;
+  const isSingle = group.items.length === 1;
+
+  return (
+    <div className="group relative flex gap-3 items-start py-1">
+      {/* Dot do Sistema cortando a linha central */}
+      <div className="flex flex-col items-center shrink-0 w-6 pt-[6px]">
+        <div className={`w-[7px] h-[7px] rounded-full ${dotColor} shrink-0 z-[1] ring-2 ring-white`} />
+      </div>
+      <div className="flex-1 min-w-0">
+        {isSingle ? (
+          <div className="flex items-baseline gap-1.5 flex-wrap">
+            <span className="text-[13px] font-medium text-gray-800">{resolvedName}</span>
+            <span className="text-[13px] text-gray-500">{firstLog.summary}</span>
+            {firstLog.old_value && firstLog.new_value && (
+              <span className="inline-flex items-center gap-1 text-[11px] text-gray-400">
+                <span className="line-through">{firstLog.old_value}</span>
+                <ArrowRight className="w-2.5 h-2.5" />
+                <span className="font-medium text-gray-600">{firstLog.new_value}</span>
+              </span>
+            )}
+            <span className="text-[11px] text-gray-400 ml-auto shrink-0">{formatTimestamp(firstLog.timestamp)}</span>
+          </div>
+        ) : (
+          <div>
+            <div className="flex items-baseline gap-1.5 mb-1">
+              <span className="text-[13px] font-medium text-gray-800">{resolvedName}</span>
+              <span className="text-[11px] text-gray-400 ml-auto shrink-0">{formatTimestamp(firstLog.timestamp)}</span>
+            </div>
+            <ul className="space-y-0.5">
+              {group.items.map((log, idx) => (
+                <li key={idx} className="flex items-center gap-1.5 text-[12px] text-gray-500">
+                  <span className="text-gray-300">•</span>
+                  <span>{log.summary}</span>
+                  {log.old_value && log.new_value && (
+                    <span className="inline-flex items-center gap-1 text-[11px] text-gray-400">
+                      <span className="line-through">{log.old_value}</span>
+                      <ArrowRight className="w-2.5 h-2.5" />
+                      <span className="font-medium text-gray-600">{log.new_value}</span>
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -392,94 +362,146 @@ export default function ActivityFeed({
 
   const isLoading = isLoadingLogs || isLoadingComments;
 
+  // Filtragem de logs ignorados
   const filteredLogs = useMemo(() => {
+    if (!showLogs) return [];
     return logs.filter(l => {
       if (l.event_type === "field_changed" && l.field_name && IGNORED_FIELDS.has(l.field_name)) return false;
       if (l.summary && IGNORED_FIELDS.has(l.summary.match(/Campo "([^"]+)"/)?.[1])) return false;
       return true;
-    }).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-  }, [logs]);
-
-  const logsByDay = useMemo(() => {
-    const dayMap = new Map();
-    filteredLogs.forEach(log => {
-      const key = getDayKey(log.timestamp);
-      if (!dayMap.has(key)) dayMap.set(key, { label: getDayLabel(log.timestamp), logs: [] });
-      dayMap.get(key).logs.push(log);
     });
-    const result = [];
-    dayMap.forEach(({ label, logs: dayLogs }) => { result.push({ label, groups: groupConsecutiveLogs(dayLogs) }); });
-    return result;
-  }, [filteredLogs]);
+  }, [logs, showLogs]);
 
-  const { topLevel, repliesByParent } = useMemo(() => {
-    const top = comments.filter(c => !c.parent_comment_id).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-    const replies = comments.reduce((acc, c) => {
-      if (c.parent_comment_id) { if (!acc[c.parent_comment_id]) acc[c.parent_comment_id] = []; acc[c.parent_comment_id].push(c); }
+  // Apenas comentários raiz (respostas ficam embutidas dentro de CommentEntry)
+  const topLevelComments = useMemo(() => {
+    if (!showComments) return [];
+    return comments.filter(c => !c.parent_comment_id);
+  }, [comments, showComments]);
+
+  const repliesByParent = useMemo(() => {
+    return comments.reduce((acc, c) => {
+      if (c.parent_comment_id) { 
+        if (!acc[c.parent_comment_id]) acc[c.parent_comment_id] = []; 
+        acc[c.parent_comment_id].push(c); 
+      }
       return acc;
     }, {});
-    Object.keys(replies).forEach(k => replies[k].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)));
-    return { topLevel: top, repliesByParent: replies };
   }, [comments]);
 
-  const commentsByDay = useMemo(() => {
+  // Ordena todas as respostas individualmente por timestamp
+  Object.keys(repliesByParent).forEach(k => {
+    repliesByParent[k].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  });
+
+  // Unificação e organização cronológica por dia com agrupamento inteligente de logs consecutivos
+  const timelineByDay = useMemo(() => {
+    // 1. Cria um array unificado de itens da timeline marcando o tipo
+    const unifiedItems = [
+      ...filteredLogs.map(l => ({ type: 'log', timestamp: l.timestamp, data: l })),
+      ...topLevelComments.map(c => ({ type: 'comment', timestamp: c.timestamp, data: c }))
+    ].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); // Ordem cronológica crescente por dia
+
+    if (unifiedItems.length === 0) return [];
+
+    // 2. Agrupa por dia
     const dayMap = new Map();
-    topLevel.forEach(c => {
-      const key = getDayKey(c.timestamp);
-      if (!dayMap.has(key)) dayMap.set(key, { label: getDayLabel(c.timestamp), comments: [] });
-      dayMap.get(key).comments.push(c);
+    unifiedItems.forEach(item => {
+      const key = getDayKey(item.timestamp);
+      if (!dayMap.has(key)) {
+        dayMap.set(key, { label: getDayLabel(item.timestamp), rawItems: [] });
+      }
+      dayMap.get(key).rawItems.push(item);
     });
+
+    // 3. Dentro de cada dia, aplica o agrupamento consecutivo apenas em logs de sistema vizinhos (< 5 min e mesmo ator)
     const result = [];
-    dayMap.forEach(({ label, comments: dayComments }) => { result.push({ label, comments: dayComments }); });
+    dayMap.forEach(({ label, rawItems }) => {
+      const processedElements = [];
+      let currentLogGroup = null;
+
+      rawItems.forEach((item) => {
+        if (item.type === 'comment') {
+          // Se houver um grupo de logs aberto, fecha antes de adicionar o comentário
+          if (currentLogGroup) {
+            processedElements.push({ type: 'log_group', group: currentLogGroup, timestamp: currentLogGroup.items[0].timestamp });
+            currentLogGroup = null;
+          }
+          processedElements.push({ type: 'comment', comment: item.data, timestamp: item.timestamp });
+        } else {
+          // É log de sistema
+          const log = item.data;
+          const actor = log.actor_id || log.actor_name;
+          
+          if (!currentLogGroup) {
+            currentLogGroup = { actor, items: [log], timestamp: log.timestamp };
+          } else {
+            const timeDiff = Math.abs(new Date(log.timestamp) - new Date(currentLogGroup.timestamp)) / 60000;
+            if (actor === currentLogGroup.actor && timeDiff <= 5) {
+              currentLogGroup.items.push(log);
+            } else {
+              processedElements.push({ type: 'log_group', group: currentLogGroup, timestamp: currentLogGroup.items[0].timestamp });
+              currentLogGroup = { actor, items: [log], timestamp: log.timestamp };
+            }
+          }
+        }
+      });
+
+      // Fecha o último grupo de logs se sobrou algum
+      if (currentLogGroup) {
+        processedElements.push({ type: 'log_group', group: currentLogGroup, timestamp: currentLogGroup.items[0].timestamp });
+      }
+
+      result.push({ label, elements: processedElements });
+    });
+
     return result;
-  }, [topLevel]);
+  }, [filteredLogs, topLevelComments]);
 
   return (
     <div className="flex flex-col" style={{ maxHeight }}>
       <div className="flex-1 overflow-y-auto pr-1">
         {isLoading ? (
           <div className="flex items-center justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div>
-        ) : (filteredLogs.length === 0 && topLevel.length === 0) ? (
+        ) : timelineByDay.length === 0 ? (
           <div className="text-center py-8 text-[13px] text-gray-400">Nenhuma atividade registrada ainda.</div>
         ) : (
-          <>
-            {showLogs && filteredLogs.length > 0 && (
-              <div className="pb-2">
-                <SectionHeader title="Atividade" count={filteredLogs.length} />
-                {logsByDay.map((day, dayIdx) => (
-                  <div key={dayIdx}>
-                    <DaySeparator label={day.label} />
-                    {day.groups.map((group, gIdx) => (
-                      <LogGroup key={gIdx} group={group}
-                        isLast={dayIdx === logsByDay.length - 1 && gIdx === day.groups.length - 1} getName={getName} />
-                    ))}
+          <div className="relative">
+            {/* Linha vertical contínua posicionada para alinhar com os dots (w-6 / center) e avatares */}
+            <div className="absolute left-[11px] top-3 bottom-3 w-px bg-gray-200 z-0" />
+
+            <div className="relative z-10 space-y-1">
+              {timelineByDay.map((day, dayIdx) => (
+                <div key={dayIdx}>
+                  <DaySeparator label={day.label} />
+                  <div className="space-y-1">
+                    {day.elements.map((el, elIdx) => {
+                      if (el.type === 'log_group') {
+                        return <LogGroupItem key={`log-${elIdx}`} group={el.group} getName={getName} />;
+                      } else {
+                        return (
+                          <CommentEntry 
+                            key={`comment-${el.comment.id}`} 
+                            comment={el.comment} 
+                            replies={repliesByParent[el.comment.id] || []}
+                            getName={getName} 
+                            getPhoto={getPhoto} 
+                            allowReply={allowReply}
+                            entityType={entityType} 
+                            entityId={entityId} 
+                            workshopId={workshopId} 
+                          />
+                        );
+                      }
+                    })}
                   </div>
-                ))}
-              </div>
-            )}
-            {showLogs && filteredLogs.length > 0 && showComments && topLevel.length > 0 && (
-              <div className="my-2 border-t border-gray-200" />
-            )}
-            {showComments && topLevel.length > 0 && (
-              <div className="pb-2">
-                <SectionHeader title="Conversas" count={topLevel.length} />
-                {commentsByDay.map((day, dayIdx) => (
-                  <div key={dayIdx}>
-                    <DaySeparator label={day.label} />
-                    {day.comments.map(comment => (
-                      <CommentEntry key={comment.id} comment={comment} replies={repliesByParent[comment.id] || []}
-                        getName={getName} getPhoto={getPhoto} allowReply={allowReply}
-                        entityType={entityType} entityId={entityId} workshopId={workshopId} />
-                    ))}
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
       {showComments && !isLoading && (
-        <div className="border-t border-gray-200 pt-3">
+        <div className="border-t border-gray-200 pt-3 mt-2">
           <CommentInput entityType={entityType} entityId={entityId} workshopId={workshopId}
             getName={getName} getPhoto={getPhoto} />
         </div>
