@@ -335,7 +335,7 @@ function CommentEntry({ comment, replies = [], getName, getPhoto, allowReply, en
       isLast={isLast}
       isHighlighted={isHighlighted}
     >
-      <TimelineNode isLast={isLast}><AvatarNode /></TimelineNode>
+      <TimelineNode isLast={isLast}>{AvatarNode}</TimelineNode>
       <TimelineContent className="flex-1">{ContentNode}</TimelineContent>
     </TimelineItem>
   );
