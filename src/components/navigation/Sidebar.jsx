@@ -10,6 +10,7 @@ import { useAssistanceMode } from "@/components/hooks/useAssistanceMode";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { useAdminMode } from "@/components/hooks/useAdminMode";
 import { base44 } from "@/api/base44Client";
+import Avatar from "@/components/ui/Avatar";
 import {
   X,
   Home,
@@ -58,13 +59,6 @@ function UserProfileSection({ user, collapsed, workshop }) {
     // LOAD-02: fallback imediato com dados do authUser — perfil nunca fica em branco
     placeholderData: null
   });
-
-  const getInitials = () => {
-    if (employee?.full_name) {
-      return employee.full_name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase();
-    }
-    return user?.full_name?.[0] || user?.email?.[0] || 'U';
-  };
 
   const jobRoleLabels = {
     socio: "Sócio",
@@ -117,17 +111,12 @@ function UserProfileSection({ user, collapsed, workshop }) {
   return (
     <div className="border-t border-gray-200 px-4 py-1">
       <div className="flex items-center gap-3">
-        {employee?.profile_picture_url ?
-        <img
-          src={employee.profile_picture_url}
-          alt={employee.full_name}
-          className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-blue-200" /> :
-
-
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white font-semibold flex-shrink-0 border-2 border-blue-200">
-            {getInitials()}
-          </div>
-        }
+        <Avatar
+          src={employee?.profile_picture_url}
+          name={employee?.full_name || user?.full_name || user?.email?.split('@')[0] || 'Usuário'}
+          size="md"
+          className="border-2 border-blue-200"
+        />
         {!collapsed &&
         <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
