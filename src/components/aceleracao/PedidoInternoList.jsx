@@ -170,7 +170,8 @@ function GroupHeader({ group, count, collapsed, onToggle }) {
       tabIndex={0}
       onClick={onToggle}
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onToggle(); } }}
-      className={`flex items-center ${MIN_TABLE} py-2.5 px-4 cursor-pointer select-none transition-all duration-150 bg-gray-50 hover:bg-gray-100 ${collapsed ? "opacity-50" : ""}`}
+      // Atualizado com a nova cor fixa e o efeito hover personalizado
+      className={`flex items-center ${MIN_TABLE} py-2.5 px-4 cursor-pointer select-none transition-all duration-150 bg-[#ffe984] hover:bg-[#f2db6b] ${collapsed ? "opacity-50" : ""}`}
     >
       <div className="flex items-center gap-2 shrink-0">
         <span className={`h-[7px] w-[7px] rounded-full ${dotCls}`} />
