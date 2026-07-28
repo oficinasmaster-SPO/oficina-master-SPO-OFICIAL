@@ -93,6 +93,21 @@ Deno.serve(async (req) => {
     const consultorIdFinal = consultor_id || (tipo === 'tarefa_backlog' ? origem.consultor_id : origem.responsavel_id) || user.id;
     const consultorNomeFinal = consultor_nome || (tipo === 'tarefa_backlog' ? origem.consultor_nome : origem.responsavel_nome) || user.full_name || null;
 
+    // ── Buscar Workshop para herdar consultor_principal ──
+    let consultorPrincipalId = null;
+    let consultorPrincipalNome = null;
+    const workshopIdOrigem = origem.cliente_id || origem.workshop_id;
+    if (workshopIdOrigem) {
+      try {
+        const wsItems = await base44.asServiceRole.entities.Workshop.filter({ id: workshopIdOrigem });
+        const ws = wsItems?.[0];
+        if (ws?.consultor_principal_id) {
+          consultorPrincipalId = ws.consultor_principal_id;
+          consultorPrincipalNome = ws.consultor_principal_nome || null;
+        }
+      } catch { /* não crítico */ }
+    }
+
     let fuData = null;
 
     if (tipo === 'tarefa_backlog') {
@@ -115,6 +130,8 @@ Deno.serve(async (req) => {
         is_completed: false,
         notes: `Follow-up de tarefa: ${origem.titulo || ''}`,
         consulting_firm_id: user?.data?.consulting_firm_id || null,
+        consultor_principal_id: consultorPrincipalId,
+        consultor_principal_nome: consultorPrincipalNome,
       };
     } else {
       fuData = {
@@ -136,6 +153,8 @@ Deno.serve(async (req) => {
         is_completed: false,
         notes: `Follow-up de pedido interno: ${origem.titulo || ''}`,
         consulting_firm_id: user?.data?.consulting_firm_id || null,
+        consultor_principal_id: consultorPrincipalId,
+        consultor_principal_nome: consultorPrincipalNome,
       };
     }
 
