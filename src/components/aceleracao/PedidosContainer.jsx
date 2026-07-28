@@ -104,17 +104,6 @@ export default function PedidosContainer({
           />
         )}
 
-        {/* Cabeçalho fixo da lista de pedidos */}
-        {activeList === "pedidos" && (
-          <div className="shrink-0 bg-gray-50/75 border-b border-gray-200 px-6 py-2 grid grid-cols-12 gap-4 text-[11px] font-bold uppercase tracking-wider text-gray-500 select-none">
-            <div className="col-span-3">Cliente / Empresa</div>
-            <div className="col-span-3">Título / Serviço</div>
-            <div className="col-span-2">Solicitante</div>
-            <div className="col-span-2 text-center">Status</div>
-            <div className="col-span-2 text-right">Prazo / SLA</div>
-          </div>
-        )}
-
         {/* Conteúdo da Lista de Pedidos */}
         <TabsContent value="pedidos" forceMount className={`mt-0 flex min-h-0 flex-1 flex-col bg-white ${activeList !== "pedidos" ? "hidden" : ""}`}>
           <div className="min-h-0 flex-1 overflow-y-auto">

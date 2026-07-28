@@ -385,6 +385,7 @@ export default function PedidoInternoList({ pedidos, onSelect, isLoading, select
 
   return (
     <div>
+      <ColumnHeaders />
       {STATUS_GROUPS.map(group => {
         const items = grouped[group.key] || [];
         if (items.length === 0 && !["pendente","em_analise"].includes(group.key)) return null;
