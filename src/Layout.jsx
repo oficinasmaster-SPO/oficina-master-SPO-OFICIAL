@@ -206,7 +206,7 @@ export default function Layout({ children, currentPageName }) {
         </>
         }
 
-      <div className={`flex flex-col min-h-screen transition-all duration-300 min-w-0 overflow-x-hidden ${shouldShowMenus ? 'lg:pl-[var(--sidebar-width,16rem)]' : ''}`}>
+      <div className={`flex flex-col min-h-screen min-w-0 overflow-x-clip ${shouldShowMenus ? 'lg:pl-[var(--sidebar-width,16rem)]' : ''}`}>
               {/* Injeção de CSS Personalizado por Oficina */}
               {workshop?.custom_css_url &&
           <link rel="stylesheet" href={`${workshop.custom_css_url}?v=${cssVersion}`} />
