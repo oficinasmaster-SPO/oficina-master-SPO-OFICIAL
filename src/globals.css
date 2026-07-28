@@ -74,14 +74,34 @@
   100% { left: 120%; }
 }
 
+/* --- BRILHO DUPLO ESTILO UNCHARTED --- */
 .step-shimmer {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 18px;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.15) 30%, rgba(255, 255, 255, 0.85) 50%, rgba(255, 255, 255, 0.15) 70%, transparent 100%);
-  transform: skewX(-15deg);
-  animation: shimmer-glass-stepper 5s cubic-bezier(0.4, 0, 0.6, 1) 0s infinite; /* 0s = Roda na hora se tela recém aberta */
+  top: -50%;
+  left: -150%;
+  width: 120%;
+  height: 200%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.2) 15%,  /* Linha Grossa */
+    rgba(255, 255, 255, 0.2) 35%,  /* Fim da Linha Grossa */
+    rgba(255, 255, 255, 0) 42%,    /* Espaço vazio intermediário */
+    rgba(255, 255, 255, 0.6) 48%,  /* Linha Fina Intensa */
+    rgba(255, 255, 255, 0.6) 51%,  /* Fim da Linha Fina */
+    rgba(255, 255, 255, 0) 60%
+  );
+  transform: rotate(22deg);
+  animation: unchartedDoubleShine 3s infinite ease-in-out;
+}
+
+@keyframes unchartedDoubleShine {
+  0% {
+    left: -150%;
+  }
+  40%, 100% {
+    left: 150%; /* Faz a varredura completa e aguarda oculta até reiniciar o ciclo */
+  }
 }
 
 .is-animating .step-shimmer {
