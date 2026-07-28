@@ -214,6 +214,11 @@ export default function ClientSelectorGrid({ onSelect, onClose }) {
                   {client.city && (
                     <p className="text-[10px] text-gray-400 mt-2 truncate">📍 {client.city}</p>
                   )}
+
+                  {/* Consultor Principal */}
+                  {client.consultorPrincipalNome && (
+                    <p className="text-[10px] text-blue-600 font-medium mt-1 truncate">👤 {client.consultorPrincipalNome}</p>
+                  )}
                 </button>
               ))}
             </div>

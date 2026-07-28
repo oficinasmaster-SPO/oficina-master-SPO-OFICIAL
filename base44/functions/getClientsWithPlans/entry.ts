@@ -49,6 +49,7 @@ Deno.serve(async (req) => {
           backlogCount,
           segment: workshop.segment_auto || workshop.segment || '—',
           city: workshop.city,
+          consultorPrincipalNome: workshop.consultor_principal_nome || null,
         };
       })
       .sort((a, b) => {

@@ -49,6 +49,7 @@ export default function GestaoTenants() {
     name: '',
     consulting_firm_id: '',
     owner_id: '',
+    consultor_principal_id: '',
     cnpj: '',
     city: 'Não informada',
     state: 'ND'
@@ -150,10 +151,16 @@ export default function GestaoTenants() {
   // Mutations: Companies (Workshops)
   const saveCompanyMutation = useMutation({
     mutationFn: async (data) => {
+      const consultor = consultoresOptions.find(c => c.user_id === data.consultor_principal_id);
+      const payload = {
+        ...data,
+        consultor_principal_id: data.consultor_principal_id || null,
+        consultor_principal_nome: consultor?.full_name || '',
+      };
       if (editingCompany) {
-        return await base44.entities.Workshop.update(editingCompany.id, data);
+        return await base44.entities.Workshop.update(editingCompany.id, payload);
       } else {
-        const wsNovo = await base44.entities.Workshop.create(data);
+        const wsNovo = await base44.entities.Workshop.create(payload);
         // Provisionamento canônico do tenant (firm_id + memberships dono/internos)
         base44.functions.invoke('provisionWorkshopTenant', { workshop_id: wsNovo.id }).catch(() => {});
         return wsNovo;
@@ -270,6 +277,7 @@ export default function GestaoTenants() {
         name: company.name || '',
         consulting_firm_id: company.consulting_firm_id || '',
         owner_id: company.owner_id || '',
+        consultor_principal_id: company.consultor_principal_id || '',
         cnpj: company.cnpj || '',
         city: company.city || 'Não informada',
         state: company.state || 'ND'
@@ -297,6 +305,7 @@ export default function GestaoTenants() {
       name: '',
       consulting_firm_id: '',
       owner_id: '',
+      consultor_principal_id: '',
       cnpj: '',
       city: 'Não informada',
       state: 'ND'
@@ -814,6 +823,15 @@ export default function GestaoTenants() {
                 placeholder="Ex: 60d5ecb..." 
               />
               <span className="text-xs text-gray-500">O ID do usuário que administra esta oficina (geralmente o empresário dono).</span>
+            </div>
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Consultor Principal</label>
+              <ConsultorSelect
+                usuarios={consultoresOptions}
+                value={companyFormData.consultor_principal_id}
+                onChange={(consultorId) => setCompanyFormData({ ...companyFormData, consultor_principal_id: consultorId })}
+                placeholder="Sem consultor"
+              />
             </div>
             <div className="grid gap-2">
               <label className="text-sm font-medium">CNPJ (Opcional)</label>
