@@ -6,7 +6,14 @@ import OperationSidebar from '@/components/aceleracao/OperationSidebar';
 import NewFollowUpFAB from '@/components/aceleracao/NewFollowUpFAB';
 import IniciarAtendimentoModal from '@/components/aceleracao/IniciarAtendimentoModal';
 import { useAuth } from '@/lib/AuthContext';
-import { Clock, AlertCircle, Umbrella } from 'lucide-react';
+import { Clock, AlertCircle, Umbrella, Users } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export default function CentralFollowUp() {
   useEffect(() => {
@@ -21,6 +28,13 @@ export default function CentralFollowUp() {
 
   const { user } = useAuth();
   const [showNovoFollowUp, setShowNovoFollowUp] = useState(false);
+  const [consultorSelecionado, setConsultorSelecionado] = useState(null);
+
+  useEffect(() => {
+    if (user?.id && !consultorSelecionado) {
+      setConsultorSelecionado(user.id);
+    }
+  }, [user?.id]);
   const today = new Date().toISOString().split('T')[0];
 
   const { data: userData } = useQuery({
@@ -32,6 +46,25 @@ export default function CentralFollowUp() {
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
   });
+
+  const consultingFirmId = userData?.data?.consulting_firm_id || user?.consulting_firm_id;
+
+  const { data: consultores = [] } = useQuery({
+    queryKey: ['consultores-firma', consultingFirmId],
+    queryFn: async () => {
+      if (!consultingFirmId) return [];
+      const users = await base44.entities.User.filter({
+        'data.consulting_firm_id': consultingFirmId,
+      });
+      return users.filter(u => u.id !== user?.id).sort((a, b) =>
+        (a.full_name || '').localeCompare(b.full_name || '')
+      );
+    },
+    enabled: !!consultingFirmId,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const consultorEfetivo = consultorSelecionado === 'todos' ? null : consultorSelecionado;
 
   // Stats para o sub-banner
   const { data: stats = { pendentes: 0, atrasados: 0, guardaChuva: 0 } } = useQuery({
@@ -81,9 +114,26 @@ export default function CentralFollowUp() {
             <span className="text-xs font-semibold text-red-400 uppercase tracking-widest">Área de execução</span>
           </div>
           <h1 className="font-extrabold text-white leading-tight" style={{fontSize: '2.0rem'}}>Central de Follow-up</h1>
-          <p className="text-gray-400 mt-1 text-sm">
-            Gerencie e acompanhe todos os follow-ups dos clientes em aceleração
-          </p>
+          <div className="flex items-center gap-3 mt-2">
+            <p className="text-gray-400 text-sm">
+              Gerencie e acompanhe todos os follow-ups dos clientes em aceleração
+            </p>
+            <Select value={consultorSelecionado || ''} onValueChange={setConsultorSelecionado}>
+              <SelectTrigger className="w-[220px] bg-gray-800/80 border-gray-700 text-white text-xs h-8">
+                <Users className="w-3.5 h-3.5 mr-1.5 text-gray-400" />
+                <SelectValue placeholder="Selecionar consultor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={user?.id || 'me'}>Meus Follow-ups</SelectItem>
+                <SelectItem value="todos">Todos os Consultores</SelectItem>
+                {consultores.map(c => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.full_name || c.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* LADO DIREITO — boas-vindas consultor */}
@@ -134,7 +184,7 @@ export default function CentralFollowUp() {
       {/* Grid 2 colunas — Fila (esquerda) + Inteligência (direita) */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 items-start">
         <div className="min-w-0">
-          <FollowUpsTab />
+          <FollowUpsTab consultorEfetivo={consultorEfetivo} userId={user?.id} />
         </div>
         <div className="hidden lg:block sticky top-20">
           <OperationSidebar />

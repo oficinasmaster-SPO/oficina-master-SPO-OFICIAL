@@ -626,74 +626,82 @@ export default function ActivityFeed({
   }, [highlightedId]);
 
   return (
-    <div className="flex flex-col w-full max-w-[85%] relative">
-      <div className="overflow-x-hidden px-2 pb-2">
-        {isLoading ? (
-          <TimelineSkeleton />
-        ) : timelineByDay.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center animate-in fade-in px-4">
-            <h3 className="text-[14px] font-medium text-gray-900 mb-1">Nenhuma atividade ainda</h3>
-            <p className="text-[13px] text-gray-500 max-w-[320px] leading-relaxed">
-              Este espaço registrará automaticamente comentários, alterações e todo o histórico deste pedido.
-            </p>
-          </div>
-        ) : (
-          <div className="w-full">
-            {timelineByDay.map((day, dayIdx) => (
-              <TimelineSection key={dayIdx} label={day.label} count={day.elements.length}>
-                <Timeline>
-                  {day.elements.map((el, elIdx) => {
-                    const isLastElement = dayIdx === timelineByDay.length - 1 && elIdx === day.elements.length - 1;
-                    if (el.type === 'log_group') {
-                      return <LogGroupItem key={"log-" + elIdx} group={el.group} getName={getName} isLast={isLastElement} showTime={el.showTime} formattedTime={el.formattedTime} />;
-                    } else {
-                      return (
-                        <React.Fragment key={"comment-wrap-" + el.comment.id}>
-                          <CommentEntry
-                            comment={el.comment}
-                            replies={repliesByParent[el.comment.id] || []}
-                            getName={getName}
-                            getPhoto={getPhoto}
-                            allowReply={allowReply}
-                            entityType={entityType}
-                            entityId={entityId}
-                            workshopId={workshopId}
-                            isLast={isLastElement && activeReplyId !== el.comment.id}
-                            onReplyClick={(id) => setActiveReplyId(activeReplyId === id ? null : id)}
-                            showTime={el.showTime}
-                            formattedTime={el.formattedTime}
-                            isHighlighted={highlightedId === el.comment.id}
-                          />
-                          {activeReplyId === el.comment.id && (
-                            <div className="pl-[82px] pr-2 pb-3 pt-1 animate-in fade-in slide-in-from-top-2 duration-200 relative">
-                              {!isLastElement && <div className="absolute left-[70px] top-0 bottom-0 w-px bg-slate-200 z-0" />}
-                              <div className="relative z-10">
-                                <CommentInput
-                                  entityType={entityType} entityId={entityId} workshopId={workshopId}
-                                  parentCommentId={el.comment.id}
-                                  onSubmitted={(newId) => { setActiveReplyId(null); if(newId) setPendingHighlightId(newId); }}
-                                  onCancel={() => setActiveReplyId(null)}
-                                  compact getName={getName} getPhoto={getPhoto}
-                                />
+    <div className="flex flex-col w-full h-full relative">
+      
+      <div className="flex-1 overflow-y-auto overflow-x-hidden pb-4">
+        
+        <div className="w-full max-w-5xl">
+          {isLoading ? (
+            <TimelineSkeleton />
+          ) : timelineByDay.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in px-4">
+              <h3 className="text-[14px] font-medium text-gray-900 mb-1">Nenhuma atividade ainda</h3>
+              <p className="text-[13px] text-gray-500 max-w-[320px] leading-relaxed">
+                Este espaço registrará automaticamente comentários, alterações e todo o histórico deste pedido.
+              </p>
+            </div>
+          ) : (
+            <div className="w-full">
+              {timelineByDay.map((day, dayIdx) => (
+                <TimelineSection key={dayIdx} label={day.label} count={day.elements.length}>
+                  <Timeline>
+                    {day.elements.map((el, elIdx) => {
+                      const isLastElement = dayIdx === timelineByDay.length - 1 && elIdx === day.elements.length - 1;
+                      if (el.type === 'log_group') {
+                        return <LogGroupItem key={"log-" + elIdx} group={el.group} getName={getName} isLast={isLastElement} showTime={el.showTime} formattedTime={el.formattedTime} />;
+                      } else {
+                        return (
+                          <React.Fragment key={"comment-wrap-" + el.comment.id}>
+                            <CommentEntry
+                              comment={el.comment}
+                              replies={repliesByParent[el.comment.id] || []}
+                              getName={getName}
+                              getPhoto={getPhoto}
+                              allowReply={allowReply}
+                              entityType={entityType}
+                              entityId={entityId}
+                              workshopId={workshopId}
+                              isLast={isLastElement && activeReplyId !== el.comment.id}
+                              onReplyClick={(id) => setActiveReplyId(activeReplyId === id ? null : id)}
+                              showTime={el.showTime}
+                              formattedTime={el.formattedTime}
+                              isHighlighted={highlightedId === el.comment.id}
+                            />
+                            {activeReplyId === el.comment.id && (
+                              <div className="pl-[82px] pr-2 pb-3 pt-1 animate-in fade-in slide-in-from-top-2 duration-200 relative">
+                                {!isLastElement && <div className="absolute left-[70px] top-0 bottom-0 w-px bg-slate-200 z-0" />}
+                                <div className="relative z-10">
+                                  <CommentInput
+                                    entityType={entityType} entityId={entityId} workshopId={workshopId}
+                                    parentCommentId={el.comment.id}
+                                    onSubmitted={(newId) => { setActiveReplyId(null); if(newId) setPendingHighlightId(newId); }}
+                                    onCancel={() => setActiveReplyId(null)}
+                                    compact getName={getName} getPhoto={getPhoto}
+                                  />
+                                </div>
                               </div>
-                            </div>
-                          )}
-                        </React.Fragment>
-                      );
-                    }
-                  })}
-                </Timeline>
-              </TimelineSection>
-            ))}
-          </div>
-        )}
+                            )}
+                          </React.Fragment>
+                        );
+                      }
+                    })}
+                  </Timeline>
+                </TimelineSection>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
+      
       {showComments && !isLoading && (
-        <div className="pt-2 pb-1 px-2 w-full mt-auto sticky bottom-0 z-30 border-t border-gray-100 bg-white">
-          <CommentInput entityType={entityType} entityId={entityId} workshopId={workshopId}
-            getName={getName} getPhoto={getPhoto}
-            onSubmitted={(newId) => { if(newId) setPendingHighlightId(newId); }}
-          />
+        <div className="shrink-0 pt-3 pb-2 w-full mt-auto sticky bottom-0 z-30 border-t border-gray-100 bg-white">
+          <div className="w-full max-w-5xl">
+            <CommentInput 
+              entityType={entityType} entityId={entityId} workshopId={workshopId}
+              getName={getName} getPhoto={getPhoto}
+              onSubmitted={(newId) => { if(newId) setPendingHighlightId(newId); }}
+            />
+          </div>
         </div>
       )}
     </div>
