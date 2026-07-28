@@ -154,13 +154,14 @@ export default function PedidosInternosTab({ workshopId, user }) {
               </div>
 
               <Button
-              onClick={() => {setEditingPedido(null);setShowNewForm(true);}}
-              size="sm"
-              className="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-xs font-bold shadow-sm">
-              
-                <Plus className="mr-1.5 h-3.5 w-3.5" />
-                Novo Pedido
-              </Button>
+  onClick={() => { setEditingPedido(null); setShowNewForm(true); }}
+  size="sm"
+  className="h-8 px-3.5 bg-blue-600 hover:bg-blue-600/90 text-[12px] font-medium text-white rounded-md shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-blue-700/50 transition-all"
+>
+  <Plus className="mr-1.5 h-3 w-3 stroke-[2.5]" />
+  Novo Pedido
+</Button>
+
             </div>
           }
         </div>
