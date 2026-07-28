@@ -7,7 +7,7 @@ import {
   Paperclip, Loader2, ArrowRight, Send,
   ChevronRight, Copy, FileText, Check, Reply
 } from "lucide-react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import Avatar from "@/components/ui/Avatar";
 import useEmployeeResolver from "@/hooks/useEmployeeResolver";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -318,12 +318,12 @@ function CommentEntry({ comment, replies = [], getName, getPhoto, allowReply, en
   );
 
   const AvatarNode = (
-    <Avatar className={cn("shrink-0 ring-4 ring-white", isNested ? "w-6 h-6 mt-0.5" : "w-8 h-8")}>
-      {photoUrl && <AvatarImage src={photoUrl} alt={resolvedName} />}
-      <AvatarFallback className={cn("text-[10px] font-bold", isInternal ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700")}>
-        {getInitials(resolvedName)}
-      </AvatarFallback>
-    </Avatar>
+    <Avatar
+      src={photoUrl}
+      name={resolvedName}
+      size="sm"
+      className={cn("shrink-0 ring-4 ring-white", isNested ? "w-6 h-6 mt-0.5" : "w-8 h-8")}
+    />
   );
 
   return (
