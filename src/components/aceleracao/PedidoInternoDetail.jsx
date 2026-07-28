@@ -4,7 +4,7 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft, CheckCircle, XCircle, Printer,
-  MessageSquare, FileText, ListChecks,
+  FileText, ListChecks,
   AlertTriangle, ArrowUp, Minus, ArrowDown,
   Clock, CalendarClock, Hash, Building2,
   Edit2, ChevronLeft, ChevronRight
@@ -267,11 +267,6 @@ export default function PedidoInternoDetail({
 
         {/* ESQUERDA: Atividade */}
         <div className="flex min-h-0 flex-1 flex-col border-r border-gray-200">
-          <div className="shrink-0 border-b border-gray-100 px-5 py-2">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-gray-400 flex items-center gap-1.5">
-              <MessageSquare className="h-3 w-3" /> Atividade
-            </p>
-          </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-3 space-y-3">
             {pedido.descricao && (
               <div className="rounded-lg border border-[#e6e6a3] bg-[#FFFF99]/30 p-3">
