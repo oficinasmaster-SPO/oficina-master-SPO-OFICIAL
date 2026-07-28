@@ -3,7 +3,8 @@ import {
   FileText, FileImage, FileSpreadsheet, FileArchive, 
   FileAudio, FileVideo, File, Link as LinkIcon, 
   ChevronDown, ChevronRight, Download, Maximize, 
-  RotateCw, ChevronLeft, ExternalLink, X, Loader2
+  RotateCw, RotateCcw, ZoomIn, ZoomOut,
+  ChevronLeft, ExternalLink, X, Loader2
 } from "lucide-react";
 
 // ============================================================================
@@ -53,64 +54,130 @@ const getFileMeta = (mimeType, extension) => {
 // ============================================================================
 // COMPONENTE: PDF VIEWER (React-PDF)
 // ============================================================================
-function PdfViewer({ url }) {
+function PdfViewer({ url, name = "documento.pdf" }) {
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
+  const [scale, setScale] = useState(1.0);
+  const [rotate, setRotate] = useState(0);
 
   function onDocumentLoadSuccess({ numPages }) {
     setNumPages(numPages);
-    setPageNumber(1); // Reseta para a pág 1 ao abrir um novo PDF
+    setPageNumber(1);
   }
 
+  const handleZoomIn = () => setScale(prev => Math.min(prev + 0.25, 3.0));
+  const handleZoomOut = () => setScale(prev => Math.max(prev - 0.25, 0.5));
+  const handleResetZoom = () => { setScale(1.0); setRotate(0); };
+  const handleRotate = () => setRotate(prev => (prev + 90) % 360);
+
   return (
-    <div className="flex flex-col items-center w-full h-full bg-gray-100/50 rounded-md border border-gray-200 overflow-hidden">
-      {/* Controles de Paginação Fixos no Topo */}
-      <div className="flex items-center gap-4 bg-white/90 backdrop-blur border-b border-gray-200 w-full px-4 py-2 shrink-0 z-10 justify-center shadow-sm">
-        <button 
-          disabled={pageNumber <= 1} 
-          onClick={() => setPageNumber(p => p - 1)}
-          className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 transition-colors"
+    <div className="flex flex-col items-center w-full h-full bg-gray-100/70 rounded-lg border border-gray-200 overflow-hidden">
+
+      {/* ── TOOLBAR SUPERIOR DO PDF ── */}
+      <div className="flex flex-wrap items-center justify-between bg-white/95 backdrop-blur border-b border-gray-200 w-full px-4 py-2 shrink-0 z-10 shadow-sm gap-2">
+
+        {/* 1. Paginação */}
+        <div className="flex items-center gap-1">
+          <button
+            disabled={pageNumber <= 1}
+            onClick={() => setPageNumber(p => p - 1)}
+            className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 transition-colors"
+            title="Página Anterior"
+          >
+            <ChevronLeft className="w-4 h-4 text-gray-600" />
+          </button>
+
+          <span className="text-xs font-medium text-gray-600 tabular-nums px-1">
+            Página {pageNumber} de {numPages || '--'}
+          </span>
+
+          <button
+            disabled={pageNumber >= numPages}
+            onClick={() => setPageNumber(p => p + 1)}
+            className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 transition-colors"
+            title="Próxima Página"
+          >
+            <ChevronRight className="w-4 h-4 text-gray-600" />
+          </button>
+        </div>
+
+        {/* 2. Zoom & Rotação */}
+        <div className="flex items-center gap-1 border-x border-gray-200 px-3">
+          <button
+            disabled={scale <= 0.5}
+            onClick={handleZoomOut}
+            className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 transition-colors text-gray-600"
+            title="Reduzir Zoom (-25%)"
+          >
+            <ZoomOut className="w-4 h-4" />
+          </button>
+
+          <span className="text-xs font-semibold text-gray-700 w-12 text-center tabular-nums">
+            {Math.round(scale * 100)}%
+          </span>
+
+          <button
+            disabled={scale >= 3.0}
+            onClick={handleZoomIn}
+            className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 transition-colors text-gray-600"
+            title="Aumentar Zoom (+25%)"
+          >
+            <ZoomIn className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={handleResetZoom}
+            className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors ml-1"
+            title="Resetar Zoom e Rotação"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={handleRotate}
+            className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors"
+            title="Rotacionar 90°"
+          >
+            <RotateCw className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* 3. Ações de Download Direto */}
+        <a
+          href={url}
+          download={name}
+          className="p-1.5 rounded hover:bg-gray-100 text-gray-600 transition-colors"
+          title="Fazer Download do PDF"
         >
-          <ChevronLeft className="w-4 h-4 text-gray-600" />
-        </button>
-        
-        <span className="text-xs font-medium text-gray-600 tabular-nums">
-          Página {pageNumber} de {numPages || '--'}
-        </span>
-        
-        <button 
-          disabled={pageNumber >= numPages} 
-          onClick={() => setPageNumber(p => p + 1)}
-          className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 transition-colors"
-        >
-          <ChevronRight className="w-4 h-4 text-gray-600" />
-        </button>
+          <Download className="w-4 h-4" />
+        </a>
       </div>
 
-      {/* Renderizador do Documento */}
-      <div className="flex-1 overflow-y-auto w-full flex justify-center p-4">
+      {/* ── ÁREA DE LEITURA COM SCROLL ── */}
+      <div className="flex-1 overflow-auto w-full flex justify-center p-4">
         <Document
           file={url}
           onLoadSuccess={onDocumentLoadSuccess}
           loading={
-            <div className="flex flex-col items-center justify-center h-40 text-gray-400">
-              <Loader2 className="w-8 h-8 animate-spin mb-2" />
-              <span className="text-xs">Carregando PDF...</span>
+            <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+              <Loader2 className="w-8 h-8 animate-spin mb-2 text-blue-600" />
+              <span className="text-xs font-medium">Carregando PDF...</span>
             </div>
           }
           error={
-            <div className="flex flex-col items-center justify-center h-40 text-red-400">
+            <div className="flex flex-col items-center justify-center h-64 text-red-400">
               <FileText className="w-8 h-8 mb-2 opacity-50" />
-              <span className="text-xs">Falha ao carregar o documento.</span>
+              <span className="text-xs font-medium">Falha ao carregar o documento PDF.</span>
             </div>
           }
         >
-          <Page 
-            pageNumber={pageNumber} 
-            renderTextLayer={false} 
+          <Page
+            pageNumber={pageNumber}
+            scale={scale}
+            rotate={rotate}
+            renderTextLayer={false}
             renderAnnotationLayer={false}
-            className="shadow-md rounded-sm overflow-hidden border border-gray-200"
-            width={600} // Ajuste fino da largura base
+            className="shadow-xl rounded-sm overflow-hidden border border-gray-200 transition-all duration-150"
           />
         </Document>
       </div>
@@ -170,7 +237,7 @@ function FileViewerDrawer({ files, currentIndex, onClose, onChangeIndex }) {
           
           /* Se for PDF (Usando react-pdf) */
           : isPdf ? (
-            <PdfViewer url={currentFile.url} />
+            <PdfViewer url={currentFile.url} name={currentFile.name} />
           ) 
           
           /* Fallback para outros arquivos (Excel, Word, Zip, etc) */
