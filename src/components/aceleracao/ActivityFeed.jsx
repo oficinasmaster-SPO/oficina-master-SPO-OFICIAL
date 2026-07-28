@@ -1,11 +1,5 @@
 /**
  * ActivityFeed — Timeline unificada cronológica (Estilo Jira/Slack moderno).
- *
- * Mudanças principais:
- * - Unificação de logs de sistema e comentários numa única stream ordenada por timestamp.
- * - Linha vertical contínua conectando todos os eventos (sistema e comentários).
- * - Avatares para comentários e dots coloridos para eventos de sistema integrados na mesma árvore visual.
- * - Redução de densidade e espaçamentos (padrão compacto).
  */
 import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -194,7 +188,7 @@ function LogGroupItem({ group, getName }) {
   const isSingle = group.items.length === 1;
 
   return (
-    <div className="group relative flex gap-3 items-start py-1">
+    <div className="group relative flex gap-3 items-start py-1 px-2 -mx-2 hover:bg-gray-50/50 rounded-lg transition-colors">
       {/* Dot do Sistema cortando a linha central */}
       <div className="flex flex-col items-center shrink-0 w-6 pt-[6px]">
         <div className={`w-[7px] h-[7px] rounded-full ${dotColor} shrink-0 z-[1] ring-2 ring-white`} />
@@ -362,7 +356,6 @@ export default function ActivityFeed({
 
   const isLoading = isLoadingLogs || isLoadingComments;
 
-  // Filtragem de logs ignorados
   const filteredLogs = useMemo(() => {
     if (!showLogs) return [];
     return logs.filter(l => {
@@ -372,7 +365,6 @@ export default function ActivityFeed({
     });
   }, [logs, showLogs]);
 
-  // Apenas comentários raiz (respostas ficam embutidas dentro de CommentEntry)
   const topLevelComments = useMemo(() => {
     if (!showComments) return [];
     return comments.filter(c => !c.parent_comment_id);
@@ -388,22 +380,18 @@ export default function ActivityFeed({
     }, {});
   }, [comments]);
 
-  // Ordena todas as respostas individualmente por timestamp
   Object.keys(repliesByParent).forEach(k => {
     repliesByParent[k].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
   });
 
-  // Unificação e organização cronológica por dia com agrupamento inteligente de logs consecutivos
   const timelineByDay = useMemo(() => {
-    // 1. Cria um array unificado de itens da timeline marcando o tipo
     const unifiedItems = [
       ...filteredLogs.map(l => ({ type: 'log', timestamp: l.timestamp, data: l })),
       ...topLevelComments.map(c => ({ type: 'comment', timestamp: c.timestamp, data: c }))
-    ].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); // Ordem cronológica crescente por dia
+    ].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
     if (unifiedItems.length === 0) return [];
 
-    // 2. Agrupa por dia
     const dayMap = new Map();
     unifiedItems.forEach(item => {
       const key = getDayKey(item.timestamp);
@@ -413,7 +401,6 @@ export default function ActivityFeed({
       dayMap.get(key).rawItems.push(item);
     });
 
-    // 3. Dentro de cada dia, aplica o agrupamento consecutivo apenas em logs de sistema vizinhos (< 5 min e mesmo ator)
     const result = [];
     dayMap.forEach(({ label, rawItems }) => {
       const processedElements = [];
@@ -421,14 +408,12 @@ export default function ActivityFeed({
 
       rawItems.forEach((item) => {
         if (item.type === 'comment') {
-          // Se houver um grupo de logs aberto, fecha antes de adicionar o comentário
           if (currentLogGroup) {
             processedElements.push({ type: 'log_group', group: currentLogGroup, timestamp: currentLogGroup.items[0].timestamp });
             currentLogGroup = null;
           }
           processedElements.push({ type: 'comment', comment: item.data, timestamp: item.timestamp });
         } else {
-          // É log de sistema
           const log = item.data;
           const actor = log.actor_id || log.actor_name;
           
@@ -446,7 +431,6 @@ export default function ActivityFeed({
         }
       });
 
-      // Fecha o último grupo de logs se sobrou algum
       if (currentLogGroup) {
         processedElements.push({ type: 'log_group', group: currentLogGroup, timestamp: currentLogGroup.items[0].timestamp });
       }
@@ -459,14 +443,15 @@ export default function ActivityFeed({
 
   return (
     <div className="flex flex-col" style={{ maxHeight }}>
-      <div className="flex-1 overflow-y-auto pr-1">
+      {/* Adicionado overflow-x-hidden e px-2 no contêiner de rolagem principal */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 pb-2">
         {isLoading ? (
           <div className="flex items-center justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div>
         ) : timelineByDay.length === 0 ? (
           <div className="text-center py-8 text-[13px] text-gray-400">Nenhuma atividade registrada ainda.</div>
         ) : (
           <div className="relative">
-            {/* Linha vertical contínua posicionada para alinhar com os dots (w-6 / center) e avatares */}
+            {/* A linha agora se posiciona perfeitamente em left-[11px] relativo ao novo box absorvido */}
             <div className="absolute left-[11px] top-3 bottom-3 w-px bg-gray-200 z-0" />
 
             <div className="relative z-10 space-y-1">
@@ -501,7 +486,7 @@ export default function ActivityFeed({
         )}
       </div>
       {showComments && !isLoading && (
-        <div className="border-t border-gray-200 pt-3 mt-2">
+        <div className="border-t border-gray-200 pt-3 mt-2 px-2">
           <CommentInput entityType={entityType} entityId={entityId} workshopId={workshopId}
             getName={getName} getPhoto={getPhoto} />
         </div>
