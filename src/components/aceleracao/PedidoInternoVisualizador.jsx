@@ -1,33 +1,38 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import AttachmentGallery from "./AttachmentGallery"; // Importamos o componente genérico que criamos
+import AttachmentGallery from "./AttachmentGallery";
 
 export default function PedidoInternoVisualizador({ pedido }) {
-  const medias = pedido?.midias_anexas || [];
+  const medias = pedido?.midias_anexas;
 
-  if (!medias || medias.length === 0) return null;
+  // 1. Mapeamento memoizado e seguro
+  const arquivosFormatados = useMemo(() => {
+    if (!medias || !Array.isArray(medias)) return [];
 
-  // Aqui nós mapeamos os dados do "Pedido Interno" para o formato 
-  // genérico que a nossa AttachmentGallery espera.
-  const arquivosFormatados = medias.map(media => ({
-    id: media.id || Math.random().toString(), // fallback se não tiver id
-    url: media.url,
-    name: media.nome,
-    type: media.type === "imagem" ? "image" : media.type === "link" ? "link" : "document",
-    mimeType: media.mimeType,
-    size: media.size,
-    extension: media.extension,
-    createdBy: media.createdBy || "Sistema",
-    origin: "Pedido Interno"
-  }));
+    return medias.map((media, index) => ({
+      id: media.id || `${index}-${media.url || 'anexo'}`, // ID estável como fallback
+      url: media.url,
+      name: media.nome || media.name || "Arquivo sem nome",
+      type: media.type === "imagem" ? "image" : media.type === "link" ? "link" : "document",
+      mimeType: media.mimeType,
+      size: media.size,
+      extension: media.extension,
+      createdBy: media.createdBy || "Sistema",
+      origin: "Pedido Interno"
+    }));
+  }, [medias]);
+
+  // 2. Early return após o Hook (regra dos Hooks no React)
+  if (!arquivosFormatados.length) return null;
 
   return (
-    <Card className="mt-6">
-      <CardHeader>
-        <CardTitle className="text-base">Anexos do Pedido</CardTitle>
+    <Card className="mt-6 border-gray-200/80 shadow-sm">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-bold text-gray-800">
+          Anexos do Pedido ({arquivosFormatados.length})
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        {/* Usamos a biblioteca reutilizável que criamos! */}
         <AttachmentGallery files={arquivosFormatados} />
       </CardContent>
     </Card>
