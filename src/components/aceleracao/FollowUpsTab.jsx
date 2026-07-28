@@ -271,6 +271,8 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
     await base44.entities.FollowUpReminder.update(reminder.id, {
       is_completed: true,
       completed_at: new Date().toISOString(),
+      consultor_executor_id: user?.id || null,
+      consultor_executor_nome: user?.full_name || user?.email || null,
     });
     toast.success("Follow-up marcado como realizado!");
     queryClient.invalidateQueries({ queryKey: ["follow-up-reminders-tab"] });
