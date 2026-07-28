@@ -595,8 +595,8 @@ export default function ActivityFeed({
   }, [highlightedId]);
 
   return (
-    <div className="flex flex-col mx-auto w-full max-w-[720px] relative h-full">
-      <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 pb-2">
+    <div className="flex flex-col w-full max-w-[85%] relative">
+      <div className="overflow-x-hidden px-2 pb-2">
         {isLoading ? (
           <TimelineSkeleton />
         ) : timelineByDay.length === 0 ? (
@@ -658,7 +658,7 @@ export default function ActivityFeed({
         )}
       </div>
       {showComments && !isLoading && (
-        <div className="pt-4 pb-2 px-2 w-full mt-auto bg-white/95 backdrop-blur-sm sticky bottom-0 z-30 shadow-[0_-8px_20px_rgba(0,0,0,0.03)] border-t border-gray-100">
+        <div className="pt-2 pb-1 px-2 w-full mt-auto sticky bottom-0 z-30 border-t border-gray-100 bg-white">
           <CommentInput entityType={entityType} entityId={entityId} workshopId={workshopId}
             getName={getName} getPhoto={getPhoto}
             onSubmitted={(newId) => { if(newId) setPendingHighlightId(newId); }}
