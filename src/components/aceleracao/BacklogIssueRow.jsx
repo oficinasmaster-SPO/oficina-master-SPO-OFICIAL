@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import {
   AlertTriangle,
   ArrowUp,
@@ -116,7 +116,7 @@ function IssueCode({ id }) {
 }
 
 // ── Componente principal ─────────────────────────────────────────────────────
-export default function BacklogIssueRow({ tarefa, onView, isSelected = false }) {
+function BacklogIssueRow({ tarefa, onView, isSelected = false }) {
   const originCfg = ORIGIN_ICONS[tarefa.origin_type] || ORIGIN_ICONS.manual;
   const OriginIcon = originCfg.icon;
 
@@ -187,3 +187,5 @@ export default function BacklogIssueRow({ tarefa, onView, isSelected = false }) 
     </div>
   );
 }
+
+export default memo(BacklogIssueRow);

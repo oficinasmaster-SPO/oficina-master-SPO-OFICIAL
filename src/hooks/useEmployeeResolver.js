@@ -10,6 +10,7 @@
  *   getPhoto(userId) → "https://..." ou null
  */
 import { useQuery } from "@tanstack/react-query";
+import { useMemo, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 
 export default function useEmployeeResolver() {
@@ -33,28 +34,31 @@ export default function useEmployeeResolver() {
   });
 
   // Map user_id → Employee
-  const byUserId = {};
-  employees.forEach((e) => {
-    if (e.user_id) byUserId[e.user_id] = e;
-  });
+  const byUserId = useMemo(() => {
+    const m = {};
+    employees.forEach((e) => { if (e.user_id) m[e.user_id] = e; });
+    return m;
+  }, [employees]);
 
   // Map user_id → User (fallback)
-  const userById = {};
-  users.forEach((u) => {
-    if (u.id) userById[u.id] = u;
-  });
+  const userById = useMemo(() => {
+    const m = {};
+    users.forEach((u) => { if (u.id) m[u.id] = u; });
+    return m;
+  }, [users]);
 
   // Map email → Employee (fallback)
-  const byEmail = {};
-  employees.forEach((e) => {
-    if (e.email) byEmail[e.email.toLowerCase()] = e;
-  });
+  const byEmail = useMemo(() => {
+    const m = {};
+    employees.forEach((e) => { if (e.email) m[e.email.toLowerCase()] = e; });
+    return m;
+  }, [employees]);
 
   /**
    * Resolve o nome real de um usuário.
    * Tenta: user_id → Employee.full_name → fallback
    */
-  const getName = (userId, fallbackName) => {
+  const getName = useCallback((userId, fallbackName) => {
     if (userId && byUserId[userId]) return byUserId[userId].full_name;
     // Fallback: tenta resolver via User
     if (userId && userById[userId]) {
@@ -71,23 +75,23 @@ export default function useEmployeeResolver() {
       return fallbackName.split("@")[0];
     }
     return fallbackName || "—";
-  };
+  }, [byUserId, userById, byEmail]);
 
   /**
    * Resolve a foto de perfil.
    */
-  const getPhoto = (userId) => {
+  const getPhoto = useCallback((userId) => {
     if (userId && byUserId[userId]) return byUserId[userId].profile_picture_url || null;
     if (userId && userById[userId]) return userById[userId].photo_url || null;
     return null;
-  };
+  }, [byUserId, userById]);
 
   /**
    * Resolve Employee completo.
    */
-  const getEmployee = (userId) => {
+  const getEmployee = useCallback((userId) => {
     return userId ? byUserId[userId] || null : null;
-  };
+  }, [byUserId]);
 
   return { getName, getPhoto, getEmployee, isLoading, employees };
 }

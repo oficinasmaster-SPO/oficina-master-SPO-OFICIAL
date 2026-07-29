@@ -159,7 +159,7 @@ export default function BacklogBoard({ workshopId, user }) {
     const d = new Date(); d.setHours(0, 0, 0, 0); return d;
   }, []);
 
-  const ativos = tarefas.filter((t) => t.status !== "concluida");
+  const ativos = useMemo(() => tarefas.filter((t) => t.status !== "concluida"), [tarefas]);
 
   const filteredAll = useMemo(() => {
     return tarefas.filter((t) => {

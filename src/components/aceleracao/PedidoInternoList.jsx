@@ -2,7 +2,7 @@
  * PedidoInternoList — Listagem densa estilo Linear/Jira.
  * Colunas: Cliente | Pedido | Solicitante → Responsável | Prioridade | Status | Tempo
  */
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo, memo } from "react";
 import {
   Clock, ClipboardList, ArrowRight,
   ArrowDown, Minus, ArrowUp, AlertOctagon,
@@ -269,6 +269,9 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
   );
 }
 
+// Sprint 3 — memoiza a row para evitar re-render de todas as linhas ao mudar seleção
+const MemoTicketRow = memo(TicketRow);
+
 /* ═══════════════════════════════════════════════════════════════════════════
    SKELETON
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -324,6 +327,22 @@ export default function PedidoInternoList({ pedidos, onSelect, isLoading, select
   });
   const toggle = useCallback((k) => setCollapsed(p => ({ ...p, [k]: !p[k] })), []);
 
+  // Sprint 3 — memoiza o agrupamento (antes regroupava todos os pedidos a cada render).
+  // Deve ficar ANTES dos early returns (regra dos hooks).
+  const grouped = useMemo(() => {
+    const map = {};
+    STATUS_GROUPS.forEach(g => { map[g.key] = []; });
+    pedidos.forEach(p => { if (map[p.status]) map[p.status].push(p); });
+    Object.keys(map).forEach(k => {
+      map[k].sort((a,b) => {
+        const vA = isOverdue(a)?0:1, vB = isOverdue(b)?0:1;
+        if (vA !== vB) return vA - vB;
+        return new Date(b.created_date||0) - new Date(a.created_date||0);
+      });
+    });
+    return map;
+  }, [pedidos]);
+
   if (isLoading) return <SkeletonRows />;
 
   if (!pedidos || pedidos.length === 0) {
@@ -335,17 +354,6 @@ export default function PedidoInternoList({ pedidos, onSelect, isLoading, select
       </div>
     );
   }
-
-  const grouped = {};
-  STATUS_GROUPS.forEach(g => { grouped[g.key] = []; });
-  pedidos.forEach(p => { if (grouped[p.status]) grouped[p.status].push(p); });
-  Object.keys(grouped).forEach(k => {
-    grouped[k].sort((a,b) => {
-      const vA = isOverdue(a)?0:1, vB = isOverdue(b)?0:1;
-      if (vA !== vB) return vA - vB;
-      return new Date(b.created_date||0) - new Date(a.created_date||0);
-    });
-  });
 
   return (
     <div>
@@ -367,7 +375,7 @@ export default function PedidoInternoList({ pedidos, onSelect, isLoading, select
                 <div className={`${COL.px} py-5 text-sm text-gray-400 italic border-b border-[hsl(var(--border-subtle))]`}>Nenhum pedido</div>
               ) : (
                 items.map(pedido => (
-                  <TicketRow
+                  <MemoTicketRow
                     key={pedido.id}
                     pedido={pedido}
                     onSelect={onSelect}
