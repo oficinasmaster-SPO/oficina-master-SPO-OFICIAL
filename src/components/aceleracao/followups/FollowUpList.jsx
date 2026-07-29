@@ -204,10 +204,6 @@ const PROXIMO_PASSO_LABELS = {
   nurturing: "Nurturing",
 };
 
-function getInitials(name = "") {
-  return name.split(" ").slice(0, 2).map(p => p[0]).join("").toUpperCase() || "?";
-}
-
 function getDaysOverdue(reminderDate, today) {
   if (!reminderDate) return 0;
   const diff = differenceInDays(new Date(today), new Date(reminderDate + "T00:00:00"));
@@ -216,19 +212,6 @@ function getDaysOverdue(reminderDate, today) {
 
 function isToday(reminderDate, today) {
   return reminderDate === today;
-}
-
-const avatarColors = [
-  "bg-blue-100 text-blue-700",
-  "bg-purple-100 text-purple-700",
-  "bg-emerald-100 text-emerald-700",
-  "bg-orange-100 text-orange-700",
-  "bg-pink-100 text-pink-700",
-];
-
-function getAvatarColor(name = "") {
-  const idx = name.charCodeAt(0) % avatarColors.length;
-  return avatarColors[idx];
 }
 
 // Busca todos os FollowUpConcluidos de uma vez para enriquecer os cards
