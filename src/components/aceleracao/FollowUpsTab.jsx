@@ -236,6 +236,8 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
   }, [reminders, user?.consulting_firm_id]);
 
   // Fetch dos atendimentos concluídos
+  // OOM-FIX (Sprint 1C): descarta pastedImages (base64) do cache — a row não usa
+  // esse campo e o drawer busca o registro completo por id sob demanda (lazy load).
   const { data: concludedAttendances = [] } = useQuery({
     queryKey: ["follow-up-concluidos-tab", consultorEfetivo],
     queryFn: async () => {
@@ -243,7 +245,12 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
       if (consultorEfetivo) {
         query.consultor_id = consultorEfetivo;
       }
-      return base44.entities.FollowUpConcluido.filter(query, "-completedAt", 200);
+      const items = await base44.entities.FollowUpConcluido.filter(query, "-completedAt", 200);
+      return (Array.isArray(items) ? items : []).map(c => {
+        if (!c || !c.pastedImages) return c;
+        const { pastedImages: _drop, ...rest } = c;
+        return rest;
+      });
     },
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,

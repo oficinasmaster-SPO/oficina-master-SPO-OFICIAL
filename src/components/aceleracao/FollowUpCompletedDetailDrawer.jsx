@@ -42,12 +42,8 @@ export default function FollowUpCompletedDetailDrawer({ followUp, open, onClose,
     const loadAttendanceData = async () => {
       if (!open) return;
 
-      // Se o item já trouxe os dados embutidos (source: concluded), usa direto
-      if (followUp?._attendanceData) {
-        setAttendanceData(followUp._attendanceData);
-        return;
-      }
-
+      // OOM-FIX (Sprint 1C): não usa _attendanceData embutido (pode estar sem base64).
+      // Busca o registro completo por id sob demanda (lazy load de imagens).
       // Se é source: concluded e tem id próprio, busca pelo id
       if (followUp?._source === 'concluded' && followUp?.id) {
         try {

@@ -61,8 +61,9 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
   // Queries para Avisos e Configurações
   const { data: notices = [], refetch: refetchNotices } = useQuery({
     queryKey: ['internal-notices', workshop?.id],
-    queryFn: () => base44.entities.InternalNotice.filter({ active: true }),
+    queryFn: () => base44.entities.InternalNotice.filter({ active: true }, '-created_date', 20),
     staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
     retry: false,
     enabled: !!workshop?.id
   });
@@ -97,7 +98,7 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
     queryFn: async () => {
       if (!user?.email || !workshop?.id) return null;
       try {
-        const employees = await base44.entities.Employee.filter({ email: user.email, workshop_id: workshop.id });
+        const employees = await base44.entities.Employee.filter({ email: user.email, workshop_id: workshop.id }, undefined, 1);
         return Array.isArray(employees) && employees.length > 0 ? employees[0] : null;
       } catch (e) {
         return null;
@@ -184,7 +185,9 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
     queryFn: async () => {
       try {
         if (!workshop?.id) return [];
-        const result = await base44.entities.Diagnostic.filter({ workshop_id: workshop.id }, '-created_date');
+        // OOM-FIX (Sprint 1C): só o último diagnóstico é usado (lastDiagnostic).
+        // Antes trazia TODOS os diagnósticos da oficina (records pesados) no boot.
+        const result = await base44.entities.Diagnostic.filter({ workshop_id: workshop.id }, '-created_date', 1);
         return Array.isArray(result) ? result : [];
       } catch (error) {
         console.log("Error fetching diagnostics:", error);
@@ -193,6 +196,7 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
     },
     enabled: !!user?.id && !!workshop?.id,
     staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
     retry: false
   });
 
@@ -201,7 +205,8 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
     queryFn: async () => {
       try {
         if (!workshop?.id) return [];
-        const result = await base44.entities.Task.filter({ workshop_id: workshop.id });
+        // OOM-FIX (Sprint 1C): limita a 200 tarefas mais recentes (antes sem limit).
+        const result = await base44.entities.Task.filter({ workshop_id: workshop.id }, '-created_date', 200);
         return Array.isArray(result) ? result : [];
       } catch (error) {
         console.log("Error fetching tasks:", error);
@@ -210,6 +215,7 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
     },
     enabled: !!user?.id && !!workshop?.id,
     staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
     retry: false
   });
 
@@ -235,7 +241,7 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
     queryFn: async () => {
       try {
         if (!user?.id) return null;
-        const profiles = await base44.entities.UserGameProfile.filter({ user_id: user.id });
+        const profiles = await base44.entities.UserGameProfile.filter({ user_id: user.id }, undefined, 1);
         const profilesArray = Array.isArray(profiles) ? profiles : [];
         return profilesArray[0] || null;
       } catch (error) {
