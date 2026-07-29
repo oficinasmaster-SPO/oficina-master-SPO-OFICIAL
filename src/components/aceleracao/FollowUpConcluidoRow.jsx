@@ -1,8 +1,10 @@
 import React from "react";
+import { Calendar, FileText } from "lucide-react";
 import { format } from "date-fns";
-import { FileText, Calendar } from "lucide-react";
-import WorkshopAvatar from "@/components/aceleracao/followups/ds/WorkshopAvatar";
-import { ChannelBadge } from "@/components/aceleracao/followups/ds/ChannelIcon";
+import WorkshopAvatar from "./followups/ds/WorkshopAvatar";
+import { ChannelBadge } from "./followups/ds/ChannelIcon";
+import OriginBadge from "./followups/ds/OriginBadge";
+import { formatDateCompact, formatTime } from "./followups/ds/dateUtils";
 
 function RiscoReuniaoCell({ risco }) {
   if (!risco || risco.nivel === "sem_dados") {
@@ -18,8 +20,6 @@ function RiscoReuniaoCell({ risco }) {
 
   return (
     <div className="flex flex-col gap-0.5">
-
-      {/* Linha 1: realizadas/total */}
       <div className="flex items-center gap-1">
         {nivel === "nunca" ? (
           <span className="text-[10px] text-gray-500 bg-gray-100 border border-gray-200 px-1.5 py-0.5 rounded-full font-medium">
@@ -32,21 +32,18 @@ function RiscoReuniaoCell({ risco }) {
         )}
       </div>
 
-      {/* Linha 2: ATRASADAS — badge vermelho com contagem */}
       {atrasadas > 0 && (
         <span className="text-[10px] text-red-700 bg-red-50 border border-red-300 px-1.5 py-0.5 rounded-full font-semibold">
           🔴 {atrasadas} atrasada{atrasadas > 1 ? "s" : ""}
         </span>
       )}
 
-      {/* Linha 3: dias desde última (só atenção sem atrasadas) */}
       {nivel === "atencao" && atrasadas === 0 && diasDesdeUltima !== null && (
         <span className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full font-medium">
           ⚠️ última há {diasDesdeUltima}d
         </span>
       )}
 
-      {/* Linha 4: próxima agendada OU sem próxima */}
       {proximaFmt ? (
         <span className="text-[10px] text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
           <Calendar className="w-2.5 h-2.5" /> {proximaFmt}
@@ -56,12 +53,10 @@ function RiscoReuniaoCell({ risco }) {
           ❌ Sem próxima
         </span>
       ) : null}
-
     </div>
   );
 }
 
-// Cor da borda lateral baseada no nível de risco
 function getBordaRisco(nivel, atrasadas = 0) {
   if (nivel === "critico" || atrasadas > 0) return "border-l-4 border-l-red-500";
   if (nivel === "nunca") return "border-l-4 border-l-red-400";
@@ -69,24 +64,13 @@ function getBordaRisco(nivel, atrasadas = 0) {
   return "";
 }
 
-function safeDateFormat(dateStr, fmt) {
-  if (!dateStr) return "—";
-  try {
-    const d = new Date(dateStr.includes("T") ? dateStr : dateStr + "T00:00:00");
-    if (isNaN(d.getTime())) return "—";
-    return format(d, fmt);
-  } catch {
-    return "—";
-  }
-}
-
 const HUMOR_MAP = {
-  "😊": { emoji: "😊", label: "Feliz",        color: "text-green-600 bg-green-50 border-green-200" },
-  "😐": { emoji: "😐", label: "Neutro",       color: "text-gray-600 bg-gray-50 border-gray-200" },
-  "😞": { emoji: "😞", label: "Triste",       color: "text-red-600 bg-red-50 border-red-200" },
-  "😠": { emoji: "😠", label: "Irritado",     color: "text-red-700 bg-red-50 border-red-200" },
-  "😄": { emoji: "😄", label: "Animado",      color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
-  "😓": { emoji: "😓", label: "Preocupado",   color: "text-amber-600 bg-amber-50 border-amber-200" },
+  "😊": { emoji: "😊", label: "Feliz",      color: "text-green-600 bg-green-50 border-green-200" },
+  "😐": { emoji: "😐", label: "Neutro",     color: "text-gray-600 bg-gray-50 border-gray-200" },
+  "😞": { emoji: "😞", label: "Triste",     color: "text-red-600 bg-red-50 border-red-200" },
+  "😠": { emoji: "😠", label: "Irritado",   color: "text-red-700 bg-red-50 border-red-200" },
+  "😄": { emoji: "😄", label: "Animado",    color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
+  "😓": { emoji: "😓", label: "Preocupado", color: "text-amber-600 bg-amber-50 border-amber-200" },
 };
 
 function renderHumor(humor) {
@@ -99,24 +83,24 @@ function renderHumor(humor) {
       </span>
     );
   }
-  // texto livre
   return <span className="text-gray-600 text-[11px] truncate">{humor}</span>;
 }
 
-export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFollowUps, totalDoCliente, proximoFuPendente, risco, empresaInfo, onSelect }) {
-  const canal = completed?.canal?.toLowerCase();
-
+export default function FollowUpConcluidoRow({
+  completed, reminder, ata, totalFollowUps, totalDoCliente,
+  proximoFuPendente, risco, empresaInfo, onSelect,
+}) {
   const clienteName = reminder?.workshop_name || completed?.workshop_name || "—";
   const dataContato = completed?.dataContato || reminder?.reminder_date;
   const dataConc = completed?.completedAt || reminder?.completed_at;
   const consultorResponsavel = reminder?.consultor_nome || completed?.consultor_nome || "—";
   const quemRealizou = completed?.consultor_nome || completed?.created_by || "—";
   const humor = completed?.humor || null;
+  const canal = completed?.canal?.toLowerCase();
 
   const ataCode = ata?.code || null;
   const tipoReuniao = ata?.tipo_aceleracao || ata?.tipo_atendimento || null;
 
-  // Cascata: 1) consultor definiu manualmente, 2) sistema tem próximo FU pendente, 3) vazio = risco
   const proxData = completed?.proxData || proximoFuPendente?.reminder_date || null;
   const proxHora = completed?.proxData ? completed?.proxHora : null;
   const proxFonte = completed?.proxData ? "manual" : proximoFuPendente ? "fu_pendente" : null;
@@ -129,11 +113,11 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
   return (
     <button
       onClick={() => onSelect && onSelect()}
-      className={`w-full text-left hover:bg-green-50/40 transition-colors px-4 py-2.5 border-b border-gray-100 last:border-b-0  ${bordaRisco}`}
+      className={`w-full text-left hover:bg-green-50/40 transition-colors px-4 py-2.5 border-b border-gray-100 last:border-b-0 min-w-[1200px] ${bordaRisco}`}
     >
       <div className="flex items-center gap-2 text-xs min-w-0">
 
-        {/* Nº FU do cliente */}
+        {/* Nº FU */}
         <div className="w-10 flex-shrink-0 text-center">
           <span className={`inline-flex items-center justify-center rounded-full text-[10px] font-bold px-1.5 py-1 min-w-[2rem] ${
             typeof fuTotal === "number" && fuTotal >= 50 ? "bg-red-100 text-red-700" :
@@ -145,7 +129,7 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
           </span>
         </div>
 
-        {/* Nome do Cliente */}
+        {/* Cliente */}
         <div className="w-36 flex-shrink-0 flex items-center gap-1.5 min-w-0">
           <WorkshopAvatar name={clienteName} size="sm" />
           <span className="text-gray-800 font-semibold truncate">{clienteName}</span>
@@ -153,17 +137,15 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
 
         {/* Data/Hora */}
         <div className="w-20 flex-shrink-0">
-          <div className="text-gray-700 font-medium">{safeDateFormat(dataContato, "dd/MM/yy")}</div>
-          <div className="text-gray-400">{safeDateFormat(dataConc, "HH:mm")}</div>
+          <div className="text-gray-700 font-medium">{formatDateCompact(dataContato)}</div>
+          <div className="text-gray-400">{formatTime(dataConc)}</div>
         </div>
 
         {/* Consultor Responsável */}
-        <div className="w-28 flex-shrink-0 text-gray-600 truncate">
-          {consultorResponsavel}
-        </div>
+        <div className="w-28 flex-shrink-0 text-gray-600 truncate">{consultorResponsavel}</div>
 
         {/* Quem Realizou */}
-        <div className="w-28 flex-shrink-0 text-gray-600 truncate">
+        <div className="w-28 flex-shrink-0">
           {quemRealizou !== consultorResponsavel ? (
             <span className="text-indigo-700 font-medium truncate">{quemRealizou}</span>
           ) : (
@@ -172,9 +154,7 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
         </div>
 
         {/* Humor */}
-        <div className="w-20 flex-shrink-0">
-          {renderHumor(humor)}
-        </div>
+        <div className="w-20 flex-shrink-0">{renderHumor(humor)}</div>
 
         {/* Canal */}
         <div className="w-20 flex-shrink-0">
@@ -185,22 +165,24 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
         {empresaInfo && (
           <div className="w-16 flex-shrink-0 text-center">
             <span className={`inline-flex items-center justify-center rounded-full text-[10px] font-bold px-2 py-1 ${
-              empresaInfo.critico ? "bg-red-100 text-red-700 border border-red-200" : "bg-purple-100 text-purple-700 border border-purple-200"
+              empresaInfo.critico
+                ? "bg-red-100 text-red-700 border border-red-200"
+                : "bg-purple-100 text-purple-700 border border-purple-200"
             }`}>
               {empresaInfo.total} FUs
             </span>
           </div>
         )}
 
-        {/* ATA */}
+        {/* ATA / origem */}
         <div className="w-20 flex-shrink-0">
           {ataCode ? (
             <span className="text-gray-500 font-mono text-[11px]">{ataCode}</span>
-          ) : reminder?.origin_type === 'guarda_chuva' ? (
+          ) : reminder?.origin_type === "guarda_chuva" ? (
             <span className="inline-flex items-center text-[10px] text-pink-600 bg-pink-50 border border-pink-200 px-1.5 py-0.5 rounded-full font-medium">💝 Encant.</span>
-          ) : reminder?.origin_type === 'suporte' ? (
+          ) : reminder?.origin_type === "suporte" ? (
             <span className="inline-flex items-center text-[10px] text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full font-medium">🛟 Suporte</span>
-          ) : reminder?.origin_type === 'suporte_checkin' ? (
+          ) : reminder?.origin_type === "suporte_checkin" ? (
             <span className="inline-flex items-center text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full font-medium">🛟 Check-in</span>
           ) : (
             <span className="text-gray-300">—</span>
@@ -229,7 +211,7 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
           {proxData ? (
             <>
               <div className={`font-medium text-xs ${proxFonte === "fu_pendente" ? "text-blue-600" : "text-gray-700"}`}>
-                {safeDateFormat(proxData, "dd/MM/yy")}
+                {formatDateCompact(proxData)}
               </div>
               {proxHora && <div className="text-gray-400 text-[10px]">{proxHora}</div>}
               {proxFonte === "fu_pendente" && (
@@ -249,7 +231,6 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
             ✓ Concluído
           </span>
         </div>
-
       </div>
     </button>
   );
