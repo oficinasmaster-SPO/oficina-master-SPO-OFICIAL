@@ -151,7 +151,9 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
       if (!area || !type) return;
 
       // Buscar documentos existentes com mesmo prefixo
-      const allDocs = await base44.entities.CompanyDocument.filter({ workshop_id: workshopId }, '-created_date', 200);
+      // Etapa 2: roteia pelo wrapper backend (valida workshop_id antes do filter → nunca 500)
+      const safeRes = await base44.functions.invoke('listCompanyDocumentsSafe', { workshop_id: workshopId, sort: '-created_date', limit: 200 });
+      const allDocs = safeRes?.data?.documents || [];
       const prefix = `${area}-${type}-`;
       const existingDocs = allDocs.filter(d => d.document_id?.startsWith(prefix));
       
