@@ -63,10 +63,10 @@ class ErrorBoundary extends React.Component {
               </Button>
             </div>
 
-            {import.meta.env.DEV && this.state.error && (
-              <div className="mt-8 p-4 bg-gray-100 rounded-lg text-left overflow-auto max-h-48">
+            {this.state.error && (
+              <div className="mt-8 p-4 bg-gray-100 rounded-lg text-left overflow-auto max-h-64">
                 <p className="text-sm font-mono text-red-600 font-semibold mb-2">
-                  {this.state.error.toString()}
+                  {this.state.error?.toString?.() || String(this.state.error)}
                 </p>
                 <pre className="text-xs font-mono text-gray-700 whitespace-pre-wrap">
                   {this.state.errorInfo?.componentStack}
