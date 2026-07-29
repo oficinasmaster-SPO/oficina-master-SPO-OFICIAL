@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Tabs } from "@/components/ui/tabs";
 import { RedTabsList, RedTabsTrigger } from "@/components/ui/RedTabs";
 import { base44 } from "@/api/base44Client";
+import { isValidWorkshopId } from "@/lib/workshopIdGuard";
 import { useAuth } from "@/lib/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -190,7 +191,9 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
         ];
       }
       // Ordena por reminder_date para trazer os mais recentes primeiro
-      return base44.entities.FollowUpReminder.filter(query, "-reminder_date", 200);
+      const items = await base44.entities.FollowUpReminder.filter(query, "-reminder_date", 200);
+      // 2B.3: descarta reminders órfãos (workshop_id inválido) — evita que cheguem ao Iniciar Atendimento (404/500)
+      return (Array.isArray(items) ? items : []).filter(r => isValidWorkshopId(r.workshop_id));
     },
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -203,7 +206,9 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
     queryFn: async () => {
       const query = { is_completed: true };
       if (consultorEfetivo) query.consultor_id = consultorEfetivo;
-      return base44.entities.FollowUpReminder.filter(query, "-completed_at", 200);
+      const items = await base44.entities.FollowUpReminder.filter(query, "-completed_at", 200);
+      // 2B.3: descarta reminders órfãos (workshop_id inválido) — consistência com a lista de pendentes
+      return (Array.isArray(items) ? items : []).filter(r => isValidWorkshopId(r.workshop_id));
     },
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
