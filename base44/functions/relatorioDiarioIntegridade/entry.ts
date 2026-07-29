@@ -16,7 +16,9 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 const CAP = 150;
 const OBJECT_ID_RE = /^[a-f0-9]{24}$/i;
 const REFERENCE_EMAIL = 'administrativo@molashoracerta.com.br';
-const CRITICAL_ENTITIES_SAMPLE = ['Employee', 'Goal', 'ContaPagar', 'CronogramaImplementacao'];
+// Canário de 2 entidades (2 reads × 2 = 4 reads) — versão leve do guard
+// semanal. O guard completo (16 entidades) segue disponível para acionamento manual.
+const CRITICAL_ENTITIES_SAMPLE = ['Employee', 'Goal'];
 
 const SYSTEM_ROLES_HINT = ['dashboard.view', 'workshop.view', 'employees.view', 'financeiro.view', 'admin.users'];
 
@@ -57,9 +59,11 @@ export default async function(req) {
       if (emp.profile_id && !profileMap.has(emp.profile_id)) missing_profiles++;
     }
     const employeeUserIds = new Set(employees.map(e => e.user_id).filter(Boolean));
+    // Apenas usuários de tenant (com workshop_id) devem ter Employee — externos
+    // sem workshop_id legitimamente não têm Employee (evita falso-positivo).
     let users_without_employee = 0;
     for (const u of users) {
-      if (u.role !== 'admin' && !employeeUserIds.has(u.id)) users_without_employee++;
+      if (u.role !== 'admin' && u.workshop_id && !employeeUserIds.has(u.id)) users_without_employee++;
     }
     const rbac_issues = invalid_roles + missing_profiles + users_without_employee;
 
