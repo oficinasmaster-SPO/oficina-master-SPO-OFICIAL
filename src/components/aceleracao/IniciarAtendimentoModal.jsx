@@ -1031,8 +1031,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
 
   return ReactDOM.createPortal(
     <>
-      <div style={{ position: "fixed", inset: 0, zIndex: 9998, background: "rgba(0,0,0,0.45)" }} onClick={onClose} />
-      <div className="p-0 flex flex-col overflow-hidden relative bg-white border-l border-gray-200 animate-in slide-in-from-right duration-300" style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(760px, 100vw)", zIndex: 9999, margin: 0, borderRadius: 0, boxShadow: "-4px 0 32px rgba(0,0,0,0.15)" }}>
+      <div className="p-0 flex flex-col overflow-hidden relative bg-white animate-in fade-in duration-150" style={{ position: "fixed", inset: 0, zIndex: 9999 }}>
         {/* OVERLAY DE SALVAMENTO */}
         {saving && (
           <div className="absolute inset-0 bg-white/90 z-50 flex flex-col items-center justify-center gap-6">
