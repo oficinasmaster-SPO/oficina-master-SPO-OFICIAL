@@ -10,10 +10,10 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 
 import {
   Phone, MessageCircle, Mail, Video, MapPin, CheckCircle2, X, Clock, AlertCircle,
-  ChevronRight, ChevronLeft, Upload, Check, Calendar, User, Bell,
+  ChevronRight, ChevronLeft, Upload, Check, Calendar, User,
   MessageSquare, Send, Loader2, FileText
 } from "lucide-react";
-import { format, isToday, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -39,7 +39,6 @@ import { useToasts } from "@/components/aceleracao/ToastContainer";
 import { useClientDemands } from "@/components/aceleracao/hooks/useClientDemands";
 import SuporteFormBanner from "@/components/aceleracao/suporte/SuporteFormBanner";
 import OrigemDerivadaBanner from "@/components/aceleracao/followups/OrigemDerivadaBanner";
-import ClientHistoryFloatingPanel from "@/components/aceleracao/ClientHistoryFloatingPanel";
 import { isSuporteFlow, gerarSuporteId } from "@/utils/suporteHelper";
 import ClientIndicatorsSection from "@/components/atendimento/ClientIndicatorsSection";
 import ClientIndicatorsChart from "@/components/clientIndicators/ClientIndicatorsChart";
@@ -895,7 +894,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
            consulting_firm_id: followUp.consulting_firm_id || null,
            suporte_id: followUp.suporte_id || null,
          });
-      } else if (!isFluxoSuporte && (proximoPasso === "reagendar" || decision === "next_week" || decision === "in_X_days") && (proxData || metadata?.date)) {
+      } else if (!isFluxoSuporte && ((proximoPasso === "reagendar" || decision === "next_week" || decision === "in_X_days") && (proxData || metadata?.date))) {
         // Reagendamento: usa data do checkpoint (next_week/in_X_days) ou data manual do formulário
         const dataParaAgendar = metadata?.date || proxData;
         const nextSeq = (followUp.sequence_number || 1) + 1;
