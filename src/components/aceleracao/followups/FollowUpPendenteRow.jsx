@@ -1,6 +1,7 @@
 import React, { memo } from "react";
 import WorkshopAvatar from "./ds/WorkshopAvatar";
 import OriginBadge from "./ds/OriginBadge";
+import { ChannelDot } from "./ds/ChannelIcon";
 import StatusBadge from "./ds/StatusBadge";
 import { formatDate, formatDateTime } from "./ds/dateUtils";
 
@@ -43,6 +44,11 @@ const FollowUpPendenteRow = memo(({ reminder, today, seqFU, onSelect, isLast, me
       {/* Tipo */}
       <div className="w-28 flex-shrink-0">
         <OriginBadge originType={reminder.origin_type} />
+      </div>
+
+      {/* Canal */}
+      <div className="w-8 flex-shrink-0 flex justify-center">
+        <ChannelDot canal={reminder.canal_origem} />
       </div>
 
       {/* Consultor */}
