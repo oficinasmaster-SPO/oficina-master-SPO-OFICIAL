@@ -4,7 +4,6 @@ import { AlertCircle, Clock, CheckCircle2, StickyNote, CalendarCheck, MessageCir
 import { format, differenceInDays } from "date-fns";
 import FollowUpCompletedDetailDrawer from "@/components/aceleracao/FollowUpCompletedDetailDrawer";
 import FollowUpConcluidoRow from "@/components/aceleracao/FollowUpConcluidoRow.jsx";
-import FollowUpQueue from "@/components/aceleracao/FollowUpQueue";
 import FollowUpPendenteRow from "@/components/aceleracao/followups/FollowUpPendenteRow";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -308,13 +307,6 @@ function useAtasIndex(ataIds = []) {
   return byId;
 }
 
-const CANAL_ICON_MAP = {
-  whatsapp:   { icon: MessageCircle, bg: "bg-green-500",  title: "Aguardando resposta WhatsApp" },
-  ligacao:    { icon: Phone,          bg: "bg-blue-500",   title: "Aguardando retorno de ligação" },
-  email:      { icon: Mail,           bg: "bg-indigo-500", title: "Aguardando resposta por e-mail" },
-  presencial: { icon: MapPin,         bg: "bg-gray-500",   title: "Aguardando retorno presencial" },
-  meet:       { icon: Video,          bg: "bg-purple-500", title: "Aguardando retorno via Meet" },
-};
 
 export default function FollowUpList({ reminders, remindersConcluidos = [], today, isLoading, onSelect, filterPill, onFilterPill, seqByReminderId = {}, statsByWorkshopId = {}, onSuporteRapido, meuId }) {
   const [selectedCompleted, setSelectedCompleted] = useState(null);
