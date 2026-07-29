@@ -1,6 +1,7 @@
 import React from "react";
 import { format } from "date-fns";
 import { Phone, Mail, MessageCircle, FileText, CalendarCheck, Calendar } from "lucide-react";
+import WorkshopAvatar from "@/components/aceleracao/followups/ds/WorkshopAvatar";
 
 function RiscoReuniaoCell({ risco }) {
   if (!risco || risco.nivel === "sem_dados") {
@@ -74,22 +75,6 @@ const CANAL_MAP = {
   video:      { icon: FileText,       label: "Vídeo",      color: "text-indigo-600", bg: "bg-indigo-50 border-indigo-200" },
   presencial: { icon: CalendarCheck,  label: "Presencial", color: "text-gray-600",   bg: "bg-gray-50 border-gray-200" },
 };
-
-const avatarColors = [
-  "bg-blue-100 text-blue-700",
-  "bg-purple-100 text-purple-700",
-  "bg-emerald-100 text-emerald-700",
-  "bg-orange-100 text-orange-700",
-  "bg-pink-100 text-pink-700",
-];
-
-function getInitials(name = "") {
-  return name.split(" ").slice(0, 2).map(p => p[0]).join("").toUpperCase() || "?";
-}
-
-function getAvatarColor(name = "") {
-  return avatarColors[name.charCodeAt(0) % avatarColors.length];
-}
 
 function safeDateFormat(dateStr, fmt) {
   if (!dateStr) return "—";
@@ -171,9 +156,7 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
 
         {/* Nome do Cliente */}
         <div className="w-36 flex-shrink-0 flex items-center gap-1.5 min-w-0">
-          <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${getAvatarColor(clienteName)}`}>
-            {getInitials(clienteName)}
-          </div>
+          <WorkshopAvatar name={clienteName} size="sm" />
           <span className="text-gray-800 font-semibold truncate">{clienteName}</span>
         </div>
 
