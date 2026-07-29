@@ -76,23 +76,44 @@ window.fetch = (url, options) => globalQueue.fetch(url, options);
 
 const { appId, serverUrl, functionsVersion } = appParams;
 
-// Ler token da URL diretamente caso o appParams não o tenha capturado
-// (pode acontecer em iframes/preview quando localStorage está bloqueado)
-const _urlToken = (() => {
+// ── TOKEN REATIVO (SESSION-FIX-001) ──────────────────────────────────────────
+// O client precisa sempre usar o token mais recente do localStorage/URL.
+// Antes, o client era criado UMA VEZ no boot com um token possivelmente
+// ausente/expirado — causando 401 em cascata e perda de sessão.
+// Agora: um Proxy delega toda propriedade a um client que é recriado
+// automaticamente quando o token muda.
+function resolveCurrentToken() {
   try {
-    return new URLSearchParams(window.location.search).get('access_token');
-  } catch { return null; }
-})();
-const _storedToken = (() => {
-  try { return localStorage.getItem('base44_access_token'); } catch { return null; }
-})();
-const resolvedToken = _urlToken || _storedToken || appParams.token;
+    return new URLSearchParams(window.location.search).get('access_token')
+      || localStorage.getItem('base44_access_token')
+      || appParams.token
+      || null;
+  } catch { return appParams.token || null; }
+}
 
-//Create a client with authentication required
-export const base44 = createClient({
-  appId,
-  serverUrl,
-  token: resolvedToken,
-  functionsVersion,
-  requiresAuth: true
+let _cachedClient = null;
+let _cachedToken = null;
+
+function getActiveClient() {
+  const token = resolveCurrentToken();
+  if (!_cachedClient || token !== _cachedToken) {
+    _cachedToken = token;
+    _cachedClient = createClient({
+      appId,
+      serverUrl,
+      token,
+      functionsVersion,
+      requiresAuth: true,
+    });
+  }
+  return _cachedClient;
+}
+
+export const base44 = new Proxy({}, {
+  get(_target, prop) {
+    const client = getActiveClient();
+    const val = client[prop];
+    return typeof val === 'function' ? val.bind(client) : val;
+  },
 });
+// ── FIM TOKEN REATIVO ────────────────────────────────────────────────────────
