@@ -16,7 +16,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
  * Roda via automação agendada (service-role, sem auth.me — padrão das funções scheduled do app).
  */
 
-const MAX_PER_ENTITY = 5000;
+// Volume bornado: 1 página por entidade (~6 reads leves) para não estourar o
+// teto de tráfego de leitura da plataforma. Auditoria diária incremental —
+// órfãos antigos já tratados por backfills pontuais (Sprint 2B).
+const MAX_PER_ENTITY = 500;
 const PAGE_SIZE = 500;
 
 // Paginação determinística por deslocamento (dedupe por id protege contra
