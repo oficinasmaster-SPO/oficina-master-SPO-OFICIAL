@@ -12,7 +12,7 @@ export default function useConsultoresList(user) {
       const employees = await base44.entities.Employee.filter({
         workshop_id: OFICINAS_MASTER_WORKSHOP_ID,
         status: 'ativo'
-      }, null, 1000);
+      }, null, 500);
 
       // Listar todos os colaboradores da Oficinas Master com user_id vinculado
       employees
@@ -36,7 +36,7 @@ export default function useConsultoresList(user) {
     },
     enabled: !!user,
     staleTime: 10 * 60 * 1000,
-    retry: 3,
+    retry: 1,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000)
   });
 }

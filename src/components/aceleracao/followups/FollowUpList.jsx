@@ -111,8 +111,14 @@ function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendiment
 }
 
 // Hook para buscar ContractAttendance e ConsultoriaAtendimento em lote para workshops visíveis
+// 429/OOM-FIX: cap de workshops e itens por entidade para limitar volume de leitura.
+// Workshops além do cap ficam sem cálculo de risco (sem_dados) — trade-off aceitável
+// vs. estourar limite de tráfego / memória.
+const MAX_REUNIOES_WORKSHOPS = 200;
+const MAX_REUNIOES_ITEMS = 2000; // <= 5000 (limite global)
+
 function useReunioesIndex(workshopIds = []) {
-  const ids = [...new Set(workshopIds.filter(Boolean))];
+  const ids = [...new Set(workshopIds.filter(Boolean))].slice(0, MAX_REUNIOES_WORKSHOPS);
 
   const { data: contractData = [] } = useQuery({
     queryKey: ["contract-attendances-bulk", ids.sort().join(",")],
@@ -120,42 +126,48 @@ function useReunioesIndex(workshopIds = []) {
       if (ids.length === 0) return [];
       const BATCH = 100;
       const results = [];
-      for (let i = 0; i < ids.length; i += BATCH) {
+      for (let i = 0; i < ids.length && results.length < MAX_REUNIOES_ITEMS; i += BATCH) {
         const batch = ids.slice(i, i + BATCH);
+        const remaining = MAX_REUNIOES_ITEMS - results.length;
         const items = await base44.entities.ContractAttendance.filter(
           { workshop_id: { $in: batch } },
           "-scheduled_date",
-          BATCH * 10
+          Math.min(BATCH * 10, remaining)
         );
         results.push(...items);
       }
       return results;
     },
     enabled: ids.length > 0,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    retry: 1,
+    refetchOnWindowFocus: false,
   });
 
   const { data: consultoriaData = [] } = useQuery({
     queryKey: ["consultoria-atendimentos-bulk", ids.sort().join(",")],
     queryFn: async () => {
       if (ids.length === 0) return [];
-      const BATCH = 50;
+      const BATCH = 100;
       const results = [];
-      for (let i = 0; i < ids.length; i += BATCH) {
+      for (let i = 0; i < ids.length && results.length < MAX_REUNIOES_ITEMS; i += BATCH) {
         const batch = ids.slice(i, i + BATCH);
+        const remaining = MAX_REUNIOES_ITEMS - results.length;
         const items = await base44.entities.ConsultoriaAtendimento.filter(
           { workshop_id: { $in: batch } },
           "-data_agendada",
-          100
+          Math.min(100, remaining)
         );
         results.push(...items);
       }
       return results;
     },
     enabled: ids.length > 0,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    retry: 1,
+    refetchOnWindowFocus: false,
   });
 
   // Pré-indexa por workshop_id (Map) — O(n) uma vez, lookup O(1) por workshop
@@ -266,8 +278,10 @@ function useConcluidosIndex() {
 }
 
 // Busca ATAs pelo conjunto de ata_ids dos reminders ativos — sem limite de data
+const MAX_ATAS_IDS = 300; // 429/OOM-FIX: cap de ATAs para limitar requisições em lote
+
 function useAtasIndex(ataIds = []) {
-  const uniqueIds = [...new Set(ataIds.filter(Boolean))];
+  const uniqueIds = [...new Set(ataIds.filter(Boolean))].slice(0, MAX_ATAS_IDS);
   const { data = [] } = useQuery({
     queryKey: ["meeting-minutes-by-ids", uniqueIds.sort().join(",")],
     queryFn: async () => {
@@ -287,7 +301,10 @@ function useAtasIndex(ataIds = []) {
       return results;
     },
     enabled: uniqueIds.length > 0,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    retry: 1,
+    refetchOnWindowFocus: false,
   });
   // OOM-FIX: índice memoizado — antes era reconstruído a cada render
   return useMemo(() => {

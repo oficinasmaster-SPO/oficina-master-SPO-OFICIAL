@@ -91,6 +91,8 @@ export default function CronogramaConsultoria() {
     enabled: !!activeWorkshopId && !!user?.id,
     staleTime: 2 * 60 * 1000,
     refetchInterval: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
 
   const { data: allAtas, isLoading: loadingAtas } = useQuery({
@@ -99,12 +101,14 @@ export default function CronogramaConsultoria() {
       if (!activeWorkshopId) return [];
       return await base44.entities.MeetingMinutes.filter(
         { workshop_id: activeWorkshopId },
-        '-meeting_date'
+        '-meeting_date',
+        500
       );
     },
     enabled: !!activeWorkshopId,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
 
   // Follow-ups realizados — filtrados por workshop_id ativo
@@ -115,13 +119,15 @@ export default function CronogramaConsultoria() {
       if (!activeWorkshopId) return [];
       const all = await base44.entities.FollowUpReminder.filter(
         { workshop_id: activeWorkshopId, is_completed: true },
-        '-completed_at'
+        '-completed_at',
+        500
       );
       return all;
     },
     enabled: !!activeWorkshopId,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
 
   const { data: consultores } = useQuery({

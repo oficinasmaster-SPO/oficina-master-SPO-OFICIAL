@@ -193,6 +193,8 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
       return base44.entities.FollowUpReminder.filter(query, "-reminder_date", 200);
     },
     staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
 
   // Query separada para reminders CONCLUÍDOS (usada nas abas Concluídos e pill CRM)
@@ -204,6 +206,8 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
       return base44.entities.FollowUpReminder.filter(query, "-completed_at", 200);
     },
     staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
 
   // Passa pendentes + concluídos para sequência real (#1/8, não #1/2)
@@ -242,6 +246,8 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
       return base44.entities.FollowUpConcluido.filter(query, "-completedAt", 200);
     },
     staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
 
   // Fetch dos FollowUpContadores (acompanhamento)
@@ -253,6 +259,8 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
       return base44.entities.FollowUpContador.filter(query, "-data_criacao", 200);
     },
     staleTime: 3 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
 
   const fuContadoresAtivos = useMemo(() =>
