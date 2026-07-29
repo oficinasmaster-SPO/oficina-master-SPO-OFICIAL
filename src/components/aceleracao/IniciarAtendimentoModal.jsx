@@ -66,16 +66,14 @@ const PROXIMO_PASSO_LABELS = {
   escalar: "Escalar para gestor", concluir: "Concluir programa", cancelar: "Cancelamento",
 };
 
+import { getInitials } from "@/lib/avatarUtils";
+
 const SAVE_STEPS = [
   { key: "interacao",  label: "Gravando interação..." },
   { key: "followup",   label: "Atualizando status do follow-up..." },
   { key: "proximo",    label: "Criando próximo follow-up..." },
   { key: "notificacao",label: "Notificando consultor..." },
 ];
-
-function getInitials(name = "") {
-  return name.split(" ").slice(0, 2).map(p => p[0]).join("").toUpperCase() || "?";
-}
 
 const CANAL_OPTIONS = [
   { id: "ligacao", label: "Ligação", icon: Phone },
