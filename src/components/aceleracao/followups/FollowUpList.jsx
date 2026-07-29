@@ -227,13 +227,26 @@ function isToday(reminderDate, today) {
   return reminderDate === today;
 }
 
-// Busca todos os FollowUpConcluidos de uma vez para enriquecer os cards
+// Busca os FollowUpConcluidos recentes para enriquecer os cards da lista.
+// OOM-FIX (Sprint 1A): o campo `pastedImages` pode conter base64 de screenshots
+// (MBs por registro). A row da lista NÃO usa esse campo (só campos leves) e o
+// drawer de detalhe busca o registro completo por id sob demanda. Removê-lo do
+// cache evita reterner dezenas de MBs em memória — causa raiz do OOM deste índice.
 function useConcluidosIndex() {
   const { data = [] } = useQuery({
     queryKey: ["follow-up-concluidos-list-index-v2"],
-    queryFn: () => base44.entities.FollowUpConcluido.list("-completedAt", 200),
+    queryFn: async () => {
+      const items = await base44.entities.FollowUpConcluido.list("-completedAt", 200);
+      return (Array.isArray(items) ? items : []).map(c => {
+        if (!c || !c.pastedImages) return c;
+        const { pastedImages: _drop, ...rest } = c;
+        return rest;
+      });
+    },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
 
   // OOM-FIX: índices memoizados — antes eram reconstruídos a cada render (O(n) × frequência)
