@@ -17,10 +17,7 @@ import { useMemo } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import VisualizarAtaModal from "@/components/aceleracao/VisualizarAtaModal";
 import IniciarAtendimentoModal from "@/components/aceleracao/IniciarAtendimentoModalWithPanel";
-
-function getInitials(name = "") {
-  return name.split(" ").slice(0, 2).map(p => p[0]).join("").toUpperCase() || "?";
-}
+import { getInitials } from "@/lib/avatarUtils";
 
 const CANAL_OPTIONS = [
   { id: "ligacao",     label: "Ligação",     icon: Phone },
