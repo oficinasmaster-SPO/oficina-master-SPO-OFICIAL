@@ -5,7 +5,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Download, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 
 const FIELDS = [
-  'completed_at', 'reminder_date', 'workshop_name', 'workshop_id',
+  'empresa_criada_em', 'workshop_name', 'workshop_id',
+  'completed_at', 'reminder_date',
   'consultor_nome', 'consultor_id', 'consultor_principal_nome', 'consultor_principal_id',
   'consultor_executor_nome', 'consultor_executor_id',
   'sequence_number', 'days_since_meeting', 'canal_origem', 'origin_type',
@@ -41,8 +42,54 @@ export default function RelatorioFollowUpsCSV() {
         (r) => r.completed_at && new Date(r.completed_at) >= new Date(since)
       );
 
+      // Busca oficinas para obter a data de criação de cada empresa
+      const workshopIds = [...new Set(rows.map((r) => r.workshop_id).filter(Boolean))];
+      const workshops = [];
+      const pageSize = 100;
+      for (let i = 0; i < workshopIds.length; i += pageSize) {
+        const batch = workshopIds.slice(i, i + pageSize);
+        const found = await base44.entities.Workshop.filter({ id: { $in: batch } }, '-created_date', batch.length);
+        workshops.push(...found);
+      }
+      const wCreated = {};
+      workshops.forEach((w) => { wCreated[w.id] = w.created_date || ''; });
+      // Fallback: usa created_date do próprio follow-up caso a oficina não seja encontrada
+      const wFirstCreated = {};
+      rows.forEach((r) => {
+        if (r.workshop_id && !wFirstCreated[r.workshop_id] && r.created_date) {
+          wFirstCreated[r.workshop_id] = r.created_date;
+        }
+      });
+
+      rows.forEach((r) => {
+        const created = wCreated[r.workshop_id] || wFirstCreated[r.workshop_id] || '';
+        r.empresa_criada_em = created ? String(created).slice(0, 10) : '';
+      });
+
+      // Agrupa por empresa e ordena empresas da mais recente (criação) para a mais antiga
+      const byCompany = new Map();
+      rows.forEach((r) => {
+        const key = r.workshop_id || '(sem empresa)';
+        if (!byCompany.has(key)) byCompany.set(key, []);
+        byCompany.get(key).push(r);
+      });
+
+      const companies = [...byCompany.keys()].sort((a, b) => {
+        const da = wCreated[a] || wFirstCreated[a] || '0';
+        const db = wCreated[b] || wFirstCreated[b] || '0';
+        return db.localeCompare(da); // mais recente primeiro
+      });
+
+      const ordered = [];
+      companies.forEach((key) => {
+        const group = byCompany.get(key).sort(
+          (a, b) => new Date(b.completed_at) - new Date(a.completed_at)
+        );
+        ordered.push(...group);
+      });
+
       const header = FIELDS.join(',');
-      const lines = rows.map((r) => FIELDS.map((f) => esc(r[f])).join(','));
+      const lines = ordered.map((r) => FIELDS.map((f) => esc(r[f])).join(','));
       const csv = [header, ...lines].join('\r\n');
 
       const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -73,7 +120,7 @@ export default function RelatorioFollowUpsCSV() {
           <div>
             <h1 className="text-xl font-bold text-gray-900">Relatório de Follow-ups Encerrados</h1>
             <p className="text-sm text-gray-500 mt-1">
-              Gera um CSV com todos os follow-ups concluídos nos últimos 15 dias, incluindo todos os campos preenchidos.
+              Gera um CSV com todos os follow-ups concluídos nos últimos 15 dias, agrupados por empresa e ordenados da empresa criada mais recentemente para a mais antiga.
             </p>
           </div>
 
