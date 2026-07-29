@@ -69,6 +69,7 @@ const AdminSaudeSistema = lazy(() => import('@/pages/AdminSaudeSistema'));
 const DashboardAuditoriaRBAC = lazy(() => import('@/pages/DashboardAuditoriaRBAC'));
 // TEMPORARIO - remover após validação da migração de tenant.
 const TesteRLS = lazy(() => import('@/pages/TesteRLS'));
+const RelatorioFollowUpsCSV = lazy(() => import('@/pages/RelatorioFollowUpsCSV'));
 
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -168,6 +169,7 @@ const AuthenticatedApp = () => {
         <Route element={<ProtectedRoute />}>
           {/* TEMPORARIO - remover após validação da migração de tenant. */}
           <Route path="/TesteRLS" element={<TesteRLS />} />
+          <Route path="/RelatorioFollowUpsCSV" element={<LayoutWrapper currentPageName="RelatorioFollowUpsCSV"><RelatorioFollowUpsCSV /></LayoutWrapper>} />
           <Route path="/CompletarPerfil" element={<LayoutWrapper currentPageName="CompletarPerfil"><CompletarPerfil /></LayoutWrapper>} />
           <Route path="/DescricaoCargos" element={<LayoutWrapper currentPageName="DescricaoCargos"><DescricaoCargos /></LayoutWrapper>} />
           <Route path="/CentralAvaliacoes" element={<LayoutWrapper currentPageName="CentralAvaliacoes"><CentralAvaliacoes /></LayoutWrapper>} />
