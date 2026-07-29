@@ -20,17 +20,27 @@ Deno.serve(async (req) => {
 
     const workshopIds = workshops.map(w => w.id);
 
-    // Buscar follow-ups pendentes
-    const allFollowUps = await base44.entities.FollowUpReminder.filter({
-      workshop_id: { $in: workshopIds },
-      is_completed: false
-    }, null, 1000);
+    // Contagens são OPCIONAIS (fail-open): um 429 nelas não pode zerar o grid de clientes.
+    // O Workshop list (acima) é a leitura crítica — se ela falhar, retornar vazio é correto.
+    let allFollowUps = [];
+    try {
+      allFollowUps = await base44.entities.FollowUpReminder.filter({
+        workshop_id: { $in: workshopIds },
+        is_completed: false
+      }, null, 1000);
+    } catch (e) {
+      console.warn('getClientsWithPlans: FollowUpReminder indisponível — contagens de FU zeradas:', e?.message);
+    }
 
-    // Buscar tarefas backlog pendentes
-    const allBacklogTasks = await base44.entities.TarefaBacklog.filter({
-      cliente_id: { $in: workshopIds },
-      status: { $in: ['aberta', 'em_execucao'] }
-    }, null, 5000);
+    let allBacklogTasks = [];
+    try {
+      allBacklogTasks = await base44.entities.TarefaBacklog.filter({
+        cliente_id: { $in: workshopIds },
+        status: { $in: ['aberta', 'em_execucao'] }
+      }, null, 5000);
+    } catch (e) {
+      console.warn('getClientsWithPlans: TarefaBacklog indisponível — contagens de backlog zeradas:', e?.message);
+    }
 
     // Montar grid com dados completos
     const clients = workshops

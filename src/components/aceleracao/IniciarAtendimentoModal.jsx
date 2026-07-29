@@ -310,17 +310,20 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
     try {
       setClienteAtual(clientData);
       
-      // Buscar primeiro follow-up pendente do cliente (limit 1 — leve).
-      // Em caso de 429/falha de leitura, segue em fluxo de suporte local (não bloqueia o usuário).
+      // Buscar primeiro follow-up pendente — apenas quando o seletor já indicou que
+      // existem pendentes (followUpsCount > 0), evitando leitura redundante no caso
+      // mais comum de suporte (cliente sem FU aberto). Em 429/falha, cai no suporte local.
       let followUps = [];
-      try {
-        followUps = await base44.entities.FollowUpReminder.filter({
-          workshop_id: clientData.id,
-          is_completed: false
-        }, 'reminder_date', 1);
-      } catch (readErr) {
-        console.warn('FollowUpReminder indisponível (limite de leitura) — fluxo de suporte local:', readErr?.message);
-        followUps = [];
+      if (clientData.followUpsCount && clientData.followUpsCount > 0) {
+        try {
+          followUps = await base44.entities.FollowUpReminder.filter({
+            workshop_id: clientData.id,
+            is_completed: false
+          }, 'reminder_date', 1);
+        } catch (readErr) {
+          console.warn('FollowUpReminder indisponível (limite de leitura) — fluxo de suporte local:', readErr?.message);
+          followUps = [];
+        }
       }
 
       if (followUps && followUps.length > 0) {
