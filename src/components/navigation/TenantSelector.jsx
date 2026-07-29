@@ -165,7 +165,7 @@ export default function TenantSelector({ isMobileSidebar = false }) {
           </Button>
         </PopoverTrigger>
         {/* Largura aumentada em 10px: de w-[500px] para w-[510px] */}
-        <PopoverContent className="w-[510px] -ml-[10px] p-0" align="start">
+        <PopoverContent className="w-[250px] -ml-[10px] p-0" align="start">
           <div className="flex items-center border-b px-3">
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
             <input 
