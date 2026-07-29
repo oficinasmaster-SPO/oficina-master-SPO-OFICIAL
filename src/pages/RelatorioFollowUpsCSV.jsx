@@ -43,7 +43,10 @@ export default function RelatorioFollowUpsCSV() {
       );
 
       // Busca oficinas para obter a data de criação de cada empresa
-      const workshopIds = [...new Set(rows.map((r) => r.workshop_id).filter(Boolean))];
+      const isValidObjectId = (id) => /^[0-9a-fA-F]{24}$/.test(id);
+      const workshopIds = [...new Set(
+        rows.map((r) => r.workshop_id).filter((id) => id && isValidObjectId(id))
+      )];
       const workshops = [];
       const pageSize = 100;
       for (let i = 0; i < workshopIds.length; i += pageSize) {
