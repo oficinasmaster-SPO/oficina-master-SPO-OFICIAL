@@ -33,10 +33,10 @@ export default function OverviewCockpit({
         </div>
 
         <div className="flex flex-col items-center gap-1.5">
-          <ProgressRing value={healthScore} size={64} strokeWidth={6}>
-            <span className="text-[11px] font-bold tabular-nums" style={{
-              color: healthScore >= 70 ? "#15803d" : healthScore >= 40 ? "#b45309" : "#dc2626"
-            }}>
+          <ProgressRing value={healthScore} size={64} strokeWidth={6} label={`Saúde ${healthScore}%`}>
+            <span className={`text-[11px] font-bold tabular-nums ${
+              healthScore >= 70 ? "text-green-700" : healthScore >= 40 ? "text-amber-700" : "text-red-700"
+            }`}>
               {healthScore}
             </span>
           </ProgressRing>
@@ -45,10 +45,11 @@ export default function OverviewCockpit({
 
         <div className="flex flex-col items-center gap-1.5">
           <ProgressRing
-            value={Math.min(100, atas.length * 20)}
+            value={Math.min(100, atas.length * 10)}
             size={64}
             strokeWidth={6}
             color="#6366f1"
+            label={`${atas.length} ATAs`}
           >
             <span className="text-[11px] font-bold text-indigo-700 tabular-nums">{atas.length}</span>
           </ProgressRing>

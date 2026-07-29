@@ -1,13 +1,14 @@
 import React from "react";
 
-export function ProgressRing({ value = 0, size = 64, strokeWidth = 6, color, children }) {
-  const radius = (size - strokeWidth) / 2;
+export function ProgressRing({ value = 0, size = 64, strokeWidth = 6, color, label, children }) {
+  const radius = Math.max(1, (size - strokeWidth) / 2);
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (Math.min(100, Math.max(0, value)) / 100) * circumference;
+  const clamped = Math.min(100, Math.max(0, value));
+  const offset = circumference - (clamped / 100) * circumference;
 
   const strokeColor = color || (
-    value >= 70 ? "#22c55e" :
-    value >= 40 ? "#f59e0b" :
+    clamped >= 70 ? "#22c55e" :
+    clamped >= 40 ? "#f59e0b" :
     "#ef4444"
   );
 
@@ -17,6 +18,8 @@ export function ProgressRing({ value = 0, size = 64, strokeWidth = 6, color, chi
         width={size} height={size}
         className="absolute inset-0"
         style={{ transform: "rotate(-90deg)" }}
+        role="img"
+        aria-label={label ?? `${Math.round(clamped)}%`}
       >
         <circle
           cx={size / 2} cy={size / 2} r={radius}

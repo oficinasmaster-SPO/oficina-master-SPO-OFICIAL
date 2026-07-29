@@ -1,8 +1,11 @@
 import React from "react";
 
 export function calcHealthScore({ reminder, allFollowUps = [], atas = [], concluidos = [], today }) {
+  if (!today || isNaN(new Date(today + "T00:00:00").getTime())) return 50;
+
   let score = 50;
   const msDay = 1000 * 60 * 60 * 24;
+  const todayMs = new Date(today + "T00:00:00").getTime();
 
   if (atas.length >= 5) score += 25;
   else if (atas.length >= 3) score += 15;
@@ -15,7 +18,7 @@ export function calcHealthScore({ reminder, allFollowUps = [], atas = [], conclu
       return (!latest || d > latest) ? d : latest;
     }, null);
     if (lastContact) {
-      const daysAgo = Math.floor((new Date(today) - new Date(lastContact)) / msDay);
+      const daysAgo = Math.floor((todayMs - new Date(lastContact).getTime()) / msDay);
       if (daysAgo <= 7)  score += 20;
       else if (daysAgo <= 14) score += 10;
       else if (daysAgo <= 30) score += 5;
