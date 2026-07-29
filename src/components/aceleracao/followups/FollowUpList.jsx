@@ -232,7 +232,7 @@ function isToday(reminderDate, today) {
 // (MBs por registro). A row da lista NÃO usa esse campo (só campos leves) e o
 // drawer de detalhe busca o registro completo por id sob demanda. Removê-lo do
 // cache evita reterner dezenas de MBs em memória — causa raiz do OOM deste índice.
-function useConcluidosIndex() {
+function useConcluidosIndex(enabled = true) {
   const { data = [] } = useQuery({
     queryKey: ["follow-up-concluidos-list-index-v2"],
     queryFn: async () => {
@@ -243,6 +243,7 @@ function useConcluidosIndex() {
         return rest;
       });
     },
+    enabled,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -341,9 +342,13 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
     return () => clearTimeout(t);
   }, [isSearching, search]);
   const PAGE_SIZE = 20;
-  const { byWorkshop: concluidosIndex, byFollowupId: concluidosByFuid, sequenceByFollowupId } = useConcluidosIndex();
-  // Extrai todos os ata_ids dos reminders para buscar apenas as ATAs necessárias
-  const ataIds = reminders.map(r => r.ata_id).filter(Boolean);
+  // Índices de concluídos e ATAs só são usados nas rows de concluído (pills
+  // concluídos/críticos/por_empresa). Na view padrão (pendentes) eram leituras
+  // desperdiçadas — lazy-gate corta até ~7 leituras / ~500 registros por mount.
+  const isConcluidosPill = filterPill === "concluidos" || filterPill === "criticos" || filterPill === "por_empresa";
+  const { byWorkshop: concluidosIndex, byFollowupId: concluidosByFuid, sequenceByFollowupId } = useConcluidosIndex(isConcluidosPill);
+  // Extrai ata_ids apenas na view de concluídos (atasIndex só é usado nas rows de concluído)
+  const ataIds = isConcluidosPill ? reminders.map(r => r.ata_id).filter(Boolean) : [];
   const atasIndex = useAtasIndex(ataIds);
 
   // Índice: workshop_id → próximo FU pendente com reminder_date >= hoje (para coluna Próx. Contato)
@@ -370,8 +375,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
 
   const searchTerm = search.trim().toLowerCase();
 
-  // Para pills de concluídos, críticos e por_empresa, usa a lista de concluídos
-  const isConcluidosPill = filterPill === "concluidos" || filterPill === "criticos" || filterPill === "por_empresa";
+  // (isConcluidosPill já definido acima para gate do useConcluidosIndex/atasIndex)
   const sourceList = isConcluidosPill ? remindersConcluidos : reminders;
 
   // Workshop IDs de TODOS os reminders visíveis (pendentes + concluídos)
