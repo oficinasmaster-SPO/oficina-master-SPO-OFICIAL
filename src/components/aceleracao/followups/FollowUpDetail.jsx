@@ -19,6 +19,7 @@ import VisualizarAtaModal from "@/components/aceleracao/VisualizarAtaModal";
 import IniciarAtendimentoModal from "@/components/aceleracao/IniciarAtendimentoModalWithPanel";
 import WorkshopAvatar from "./ds/WorkshopAvatar";
 import StatusBadge from "./ds/StatusBadge";
+import OverviewCockpit from "./OverviewCockpit";
 
 const CANAL_OPTIONS = [
   { id: "ligacao",     label: "Ligação",     icon: Phone },
@@ -748,46 +749,18 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                 </div>
               )}
 
-              {/* Situação do cliente */}
-              <div className="bg-white border border-gray-200 rounded-xl p-4">
-                <h3 className="text-base font-bold text-gray-900 uppercase mb-4">Situação do Cliente</h3>
-                <div className="grid grid-cols-3 gap-2 mb-4">
-                  <div className="text-center">
-                    <p className="text-lg font-bold text-gray-800">{currentStep}/{totalSteps}</p>
-                    <p className="text-[10px] text-gray-400">Follow-ups</p>
-                  </div>
-                  <div className="text-center">
-                    <p className={`text-lg font-bold ${isOverdue ? "text-red-600" : "text-gray-800"}`}>{daysOver > 0 ? `${daysOver}d` : "—"}</p>
-                    <p className="text-[10px] text-gray-400">Vencido</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-lg font-bold text-gray-800">{atas.length}</p>
-                    <p className="text-[10px] text-gray-400">Atas</p>
-                  </div>
-                </div>
-
-                {/* Engagement bar */}
-                <div className="space-y-2">
-                  <div>
-                    <div className="flex justify-between text-[11px] text-gray-500 mb-1">
-                      <span>Engajamento</span>
-                      <span>70%</span>
-                    </div>
-                    <div className="h-1.5 bg-gray-100 rounded-full">
-                      <div className="h-1.5 bg-blue-500 rounded-full" style={{ width: "70%" }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-[11px] text-gray-500 mb-1">
-                      <span>Progresso do programa</span>
-                      <span>{Math.round((currentStep / totalSteps) * 100)}%</span>
-                    </div>
-                    <div className="h-1.5 bg-gray-100 rounded-full">
-                      <div className="h-1.5 bg-green-500 rounded-full" style={{ width: `${Math.round((currentStep / totalSteps) * 100)}%` }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <OverviewCockpit
+                reminder={reminder}
+                allFollowUps={allFollowUps}
+                atas={atas}
+                concluidos={concluidos}
+                today={today}
+                currentStep={currentStep}
+                totalSteps={totalSteps}
+                daysOver={daysOver}
+                isOverdue={isOverdue}
+                stats={stats}
+              />
 
               {/* Próximas ações sugeridas */}
               <div className="bg-white border border-gray-200 rounded-xl p-4">
