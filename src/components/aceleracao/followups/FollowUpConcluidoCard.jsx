@@ -1,15 +1,9 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Clock, User, MessageCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Clock, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-
-const CANAL_ICONS = {
-  ligacao: '📞',
-  whatsapp: '💬',
-  email: '📧',
-  reuniao: '👥',
-  video: '🎥',
-};
+import WorkshopAvatar from './ds/WorkshopAvatar';
+import { ChannelBadge } from './ds/ChannelIcon';
 
 const RESULTADO_COLORS = {
   atendeu: 'bg-green-100 text-green-800',
@@ -31,11 +25,9 @@ export default function FollowUpConcluidoCard({ registro, isBatch = false }) {
     { locale: ptBR }
   );
 
-  const canalIcon = CANAL_ICONS[registro.canal] || '📋';
   const resultadoColor = RESULTADO_COLORS[registro.resultado] || 'bg-gray-100 text-gray-800';
 
   if (isBatch && registro.totalFUs > 1) {
-    // Card consolidado para conclusão em massa
     return (
       <div className="border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl overflow-hidden">
         <button
@@ -43,10 +35,10 @@ export default function FollowUpConcluidoCard({ registro, isBatch = false }) {
           className="w-full px-4 py-3 flex items-center justify-between hover:bg-blue-100/50 transition-colors"
         >
           <div className="flex items-center gap-3 text-left flex-1">
-            <div className="text-2xl">{canalIcon}</div>
+            <ChannelBadge canal={registro.canal} />
             <div className="flex-1">
               <h4 className="font-bold text-gray-900">
-                🎯 Conclusão em Massa — {registro.totalFUs} FUs
+                Conclusão em Massa — {registro.totalFUs} FUs
               </h4>
               <p className="text-sm text-gray-600 mt-0.5">
                 <span className="font-semibold">Resultado:</span> {registro.resultado} ·{' '}
@@ -67,7 +59,6 @@ export default function FollowUpConcluidoCard({ registro, isBatch = false }) {
 
         {expanded && (
           <div className="border-t border-blue-200 bg-white">
-            {/* Lista dos FUs encerrados */}
             <div className="divide-y divide-gray-100 max-h-64 overflow-y-auto">
               {registro.fusList.map((fu, idx) => (
                 <div key={idx} className="px-4 py-2.5 flex items-start gap-3">
@@ -91,7 +82,6 @@ export default function FollowUpConcluidoCard({ registro, isBatch = false }) {
               ))}
             </div>
 
-            {/* Footer com metadata */}
             <div className="px-4 py-3 bg-blue-50 border-t border-blue-200 text-[11px] text-gray-600 space-y-1">
               <p>
                 <span className="font-semibold">Batch ID:</span>{' '}
@@ -109,21 +99,21 @@ export default function FollowUpConcluidoCard({ registro, isBatch = false }) {
     );
   }
 
-  // Card individual para conclusão simples
   return (
     <div className="border border-gray-200 bg-white rounded-lg overflow-hidden hover:shadow-md transition-shadow">
       <div className="px-4 py-3 flex items-start gap-3">
-        <div className="text-2xl flex-shrink-0">{canalIcon}</div>
+        <WorkshopAvatar name={registro.workshop_name} size="sm" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <h4 className="font-semibold text-gray-900">
               {registro.workshop_name || 'Follow-up'}
             </h4>
+            <ChannelBadge canal={registro.canal} />
             <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${resultadoColor}`}>
               {registro.resultado}
             </span>
           </div>
-          
+
           <div className="space-y-1">
             <p className="text-sm text-gray-600 flex items-center gap-1">
               <User className="w-3.5 h-3.5" />

@@ -18,7 +18,7 @@ const FollowUpPendenteRow = memo(({ reminder, today, seqFU, score, onSelect, isL
   return (
     <div
       onClick={() => onSelect?.(reminder)}
-      className={`flex items-center px-3 py-2 ${rowBorder} hover:bg-gray-50/70 cursor-pointer transition-colors min-w-[1100px]`}
+      className={`flex items-center px-3 py-2 ${rowBorder} hover:bg-gray-50/70 cursor-pointer transition-colors`}
     >
       {/* Prioridade */}
       <div className="w-10 flex-shrink-0 flex flex-col items-center gap-0.5">
