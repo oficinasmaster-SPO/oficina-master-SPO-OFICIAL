@@ -7,6 +7,7 @@ import NewFollowUpFAB from '@/components/aceleracao/NewFollowUpFAB';
 import IniciarAtendimentoModal from '@/components/aceleracao/IniciarAtendimentoModal';
 import { useAuth } from '@/lib/AuthContext';
 import { Clock, AlertCircle, Umbrella, Users } from 'lucide-react';
+import { getInitials } from '@/lib/avatarUtils';
 import {
   Select,
   SelectContent,
@@ -89,9 +90,6 @@ export default function CentralFollowUp() {
     if (hour < 18) return 'Boa tarde';
     return 'Boa noite';
   };
-
-  const getInitials = (name = '') =>
-    name.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase() || '?';
 
   const fullName = userData?.full_name || user?.full_name || user?.email || '';
   const profilePicture = userData?.profile_picture_url || user?.profile_picture_url;
