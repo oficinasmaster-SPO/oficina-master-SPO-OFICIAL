@@ -6,15 +6,15 @@ import OperationSidebar from '@/components/aceleracao/OperationSidebar';
 import NewFollowUpFAB from '@/components/aceleracao/NewFollowUpFAB';
 import IniciarAtendimentoModal from '@/components/aceleracao/IniciarAtendimentoModal';
 import { useAuth } from '@/lib/AuthContext';
-import { Users } from 'lucide-react';
+import { Users, Check, ChevronDown } from 'lucide-react';
 import { getInitials } from '@/lib/avatarUtils';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 
 export default function CentralFollowUp() {
   useEffect(() => {
@@ -85,22 +85,57 @@ export default function CentralFollowUp() {
         {/* Separator */}
         <div className="w-px h-5 bg-gray-700 flex-shrink-0" />
 
-        {/* Consultant selector */}
-        <Select value={consultorSelecionado || ''} onValueChange={setConsultorSelecionado}>
-          <SelectTrigger className="w-[200px] bg-gray-800/80 border-gray-700 text-white text-xs h-7 flex-shrink-0">
-            <Users className="w-3 h-3 mr-1.5 text-gray-400 flex-shrink-0" />
-            <SelectValue placeholder="Selecionar consultor" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={user?.id || 'me'}>Meus Follow-ups</SelectItem>
-            <SelectItem value="todos">Todos os Consultores</SelectItem>
-            {consultores.map(c => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.full_name || c.email}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Consultant selector — DropdownMenu com checkmark no item selecionado */}
+        {(() => {
+          const selectedConsultor = consultores.find(c => c.id === consultorSelecionado);
+          const triggerLabel = consultorSelecionado === 'todos'
+            ? 'Todos os Consultores'
+            : selectedConsultor
+              ? (selectedConsultor.full_name || selectedConsultor.email)
+              : 'Meus Follow-ups';
+          const isSelected = (val) => consultorSelecionado === val;
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="w-[200px] bg-gray-800/80 border border-gray-700 text-white text-xs h-7 rounded-md flex items-center px-2 flex-shrink-0 hover:bg-gray-700/80 transition-colors"
+                >
+                  <Users className="w-3 h-3 mr-1.5 text-gray-400 flex-shrink-0" />
+                  <span className="truncate flex-1 text-left">{triggerLabel}</span>
+                  <ChevronDown className="w-3 h-3 ml-1 text-gray-400 flex-shrink-0" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[220px] max-h-[340px] overflow-y-auto">
+                <DropdownMenuItem
+                  onClick={() => setConsultorSelecionado(user?.id || 'me')}
+                  className={isSelected(user?.id) ? 'bg-gray-100' : ''}
+                >
+                  <span className="flex-1">Meus Follow-ups</span>
+                  {isSelected(user?.id) && <Check className="w-3.5 h-3.5 text-gray-700 ml-auto" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setConsultorSelecionado('todos')}
+                  className={isSelected('todos') ? 'bg-gray-100' : ''}
+                >
+                  <span className="flex-1">Todos os Consultores</span>
+                  {isSelected('todos') && <Check className="w-3.5 h-3.5 text-gray-700 ml-auto" />}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {consultores.map(c => (
+                  <DropdownMenuItem
+                    key={c.id}
+                    onClick={() => setConsultorSelecionado(c.id)}
+                    className={isSelected(c.id) ? 'bg-gray-100' : ''}
+                  >
+                    <span className="flex-1 truncate">{c.full_name || c.email}</span>
+                    {isSelected(c.id) && <Check className="w-3.5 h-3.5 text-gray-700 ml-auto" />}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        })()}
 
         {/* Spacer */}
         <div className="flex-1" />
