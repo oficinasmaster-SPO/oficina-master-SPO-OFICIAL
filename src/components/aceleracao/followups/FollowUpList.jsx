@@ -1,10 +1,8 @@
-import React, { useState, useMemo } from "react";
-import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Clock, CheckCircle2, StickyNote, CalendarCheck, MessageCircle, Phone, Mail, MapPin, Video, FileText, Target, Search, X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import { format, differenceInDays } from "date-fns";
+import React, { useState } from "react";
+import { AlertCircle, Clock, StickyNote, Search, X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { differenceInDays } from "date-fns";
 import FollowUpCompletedDetailDrawer from "@/components/aceleracao/FollowUpCompletedDetailDrawer";
 import FollowUpConcluidoRow from "@/components/aceleracao/FollowUpConcluidoRow.jsx";
-import FollowUpQueue from "@/components/aceleracao/FollowUpQueue";
 import FollowUpPendenteRow from "@/components/aceleracao/followups/FollowUpPendenteRow";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -191,45 +189,9 @@ function useReunioesIndex(workshopIds = []) {
   return index;
 }
 
-const PROXIMO_PASSO_LABELS = {
-  reagendar: "Reagendar FU",
-  agendar: "Agendar reunião",
-  enviar: "Enviar material",
-  cancelar: "Cancelado",
-  concluir: "Concluído",
-  negociacao: "Avançar negociação",
-  fechamento: "Avançar fechamento",
-  nova_proposta: "Nova proposta",
-  agendar_reuniao: "Agendar reunião",
-  perdido: "Perdido",
-  nurturing: "Nurturing",
-};
-
-function getInitials(name = "") {
-  return name.split(" ").slice(0, 2).map(p => p[0]).join("").toUpperCase() || "?";
-}
-
 function getDaysOverdue(reminderDate, today) {
   if (!reminderDate) return 0;
-  const diff = differenceInDays(new Date(today), new Date(reminderDate + "T00:00:00"));
-  return diff;
-}
-
-function isToday(reminderDate, today) {
-  return reminderDate === today;
-}
-
-const avatarColors = [
-  "bg-blue-100 text-blue-700",
-  "bg-purple-100 text-purple-700",
-  "bg-emerald-100 text-emerald-700",
-  "bg-orange-100 text-orange-700",
-  "bg-pink-100 text-pink-700",
-];
-
-function getAvatarColor(name = "") {
-  const idx = name.charCodeAt(0) % avatarColors.length;
-  return avatarColors[idx];
+  return differenceInDays(new Date(today + "T00:00:00"), new Date(reminderDate + "T00:00:00"));
 }
 
 // Busca todos os FollowUpConcluidos de uma vez para enriquecer os cards
@@ -307,14 +269,6 @@ function useAtasIndex(ataIds = []) {
   data.forEach(a => { if (a.id) byId[a.id] = a; });
   return byId;
 }
-
-const CANAL_ICON_MAP = {
-  whatsapp:   { icon: MessageCircle, bg: "bg-green-500",  title: "Aguardando resposta WhatsApp" },
-  ligacao:    { icon: Phone,          bg: "bg-blue-500",   title: "Aguardando retorno de ligação" },
-  email:      { icon: Mail,           bg: "bg-indigo-500", title: "Aguardando resposta por e-mail" },
-  presencial: { icon: MapPin,         bg: "bg-gray-500",   title: "Aguardando retorno presencial" },
-  meet:       { icon: Video,          bg: "bg-purple-500", title: "Aguardando retorno via Meet" },
-};
 
 export default function FollowUpList({ reminders, remindersConcluidos = [], today, isLoading, onSelect, filterPill, onFilterPill, seqByReminderId = {}, statsByWorkshopId = {}, onSuporteRapido, meuId }) {
   const [selectedCompleted, setSelectedCompleted] = useState(null);
@@ -623,8 +577,9 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
             <div className="w-10 flex-shrink-0 text-center">#</div>
             <div className="flex-1 min-w-[180px] flex-shrink-0">Cliente</div>
             <div className="w-28 flex-shrink-0">Tipo</div>
-            <div className="w-44 flex-shrink-0">Consultor</div>
-            <div className="w-36 flex-shrink-0">Data</div>
+            <div className="w-10 flex-shrink-0 text-center">Canal</div>
+            <div className="w-40 flex-shrink-0">Consultor</div>
+            <div className="w-32 flex-shrink-0">Data</div>
             <div className="w-36 flex-shrink-0">Criado em</div>
             <div className="w-28 flex-shrink-0 text-right ml-auto">Status</div>
           </div>
