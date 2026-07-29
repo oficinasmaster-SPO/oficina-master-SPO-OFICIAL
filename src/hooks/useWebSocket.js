@@ -10,6 +10,9 @@ export function useWebSocket(channel, onMessage = null) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const unsubscribeRef = useRef(null);
+  // P4: estabiliza onMessage via ref para não re-assinar a cada render do pai.
+  const onMessageRef = useRef(onMessage);
+  useEffect(() => { onMessageRef.current = onMessage; }, [onMessage]);
 
   useEffect(() => {
     const ws = getWebSocketManager();
@@ -22,7 +25,7 @@ export function useWebSocket(channel, onMessage = null) {
     // Subscribe to channel
     unsubscribeRef.current = ws.subscribe(channel, (payload) => {
       setData(payload);
-      if (onMessage) onMessage(payload);
+      if (onMessageRef.current) onMessageRef.current(payload);
     });
 
     return () => {
@@ -30,7 +33,7 @@ export function useWebSocket(channel, onMessage = null) {
         unsubscribeRef.current();
       }
     };
-  }, [channel, onMessage]);
+  }, [channel]);
 
   return { data, error };
 }
@@ -170,16 +173,12 @@ export function useWebSocketStatus() {
       setStatus(ws.getStatus());
     };
 
-    // Update on connection/disconnection
+    // Status inicial + atualizações event-driven (sem polling de 1s).
+    updateStatus();
     ws.on('onConnect', updateStatus);
     ws.on('onDisconnect', updateStatus);
 
-    // Poll status
-    const interval = setInterval(updateStatus, 1000);
-
     return () => {
-      clearInterval(interval);
-      // Sprint 2 — leak fix: remove os listeners registrados (off espelha on)
       ws.off('onConnect', updateStatus);
       ws.off('onDisconnect', updateStatus);
     };

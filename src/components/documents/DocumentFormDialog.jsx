@@ -9,6 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Upload, Save, Plus, FileText, FileSpreadsheet, Image as ImageIcon, FileType } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { isValidWorkshopId } from "@/lib/workshopIdGuard";
 
 export default function DocumentFormDialog({ open, onClose, document, workshopId, onSuccess, mode = "repositorio", preSelectedFile = null, followUp = null, user = null }) {
   const [uploading, setUploading] = useState(false);
@@ -64,8 +66,22 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
   };
   const [showAddTypeModal, setShowAddTypeModal] = useState(false);
   const [newTypeName, setNewTypeName] = useState('');
-  const [customTypes, setCustomTypes] = useState([]);
   const [loadingTypes, setLoadingTypes] = useState(false);
+  const queryClient = useQueryClient();
+
+  // P1: custom_document_types via react-query (cache + dedup) — antes era
+  // Workshop.get cru a cada mount, gerando 404 em IDs de teste e fetches duplicados.
+  const { data: workshopForTypes } = useQuery({
+    queryKey: ['workshop-custom-types', workshopId],
+    queryFn: () => base44.entities.Workshop.get(workshopId),
+    enabled: isValidWorkshopId(workshopId),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+  const customTypes = workshopForTypes?.custom_document_types || [];
   const [formData, setFormData] = useState({
     document_id: '',
     title: '',
@@ -98,6 +114,7 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
   }, [formData.category, formData.document_type, autoGenerateId]);
 
   const generateDocumentId = async () => {
+    if (!isValidWorkshopId(workshopId)) return; // P0: bloqueia IDs de teste/vazios
     try {
       const categoryPrefix = {
         governanca: 'GOV',
@@ -134,7 +151,7 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
       if (!area || !type) return;
 
       // Buscar documentos existentes com mesmo prefixo
-      const allDocs = await base44.entities.CompanyDocument.filter({ workshop_id: workshopId });
+      const allDocs = await base44.entities.CompanyDocument.filter({ workshop_id: workshopId }, '-created_date', 200);
       const prefix = `${area}-${type}-`;
       const existingDocs = allDocs.filter(d => d.document_id?.startsWith(prefix));
       
@@ -152,20 +169,7 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
     }
   };
 
-  // Carregar tipos customizados
-  useEffect(() => {
-    loadCustomTypes();
-  }, [workshopId]);
-
-  const loadCustomTypes = async () => {
-    if (!workshopId) return;
-    try {
-      const workshop = await base44.entities.Workshop.get(workshopId);
-      setCustomTypes(workshop.custom_document_types || []);
-    } catch (error) {
-      console.error('Erro ao carregar tipos:', error);
-    }
-  };
+  // P1: customTypes agora vem do useQuery(['workshop-custom-types', workshopId]) acima.
 
   const handleAddCustomType = async () => {
     if (!newTypeName.trim()) {
@@ -173,10 +177,14 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
       return;
     }
 
+    if (!isValidWorkshopId(workshopId)) {
+      toast.error("Oficina inválida");
+      return;
+    }
     setLoadingTypes(true);
     try {
-      const workshop = await base44.entities.Workshop.get(workshopId);
-      const currentTypes = workshop.custom_document_types || [];
+      const cached = queryClient.getQueryData(['workshop-custom-types', workshopId]);
+      const currentTypes = cached?.custom_document_types || [];
       const typeKey = newTypeName.toLowerCase().replace(/\s+/g, '_');
       
       if (currentTypes.some(t => t.key === typeKey)) {
@@ -191,7 +199,7 @@ export default function DocumentFormDialog({ open, onClose, document, workshopId
         custom_document_types: updatedTypes
       });
 
-      setCustomTypes(updatedTypes);
+      queryClient.invalidateQueries({ queryKey: ['workshop-custom-types', workshopId] });
       setFormData({ ...formData, document_type: typeKey });
       setNewTypeName('');
       setShowAddTypeModal(false);

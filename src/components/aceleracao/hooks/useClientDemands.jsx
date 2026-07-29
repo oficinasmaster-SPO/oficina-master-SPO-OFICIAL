@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
+import { isValidWorkshopId } from '@/lib/workshopIdGuard';
 
 /**
  * Hook para gerenciar demandas paralelas de um cliente
@@ -28,7 +29,7 @@ export function useClientDemands(workshopId, followUpType, isOpen = false) {
 
    // Função para buscar demands COM debounce
    const fetchDemands = useCallback(async () => {
-     if (!workshopId) {
+     if (!isValidWorkshopId(workshopId)) {
        setDemands({
          sprints: [],
          pedidosInternos: [],
