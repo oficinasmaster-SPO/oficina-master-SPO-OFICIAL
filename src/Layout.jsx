@@ -116,6 +116,7 @@ export default function Layout({ children, currentPageName }) {
       localStorage.removeItem('selected_firm_id');
       localStorage.removeItem('om_impersonation');
       localStorage.removeItem('admin_workshop_id');
+      localStorage.removeItem('base44_access_token');
     } finally {
       try {
         await base44.auth.logout();
