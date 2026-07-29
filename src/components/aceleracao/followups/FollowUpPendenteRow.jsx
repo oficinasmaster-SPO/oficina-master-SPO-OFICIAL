@@ -3,9 +3,10 @@ import WorkshopAvatar from "./ds/WorkshopAvatar";
 import StatusBadge from "./ds/StatusBadge";
 import OriginBadge from "./ds/OriginBadge";
 import { ChannelDot } from "./ds/ChannelIcon";
+import { PriorityBadge } from "./ds/PriorityScore";
 import { formatDate, formatDateTime } from "./ds/dateUtils";
 
-const FollowUpPendenteRow = memo(({ reminder, today, seqFU, onSelect, isLast, meuId }) => {
+const FollowUpPendenteRow = memo(({ reminder, today, seqFU, score, onSelect, isLast, meuId }) => {
   const consultor = reminder.consultor_principal_nome || reminder.consultor_nome || "—";
   const rowBorder = isLast ? "" : "border-b border-gray-100";
   const isOtherConsultor =
@@ -17,17 +18,18 @@ const FollowUpPendenteRow = memo(({ reminder, today, seqFU, onSelect, isLast, me
   return (
     <div
       onClick={() => onSelect?.(reminder)}
-      className={`flex items-center px-4 py-3.5 ${rowBorder} hover:bg-gray-50/70 cursor-pointer transition-colors min-w-[1100px]`}
+      className={`flex items-center px-3 py-2 ${rowBorder} hover:bg-gray-50/70 cursor-pointer transition-colors min-w-[1100px]`}
     >
-      {/* # Sequencial */}
-      <div className="w-10 flex-shrink-0 text-center">
-        <span className="text-xs font-medium text-gray-400">#{seqFU ?? "—"}</span>
+      {/* Prioridade */}
+      <div className="w-10 flex-shrink-0 flex flex-col items-center gap-0.5">
+        <PriorityBadge score={score} />
+        <span className="text-[9px] text-gray-300 tabular-nums">#{seqFU ?? "—"}</span>
       </div>
 
       {/* Cliente */}
       <div className="flex-1 min-w-[180px] flex-shrink-0">
-        <div className="flex items-center gap-2.5">
-          <WorkshopAvatar name={reminder.workshop_name} size="md" />
+        <div className="flex items-center gap-2">
+          <WorkshopAvatar name={reminder.workshop_name} size="sm" />
           <span className="text-sm font-semibold text-gray-900 truncate">
             {reminder.workshop_name || "Sem cliente"}
           </span>
@@ -47,7 +49,7 @@ const FollowUpPendenteRow = memo(({ reminder, today, seqFU, onSelect, isLast, me
         <OriginBadge originType={reminder.origin_type} />
       </div>
 
-      {/* Canal de contato */}
+      {/* Canal */}
       <div className="w-10 flex-shrink-0 flex items-center justify-center">
         <ChannelDot canal={reminder.canal_origem} />
       </div>
