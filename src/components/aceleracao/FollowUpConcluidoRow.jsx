@@ -185,7 +185,7 @@ export default function FollowUpConcluidoRow({
           ) : reminder?.origin_type === "suporte_checkin" ? (
             <span className="inline-flex items-center text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full font-medium">🛟 Check-in</span>
           ) : (
-            <span className="text-gray-300">—</span>
+            <OriginBadge originType={reminder?.origin_type} />
           )}
         </div>
 
