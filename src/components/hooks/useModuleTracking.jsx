@@ -14,16 +14,15 @@ export function useModuleTracking(workshop) {
 
     const trackAccess = async () => {
       try {
-        await base44.functions.invoke('trackModuleAccess', {
+        await base44.functions.invoke('trackImplementacao', {
           workshop_id: workshop.id,
           page_path: location.pathname
         });
       } catch (error) {
-        console.log('Erro ao rastrear acesso ao módulo:', error);
+        // Silenciar — tracking é best-effort, nunca deve bloquear navegação
       }
     };
 
-    // Aguardar 2 segundos antes de registrar (evitar registros acidentais)
     const timeout = setTimeout(trackAccess, 2000);
 
     return () => clearTimeout(timeout);
