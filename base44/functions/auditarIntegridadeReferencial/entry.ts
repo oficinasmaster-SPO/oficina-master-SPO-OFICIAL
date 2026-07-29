@@ -19,8 +19,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 // Volume bornado: 1 página por entidade (~6 reads leves) para não estourar o
 // teto de tráfego de leitura da plataforma. Auditoria diária incremental —
 // órfãos antigos já tratados por backfills pontuais (Sprint 2B).
-const MAX_PER_ENTITY = 500;
-const PAGE_SIZE = 500;
+const MAX_PER_ENTITY = 100;
+const PAGE_SIZE = 100;
 
 // Paginação determinística por deslocamento (dedupe por id protege contra
 // registros que compartilham o mesmo created_date).
@@ -51,18 +51,20 @@ export default async function(req) {
     const base44 = createClientFromRequest(req);
     const sr = base44.asServiceRole;
 
-    // 1. Conjuntos de IDs válidos (Workshop + entidades de origem)
-    const [workshops, tarefas, pedidos] = await Promise.all([
-      listAll(sr, 'Workshop'),
+    // 1. Conjuntos de IDs de origem (refs cross-entity). Workshop NÃO é carregado
+    // em volume (load completo estoura o teto de tráfego) — valide workshop_id
+    // por FORMATO (ObjectId). "Válido mas deletado" não é detectado nesta versão.
+    const [tarefas, pedidos] = await Promise.all([
       listAll(sr, 'TarefaBacklog'),
       listAll(sr, 'PedidoInterno'),
     ]);
-    const workshopIds = new Set(workshops.map(w => w.id));
     const tarefaIds = new Set(tarefas.map(t => t.id));
     const pedidoIds = new Set(pedidos.map(p => p.id));
 
-    // workshop_id órfão: ausente OU não existe no set de Workshops válidos
-    const isOrphanWorkshop = (wid) => !wid || !workshopIds.has(wid);
+    // workshop_id órfão: ausente OU formato inválido (não-ObjectId) — causa raiz
+    // dos 404/500 já tratada no data layer.
+    const OBJECT_ID_RE = /^[a-f0-9]{24}$/i;
+    const isOrphanWorkshop = (wid) => !wid || !OBJECT_ID_RE.test(String(wid));
 
     const resumo = {};
     const detalhes = {};
