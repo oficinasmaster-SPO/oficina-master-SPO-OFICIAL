@@ -35,8 +35,9 @@ export default function ClientSelectorGrid({ onSelect, onClose }) {
         return { clients: [] };
       }
     },
-    staleTime: 2 * 60 * 1000,
-    retry: 2,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
 
   // Filtrar

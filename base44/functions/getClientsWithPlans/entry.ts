@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     const allFollowUps = await base44.entities.FollowUpReminder.filter({
       workshop_id: { $in: workshopIds },
       is_completed: false
-    }, null, 5000);
+    }, null, 1000);
 
     // Buscar tarefas backlog pendentes
     const allBacklogTasks = await base44.entities.TarefaBacklog.filter({

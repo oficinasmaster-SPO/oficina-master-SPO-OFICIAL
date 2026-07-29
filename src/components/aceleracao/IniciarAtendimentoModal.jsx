@@ -310,11 +310,18 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
     try {
       setClienteAtual(clientData);
       
-      // Buscar primeiro follow-up pendente do cliente
-      const followUps = await base44.entities.FollowUpReminder.filter({
-        workshop_id: clientData.id,
-        is_completed: false
-      }, 'reminder_date', 1);
+      // Buscar primeiro follow-up pendente do cliente (limit 1 — leve).
+      // Em caso de 429/falha de leitura, segue em fluxo de suporte local (não bloqueia o usuário).
+      let followUps = [];
+      try {
+        followUps = await base44.entities.FollowUpReminder.filter({
+          workshop_id: clientData.id,
+          is_completed: false
+        }, 'reminder_date', 1);
+      } catch (readErr) {
+        console.warn('FollowUpReminder indisponível (limite de leitura) — fluxo de suporte local:', readErr?.message);
+        followUps = [];
+      }
 
       if (followUps && followUps.length > 0) {
         trocarFollowUp(followUps[0]);
