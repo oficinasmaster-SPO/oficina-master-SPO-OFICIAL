@@ -16,9 +16,11 @@ import InterviewFormsManager from "@/components/cespe/InterviewFormsManager";
 import ProposalTemplatesManager from "@/components/cespe/ProposalTemplatesManager";
 import HiringGoalsManager from "@/components/cespe/HiringGoalsManager";
 import { CESPE_CARGOS, CESPE_STATUS_CANDIDATO, CESPE_CANAIS_ORIGEM } from "@/components/cespe/constants";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function CESPECanal() {
   const queryClient = useQueryClient();
+  const { user: authUser } = useAuth();
   const [user, setUser] = useState(null);
   const [workshop, setWorkshop] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -34,8 +36,11 @@ export default function CESPECanal() {
 
   React.useEffect(() => {
     const loadData = async () => {
+      if (!authUser) return;
       try {
-        const currentUser = await base44.auth.me();
+        // Fonte canônica de usuário (alinhada com AuthContext/PermissionsContext).
+        // Antes: base44.auth.me() divergia do contexto em impersonação/admin mode.
+        const currentUser = authUser;
         setUser(currentUser);
         
         const urlParams = new URLSearchParams(window.location.search);
@@ -68,7 +73,7 @@ export default function CESPECanal() {
       }
     };
     loadData();
-  }, []);
+  }, [authUser]);
 
   const { data: candidates = [], isLoading } = useQuery({
     queryKey: ['candidates', workshop?.id],

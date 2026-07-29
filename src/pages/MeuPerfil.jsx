@@ -26,10 +26,12 @@ import AI_PDI_Generator from "../components/rh/AI_PDI_Generator";
 import EmployeeGoals from "../components/employee/EmployeeGoals";
 import PermissoesColaborador from "../components/employee/PermissoesColaborador";
 import JobDescriptionTab from "../components/employee/JobDescriptionTab";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
 export default function MeuPerfil() {
   const location = useLocation();
   const { user: contextUser } = useAuth(); // ✅ Usa usuário do contexto (com impersonação)
+  const { workshopId: activeWorkshopId } = useWorkshopContext(); // tenant ativo (fonte canônica)
   const [loading, setLoading] = useState(true);
   // HMR trigger
   const [employee, setEmployee] = useState(null);
@@ -102,11 +104,21 @@ export default function MeuPerfil() {
           user_type: 'external'
         });
       } else {
-        // Caso contrário, buscar employee do usuário logado (efetivo com impersonação)
-        employees = await base44.entities.Employee.filter({ user_id: effectiveCurrentUser.id });
+        // Caso contrário, buscar employee do usuário logado (efetivo com impersonação).
+        // Priorizar o tenant ativo (workshop) para evitar pegar employee de outra
+        // empresa em contas multi-tenant (ex.: consultor da Aceleradora).
+        if (activeWorkshopId) {
+          employees = await base44.entities.Employee.filter({
+            user_id: effectiveCurrentUser.id,
+            workshop_id: activeWorkshopId,
+          });
+        }
+        if (!employees || employees.length === 0) {
+          employees = await base44.entities.Employee.filter({ user_id: effectiveCurrentUser.id });
+        }
 
         // Fallback: Se não encontrou por ID, tentar por email
-        if (!employees || employees.length === 0) {
+        if ((!employees || employees.length === 0) && effectiveCurrentUser.email) {
           console.warn("⚠️ Employee não encontrado por ID, tentando por email:", effectiveCurrentUser.email);
           employees = await base44.entities.Employee.filter({ email: effectiveCurrentUser.email });
         }

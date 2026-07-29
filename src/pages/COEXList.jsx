@@ -14,16 +14,17 @@ import { ptBR } from "date-fns/locale";
 import GuidedTour from "../components/help/GuidedTour";
 import HelpButton from "../components/help/HelpButton";
 import AdminViewBanner from "../components/shared/AdminViewBanner";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function COEXList() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAdminView, setIsAdminView] = useState(false);
 
-  const { data: user } = useQuery({
-    queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me()
-  });
+  // Fonte canônica de usuário (alinhada com PermissionsContext/AuthContext).
+  // Antes: useQuery(['currentUser']) chamando base44.auth.me() divergia do
+  // usuário do contexto em impersonação/admin mode, impedindo a página de abrir.
+  const { user } = useAuth();
 
   const { data: workshop } = useQuery({
     queryKey: ['workshop', user?.id],

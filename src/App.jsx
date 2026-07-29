@@ -78,9 +78,11 @@ const MainPage = mainPageKey ? Pages[mainPageKey] : null;
 
 const LayoutWrapper = ({ children, currentPageName, adminOnly = false }) => {
   const content = (
-    <RouteGuard pageName={currentPageName} adminOnly={adminOnly}>
-      {children}
-    </RouteGuard>
+    <ErrorBoundary>
+      <RouteGuard pageName={currentPageName} adminOnly={adminOnly}>
+        {children}
+      </RouteGuard>
+    </ErrorBoundary>
   );
   return Layout
     ? <Layout currentPageName={currentPageName}>{content}</Layout>

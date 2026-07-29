@@ -373,6 +373,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
           atendimento_id: reminder.origin_type === 'sprint' ? null : (reminder.atendimento_id || null),
           origin_type: reminder.origin_type === 'sprint' ? 'sprint' : 'ata',
           sprint_id: reminder.origin_type === 'sprint' ? reminder.sprint_id : null,
+          consulting_firm_id: reminder.consulting_firm_id || user?.data?.consulting_firm_id || null,
           is_completed: false,
         });
         toast.success("Follow-up concluído e novo agendado!");
@@ -382,6 +383,8 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
 
       queryClient.invalidateQueries({ queryKey: ["follow-up-reminders-tab"] });
       queryClient.invalidateQueries({ queryKey: ["follow-up-reminders"] });
+      queryClient.invalidateQueries({ queryKey: ["central-followup-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["all-followups-workshop", reminder.workshop_id] });
       onBack();
     } finally {
       setSaving(false);
