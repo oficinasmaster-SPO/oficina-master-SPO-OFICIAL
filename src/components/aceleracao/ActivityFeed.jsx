@@ -63,13 +63,6 @@ function getDayKey(timestamp) {
   return new Date(timestamp).toDateString();
 }
 
-function getInitials(name) {
-  if (!name) return "?";
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-}
-
 function formatFileSize(bytes) {
   if (!bytes) return "";
   if (bytes < 1024) return bytes + " B";
