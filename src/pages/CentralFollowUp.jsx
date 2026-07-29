@@ -55,7 +55,7 @@ export default function CentralFollowUp() {
       if (!consultingFirmId) return [];
       const users = await base44.entities.User.filter({
         'data.consulting_firm_id': consultingFirmId,
-      });
+      }, 'full_name', 200);
       return users.filter(u => u.id !== user?.id).sort((a, b) =>
         (a.full_name || '').localeCompare(b.full_name || '')
       );
