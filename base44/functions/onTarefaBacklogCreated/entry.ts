@@ -23,6 +23,19 @@ Deno.serve(async (req) => {
       return Response.json({ skipped: true, reason: 'Tarefa sem id ou workshop_id' });
     }
 
+    // ── Guard: workshop_id deve resolver para um Workshop real (previne órfãos) ──
+    if (!/^[0-9a-f]{24}$/.test(tarefa.workshop_id)) {
+      return Response.json({ skipped: true, reason: `workshop_id inválido (não-ObjectId): ${tarefa.workshop_id}` });
+    }
+    try {
+      const wsItems = await base44.asServiceRole.entities.Workshop.filter({ id: tarefa.workshop_id });
+      if (!wsItems || wsItems.length === 0) {
+        return Response.json({ skipped: true, reason: `Workshop não encontrado: ${tarefa.workshop_id}` });
+      }
+    } catch (e) {
+      return Response.json({ skipped: true, reason: `Falha ao validar workshop: ${e.message}` });
+    }
+
     // Idempotência: verificar se já existe FU aberto para esta tarefa
     const existentes = await base44.asServiceRole.entities.FollowUpReminder.filter({
       origem_tarefa_id: tarefa.id,

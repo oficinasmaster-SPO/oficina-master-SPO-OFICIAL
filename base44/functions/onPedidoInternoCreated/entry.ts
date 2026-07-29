@@ -23,6 +23,19 @@ Deno.serve(async (req) => {
       return Response.json({ skipped: true, reason: 'Pedido sem id ou workshop_id' });
     }
 
+    // ── Guard: workshop_id deve resolver para um Workshop real (previne órfãos) ──
+    if (!/^[0-9a-f]{24}$/.test(pedido.workshop_id)) {
+      return Response.json({ skipped: true, reason: `workshop_id inválido (não-ObjectId): ${pedido.workshop_id}` });
+    }
+    try {
+      const wsItems = await base44.asServiceRole.entities.Workshop.filter({ id: pedido.workshop_id });
+      if (!wsItems || wsItems.length === 0) {
+        return Response.json({ skipped: true, reason: `Workshop não encontrado: ${pedido.workshop_id}` });
+      }
+    } catch (e) {
+      return Response.json({ skipped: true, reason: `Falha ao validar workshop: ${e.message}` });
+    }
+
     // ── Gerar código sequencial (PED-0001, PED-0002, ...) se ainda não existir ──
     if (!pedido.codigo) {
       try {

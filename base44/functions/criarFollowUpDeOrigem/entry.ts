@@ -54,19 +54,26 @@ Deno.serve(async (req) => {
       return Response.json({ error: `${tipo} não encontrado: ${origem_id}` }, { status: 404 });
     }
 
-    // ── Guard: verificar se a oficina está ativa ──
+    // ── Guard: workshop_id deve existir e estar ativa (previne reminders órfãos) ──
     const workshopId = origem.workshop_id;
     if (workshopId) {
+      let workshop = null;
       try {
         const workshopItems = await base44.asServiceRole.entities.Workshop.filter({ id: workshopId });
-        const workshop = workshopItems?.[0];
-        if (workshop?.status === 'inativo') {
-          return Response.json({
-            created: false,
-            message: `Oficina ${workshop.name} está inativa. Follow-up não criado.`,
-          });
-        }
-      } catch { /* se falhar a busca, deixa prosseguir */ }
+        workshop = workshopItems?.[0] || null;
+      } catch { /* falha de busca tratada abaixo */ }
+      if (!workshop) {
+        return Response.json({
+          created: false,
+          message: `Workshop não encontrado para workshop_id: ${workshopId}. Follow-up não criado (previne órfão).`,
+        });
+      }
+      if (workshop.status === 'inativo') {
+        return Response.json({
+          created: false,
+          message: `Oficina ${workshop.name} está inativa. Follow-up não criado.`,
+        });
+      }
     }
 
     // ── Idempotência: verificar se já existe FU aberto para este item ──
