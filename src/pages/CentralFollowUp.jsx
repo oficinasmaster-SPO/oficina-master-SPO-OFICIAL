@@ -6,7 +6,7 @@ import OperationSidebar from '@/components/aceleracao/OperationSidebar';
 import NewFollowUpFAB from '@/components/aceleracao/NewFollowUpFAB';
 import IniciarAtendimentoModal from '@/components/aceleracao/IniciarAtendimentoModal';
 import { useAuth } from '@/lib/AuthContext';
-import { Clock, AlertCircle, Umbrella, Users } from 'lucide-react';
+import { Clock, Users } from 'lucide-react';
 import { getInitials } from '@/lib/avatarUtils';
 import {
   Select,
@@ -66,23 +66,6 @@ export default function CentralFollowUp() {
   });
 
   const consultorEfetivo = consultorSelecionado === 'todos' ? null : consultorSelecionado;
-
-  // Stats para o sub-banner
-  const { data: stats = { pendentes: 0, atrasados: 0, guardaChuva: 0 } } = useQuery({
-    queryKey: ['central-followup-stats', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return { pendentes: 0, atrasados: 0, guardaChuva: 0 };
-      const query = { is_completed: false, consultor_id: user.id };
-      const reminders = await base44.entities.FollowUpReminder.filter(query, '-reminder_date', 500);
-      return {
-        pendentes: reminders.length,
-        atrasados: reminders.filter(r => r.reminder_date < today).length,
-        guardaChuva: reminders.filter(r => r.origin_type === 'guarda_chuva').length,
-      };
-    },
-    enabled: !!user?.id,
-    staleTime: 2 * 60 * 1000,
-  });
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -160,32 +143,13 @@ export default function CentralFollowUp() {
         </div>
       </div>
 
-      {/* Sub-banner de stats */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 bg-amber-50 border border-amber-100 rounded-lg px-4 py-2">
-          <div className="w-2 h-2 rounded-full bg-amber-400" />
-          <span className="font-bold text-amber-700">{stats.pendentes}</span>
-          <span className="text-amber-500 text-xs">pendentes</span>
-        </div>
-        <div className="flex items-center gap-2 bg-red-50 border border-red-100 rounded-lg px-4 py-2">
-          <AlertCircle className="w-3.5 h-3.5 text-red-500" />
-          <span className="font-bold text-red-700">{stats.atrasados}</span>
-          <span className="text-red-500 text-xs">atrasados</span>
-        </div>
-        <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-lg px-4 py-2">
-          <Umbrella className="w-3.5 h-3.5 text-blue-500" />
-          <span className="font-bold text-blue-700">{stats.guardaChuva}</span>
-          <span className="text-blue-500 text-xs">guarda-chuva</span>
-        </div>
-      </div>
-
       {/* Grid 2 colunas — Fila (esquerda) + Inteligência (direita) */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 items-start">
         <div className="min-w-0">
           <FollowUpsTab consultorEfetivo={consultorEfetivo} userId={user?.id} />
         </div>
         <div className="hidden lg:block sticky top-20">
-          <OperationSidebar />
+          <OperationSidebar consultorId={consultorEfetivo || user?.id} />
         </div>
       </div>
 
