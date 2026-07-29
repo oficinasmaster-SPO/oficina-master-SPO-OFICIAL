@@ -2,26 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
-import { createClient } from '@base44/sdk';
 import { getEffectiveUser } from '@/components/hooks/useImpersonation';
-
-// Retorna um cliente base44 sempre com o token mais recente disponível
-const getAuthClient = () => {
-  try {
-    const freshToken = new URLSearchParams(window.location.search).get('access_token')
-      || localStorage.getItem('base44_access_token')
-      || appParams.token;
-    if (freshToken && freshToken !== appParams.token) {
-      return createClient({
-        appId: appParams.appId,
-        serverUrl: appParams.serverUrl,
-        token: freshToken,
-        requiresAuth: true
-      });
-    }
-  } catch {}
-  return base44;
-};
 
 const AuthContext = createContext();
 
@@ -108,9 +89,8 @@ export const AuthProvider = ({ children }) => {
       // Now check if the user is authenticated
       setIsLoadingAuth(true);
       let currentUser;
-      const authClient = getAuthClient();
       try {
-        currentUser = await authClient.auth.me();
+        currentUser = await base44.auth.me();
       } catch (meError) {
         // Verificar se é erro de usuário não registrado
         const errMsg = meError?.message || meError?.response?.data?.message || '';
