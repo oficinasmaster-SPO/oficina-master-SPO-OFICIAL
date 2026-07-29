@@ -190,7 +190,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
         ];
       }
       // Ordena por reminder_date para trazer os mais recentes primeiro
-      return base44.entities.FollowUpReminder.filter(query, "-reminder_date", 500);
+      return base44.entities.FollowUpReminder.filter(query, "-reminder_date", 200);
     },
     staleTime: 2 * 60 * 1000,
   });
@@ -201,7 +201,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
     queryFn: async () => {
       const query = { is_completed: true };
       if (consultorEfetivo) query.consultor_id = consultorEfetivo;
-      return base44.entities.FollowUpReminder.filter(query, "-completed_at", 500);
+      return base44.entities.FollowUpReminder.filter(query, "-completed_at", 200);
     },
     staleTime: 2 * 60 * 1000,
   });
@@ -239,7 +239,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
       if (consultorEfetivo) {
         query.consultor_id = consultorEfetivo;
       }
-      return base44.entities.FollowUpConcluido.filter(query, "-completedAt", 500);
+      return base44.entities.FollowUpConcluido.filter(query, "-completedAt", 200);
     },
     staleTime: 2 * 60 * 1000,
   });
@@ -250,7 +250,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
     queryFn: async () => {
       const query = {};
       if (consultorEfetivo) query.consultor_id = consultorEfetivo;
-      return base44.entities.FollowUpContador.filter(query, "-data_criacao", 500);
+      return base44.entities.FollowUpContador.filter(query, "-data_criacao", 200);
     },
     staleTime: 3 * 60 * 1000,
   });

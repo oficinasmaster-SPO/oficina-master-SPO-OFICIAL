@@ -147,7 +147,7 @@ function useReunioesIndex(workshopIds = []) {
         const items = await base44.entities.ConsultoriaAtendimento.filter(
           { workshop_id: { $in: batch } },
           "-data_agendada",
-          500
+          100
         );
         results.push(...items);
       }
@@ -219,47 +219,50 @@ function isToday(reminderDate, today) {
 function useConcluidosIndex() {
   const { data = [] } = useQuery({
     queryKey: ["follow-up-concluidos-list-index-v2"],
-    queryFn: () => base44.entities.FollowUpConcluido.list("-completedAt", 2000),
+    queryFn: () => base44.entities.FollowUpConcluido.list("-completedAt", 200),
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
 
-  const byWorkshop = {};
-  const byFollowupId = {};
-  // sequenceByFollowupId: followup_id → número sequencial cronológico (#1, #2, #3...)
-  const sequenceByFollowupId = {};
+  // OOM-FIX: índices memoizados — antes eram reconstruídos a cada render (O(n) × frequência)
+  return useMemo(() => {
+    const byWorkshop = {};
+    const byFollowupId = {};
+    // sequenceByFollowupId: followup_id → número sequencial cronológico (#1, #2, #3...)
+    const sequenceByFollowupId = {};
 
-  // Agrupa por workshop e ordena cronologicamente (ASC) para atribuir sequência
-  const byWorkshopRaw = {};
-  data.forEach(c => {
-    const wid = c.workshop_id;
-    if (!wid) return;
-    if (!byWorkshopRaw[wid]) byWorkshopRaw[wid] = [];
-    byWorkshopRaw[wid].push(c);
-    // índice por followup_id (último encontrado — há no máximo 1 por FU)
-    if (c.followup_id) byFollowupId[c.followup_id] = c;
-    // último concluído por workshop
-    if (!byWorkshop[wid] || new Date(c.completedAt) > new Date(byWorkshop[wid].completedAt)) {
-      byWorkshop[wid] = c;
-    }
-  });
+    // Agrupa por workshop e ordena cronologicamente (ASC) para atribuir sequência
+    const byWorkshopRaw = {};
+    data.forEach(c => {
+      const wid = c.workshop_id;
+      if (!wid) return;
+      if (!byWorkshopRaw[wid]) byWorkshopRaw[wid] = [];
+      byWorkshopRaw[wid].push(c);
+      // índice por followup_id (último encontrado — há no máximo 1 por FU)
+      if (c.followup_id) byFollowupId[c.followup_id] = c;
+      // último concluído por workshop
+      if (!byWorkshop[wid] || new Date(c.completedAt) > new Date(byWorkshop[wid].completedAt)) {
+        byWorkshop[wid] = c;
+      }
+    });
 
-  // Ordena cada workshop por completedAt ASC e atribui sequência #1, #2, #3...
-  // Chave: followup_id (= id do FollowUpReminder) OU id do próprio FollowUpConcluido
-  Object.entries(byWorkshopRaw).forEach(([wid, list]) => {
-    list
-      .slice()
-      .sort((a, b) => new Date(a.completedAt || a.created_date) - new Date(b.completedAt || b.created_date))
-      .forEach((c, idx) => {
-        const seq = idx + 1;
-        // chave primária: followup_id vincula ao FollowUpReminder.id
-        if (c.followup_id) sequenceByFollowupId[c.followup_id] = seq;
-        // chave secundária: id do próprio FollowUpConcluido (sem fallback cruzado)
-        if (c.id) sequenceByFollowupId[c.id] = seq;
-      });
-  });
+    // Ordena cada workshop por completedAt ASC e atribui sequência #1, #2, #3...
+    // Chave: followup_id (= id do FollowUpReminder) OU id do próprio FollowUpConcluido
+    Object.entries(byWorkshopRaw).forEach(([wid, list]) => {
+      list
+        .slice()
+        .sort((a, b) => new Date(a.completedAt || a.created_date) - new Date(b.completedAt || b.created_date))
+        .forEach((c, idx) => {
+          const seq = idx + 1;
+          // chave primária: followup_id vincula ao FollowUpReminder.id
+          if (c.followup_id) sequenceByFollowupId[c.followup_id] = seq;
+          // chave secundária: id do próprio FollowUpConcluido (sem fallback cruzado)
+          if (c.id) sequenceByFollowupId[c.id] = seq;
+        });
+    });
 
-  return { byWorkshop, byFollowupId, sequenceByFollowupId };
+    return { byWorkshop, byFollowupId, sequenceByFollowupId };
+  }, [data]);
 }
 
 // Busca ATAs pelo conjunto de ata_ids dos reminders ativos — sem limite de data
@@ -286,9 +289,12 @@ function useAtasIndex(ataIds = []) {
     enabled: uniqueIds.length > 0,
     staleTime: 5 * 60 * 1000,
   });
-  const byId = {};
-  data.forEach(a => { if (a.id) byId[a.id] = a; });
-  return byId;
+  // OOM-FIX: índice memoizado — antes era reconstruído a cada render
+  return useMemo(() => {
+    const byId = {};
+    data.forEach(a => { if (a.id) byId[a.id] = a; });
+    return byId;
+  }, [data]);
 }
 
 

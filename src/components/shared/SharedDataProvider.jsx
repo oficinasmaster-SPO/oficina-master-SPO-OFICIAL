@@ -62,7 +62,7 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
     queryFn: async () => {
       if (!workshopId) return [];
       try {
-        const result = await base44.entities.Employee.filter({ workshop_id: workshopId });
+        const result = await base44.entities.Employee.filter({ workshop_id: workshopId }, '-created_date', 500);
         return Array.isArray(result) ? result : [];
       } catch (error) {
         console.error("Erro ao carregar employees:", error);
@@ -107,7 +107,8 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
       try {
         const history = await base44.entities.MonthlyGoalHistory.filter(
           { workshop_id: workshopId },
-          '-month'
+          '-month',
+          100
         );
         return Array.isArray(history) ? history : [];
       } catch (error) {
