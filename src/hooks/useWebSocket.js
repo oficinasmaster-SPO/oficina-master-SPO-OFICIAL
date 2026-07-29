@@ -179,6 +179,9 @@ export function useWebSocketStatus() {
 
     return () => {
       clearInterval(interval);
+      // Sprint 2 — leak fix: remove os listeners registrados (off espelha on)
+      ws.off('onConnect', updateStatus);
+      ws.off('onDisconnect', updateStatus);
     };
   }, []);
 

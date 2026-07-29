@@ -189,6 +189,19 @@ export class WebSocketManager {
   }
 
   /**
+   * Remove an event listener (Sprint 2 — leak fix)
+   * Espelha on(): todo on(...) no mount deve ter um off(...) correspondente no cleanup.
+   */
+  off(event, callback) {
+    if (!this.listeners[event]) return;
+    const arr = this.listeners[event];
+    const idx = arr.indexOf(callback);
+    if (idx > -1) {
+      arr.splice(idx, 1);
+    }
+  }
+
+  /**
    * Emit event to listeners
    */
   emit(event, data = null) {

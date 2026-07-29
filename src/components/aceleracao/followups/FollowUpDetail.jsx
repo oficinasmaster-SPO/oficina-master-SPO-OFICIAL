@@ -67,6 +67,8 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
   const [chatEnviando, setChatEnviando] = useState(false);
   const [chatConversa, setChatConversa] = useState(null);
   const chatEndRef = useRef(null);
+  // Sprint 2 — leak fix: guarda o unsubscribe do subscribeToConversation para limpar no unmount
+  const chatUnsubRef = useRef(null);
   const [selectedAta, setSelectedAta] = useState(null);
   const { user } = useAuth();
   const [registerStep, setRegisterStep] = useState("history");
@@ -235,8 +237,9 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
       });
       setChatConversa(conv);
       setChatMensagens([{ role: 'assistant', content: `Olá! Estou pronto para ajudar com o atendimento de **${reminder.workshop_name}**. Tenho acesso ao histórico de atas e atendimentos deste cliente. O que você precisa saber?` }]);
-      const unsubscribe = base44.agents.subscribeToConversation(conv.id, (data) => setChatMensagens(data.messages || []));
-      return () => unsubscribe();
+      // Sprint 2 — limpa subscrição anterior (se houver) e guarda a nova para cleanup
+      if (chatUnsubRef.current) { chatUnsubRef.current(); chatUnsubRef.current = null; }
+      chatUnsubRef.current = base44.agents.subscribeToConversation(conv.id, (data) => setChatMensagens(data.messages || []));
     } catch (err) {
       console.error('Erro ao iniciar chat:', err);
       toast.error('Erro ao iniciar chat');
@@ -292,6 +295,16 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
       gerarDicaIA();
     }
   }, [atas.length, concluidos.length]);
+
+  // Sprint 2 — leak fix: cancela a subscrição do chat IA ao desmontar o FollowUpDetail
+  useEffect(() => {
+    return () => {
+      if (chatUnsubRef.current) {
+        chatUnsubRef.current();
+        chatUnsubRef.current = null;
+      }
+    };
+  }, []);
 
   const inicioSemana = (() => {
     const d = new Date(today);
