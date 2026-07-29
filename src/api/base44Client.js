@@ -15,20 +15,33 @@ class RequestQueue {
     async fetch(url, options) {
         const method = options?.method || 'GET';
         
-        // Deduplicate GET requests to prevent duplicate calls
+        // SESSION-FIX-002: deduplicação segura de GETs.
+        // Guarda a Response clonada em arrayBuffer para que múltiplos
+        // consumers recebam bodies intactos (antes, .clone() numa
+        // Response já consumida lançava TypeError silencioso).
         if (method === 'GET') {
             const key = `${url}-${JSON.stringify(options?.headers || {})}`;
             if (this.inFlight.has(key)) {
-                const res = await this.inFlight.get(key);
-                return res.clone();
+                const cached = await this.inFlight.get(key);
+                return new Response(cached.body, {
+                    status: cached.status,
+                    statusText: cached.statusText,
+                    headers: cached.headers,
+                });
             }
             
-            const promise = this._enqueue(url, options).finally(() => {
-                this.inFlight.delete(key);
+            const promise = this._enqueue(url, options).then(async (res) => {
+                const buf = await res.arrayBuffer();
+                return { body: buf, status: res.status, statusText: res.statusText, headers: res.headers };
             });
             this.inFlight.set(key, promise);
-            const res = await promise;
-            return res.clone();
+            promise.finally(() => this.inFlight.delete(key));
+            const cached = await promise;
+            return new Response(cached.body, {
+                status: cached.status,
+                statusText: cached.statusText,
+                headers: cached.headers,
+            });
         }
         
         return this._enqueue(url, options);
