@@ -1,7 +1,8 @@
 import React from "react";
 import { format } from "date-fns";
-import { Phone, Mail, MessageCircle, FileText, CalendarCheck, Calendar } from "lucide-react";
+import { FileText, Calendar } from "lucide-react";
 import WorkshopAvatar from "@/components/aceleracao/followups/ds/WorkshopAvatar";
+import { ChannelBadge } from "@/components/aceleracao/followups/ds/ChannelIcon";
 
 function RiscoReuniaoCell({ risco }) {
   if (!risco || risco.nivel === "sem_dados") {
@@ -68,14 +69,6 @@ function getBordaRisco(nivel, atrasadas = 0) {
   return "";
 }
 
-const CANAL_MAP = {
-  ligacao:    { icon: Phone,          label: "Ligação",    color: "text-blue-600",   bg: "bg-blue-50 border-blue-200" },
-  email:      { icon: Mail,           label: "E-mail",     color: "text-purple-600", bg: "bg-purple-50 border-purple-200" },
-  whatsapp:   { icon: MessageCircle,  label: "WhatsApp",   color: "text-green-600",  bg: "bg-green-50 border-green-200" },
-  video:      { icon: FileText,       label: "Vídeo",      color: "text-indigo-600", bg: "bg-indigo-50 border-indigo-200" },
-  presencial: { icon: CalendarCheck,  label: "Presencial", color: "text-gray-600",   bg: "bg-gray-50 border-gray-200" },
-};
-
 function safeDateFormat(dateStr, fmt) {
   if (!dateStr) return "—";
   try {
@@ -112,8 +105,6 @@ function renderHumor(humor) {
 
 export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFollowUps, totalDoCliente, proximoFuPendente, risco, empresaInfo, onSelect }) {
   const canal = completed?.canal?.toLowerCase();
-  const canalCfg = CANAL_MAP[canal] || null;
-  const CanalIcon = canalCfg?.icon || null;
 
   const clienteName = reminder?.workshop_name || completed?.workshop_name || "—";
   const dataContato = completed?.dataContato || reminder?.reminder_date;
@@ -138,7 +129,7 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
   return (
     <button
       onClick={() => onSelect && onSelect()}
-      className={`w-full text-left hover:bg-green-50/40 transition-colors px-4 py-2.5 border-b border-gray-100 last:border-b-0 min-w-[1200px] ${bordaRisco}`}
+      className={`w-full text-left hover:bg-green-50/40 transition-colors px-4 py-2.5 border-b border-gray-100 last:border-b-0  ${bordaRisco}`}
     >
       <div className="flex items-center gap-2 text-xs min-w-0">
 
@@ -187,14 +178,7 @@ export default function FollowUpConcluidoRow({ completed, reminder, ata, totalFo
 
         {/* Canal */}
         <div className="w-20 flex-shrink-0">
-          {canalCfg ? (
-            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-xs ${canalCfg.color} ${canalCfg.bg}`}>
-              {CanalIcon && <CanalIcon className="w-3 h-3" />}
-              {canalCfg.label}
-            </span>
-          ) : (
-            <span className="text-gray-300">—</span>
-          )}
+          <ChannelBadge canal={canal} />
         </div>
 
         {/* Total FUs da empresa (apenas no modo Por Empresa) */}
