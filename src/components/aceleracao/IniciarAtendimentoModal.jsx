@@ -42,6 +42,7 @@ import OrigemDerivadaBanner from "@/components/aceleracao/followups/OrigemDeriva
 import { isSuporteFlow, gerarSuporteId } from "@/utils/suporteHelper";
 import ClientIndicatorsSection from "@/components/atendimento/ClientIndicatorsSection";
 import ClientIndicatorsChart from "@/components/clientIndicators/ClientIndicatorsChart";
+import { getInitials } from "@/lib/avatarUtils";
 
 
 const RESULTADO_COLORS = {
@@ -65,8 +66,6 @@ const PROXIMO_PASSO_LABELS = {
   reagendar: "Reagendar follow-up", agendar: "Agendar sessão", enviar: "Enviar material",
   escalar: "Escalar para gestor", concluir: "Concluir programa", cancelar: "Cancelamento",
 };
-
-import { getInitials } from "@/lib/avatarUtils";
 
 const SAVE_STEPS = [
   { key: "interacao",  label: "Gravando interação..." },

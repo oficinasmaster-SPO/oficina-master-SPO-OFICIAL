@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.38';
 
 // ─── Helper: busca dados do workshop e valida frequência ─────────────────────
 async function getWorkshopData(base44, workshop_id) {
