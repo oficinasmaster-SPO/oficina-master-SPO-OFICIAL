@@ -1,25 +1,7 @@
 import React, { memo } from "react";
 import { AlertCircle, Clock } from "lucide-react";
 import { format } from "date-fns";
-
-const AVATAR_COLORS = [
-  "bg-blue-500", "bg-emerald-500", "bg-amber-500", "bg-purple-500",
-  "bg-pink-500", "bg-indigo-500", "bg-teal-500", "bg-orange-500",
-  "bg-cyan-500", "bg-rose-500",
-];
-
-function getInitials(name) {
-  if (!name) return "??";
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-function getAvatarColor(name) {
-  if (!name) return AVATAR_COLORS[0];
-  const sum = name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return AVATAR_COLORS[sum % AVATAR_COLORS.length];
-}
+import WorkshopAvatar from "./ds/WorkshopAvatar";
 
 const ORIGIN_LABELS = {
   ata: "FUAta",
@@ -100,9 +82,6 @@ const FollowUpPendenteRow = memo(({ reminder, today, seqFU, onSelect, isLast, me
   const isOverdue = !reminder.is_completed && reminder.reminder_date < today;
   const isToday = !reminder.is_completed && reminder.reminder_date === today;
 
-  const avatarColor = getAvatarColor(reminder.workshop_name);
-  const initials = getInitials(reminder.workshop_name);
-
   const originLabel = ORIGIN_LABELS[reminder.origin_type] || "Manual";
   const originBadgeClass = ORIGIN_BADGE_STYLES[originLabel] || ORIGIN_BADGE_STYLES.Manual;
 
@@ -126,9 +105,7 @@ const FollowUpPendenteRow = memo(({ reminder, today, seqFU, onSelect, isLast, me
       {/* Cliente */}
       <div className="flex-1 min-w-[180px] flex-shrink-0">
         <div className="flex items-center gap-2.5">
-          <div className={`w-8 h-8 rounded-full ${avatarColor} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
-            {initials}
-          </div>
+          <WorkshopAvatar name={reminder.workshop_name} />
           <span className="text-sm font-semibold text-gray-900 truncate">
             {reminder.workshop_name || "Sem cliente"}
           </span>
