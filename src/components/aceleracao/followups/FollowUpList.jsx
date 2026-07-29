@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Clock, CheckCircle2, StickyNote, CalendarCheck, MessageCircle, Phone, Mail, MapPin, Video, FileText, Target, Search, X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
+import { calcPriorityScore } from "./ds/PriorityScore";
 import FollowUpCompletedDetailDrawer from "@/components/aceleracao/FollowUpCompletedDetailDrawer";
 import FollowUpConcluidoRow from "@/components/aceleracao/FollowUpConcluidoRow.jsx";
 import FollowUpPendenteRow from "@/components/aceleracao/followups/FollowUpPendenteRow";
@@ -377,9 +378,9 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
       if (filterPill === "urgentes")  return !r.is_completed && getDaysOverdue(r.reminder_date, today) >= 3;
       return !r.is_completed;
     }).sort((a, b) => {
-      const aOverdue = getDaysOverdue(a.reminder_date, today);
-      const bOverdue = getDaysOverdue(b.reminder_date, today);
-      if (aOverdue !== bOverdue) return bOverdue - aOverdue;
+      const sa = calcPriorityScore(a, today);
+      const sb = calcPriorityScore(b, today);
+      if (sa !== sb) return sb - sa;
       return (a.reminder_date || "").localeCompare(b.reminder_date || "");
     });
 
@@ -594,8 +595,8 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
         </div>
       ) : (
         <div className="rounded-xl border border-gray-200 shadow-sm overflow-x-auto bg-white">
-          <div className="flex items-center px-4 py-3 bg-gray-50 border-b border-gray-200 text-[11px] font-bold text-gray-500 uppercase tracking-wide min-w-[1100px]">
-            <div className="w-10 flex-shrink-0 text-center">#</div>
+          <div className="flex items-center px-3 py-2 bg-gray-50 border-b border-gray-200 text-[11px] font-bold text-gray-500 uppercase tracking-wide min-w-[1100px]">
+            <div className="w-10 flex-shrink-0 text-center">Prio</div>
             <div className="flex-1 min-w-[180px] flex-shrink-0">Cliente</div>
             <div className="w-28 flex-shrink-0">Tipo</div>
             <div className="w-10 flex-shrink-0 text-center">Canal</div>
@@ -610,6 +611,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
               reminder={r}
               today={today}
               seqFU={seqByReminderId[r.id] ?? null}
+              score={calcPriorityScore(r, today)}
               onSelect={onSelect}
               isLast={i === paginated.length - 1}
               meuId={meuId}
