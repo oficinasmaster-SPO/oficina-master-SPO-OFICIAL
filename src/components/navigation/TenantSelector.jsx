@@ -23,15 +23,8 @@ export default function TenantSelector({ isMobileSidebar = false }) {
     queryFn: () => base44.entities.ConsultingFirm.list()
   });
 
-  // SEMPRE usar workshopsDisponiveis (da session/memberships) — nunca listar
-  // oficinas que o usuário não tem membership. Antes, admins viam TODAS as
-  // oficinas via Workshop.list(), e clicar numa sem membership causava 403
-  // no resolveTenant → fallback silencioso para a matriz (default).
   const companiesToDisplay = useMemo(() => {
-    // Fase C: esconder oficinas inativas/encerradas do seletor — evita
-    // trocar para um tenant que não deveria mais aparecer no dia a dia.
     const list = (workshopsDisponiveis || []).filter(w => !w.status || w.status === 'ativo');
-    // Admin pode filtrar por consultoria, mas só entre oficinas com membership
     if (user?.role === 'admin' && selectedFirmId && selectedFirmId !== 'none') {
       return list.filter(w => w.consulting_firm_id === selectedFirmId);
     }
@@ -49,18 +42,16 @@ export default function TenantSelector({ isMobileSidebar = false }) {
     `${c.name} ${c.city || ''} ${c.state || ''}`.toLowerCase().includes(companySearchTerm.toLowerCase())
   ) || [];
 
-  // Não mostrar para usuários não-admin e não-internal com 0 ou 1 workshop
   const isInternal = user?.is_internal === true || user?.user_type === "internal" || user?.data?.user_type === "internal";
   if (user?.role !== 'admin' && !isInternal && (!workshopsDisponiveis || workshopsDisponiveis.length <= 1)) {
     return null;
   }
   
-  // Mostrar skeleton enquanto carrega
   if (isTenantLoading || isWorkshopLoading) {
     return (
       <div className={cn(isMobileSidebar ? "flex flex-col gap-3" : "hidden md:flex items-center gap-3 ml-4")}>
-        <div className="h-9 w-[180px] bg-gray-100 animate-pulse rounded-md" />
-        {user?.role === 'admin' && <div className="h-9 w-[180px] bg-gray-100 animate-pulse rounded-md" />}
+        <div className="h-9 w-[190px] bg-gray-100 animate-pulse rounded-md" />
+        {user?.role === 'admin' && <div className="h-9 w-[190px] bg-gray-100 animate-pulse rounded-md" />}
       </div>
     );
   }
@@ -76,7 +67,7 @@ export default function TenantSelector({ isMobileSidebar = false }) {
             variant="outline"
             role="combobox"
             aria-expanded={openFirmPopover}
-            className={cn("justify-between text-gray-600", isMobileSidebar ? "w-full" : "w-[180px]")}
+            className={cn("justify-between text-gray-600", isMobileSidebar ? "w-full" : "w-[190px]")}
           >
             <span className="flex items-center gap-2 truncate">
               <Building2 className="w-4 h-4 shrink-0 text-gray-500" />
@@ -162,7 +153,7 @@ export default function TenantSelector({ isMobileSidebar = false }) {
             variant="outline"
             role="combobox"
             aria-expanded={openCompanyPopover}
-            className={cn("justify-between text-gray-600", isMobileSidebar ? "w-full" : "w-[180px]")}
+            className={cn("justify-between text-gray-600", isMobileSidebar ? "w-full" : "w-[190px]")}
           >
             <span className="flex items-center gap-2 truncate">
               <Briefcase className="w-4 h-4 shrink-0 text-gray-500" />
@@ -173,7 +164,8 @@ export default function TenantSelector({ isMobileSidebar = false }) {
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[250px] p-0" align="start">
+        {/* Largura aumentada em 10px: de w-[500px] para w-[510px] */}
+        <PopoverContent className="w-[510px] -ml-[10px] p-0" align="start">
           <div className="flex items-center border-b px-3">
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
             <input 
@@ -188,7 +180,6 @@ export default function TenantSelector({ isMobileSidebar = false }) {
             <div 
               onClick={() => {
                 changeCompany(null);
-                // Tenant de dados: volta à membership default (matriz para internos)
                 clearWorkshop();
                 setOpenCompanyPopover(false);
                 setCompanySearchTerm('');
@@ -199,7 +190,8 @@ export default function TenantSelector({ isMobileSidebar = false }) {
             </div>
           </div>
 
-          <div className="max-h-32 overflow-y-auto pr-2" style={{ scrollbarGutter: 'stable' }}>
+          {/* Altura dobrada: de max-h-32 para max-h-64 */}
+          <div className="max-h-64 overflow-y-auto pr-2" style={{ scrollbarGutter: 'stable' }}>
             {filteredCompanies.length === 0 ? (
               <div className="px-3 py-4 text-center text-sm text-gray-500">
                 Nenhuma oficina encontrada
@@ -211,7 +203,6 @@ export default function TenantSelector({ isMobileSidebar = false }) {
                     key={company.id}
                     onClick={() => {
                       changeCompany(company.id);
-                      // Tenant de dados: troca validada pelo resolveTenant (membership consultant)
                       setCurrentWorkshop(company.id);
                       setOpenCompanyPopover(false);
                       setCompanySearchTerm('');
