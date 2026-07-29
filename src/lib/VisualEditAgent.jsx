@@ -581,7 +581,14 @@ export default function VisualEditAgent() {
 	}, [isDropdownOpen]);
 
 	// Handle window resize and scroll to reposition overlays
+	// OOM-FIX (Sprint 2): observer + listeners só ativos no modo de edição.
+	// Antes o MutationObserver era criado incondicionalmente e disparava a cada
+	// mutação de style/class no DOM inteiro — churn de closures (hasVisualId) +
+	// setTimeout retidos = crescimento contínuo de heap (stair-step de 2GB na Home).
 	useEffect(() => {
+		// Fora do modo de edição não há overlays para reposicionar — nada a fazer.
+		if (!isVisualEditMode) return;
+
 		const handleResize = () => {
 			// Reposition selected overlays
 			if (selectedElementIdRef.current) {
@@ -656,7 +663,7 @@ export default function VisualEditAgent() {
 			window.removeEventListener('scroll', handleResize);
 			mutationObserver.disconnect();
 		};
-	}, []);
+	}, [isVisualEditMode]);
 
 	// No visible UI - all functionality is handled through event listeners and message passing
 	return null;

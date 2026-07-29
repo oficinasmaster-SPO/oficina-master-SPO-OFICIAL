@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect } from "react";
+import React, { createContext, useContext, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
@@ -124,8 +124,8 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
     placeholderData: keepPreviousData,
   });
 
-  // Função para invalidar e atualizar dados
-  const refreshData = (dataType) => {
+  // Função para invalidar e atualizar dados (memoizada — entra no useMemo do value)
+  const refreshData = useCallback((dataType) => {
     const keyMap = {
       'workshop': ['shared-workshop', workshopId],
       'dre': ['shared-dre', workshopId],
@@ -145,10 +145,13 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
     } else if (keyMap[dataType]) {
       queryClient.invalidateQueries({ queryKey: keyMap[dataType] });
     }
-  };
+  }, [queryClient, workshopId]);
 
   // Dados financeiros consolidados do TCMP²
-  const tcmp2Data = {
+  // OOM-FIX (Sprint 1B): objetos consolidados e o valor do contexto memoizados.
+  // Antes eram recriados a cada render → re-render em cascata em todos os
+  // consumidores do SharedDataContext (contexto enorme + churn de GC).
+  const tcmp2Data = useMemo(() => ({
     // Do diagnóstico OS
     productive_technicians: latestOSDiagnostic?.productive_technicians || 0,
     monthly_hours: latestOSDiagnostic?.monthly_hours || 219,
@@ -159,7 +162,6 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
     current_hour_value: latestOSDiagnostic?.current_hour_value || 0,
     investment_percentage: latestOSDiagnostic?.investment_percentage || 30,
     revenue_percentage: latestOSDiagnostic?.revenue_percentage || 70,
-    
     // Do DRE
     revenue_total: latestDRE?.revenue_total || workshop?.best_month_history?.revenue_total || 0,
     revenue_parts: latestDRE?.revenue_parts || workshop?.best_month_history?.revenue_parts || 0,
@@ -168,10 +170,10 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
     rentability_percentage: latestDRE?.rentability_percentage || workshop?.best_month_history?.rentability_percentage || 0,
     average_ticket: latestDRE?.average_ticket || workshop?.best_month_history?.average_ticket || 0,
     customer_volume: latestDRE?.customer_volume || workshop?.best_month_history?.customer_volume || 0,
-  };
+  }), [latestOSDiagnostic, latestDRE, workshop]);
 
   // Dados da oficina consolidados
-  const workshopData = {
+  const workshopData = useMemo(() => ({
     id: workshop?.id,
     name: workshop?.name || '',
     city: workshop?.city || '',
@@ -185,10 +187,10 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
     capacidade_atendimento_dia: workshop?.capacidade_atendimento_dia || 0,
     tempo_medio_servico: workshop?.tempo_medio_servico || 0,
     horario_funcionamento: workshop?.horario_funcionamento || {},
-  };
+  }), [workshop, employees]);
 
   // Metas consolidadas
-  const goalsData = {
+  const goalsData = useMemo(() => ({
     month: monthlyGoals?.month || '',
     revenue_parts: monthlyGoals?.revenue_parts || 0,
     revenue_services: monthlyGoals?.revenue_services || 0,
@@ -197,9 +199,9 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
     average_ticket: monthlyGoals?.average_ticket || 0,
     customer_volume: monthlyGoals?.customer_volume || 0,
     buy_target: monthlyGoals?.buy_target || 0,
-  };
+  }), [monthlyGoals]);
 
-  const value = {
+  const value = useMemo(() => ({
     // Dados brutos
     workshop,
     latestDRE,
@@ -207,12 +209,10 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
     employees,
     monthlyGoals,
     goalsHistory,
-    
     // Dados consolidados para uso fácil
     tcmp2Data,
     workshopData,
     goalsData,
-    
     // Estados de loading
     isLoading: loadingWorkshop || loadingDRE || loadingOS || loadingEmployees || loadingGoals,
     loadingStates: {
@@ -223,14 +223,12 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
       goals: loadingGoals,
       goalsHistory: loadingGoalsHistory,
     },
-    
     // Função para atualizar dados
     refreshData,
-    
     // IDs para referência
     workshopId,
     userId,
-  };
+  }), [workshop, latestDRE, latestOSDiagnostic, employees, monthlyGoals, goalsHistory, loadingWorkshop, loadingDRE, loadingOS, loadingEmployees, loadingGoals, loadingGoalsHistory, tcmp2Data, workshopData, goalsData, refreshData, workshopId, userId]);
 
   return (
     <SharedDataContext.Provider value={value}>
