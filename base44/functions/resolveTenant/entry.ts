@@ -14,7 +14,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.38';
 const TENANT_FALLBACK_EVENT = 'TENANT_RESOLVE_FALLBACK';
 
 // ── CÓPIA FIEL de shared/tenantResolver.resolveTenantCore ────────────────────
-const TENANT_RESOLVER_COPY_VERSION = '1.1.0';
+const TENANT_RESOLVER_COPY_VERSION = '1.2.0';
 async function resolveTenantCore(sr, authUser, params = {}) {
   const { workshop_id, admin_workshop_id, impersonated_user_id, sync_user_field } = params;
   const isAdmin = authUser.role === 'admin';
@@ -88,11 +88,24 @@ async function resolveTenantCore(sr, authUser, params = {}) {
   if (!workshop) return { status: 404, error: 'Workshop do tenant não encontrado' };
 
   // Denormalização p/ RLS: user.tenant_workshop_id espelha a membership ativa.
+  // IMPORTANTE: templates RLS só resolvem {{user.id}}, {{user.email}}, {{user.role}}
+  // e {{user.data.<field>}}. Campos custom top-level (tenant_workshop_id, workshop_id)
+  // NÃO resolvem em RLS — por isso espelhamos também em data.workshop_id, que as regras
+  // RLS existentes já leem. Assim clientes externos (role=user, user_type=external)
+  // conseguem ler os dados da própria oficina.
   // Só quando sync_user_field=true (endpoint resolveTenant); nunca em impersonação
   // nem em override sintético de admin.
-  if (sync_user_field && !isImpersonating && effectiveMembership.notes !== 'admin-override' &&
-      (effectiveUser.tenant_workshop_id || null) !== effectiveMembership.workshop_id) {
-    try { await sr.entities.User.update(effectiveUser.id, { tenant_workshop_id: effectiveMembership.workshop_id }); } catch (_) {}
+  if (sync_user_field && !isImpersonating && effectiveMembership.notes !== 'admin-override') {
+    const updates = {};
+    if ((effectiveUser.tenant_workshop_id || null) !== effectiveMembership.workshop_id) {
+      updates.tenant_workshop_id = effectiveMembership.workshop_id;
+    }
+    if ((effectiveUser.data?.workshop_id || null) !== effectiveMembership.workshop_id) {
+      updates.data = { ...(effectiveUser.data || {}), workshop_id: effectiveMembership.workshop_id };
+    }
+    if (Object.keys(updates).length) {
+      try { await sr.entities.User.update(effectiveUser.id, updates); } catch (_) {}
+    }
   }
 
   return {
