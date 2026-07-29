@@ -26,6 +26,7 @@ import RelatoriosTab from "./RelatoriosTab";
 import TaxaRealizacaoRelatorio from "./TaxaRealizacaoRelatorio";
 import SugestoesAgendamentoTab from "./sugestoes/SugestoesAgendamentoTab";
 import { useFollowUpSequence } from "@/hooks/useFollowUpSequence";
+import { usePendentes, useConcluidos } from "./followups/useSharedFollowUpQueries";
 import IniciarAtendimentoModal from "@/components/aceleracao/IniciarAtendimentoModal";
 
 // ── Componentes de módulo (fora do corpo do componente para evitar re-mount) ──
@@ -190,29 +191,8 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
 
   // ── Camada 1: sequência universal baseada em FollowUpReminder ──
   // Calculado APÓS carregar reminders — injetado em todas as sub-telas
-  const { data: reminders = [], isLoading } = useQuery({
-    queryKey: ["follow-up-reminders-tab", consultorEfetivo],
-    queryFn: async () => {
-      // Busca TODOS os follow-ups pendentes do tenant (incluindo guarda-chuva)
-      // Se tiver consultor efetivo, filtra por ele OU traz follow-ups do sistema (guarda-chuva)
-      const query = { is_completed: false };
-      
-      if (consultorEfetivo) {
-        // Inclui follow-ups do consultor E follow-ups do sistema (guarda-chuva)
-        query.$or = [
-          { consultor_id: consultorEfetivo },
-          { origin_type: "guarda_chuva" }
-        ];
-      }
-      // Ordena por reminder_date para trazer os mais recentes primeiro
-      const items = await base44.entities.FollowUpReminder.filter(query, "-reminder_date", 200);
-      // 2B.3: NÃO esconde — preserva reminders inconsistentes para sinalização (mascarar esconde problemas de integridade)
-      return Array.isArray(items) ? items : [];
-    },
-    staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    retry: 1,
-  });
+  // Sprint 3 — P1: cache único compartilhado com OperationSidebar (1 fetch serve ambos)
+  const { data: reminders = [], isLoading } = usePendentes(consultorEfetivo);
 
   // Query separada para reminders CONCLUÍDOS (usada nas abas Concluídos e pill CRM)
   const { data: remindersConcluidos = [], isLoading: isLoadingConcluidos } = useQuery({
@@ -264,27 +244,8 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
     console.warn('⚠️ [FollowUp] Reminders inconsistentes (workshop_id inválido):', remindersInconsistentes.map(r => ({ id: r.id, workshop_id: r.workshop_id, workshop_name: r.workshop_name })));
   }, [remindersInconsistentes]);
 
-  // Fetch dos atendimentos concluídos
-  // OOM-FIX (Sprint 1C): descarta pastedImages (base64) do cache — a row não usa
-  // esse campo e o drawer busca o registro completo por id sob demanda (lazy load).
-  const { data: concludedAttendances = [] } = useQuery({
-    queryKey: ["follow-up-concluidos-tab", consultorEfetivo],
-    queryFn: async () => {
-      const query = {};
-      if (consultorEfetivo) {
-        query.consultor_id = consultorEfetivo;
-      }
-      const items = await base44.entities.FollowUpConcluido.filter(query, "-completedAt", 200);
-      return (Array.isArray(items) ? items : []).map(c => {
-        if (!c || !c.pastedImages) return c;
-        const { pastedImages: _drop, ...rest } = c;
-        return rest;
-      });
-    },
-    staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    retry: 1,
-  });
+  // Sprint 3 — P1: cache único compartilhado com OperationSidebar
+  const { data: concludedAttendances = [] } = useConcluidos(consultorEfetivo);
 
   // Fetch dos FollowUpContadores (acompanhamento)
   const { data: followUpContadores = [], isLoading: isLoadingContadores } = useQuery({

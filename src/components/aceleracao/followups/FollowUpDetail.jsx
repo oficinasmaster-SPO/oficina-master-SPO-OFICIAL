@@ -290,11 +290,9 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
     }
   };
 
-  useEffect(() => {
-    if ((atas.length > 0 || concluidos.length > 0) && !dicaIA && !carregandoDica) {
-      gerarDicaIA();
-    }
-  }, [atas.length, concluidos.length]);
+  // Sprint 3 — P2: dica de IA agora é opt-in (botão recarregar). Removido o
+  // auto-fire no mount para não consumir créditos/latência em toda abertura.
+  // O box exibe suggestedAction (gratuito, de proximos_passos) como fallback.
 
   // Sprint 2 — leak fix: cancela a subscrição do chat IA ao desmontar o FollowUpDetail
   useEffect(() => {
@@ -305,6 +303,11 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
       }
     };
   }, []);
+
+  // Sprint 3 — P4: scroll automático do chat para a última mensagem
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMensagens]);
 
   const inicioSemana = (() => {
     const d = new Date(today);

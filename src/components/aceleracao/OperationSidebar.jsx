@@ -1,39 +1,17 @@
 import React, { memo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle, Clock, CheckCircle2, TrendingUp, Users } from "lucide-react";
+import { usePendentes, useConcluidos } from "./followups/useSharedFollowUpQueries";
 
 function useConsultorStats(consultorId) {
   const today = new Date().toISOString().split("T")[0];
 
-  const { data: pendentes = [] } = useQuery({
-    queryKey: ["sidebar-pendentes", consultorId],
-    queryFn: async () => {
-      if (!consultorId) return [];
-      return base44.entities.FollowUpReminder.filter(
-        { is_completed: false, consultor_id: consultorId },
-        "-reminder_date",
-        500
-      );
-    },
-    enabled: !!consultorId,
-    staleTime: 3 * 60 * 1000,
-  });
-
-  const { data: concluidos = [] } = useQuery({
-    queryKey: ["sidebar-concluidos", consultorId],
-    queryFn: async () => {
-      if (!consultorId) return [];
-      return base44.entities.FollowUpConcluido.filter(
-        { consultor_id: consultorId },
-        "-completedAt",
-        200
-      );
-    },
-    enabled: !!consultorId,
-    staleTime: 3 * 60 * 1000,
-  });
+  // Sprint 3 — P1: reusa o cache único da Central (Tab + Sidebar = 1 fetch).
+  // Filtra client-side por consultor_id para preservar a semântica original
+  // (exclui guarda-chuva das contagens de "Minha Operação").
+  const { data: reminders = [] } = usePendentes(consultorId);
+  const { data: concluidos = [] } = useConcluidos(consultorId);
+  const pendentes = reminders.filter(r => r.consultor_id === consultorId);
 
   const atrasados = pendentes.filter(r => r.reminder_date < today);
   const hoje = pendentes.filter(r => r.reminder_date === today);
