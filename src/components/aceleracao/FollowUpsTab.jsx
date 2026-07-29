@@ -33,6 +33,20 @@ import IniciarAtendimentoModal from "@/components/aceleracao/IniciarAtendimentoM
 // seqNum = número sequencial global do reminder (#1, #2...) vindo do useFollowUpSequence
 // stats = { total, concluidos, pendentes } do workshop desse reminder
 const ReminderRow = memo(({ reminder, today, showWorkshop, onComplete, onReopen, seqNum, stats }) => {
+  // 2B.3: registro inconsistente (workshop_id inválido) — sinaliza em vez de ocultar
+  if (!isValidWorkshopId(reminder.workshop_id)) {
+    return (
+      <div className="flex items-center gap-3 px-4 py-3 bg-red-50/50 border-l-2 border-red-400">
+        <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+        <div className="flex-1 min-w-0 text-xs text-red-700">
+          Registro inconsistente detectado. Contate o administrador.
+          <span className="block text-[10px] text-red-400 mt-0.5 truncate">
+            workshop_id: {reminder.workshop_id || "—"}
+          </span>
+        </div>
+      </div>
+    );
+  }
   const isOverdue = !reminder.is_completed && reminder.reminder_date < today;
   const displaySeq = seqNum ?? reminder.sequence_number ?? "?";
   return (
@@ -192,8 +206,8 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
       }
       // Ordena por reminder_date para trazer os mais recentes primeiro
       const items = await base44.entities.FollowUpReminder.filter(query, "-reminder_date", 200);
-      // 2B.3: descarta reminders órfãos (workshop_id inválido) — evita que cheguem ao Iniciar Atendimento (404/500)
-      return (Array.isArray(items) ? items : []).filter(r => isValidWorkshopId(r.workshop_id));
+      // 2B.3: NÃO esconde — preserva reminders inconsistentes para sinalização (mascarar esconde problemas de integridade)
+      return Array.isArray(items) ? items : [];
     },
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -207,8 +221,8 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
       const query = { is_completed: true };
       if (consultorEfetivo) query.consultor_id = consultorEfetivo;
       const items = await base44.entities.FollowUpReminder.filter(query, "-completed_at", 200);
-      // 2B.3: descarta reminders órfãos (workshop_id inválido) — consistência com a lista de pendentes
-      return (Array.isArray(items) ? items : []).filter(r => isValidWorkshopId(r.workshop_id));
+      // 2B.3: NÃO esconde — preserva reminders inconsistentes para sinalização
+      return Array.isArray(items) ? items : [];
     },
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -239,6 +253,16 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
       );
     }
   }, [reminders, user?.consulting_firm_id]);
+
+  // 2B.3: registra internamente reminders inconsistentes (workshop_id inválido) — nunca oculto
+  const remindersInconsistentes = useMemo(
+    () => reminders.filter(r => !isValidWorkshopId(r.workshop_id)),
+    [reminders]
+  );
+  useEffect(() => {
+    if (remindersInconsistentes.length === 0) return;
+    console.warn('⚠️ [FollowUp] Reminders inconsistentes (workshop_id inválido):', remindersInconsistentes.map(r => ({ id: r.id, workshop_id: r.workshop_id, workshop_name: r.workshop_name })));
+  }, [remindersInconsistentes]);
 
   // Fetch dos atendimentos concluídos
   // OOM-FIX (Sprint 1C): descarta pastedImages (base64) do cache — a row não usa
