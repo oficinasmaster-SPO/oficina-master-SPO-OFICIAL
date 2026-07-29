@@ -447,14 +447,6 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
           <span className="font-medium text-gray-700">{counts.concluidos}</span> concluídos
         </span>
 
-        {/* Debug badge - guarda-chuva */}
-        {reminders.length > 0 && (
-          <span className="flex items-center gap-1.5 ml-2">
-            <span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />
-            <span className="font-medium text-blue-700">{reminders.filter(r => r.origin_type === 'guarda_chuva').length}</span> guarda-chuva
-          </span>
-        )}
-
         {/* Refresh button */}
         <Button
           variant="ghost"
