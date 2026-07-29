@@ -42,6 +42,7 @@ import OrigemDerivadaBanner from "@/components/aceleracao/followups/OrigemDeriva
 import ClientHistoryFloatingPanel from "@/components/aceleracao/ClientHistoryFloatingPanel";
 import { isSuporteFlow, gerarSuporteId } from "@/utils/suporteHelper";
 import ClientIndicatorsSection from "@/components/atendimento/ClientIndicatorsSection";
+import { getInitials } from "@/lib/avatarUtils";
 import ClientIndicatorsChart from "@/components/clientIndicators/ClientIndicatorsChart";
 
 
@@ -73,10 +74,6 @@ const SAVE_STEPS = [
   { key: "proximo",    label: "Criando próximo follow-up..." },
   { key: "notificacao",label: "Notificando consultor..." },
 ];
-
-function getInitials(name = "") {
-  return name.split(" ").slice(0, 2).map(p => p[0]).join("").toUpperCase() || "?";
-}
 
 const CANAL_OPTIONS = [
   { id: "ligacao", label: "Ligação", icon: Phone },

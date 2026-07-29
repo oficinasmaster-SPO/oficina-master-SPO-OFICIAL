@@ -17,10 +17,8 @@ import { useMemo } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import VisualizarAtaModal from "@/components/aceleracao/VisualizarAtaModal";
 import IniciarAtendimentoModal from "@/components/aceleracao/IniciarAtendimentoModalWithPanel";
-
-function getInitials(name = "") {
-  return name.split(" ").slice(0, 2).map(p => p[0]).join("").toUpperCase() || "?";
-}
+import WorkshopAvatar from "./ds/WorkshopAvatar";
+import StatusBadge from "./ds/StatusBadge";
 
 const CANAL_OPTIONS = [
   { id: "ligacao",     label: "Ligação",     icon: Phone },
@@ -467,22 +465,16 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
               {/* Identity card */}
               <div className="bg-white border border-gray-200 rounded-xl p-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm flex-shrink-0">
-                    {getInitials(reminder.workshop_name)}
-                  </div>
+                  <WorkshopAvatar name={reminder.workshop_name} size="lg" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-gray-900 text-sm">{reminder.workshop_name || "Sem cliente"}</span>
-                        {isOverdue && (
-                          <Badge className="text-[10px] bg-red-100 text-red-700 border-red-200">Urgente</Badge>
-                        )}
+                        <StatusBadge reminder={reminder} today={today} />
                       </div>
                       {reminder.consultor_nome && (
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          <div className="w-8 h-8 rounded-full bg-red-100 text-red-700 flex items-center justify-center font-bold text-xs flex-shrink-0">
-                            {getInitials(reminder.consultor_nome)}
-                          </div>
+                          <WorkshopAvatar name={reminder.consultor_nome} size="md" />
                           <div className="text-right">
                             <p className="text-xs font-semibold text-gray-800 leading-tight">{reminder.consultor_nome}</p>
                             <p className="text-[10px] text-gray-400 leading-tight">Consultor sênior</p>
@@ -490,17 +482,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {isOverdue && daysOver > 0 && (
-                        <span className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">
-                          {daysOver}d vencido
-                        </span>
-                      )}
-                      {reminder.reminder_date === today && !isOverdue && (
-                        <span className="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">Hoje</span>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className="text-xs text-gray-400 mt-1">
                       Follow-up #{currentStep} de {totalSteps}
                       {stats && (
                         <span className="ml-1 text-gray-400">· {stats.concluidos} concluídos · {stats.pendentes} pendentes</span>
