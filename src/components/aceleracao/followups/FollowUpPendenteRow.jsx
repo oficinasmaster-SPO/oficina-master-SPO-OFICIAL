@@ -1,126 +1,149 @@
 import React, { memo } from "react";
 import WorkshopAvatar from "./ds/WorkshopAvatar";
 import StatusBadge from "./ds/StatusBadge";
-import { formatDate, formatDateTime } from "./ds/dateUtils";
+import OriginBadge from "./ds/OriginBadge";
+import { getDaysOverdue, formatDate, formatDateTime } from "./ds/dateUtils";
 
-// Tag de origem — rótulo + cor por origin_type
-function originTag(origin_type, suporte_id) {
-  switch (origin_type) {
-    case "guarda_chuva":
-      return { label: "💝 Encantamento", cls: "bg-pink-50 text-pink-700 border-pink-200" };
-    case "suporte_checkin":
-      return {
-        label: suporte_id ? `🛟 Check-in ${suporte_id}` : "🛟 Check-in Suporte",
-        cls: "bg-orange-50 text-orange-700 border-orange-200",
-      };
-    case "suporte":
-      return { label: "🛟 Suporte", cls: "bg-orange-50 text-orange-700 border-orange-200" };
-    case "ata":
-      return { label: "📋 FU Ata", cls: "bg-purple-50 text-purple-700 border-purple-200" };
-    default:
-      return null;
-  }
+function cleanNotesPreview(notes) {
+  if (!notes) return null;
+  return notes.replace(/^Follow-up automático da sprint:\s*/i, "").trim() || null;
 }
 
-const FollowUpPendenteRow = memo(({ reminder, today, seqFU, score, onSelect, isLast, meuId, stats = null }) => {
-  const consultor = reminder.consultor_principal_nome || reminder.consultor_nome || "—";
-  const isOverdue = !reminder.is_completed && reminder.reminder_date < today;
-  const isTodayRow = reminder.reminder_date === today;
-  const borderColor = isOverdue
-    ? "border-l-red-500"
-    : isTodayRow
-      ? "border-l-amber-400"
-      : "border-l-gray-200";
-  const rowBorder = isLast ? "" : "border-b border-gray-100";
+// Returns Tailwind bg color class for the meeting-risk dot overlay on the avatar
+function riscoToDotColor(risco) {
+  if (!risco || risco.nivel === "sem_dados") return null;
+  const { nivel, atrasadas = 0 } = risco;
+  if (nivel === "critico" || nivel === "nunca" || atrasadas > 0) return "bg-red-500";
+  if (nivel === "atencao") return "bg-amber-400";
+  if (nivel === "ok") return "bg-emerald-400";
+  return null;
+}
+
+const FollowUpPendenteRow = memo(({
+  reminder, today, seqFU, score, onSelect, isLast, meuId, stats, isSelected, risco,
+}) => {
+  const consultor = reminder.consultor_principal_nome || reminder.consultor_nome || null;
   const isOtherConsultor =
     meuId &&
     reminder.consultor_principal_id &&
     reminder.consultor_principal_id !== meuId &&
     reminder.consultor_id !== meuId;
 
-  const total = stats?.total ?? null;
-  const concluidos = stats?.concluidos ?? null;
-  const pendentes = stats?.pendentes ?? null;
-  const seqDisplay = seqFU ?? reminder.sequence_number ?? "?";
-  const totalSeq = total ?? "?";
+  const isOverdue = reminder.reminder_date < today;
+  const isToday   = reminder.reminder_date === today;
 
-  const tag = originTag(reminder.origin_type, reminder.suporte_id);
-  const nota = reminder.notas || reminder.notes || "";
+  const borderColor = isSelected
+    ? "border-l-blue-500"
+    : isOverdue
+    ? "border-l-red-500"
+    : isToday
+    ? "border-l-amber-400"
+    : "border-l-gray-200";
 
-  let dateLabel = formatDate(reminder.reminder_date);
-  if (isOverdue) dateLabel = "Vencido";
-  else if (isTodayRow) dateLabel = "Hoje";
+  const notesPreview = cleanNotesPreview(reminder.notes);
+
+  const pct = stats && stats.total > 0
+    ? Math.round((stats.concluidos / stats.total) * 100)
+    : 0;
+
+  const dotColor = riscoToDotColor(risco);
 
   return (
     <div
       onClick={() => onSelect?.(reminder)}
-      className={`flex gap-3 px-3 py-3 border-l-4 ${borderColor} ${rowBorder} bg-white hover:bg-gray-50/70 cursor-pointer transition-colors`}
+      className={`
+        flex items-center border-l-[3px] ${borderColor}
+        ${!isLast ? "border-b border-gray-100" : ""}
+        ${isSelected
+          ? "bg-blue-50/60 hover:bg-blue-50/80"
+          : "hover:bg-gray-50/60"
+        }
+        cursor-pointer transition-colors
+      `}
     >
-      {/* Avatar */}
-      <div className="flex-shrink-0 pt-0.5">
-        <WorkshopAvatar name={reminder.workshop_name} size="sm" />
-      </div>
-
-      {/* Conteúdo vertical */}
-      <div className="flex-1 min-w-0 space-y-1">
-        {/* Linha 1: #N NomeCliente + delegação */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-gray-900 truncate">
-            #{seqDisplay} {reminder.workshop_name || "Sem cliente"}
-          </span>
-          {isOtherConsultor && (
+      {/* ── CLIENTE ── flex-1 */}
+      <div className="flex-1 min-w-[240px] px-4 py-2.5 flex items-center gap-2.5 min-w-0">
+        <div className="flex-shrink-0 relative">
+          <WorkshopAvatar name={reminder.workshop_name} size="md" />
+          {dotColor && (
             <span
-              className="flex-shrink-0 text-[9px] font-medium text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded truncate max-w-[120px]"
-              title={`Consultor: ${consultor}`}
-            >
-              {consultor}
-            </span>
+              className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${dotColor}`}
+              title={`Reuniões: ${risco.nivel}`}
+            />
           )}
         </div>
-
-        {/* Linha 2: contador do cliente */}
-        {stats && (
-          <div className="text-[11px] text-gray-500">
-            {total ?? 0} FUs · {concluidos ?? 0} ✓ · {pendentes ?? 0} pend.
-          </div>
-        )}
-
-        {/* Linha 3: sequência + consultor */}
-        <div className="text-[11px] text-gray-500">
-          Follow-up #{seqDisplay} de {totalSeq} · {consultor}
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-gray-900 truncate leading-tight">
+            {reminder.workshop_name || "Sem cliente"}
+          </p>
+          {(notesPreview || isOtherConsultor) && (
+            <p className="text-[11px] text-gray-400 truncate mt-0.5 leading-tight">
+              {isOtherConsultor && consultor && (
+                <span className="text-blue-500 font-medium mr-1">{consultor} ·</span>
+              )}
+              {notesPreview}
+            </p>
+          )}
         </div>
+      </div>
 
-        {/* Linha 4: tag de origem */}
-        {tag && (
-          <div>
-            <span
-              className={`inline-flex items-center text-[10px] font-medium border px-1.5 py-0.5 rounded ${tag.cls}`}
-            >
-              {tag.label}
-            </span>
-          </div>
-        )}
-
-        {/* Linha 5: criado / agendado */}
-        <div className="text-[11px] text-gray-400">
-          Criado: {formatDateTime(reminder.created_date)} · Agendado: {formatDate(reminder.reminder_date)}
-        </div>
-
-        {/* Linha 6: preview de nota */}
-        {nota && (
-          <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1 line-clamp-2">
-            {nota}
-          </div>
+      {/* ── SEQ. ── 72px */}
+      <div className="w-[72px] flex-shrink-0 px-2 py-2.5">
+        {seqFU != null && stats ? (
+          <span className="text-[12px] font-bold text-blue-600 tabular-nums">
+            #{seqFU}/{stats.total}
+          </span>
+        ) : seqFU != null ? (
+          <span className="text-[12px] font-bold text-blue-600 tabular-nums">#{seqFU}</span>
+        ) : (
+          <span className="text-gray-300">—</span>
         )}
       </div>
 
-      {/* Coluna direita: data + status */}
-      <div className="flex-shrink-0 flex flex-col items-end justify-start gap-1 pt-0.5 min-w-[80px]">
-        <span
-          className={`text-xs font-semibold ${isOverdue ? "text-red-600" : isTodayRow ? "text-amber-600" : "text-gray-500"}`}
-        >
-          {dateLabel}
-        </span>
+      {/* ── ORIGEM ── 200px */}
+      <div className="w-[200px] flex-shrink-0 px-2 py-2.5 flex flex-wrap gap-1">
+        <OriginBadge originType={reminder.origin_type} />
+      </div>
+
+      {/* ── FOLLOW-UPS ── 148px */}
+      <div className="w-[148px] flex-shrink-0 px-2 py-2.5">
+        {stats ? (
+          <>
+            <p className="text-[11px] text-gray-600 tabular-nums leading-tight">
+              {stats.total}
+              {" · "}
+              <span className="text-emerald-600 font-semibold">{stats.concluidos} ✓</span>
+              {" · "}
+              <span className="text-amber-600 font-semibold">{stats.pendentes}</span>
+            </p>
+            <div className="mt-1.5 w-full h-1 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-1 rounded-full bg-emerald-500 transition-all"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          </>
+        ) : (
+          <span className="text-gray-300 text-[11px]">—</span>
+        )}
+      </div>
+
+      {/* ── DATAS ── 176px */}
+      <div className="w-[176px] flex-shrink-0 px-2 py-2.5 space-y-0.5">
+        {reminder.created_date && (
+          <p className="text-[11px] text-gray-400 leading-tight">
+            Criado {formatDateTime(reminder.created_date)}
+          </p>
+        )}
+        {reminder.reminder_date && (
+          <p className="text-[11px] text-gray-400 leading-tight">
+            Agend. {formatDate(reminder.reminder_date)}
+          </p>
+        )}
+      </div>
+
+      {/* ── STATUS ── 112px */}
+      <div className="w-[112px] flex-shrink-0 px-3 py-2.5 flex justify-end">
         <StatusBadge reminder={reminder} today={today} />
       </div>
     </div>
