@@ -11,24 +11,18 @@ import { base44 } from "@/api/base44Client";
 function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendimentos) {
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
-
   const atendimentos = consultoriaAtendimentos.filter(a => a.workshop_id === workshopId);
   const buckets = contractAttendances.filter(a => a.workshop_id === workshopId);
-
   const REALIZADOS_STATUS = ["concluido", "realizado", "participando"];
   const realizadasList = atendimentos.filter(a => REALIZADOS_STATUS.includes(a.status));
   const realizadas = realizadasList.length;
-
   const total = buckets.length > 0 ? buckets.length : atendimentos.length;
-
   const toLocalDate = (d) => {
     if (!d) return null;
     const s = typeof d === "string" ? d : d.toISOString();
     return new Date(s.includes("T") ? s : s + "T12:00:00");
   };
-
   const agora = new Date();
-
   const PENDENTES_STATUS = ["agendado", "confirmado", "reagendado", "atrasado"];
   const atrasadasList = atendimentos.filter(a => {
     if (!PENDENTES_STATUS.includes(a.status) || !a.data_agendada) return false;
@@ -44,7 +38,6 @@ function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendiment
     }
   });
   const atrasadas = atrasadasList.length;
-
   const atrasadasIds = new Set(atrasadasList.map(a => a.id));
   const futuras = atendimentos
     .filter(a => {
@@ -57,41 +50,26 @@ function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendiment
     })
     .sort((a, b) => toLocalDate(a.data_agendada) - toLocalDate(b.data_agendada));
   const proxima = futuras[0]?.data_agendada || null;
-
   const ultimasOrdenadas = realizadasList
     .map(a => new Date(a.data_realizada || a.data_agendada))
     .filter(d => !isNaN(d.getTime()))
     .sort((a, b) => b - a);
   const ultimaData = ultimasOrdenadas[0] || null;
-  const diasDesdeUltima = ultimaData
-    ? Math.floor((hoje - ultimaData) / (1000 * 60 * 60 * 24))
-    : null;
-
+  const diasDesdeUltima = ultimaData ? Math.floor((hoje - ultimaData) / (1000 * 60 * 60 * 24)) : null;
   let nivel;
-  if (atendimentos.length === 0 && buckets.length === 0) {
-    nivel = "sem_dados";
-  } else if (realizadas === 0 && atrasadas === 0 && proxima) {
-    nivel = "ok";
-  } else if (realizadas === 0 && atrasadas === 0) {
-    nivel = "nunca";
-  } else if (atrasadas > 0 && !proxima) {
-    nivel = "critico";
-  } else if (atrasadas > 0) {
-    nivel = "atencao";
-  } else if (!proxima && realizadas > 0) {
-    nivel = "critico";
-  } else if (diasDesdeUltima !== null && diasDesdeUltima > 25) {
-    nivel = "atencao";
-  } else {
-    nivel = "ok";
-  }
-
+  if (atendimentos.length === 0 && buckets.length === 0) nivel = "sem_dados";
+  else if (realizadas === 0 && atrasadas === 0 && proxima) nivel = "ok";
+  else if (realizadas === 0 && atrasadas === 0) nivel = "nunca";
+  else if (atrasadas > 0 && !proxima) nivel = "critico";
+  else if (atrasadas > 0) nivel = "atencao";
+  else if (!proxima && realizadas > 0) nivel = "critico";
+  else if (diasDesdeUltima !== null && diasDesdeUltima > 25) nivel = "atencao";
+  else nivel = "ok";
   return { nivel, realizadas, total, proxima, diasDesdeUltima, atrasadas, atrasadasList };
 }
 
 function useReunioesIndex(workshopIds = []) {
   const ids = [...new Set(workshopIds.filter(Boolean))];
-
   const { data: contractData = [] } = useQuery({
     queryKey: ["contract-attendances-bulk", ids.sort().join(",")],
     queryFn: async () => {
@@ -100,11 +78,7 @@ function useReunioesIndex(workshopIds = []) {
       const results = [];
       for (let i = 0; i < ids.length; i += BATCH) {
         const batch = ids.slice(i, i + BATCH);
-        const items = await base44.entities.ContractAttendance.filter(
-          { workshop_id: { $in: batch } },
-          "-scheduled_date",
-          BATCH * 10
-        );
+        const items = await base44.entities.ContractAttendance.filter({ workshop_id: { $in: batch } }, "-scheduled_date", BATCH * 10);
         results.push(...items);
       }
       return results;
@@ -113,7 +87,6 @@ function useReunioesIndex(workshopIds = []) {
     staleTime: 5 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
   });
-
   const { data: consultoriaData = [] } = useQuery({
     queryKey: ["consultoria-atendimentos-bulk", ids.sort().join(",")],
     queryFn: async () => {
@@ -122,11 +95,7 @@ function useReunioesIndex(workshopIds = []) {
       const results = [];
       for (let i = 0; i < ids.length; i += BATCH) {
         const batch = ids.slice(i, i + BATCH);
-        const items = await base44.entities.ConsultoriaAtendimento.filter(
-          { workshop_id: { $in: batch } },
-          "-data_agendada",
-          500
-        );
+        const items = await base44.entities.ConsultoriaAtendimento.filter({ workshop_id: { $in: batch } }, "-data_agendada", 500);
         results.push(...items);
       }
       return results;
@@ -135,33 +104,26 @@ function useReunioesIndex(workshopIds = []) {
     staleTime: 5 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
   });
-
   const index = React.useMemo(() => {
     const byWorkshop = {};
-
     contractData.forEach(a => {
       const wid = a.workshop_id;
       if (!wid) return;
       if (!byWorkshop[wid]) byWorkshop[wid] = { contract: [], consultoria: [] };
       byWorkshop[wid].contract.push(a);
     });
-
     consultoriaData.forEach(a => {
       const wid = a.workshop_id;
       if (!wid) return;
       if (!byWorkshop[wid]) byWorkshop[wid] = { contract: [], consultoria: [] };
       byWorkshop[wid].consultoria.push(a);
     });
-
     const result = {};
     ids.forEach(wid => {
-      const buckets = byWorkshop[wid]?.contract || [];
-      const atendimentos = byWorkshop[wid]?.consultoria || [];
-      result[wid] = calcRiscoReuniao(wid, buckets, atendimentos);
+      result[wid] = calcRiscoReuniao(wid, byWorkshop[wid]?.contract || [], byWorkshop[wid]?.consultoria || []);
     });
     return result;
   }, [contractData, consultoriaData, ids.join(",")]);
-
   return index;
 }
 
@@ -177,11 +139,9 @@ function useConcluidosIndex() {
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
-
   const byWorkshop = {};
   const byFollowupId = {};
   const sequenceByFollowupId = {};
-
   const byWorkshopRaw = {};
   data.forEach(c => {
     const wid = c.workshop_id;
@@ -189,22 +149,16 @@ function useConcluidosIndex() {
     if (!byWorkshopRaw[wid]) byWorkshopRaw[wid] = [];
     byWorkshopRaw[wid].push(c);
     if (c.followup_id) byFollowupId[c.followup_id] = c;
-    if (!byWorkshop[wid] || new Date(c.completedAt) > new Date(byWorkshop[wid].completedAt)) {
-      byWorkshop[wid] = c;
-    }
+    if (!byWorkshop[wid] || new Date(c.completedAt) > new Date(byWorkshop[wid].completedAt)) byWorkshop[wid] = c;
   });
-
   Object.entries(byWorkshopRaw).forEach(([wid, list]) => {
-    list
-      .slice()
-      .sort((a, b) => new Date(a.completedAt || a.created_date) - new Date(b.completedAt || b.created_date))
+    list.slice().sort((a, b) => new Date(a.completedAt || a.created_date) - new Date(b.completedAt || b.created_date))
       .forEach((c, idx) => {
         const seq = idx + 1;
         if (c.followup_id) sequenceByFollowupId[c.followup_id] = seq;
         if (c.id) sequenceByFollowupId[c.id] = seq;
       });
   });
-
   return { byWorkshop, byFollowupId, sequenceByFollowupId };
 }
 
@@ -218,11 +172,7 @@ function useAtasIndex(ataIds = []) {
       const results = [];
       for (let i = 0; i < uniqueIds.length; i += BATCH) {
         const batch = uniqueIds.slice(i, i + BATCH);
-        const items = await base44.entities.MeetingMinutes.filter(
-          { id: { $in: batch } },
-          "-meeting_date",
-          BATCH
-        );
+        const items = await base44.entities.MeetingMinutes.filter({ id: { $in: batch } }, "-meeting_date", BATCH);
         results.push(...items);
       }
       return results;
@@ -248,41 +198,34 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
   }, [isSearching, search]);
 
   const PAGE_SIZE = 20;
-  const { byWorkshop: concluidosIndex, byFollowupId: concluidosByFuid, sequenceByFollowupId } = useConcluidosIndex();
+  const { byFollowupId: concluidosByFuid } = useConcluidosIndex();
   const ataIds = reminders.map(r => r.ata_id).filter(Boolean);
   const atasIndex = useAtasIndex(ataIds);
 
   const proximoFuPorWorkshop = React.useMemo(() => {
     const mapa = {};
-    reminders
-      .filter(r => !r.is_completed && r.reminder_date >= today)
+    reminders.filter(r => !r.is_completed && r.reminder_date >= today)
       .sort((a, b) => (a.reminder_date || "").localeCompare(b.reminder_date || ""))
-      .forEach(r => {
-        if (!mapa[r.workshop_id]) mapa[r.workshop_id] = r;
-      });
+      .forEach(r => { if (!mapa[r.workshop_id]) mapa[r.workshop_id] = r; });
     return mapa;
   }, [reminders, today]);
 
   const PILLS = [
-    { id: "todos",      label: "Todos" },
-    { id: "atrasados",  label: "Vencidos" },
-    { id: "hoje",       label: "Hoje" },
-    { id: "urgentes",   label: "Urgentes" },
+    { id: "todos", label: "Todos" },
+    { id: "atrasados", label: "Vencidos" },
+    { id: "hoje", label: "Hoje" },
+    { id: "urgentes", label: "Urgentes" },
     { id: "concluidos", label: "Concluídos" },
-    { id: "criticos",   label: "🔴 Críticos" },
+    { id: "criticos", label: "🔴 Críticos" },
     { id: "por_empresa", label: "🏢 Por Empresa" },
   ];
 
   const searchTerm = search.trim().toLowerCase();
-
   const isConcluidosPill = filterPill === "concluidos" || filterPill === "criticos" || filterPill === "por_empresa";
   const sourceList = isConcluidosPill ? remindersConcluidos : reminders;
 
   const workshopIdsTodos = React.useMemo(
-    () => [...new Set([
-      ...remindersConcluidos.map(r => r.workshop_id),
-      ...reminders.map(r => r.workshop_id),
-    ].filter(Boolean))],
+    () => [...new Set([...remindersConcluidos.map(r => r.workshop_id), ...reminders.map(r => r.workshop_id)].filter(Boolean))],
     [remindersConcluidos, reminders]
   );
   const reunioesIndex = useReunioesIndex(workshopIdsTodos);
@@ -294,9 +237,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
       if (!mapa[r.workshop_id]) mapa[r.workshop_id] = { total: 0, critico: false };
       mapa[r.workshop_id].total++;
       const risco = reunioesIndex[r.workshop_id];
-      if (risco && (risco.nivel === "critico" || risco.nivel === "nunca" || (risco.atrasadas || 0) > 0)) {
-        mapa[r.workshop_id].critico = true;
-      }
+      if (risco && (risco.nivel === "critico" || risco.nivel === "nunca" || (risco.atrasadas || 0) > 0)) mapa[r.workshop_id].critico = true;
     });
     return mapa;
   }, [remindersConcluidos, reunioesIndex]);
@@ -305,34 +246,21 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
     const base = sourceList.filter(r => {
       if (searchTerm && !(r.workshop_name || "").toLowerCase().includes(searchTerm)) return false;
       if (filterPill === "concluidos") return true;
-      if (filterPill === "criticos") {
-        const risco = reunioesIndex[r.workshop_id];
-        return risco && (risco.nivel === "critico" || risco.nivel === "nunca");
-      }
+      if (filterPill === "criticos") { const risco = reunioesIndex[r.workshop_id]; return risco && (risco.nivel === "critico" || risco.nivel === "nunca"); }
       if (filterPill === "por_empresa") return true;
       if (filterPill === "atrasados") return !r.is_completed && r.reminder_date < today;
-      if (filterPill === "hoje")      return !r.is_completed && r.reminder_date === today;
-      if (filterPill === "urgentes")  return !r.is_completed && getDaysOverdue(r.reminder_date, today) >= 3;
+      if (filterPill === "hoje") return !r.is_completed && r.reminder_date === today;
+      if (filterPill === "urgentes") return !r.is_completed && getDaysOverdue(r.reminder_date, today) >= 3;
       return !r.is_completed;
     }).sort((a, b) => {
-      const sa = calcPriorityScore(a, today);
-      const sb = calcPriorityScore(b, today);
+      const sa = calcPriorityScore(a, today), sb = calcPriorityScore(b, today);
       if (sa !== sb) return sb - sa;
       return (a.reminder_date || "").localeCompare(b.reminder_date || "");
     });
-
     if (filterPill === "por_empresa") {
       const seen = new Set();
-      const sorted = [...base].sort((a, b) =>
-        (b.created_date || "").localeCompare(a.created_date || "")
-      );
-      return sorted.filter(r => {
-        if (seen.has(r.workshop_id)) return false;
-        seen.add(r.workshop_id);
-        return true;
-      });
+      return [...base].sort((a, b) => (b.created_date || "").localeCompare(a.created_date || "")).filter(r => { if (seen.has(r.workshop_id)) return false; seen.add(r.workshop_id); return true; });
     }
-
     return base;
   }, [sourceList, searchTerm, filterPill, today, reunioesIndex]);
 
@@ -343,19 +271,10 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
   const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const countAtrasados = reminders.filter(r => !r.is_completed && r.reminder_date < today).length;
-  const countHoje      = reminders.filter(r => !r.is_completed && r.reminder_date === today).length;
-  const countUrgentes  = reminders.filter(r => !r.is_completed && getDaysOverdue(r.reminder_date, today) >= 3).length;
+  const countHoje = reminders.filter(r => !r.is_completed && r.reminder_date === today).length;
+  const countUrgentes = reminders.filter(r => !r.is_completed && getDaysOverdue(r.reminder_date, today) >= 3).length;
   const countEmpresasCriticas = Object.values(fusPorEmpresa).filter(e => e.critico).length;
-
-  const countEmpresas = new Set(
-    reminders.filter(r =>
-      !r.is_completed && (
-        r.reminder_date < today ||
-        r.reminder_date === today ||
-        getDaysOverdue(r.reminder_date, today) >= 3
-      )
-    ).map(r => r.workshop_id)
-  ).size;
+  const countEmpresas = new Set(reminders.filter(r => !r.is_completed && (r.reminder_date < today || r.reminder_date === today || getDaysOverdue(r.reminder_date, today) >= 3)).map(r => r.workshop_id)).size;
 
   if (isLoading) return <div className="py-20 text-center text-gray-400 text-sm">Carregando...</div>;
 
@@ -363,132 +282,52 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
     <div className="space-y-4">
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-        <input
-          type="text"
-          value={search}
-          onChange={e => { setSearch(e.target.value); setIsSearching(true); }}
-          placeholder="Buscar cliente..."
-          className="w-full pl-9 pr-9 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent placeholder-gray-400"
-        />
-        {isSearching ? (
-          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
-        ) : search ? (
-          <button
-            onClick={() => setSearch("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        ) : null}
+        <input type="text" value={search} onChange={e => { setSearch(e.target.value); setIsSearching(true); }} placeholder="Buscar cliente..." className="w-full pl-9 pr-9 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent placeholder-gray-400" />
+        {isSearching ? <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" /> : search ? <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button> : null}
       </div>
 
       <div className="flex gap-3 text-sm">
-        <div className="flex items-center gap-2 bg-red-50 border border-red-100 rounded-lg px-3 py-1.5">
-          <AlertCircle className="w-3.5 h-3.5 text-red-500" />
-          <span className="font-semibold text-red-700">{countAtrasados}</span>
-          <span className="text-red-500 text-xs">vencidos</span>
+        <div className="flex items-center gap-2 bg-red-50 border border-red-100 rounded-lg px-3 py-1.5"><AlertCircle className="w-3.5 h-3.5 text-red-500" /><span className="font-semibold text-red-700">{countAtrasados}</span><span className="text-red-500 text-xs">vencidos</span></div>
+        <div className="flex items-center gap-2 bg-amber-50 border border-amber-100 rounded-lg px-3 py-1.5"><Clock className="w-3.5 h-3.5 text-amber-500" /><span className="font-semibold text-amber-700">{countHoje}</span><span className="text-amber-500 text-xs">hoje</span></div>
+        <div className="flex items-center gap-2 bg-orange-50 border border-orange-100 rounded-lg px-3 py-1.5"><AlertCircle className="w-3.5 h-3.5 text-orange-500" /><span className="font-semibold text-orange-700">{countUrgentes}</span><span className="text-orange-500 text-xs">urgentes</span></div>
+        <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-purple-100 transition-colors" onClick={() => onFilterPill("por_empresa")} title="Ver 1 por empresa">
+          <AlertCircle className="w-3.5 h-3.5 text-purple-500" /><span className="font-semibold text-purple-700">{countEmpresas}</span><span className="text-purple-500 text-xs">empresas</span>
+          {countEmpresasCriticas > 0 && <span className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-1 py-0.5 rounded-full">{countEmpresasCriticas}🔴</span>}
         </div>
-        <div className="flex items-center gap-2 bg-amber-50 border border-amber-100 rounded-lg px-3 py-1.5">
-          <Clock className="w-3.5 h-3.5 text-amber-500" />
-          <span className="font-semibold text-amber-700">{countHoje}</span>
-          <span className="text-amber-500 text-xs">hoje</span>
-        </div>
-        <div className="flex items-center gap-2 bg-orange-50 border border-orange-100 rounded-lg px-3 py-1.5">
-          <AlertCircle className="w-3.5 h-3.5 text-orange-500" />
-          <span className="font-semibold text-orange-700">{countUrgentes}</span>
-          <span className="text-orange-500 text-xs">urgentes</span>
-        </div>
-        <div
-          className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-purple-100 transition-colors"
-          onClick={() => onFilterPill("por_empresa")}
-          title="Ver 1 por empresa"
-        >
-          <AlertCircle className="w-3.5 h-3.5 text-purple-500" />
-          <span className="font-semibold text-purple-700">{countEmpresas}</span>
-          <span className="text-purple-500 text-xs">empresas</span>
-          {countEmpresasCriticas > 0 && (
-            <span className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-1 py-0.5 rounded-full">
-              {countEmpresasCriticas}🔴
-            </span>
-          )}
-        </div>
-
         {onSuporteRapido && (
-          <button
-            onClick={onSuporteRapido}
-            title="Suporte Rápido — atender cliente sem follow-up agendado"
-            className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition-colors text-amber-700 font-semibold text-xs"
-          >
-            <span className="text-sm leading-none">🛟</span>
-            Suporte
+          <button onClick={onSuporteRapido} title="Suporte Rápido — atender cliente sem follow-up agendado" className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition-colors text-amber-700 font-semibold text-xs">
+            <span className="text-sm leading-none">🛟</span>Suporte
           </button>
         )}
       </div>
 
       <div className="flex gap-1.5 flex-wrap">
         {PILLS.map(p => (
-          <button
-            key={p.id}
-            onClick={() => onFilterPill(p.id)}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
-              filterPill === p.id
-                ? "bg-gray-900 text-white border-gray-900"
-                : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
-            }`}
-          >
-            {p.label}
-          </button>
+          <button key={p.id} onClick={() => onFilterPill(p.id)} className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${filterPill === p.id ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"}`}>{p.label}</button>
         ))}
       </div>
 
       {filtered.length === 0 ? (
         <div className="py-16 flex flex-col items-center justify-center gap-3 text-center">
-          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
-            <StickyNote className="w-8 h-8 text-gray-300" />
-          </div>
-          <p className="text-sm font-medium text-gray-500">
-            {search ? "Nenhum resultado encontrado" : "Nenhum follow-up nesta categoria"}
-          </p>
-          <p className="text-xs text-gray-400 max-w-xs">
-            {search ? "Tente outro termo ou limpe a busca para ver todos." : "Crie um novo follow-up ou atenda um cliente via suporte rápido."}
-          </p>
+          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center"><StickyNote className="w-8 h-8 text-gray-300" /></div>
+          <p className="text-sm font-medium text-gray-500">{search ? "Nenhum resultado encontrado" : "Nenhum follow-up nesta categoria"}</p>
+          <p className="text-xs text-gray-400 max-w-xs">{search ? "Tente outro termo ou limpe a busca para ver todos." : "Crie um novo follow-up ou atenda um cliente via suporte rápido."}</p>
           <div className="flex items-center gap-2 mt-1">
-            {search && (
-              <button
-                onClick={() => setSearch("")}
-                className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Limpar busca
-              </button>
-            )}
-            {onSuporteRapido && (
-              <button
-                onClick={onSuporteRapido}
-                className="px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
-              >
-                🛟 Suporte rápido
-              </button>
-            )}
+            {search && <button onClick={() => setSearch("")} className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Limpar busca</button>}
+            {onSuporteRapido && <button onClick={onSuporteRapido} className="px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors">🛟 Suporte rápido</button>}
           </div>
         </div>
       ) : isConcluidosPill ? (
         <div className="rounded-lg border border-gray-200 overflow-x-auto bg-white">
           <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border-b border-gray-200 text-[11px] font-semibold text-gray-500 uppercase tracking-wide min-w-[1200px]">
             <div className="w-10 flex-shrink-0 text-center">#FU</div>
-            <div className="w-36 flex-shrink-0">
-              Cliente
-              {filterPill === "por_empresa" && (
-                <span className="ml-1 text-[9px] text-purple-500 normal-case font-normal">(1 por empresa)</span>
-              )}
-            </div>
+            <div className="w-36 flex-shrink-0">Cliente{filterPill === "por_empresa" && <span className="ml-1 text-[9px] text-purple-500 normal-case font-normal">(1 por empresa)</span>}</div>
             <div className="w-20 flex-shrink-0">Data</div>
             <div className="w-28 flex-shrink-0">Consultor Resp.</div>
             <div className="w-28 flex-shrink-0">Quem Realizou</div>
             <div className="w-20 flex-shrink-0">Humor</div>
             <div className="w-20 flex-shrink-0">Canal</div>
-            {filterPill === "por_empresa" && (
-              <div className="w-16 flex-shrink-0">Total FUs</div>
-            )}
+            {filterPill === "por_empresa" && <div className="w-16 flex-shrink-0">Total FUs</div>}
             <div className="w-20 flex-shrink-0">ATA</div>
             <div className="w-24 flex-shrink-0">Tipo</div>
             <div className="w-32 flex-shrink-0">Situação Reuniões</div>
@@ -502,20 +341,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
             const clientStats = statsByWorkshopId[r.workshop_id] ?? null;
             const risco = reunioesIndex[r.workshop_id] ?? null;
             const empresaInfo = filterPill === "por_empresa" ? fusPorEmpresa[r.workshop_id] : null;
-            return (
-              <FollowUpConcluidoRow
-                key={r.id}
-                completed={concluido}
-                reminder={r}
-                ata={ata}
-                totalFollowUps={seqFU}
-                totalDoCliente={clientStats?.total ?? null}
-                proximoFuPendente={proximoFuPorWorkshop[r.workshop_id]}
-                risco={risco}
-                empresaInfo={empresaInfo}
-                onSelect={() => setSelectedCompleted(r)}
-              />
-            );
+            return <FollowUpConcluidoRow key={r.id} completed={concluido} reminder={r} ata={ata} totalFollowUps={seqFU} totalDoCliente={clientStats?.total ?? null} proximoFuPendente={proximoFuPorWorkshop[r.workshop_id]} risco={risco} empresaInfo={empresaInfo} onSelect={() => setSelectedCompleted(r)} />;
           })}
         </div>
       ) : (
@@ -530,17 +356,9 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
           </div>
           {paginated.map((r, i) => (
             <FollowUpPendenteRow
-              key={r.id}
-              reminder={r}
-              today={today}
-              seqFU={seqByReminderId[r.id] ?? null}
-              score={calcPriorityScore(r, today)}
-              onSelect={onSelect}
-              isLast={i === paginated.length - 1}
-              meuId={meuId}
-              stats={statsByWorkshopId[r.workshop_id] ?? null}
-              isSelected={r.id === selectedReminderId}
-              risco={reunioesIndex[r.workshop_id] ?? null}
+              key={r.id} reminder={r} today={today} seqFU={seqByReminderId[r.id] ?? null} score={calcPriorityScore(r, today)}
+              onSelect={onSelect} isLast={i === paginated.length - 1} meuId={meuId}
+              stats={statsByWorkshopId[r.workshop_id] ?? null} isSelected={r.id === selectedReminderId} risco={reunioesIndex[r.workshop_id] ?? null}
             />
           ))}
         </div>
@@ -548,36 +366,16 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
 
       {filtered.length > PAGE_SIZE && (
         <div className="flex items-center justify-between pt-2">
-          <span className="text-xs text-gray-400">
-            {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} de {filtered.length}
-          </span>
+          <span className="text-xs text-gray-400">{(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} de {filtered.length}</span>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" /> Anterior
-            </button>
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"><ChevronLeft className="w-3.5 h-3.5" /> Anterior</button>
             <span className="text-xs text-gray-500">Página {currentPage} de {totalPages}</span>
-            <button
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Próxima <ChevronRight className="w-3.5 h-3.5" />
-            </button>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">Próxima <ChevronRight className="w-3.5 h-3.5" /></button>
           </div>
         </div>
       )}
 
-      <FollowUpCompletedDetailDrawer
-        followUp={selectedCompleted}
-        open={!!selectedCompleted}
-        onClose={() => setSelectedCompleted(null)}
-        seqNum={selectedCompleted ? seqByReminderId[selectedCompleted.id] : undefined}
-        stats={selectedCompleted ? statsByWorkshopId[selectedCompleted.workshop_id] : undefined}
-      />
+      <FollowUpCompletedDetailDrawer followUp={selectedCompleted} open={!!selectedCompleted} onClose={() => setSelectedCompleted(null)} seqNum={selectedCompleted ? seqByReminderId[selectedCompleted.id] : undefined} stats={selectedCompleted ? statsByWorkshopId[selectedCompleted.workshop_id] : undefined} />
     </div>
   );
 }
