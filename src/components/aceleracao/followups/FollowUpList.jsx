@@ -1,7 +1,6 @@
-import React, { useState, useMemo } from "react";
-import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Clock, CheckCircle2, StickyNote, CalendarCheck, MessageCircle, Phone, Mail, MapPin, Video, FileText, Target, Search, X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import { format, differenceInDays } from "date-fns";
+import React, { useState } from "react";
+import { AlertCircle, Clock, StickyNote, Search, X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { differenceInDays } from "date-fns";
 import { calcPriorityScore } from "./ds/PriorityScore";
 import FollowUpCompletedDetailDrawer from "@/components/aceleracao/FollowUpCompletedDetailDrawer";
 import FollowUpConcluidoRow from "@/components/aceleracao/FollowUpConcluidoRow.jsx";
@@ -111,14 +110,8 @@ function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendiment
 }
 
 // Hook para buscar ContractAttendance e ConsultoriaAtendimento em lote para workshops visíveis
-// 429/OOM-FIX: cap de workshops e itens por entidade para limitar volume de leitura.
-// Workshops além do cap ficam sem cálculo de risco (sem_dados) — trade-off aceitável
-// vs. estourar limite de tráfego / memória.
-const MAX_REUNIOES_WORKSHOPS = 200;
-const MAX_REUNIOES_ITEMS = 2000; // <= 5000 (limite global)
-
 function useReunioesIndex(workshopIds = []) {
-  const ids = [...new Set(workshopIds.filter(Boolean))].slice(0, MAX_REUNIOES_WORKSHOPS);
+  const ids = [...new Set(workshopIds.filter(Boolean))];
 
   const { data: contractData = [] } = useQuery({
     queryKey: ["contract-attendances-bulk", ids.sort().join(",")],
@@ -126,48 +119,42 @@ function useReunioesIndex(workshopIds = []) {
       if (ids.length === 0) return [];
       const BATCH = 100;
       const results = [];
-      for (let i = 0; i < ids.length && results.length < MAX_REUNIOES_ITEMS; i += BATCH) {
+      for (let i = 0; i < ids.length; i += BATCH) {
         const batch = ids.slice(i, i + BATCH);
-        const remaining = MAX_REUNIOES_ITEMS - results.length;
         const items = await base44.entities.ContractAttendance.filter(
           { workshop_id: { $in: batch } },
           "-scheduled_date",
-          Math.min(BATCH * 10, remaining)
+          BATCH * 10
         );
         results.push(...items);
       }
       return results;
     },
     enabled: ids.length > 0,
-    staleTime: 10 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    retry: 1,
-    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 
   const { data: consultoriaData = [] } = useQuery({
     queryKey: ["consultoria-atendimentos-bulk", ids.sort().join(",")],
     queryFn: async () => {
       if (ids.length === 0) return [];
-      const BATCH = 100;
+      const BATCH = 50;
       const results = [];
-      for (let i = 0; i < ids.length && results.length < MAX_REUNIOES_ITEMS; i += BATCH) {
+      for (let i = 0; i < ids.length; i += BATCH) {
         const batch = ids.slice(i, i + BATCH);
-        const remaining = MAX_REUNIOES_ITEMS - results.length;
         const items = await base44.entities.ConsultoriaAtendimento.filter(
           { workshop_id: { $in: batch } },
           "-data_agendada",
-          Math.min(100, remaining)
+          500
         );
         results.push(...items);
       }
       return results;
     },
     enabled: ids.length > 0,
-    staleTime: 10 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    retry: 1,
-    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 
   // Pré-indexa por workshop_id (Map) — O(n) uma vez, lookup O(1) por workshop
@@ -203,99 +190,61 @@ function useReunioesIndex(workshopIds = []) {
   return index;
 }
 
-const PROXIMO_PASSO_LABELS = {
-  reagendar: "Reagendar FU",
-  agendar: "Agendar reunião",
-  enviar: "Enviar material",
-  cancelar: "Cancelado",
-  concluir: "Concluído",
-  negociacao: "Avançar negociação",
-  fechamento: "Avançar fechamento",
-  nova_proposta: "Nova proposta",
-  agendar_reuniao: "Agendar reunião",
-  perdido: "Perdido",
-  nurturing: "Nurturing",
-};
-
 function getDaysOverdue(reminderDate, today) {
   if (!reminderDate) return 0;
-  const diff = differenceInDays(new Date(today), new Date(reminderDate + "T00:00:00"));
-  return diff;
+  return differenceInDays(new Date(today + "T00:00:00"), new Date(reminderDate + "T00:00:00"));
 }
 
-function isToday(reminderDate, today) {
-  return reminderDate === today;
-}
-
-// Busca os FollowUpConcluidos recentes para enriquecer os cards da lista.
-// OOM-FIX (Sprint 1A): o campo `pastedImages` pode conter base64 de screenshots
-// (MBs por registro). A row da lista NÃO usa esse campo (só campos leves) e o
-// drawer de detalhe busca o registro completo por id sob demanda. Removê-lo do
-// cache evita reterner dezenas de MBs em memória — causa raiz do OOM deste índice.
-function useConcluidosIndex(enabled = true) {
+// Busca todos os FollowUpConcluidos de uma vez para enriquecer os cards
+function useConcluidosIndex() {
   const { data = [] } = useQuery({
     queryKey: ["follow-up-concluidos-list-index-v2"],
-    queryFn: async () => {
-      const items = await base44.entities.FollowUpConcluido.list("-completedAt", 200);
-      return (Array.isArray(items) ? items : []).map(c => {
-        if (!c || !c.pastedImages) return c;
-        const { pastedImages: _drop, ...rest } = c;
-        return rest;
-      });
-    },
-    enabled,
+    queryFn: () => base44.entities.FollowUpConcluido.list("-completedAt", 2000),
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    retry: 1,
   });
 
-  // OOM-FIX: índices memoizados — antes eram reconstruídos a cada render (O(n) × frequência)
-  return useMemo(() => {
-    const byWorkshop = {};
-    const byFollowupId = {};
-    // sequenceByFollowupId: followup_id → número sequencial cronológico (#1, #2, #3...)
-    const sequenceByFollowupId = {};
+  const byWorkshop = {};
+  const byFollowupId = {};
+  // sequenceByFollowupId: followup_id → número sequencial cronológico (#1, #2, #3...)
+  const sequenceByFollowupId = {};
 
-    // Agrupa por workshop e ordena cronologicamente (ASC) para atribuir sequência
-    const byWorkshopRaw = {};
-    data.forEach(c => {
-      const wid = c.workshop_id;
-      if (!wid) return;
-      if (!byWorkshopRaw[wid]) byWorkshopRaw[wid] = [];
-      byWorkshopRaw[wid].push(c);
-      // índice por followup_id (último encontrado — há no máximo 1 por FU)
-      if (c.followup_id) byFollowupId[c.followup_id] = c;
-      // último concluído por workshop
-      if (!byWorkshop[wid] || new Date(c.completedAt) > new Date(byWorkshop[wid].completedAt)) {
-        byWorkshop[wid] = c;
-      }
-    });
+  // Agrupa por workshop e ordena cronologicamente (ASC) para atribuir sequência
+  const byWorkshopRaw = {};
+  data.forEach(c => {
+    const wid = c.workshop_id;
+    if (!wid) return;
+    if (!byWorkshopRaw[wid]) byWorkshopRaw[wid] = [];
+    byWorkshopRaw[wid].push(c);
+    // índice por followup_id (último encontrado — há no máximo 1 por FU)
+    if (c.followup_id) byFollowupId[c.followup_id] = c;
+    // último concluído por workshop
+    if (!byWorkshop[wid] || new Date(c.completedAt) > new Date(byWorkshop[wid].completedAt)) {
+      byWorkshop[wid] = c;
+    }
+  });
 
-    // Ordena cada workshop por completedAt ASC e atribui sequência #1, #2, #3...
-    // Chave: followup_id (= id do FollowUpReminder) OU id do próprio FollowUpConcluido
-    Object.entries(byWorkshopRaw).forEach(([wid, list]) => {
-      list
-        .slice()
-        .sort((a, b) => new Date(a.completedAt || a.created_date) - new Date(b.completedAt || b.created_date))
-        .forEach((c, idx) => {
-          const seq = idx + 1;
-          // chave primária: followup_id vincula ao FollowUpReminder.id
-          if (c.followup_id) sequenceByFollowupId[c.followup_id] = seq;
-          // chave secundária: id do próprio FollowUpConcluido (sem fallback cruzado)
-          if (c.id) sequenceByFollowupId[c.id] = seq;
-        });
-    });
+  // Ordena cada workshop por completedAt ASC e atribui sequência #1, #2, #3...
+  // Chave: followup_id (= id do FollowUpReminder) OU id do próprio FollowUpConcluido
+  Object.entries(byWorkshopRaw).forEach(([wid, list]) => {
+    list
+      .slice()
+      .sort((a, b) => new Date(a.completedAt || a.created_date) - new Date(b.completedAt || b.created_date))
+      .forEach((c, idx) => {
+        const seq = idx + 1;
+        // chave primária: followup_id vincula ao FollowUpReminder.id
+        if (c.followup_id) sequenceByFollowupId[c.followup_id] = seq;
+        // chave secundária: id do próprio FollowUpConcluido (sem fallback cruzado)
+        if (c.id) sequenceByFollowupId[c.id] = seq;
+      });
+  });
 
-    return { byWorkshop, byFollowupId, sequenceByFollowupId };
-  }, [data]);
+  return { byWorkshop, byFollowupId, sequenceByFollowupId };
 }
 
 // Busca ATAs pelo conjunto de ata_ids dos reminders ativos — sem limite de data
-const MAX_ATAS_IDS = 300; // 429/OOM-FIX: cap de ATAs para limitar requisições em lote
-
 function useAtasIndex(ataIds = []) {
-  const uniqueIds = [...new Set(ataIds.filter(Boolean))].slice(0, MAX_ATAS_IDS);
+  const uniqueIds = [...new Set(ataIds.filter(Boolean))];
   const { data = [] } = useQuery({
     queryKey: ["meeting-minutes-by-ids", uniqueIds.sort().join(",")],
     queryFn: async () => {
@@ -315,21 +264,14 @@ function useAtasIndex(ataIds = []) {
       return results;
     },
     enabled: uniqueIds.length > 0,
-    staleTime: 10 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    retry: 1,
-    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
   });
-  // OOM-FIX: índice memoizado — antes era reconstruído a cada render
-  return useMemo(() => {
-    const byId = {};
-    data.forEach(a => { if (a.id) byId[a.id] = a; });
-    return byId;
-  }, [data]);
+  const byId = {};
+  data.forEach(a => { if (a.id) byId[a.id] = a; });
+  return byId;
 }
 
-
-export default function FollowUpList({ reminders, remindersConcluidos = [], today, isLoading, onSelect, filterPill, onFilterPill, seqByReminderId = {}, statsByWorkshopId = {}, onSuporteRapido, meuId }) {
+export default function FollowUpList({ reminders, remindersConcluidos = [], today, isLoading, onSelect, filterPill, onFilterPill, seqByReminderId = {}, statsByWorkshopId = {}, onSuporteRapido, meuId, selectedReminderId }) {
   const [selectedCompleted, setSelectedCompleted] = useState(null);
   const [search, setSearch] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -342,13 +284,9 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
     return () => clearTimeout(t);
   }, [isSearching, search]);
   const PAGE_SIZE = 20;
-  // Índices de concluídos e ATAs só são usados nas rows de concluído (pills
-  // concluídos/críticos/por_empresa). Na view padrão (pendentes) eram leituras
-  // desperdiçadas — lazy-gate corta até ~7 leituras / ~500 registros por mount.
-  const isConcluidosPill = filterPill === "concluidos" || filterPill === "criticos" || filterPill === "por_empresa";
-  const { byWorkshop: concluidosIndex, byFollowupId: concluidosByFuid, sequenceByFollowupId } = useConcluidosIndex(isConcluidosPill);
-  // Extrai ata_ids apenas na view de concluídos (atasIndex só é usado nas rows de concluído)
-  const ataIds = isConcluidosPill ? reminders.map(r => r.ata_id).filter(Boolean) : [];
+  const { byWorkshop: concluidosIndex, byFollowupId: concluidosByFuid, sequenceByFollowupId } = useConcluidosIndex();
+  // Extrai todos os ata_ids dos reminders para buscar apenas as ATAs necessárias
+  const ataIds = reminders.map(r => r.ata_id).filter(Boolean);
   const atasIndex = useAtasIndex(ataIds);
 
   // Índice: workshop_id → próximo FU pendente com reminder_date >= hoje (para coluna Próx. Contato)
@@ -375,7 +313,8 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
 
   const searchTerm = search.trim().toLowerCase();
 
-  // (isConcluidosPill já definido acima para gate do useConcluidosIndex/atasIndex)
+  // Para pills de concluídos, críticos e por_empresa, usa a lista de concluídos
+  const isConcluidosPill = filterPill === "concluidos" || filterPill === "criticos" || filterPill === "por_empresa";
   const sourceList = isConcluidosPill ? remindersConcluidos : reminders;
 
   // Workshop IDs de TODOS os reminders visíveis (pendentes + concluídos)
@@ -655,6 +594,8 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
               isLast={i === paginated.length - 1}
               meuId={meuId}
               stats={statsByWorkshopId[r.workshop_id] ?? null}
+              isSelected={r.id === selectedReminderId}
+              risco={reunioesIndex[r.workshop_id] ?? null}
             />
           ))}
         </div>
