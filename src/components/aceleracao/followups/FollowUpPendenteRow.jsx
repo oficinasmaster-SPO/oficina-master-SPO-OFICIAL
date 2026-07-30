@@ -2,11 +2,16 @@ import React, { memo } from "react";
 import WorkshopAvatar from "./ds/WorkshopAvatar";
 import StatusBadge from "./ds/StatusBadge";
 import OriginBadge from "./ds/OriginBadge";
-import { ChannelDot } from "./ds/ChannelIcon";
 import { getDaysOverdue, formatDate, formatDateTime } from "./ds/dateUtils";
 
+// Limpa o prefixo automático de sprint para exibir só o conteúdo relevante
+function cleanNotesPreview(notes) {
+  if (!notes) return null;
+  return notes.replace(/^Follow-up automático da sprint:\s*/i, "").trim() || null;
+}
+
 const FollowUpPendenteRow = memo(({ reminder, today, seqFU, score, onSelect, isLast, meuId, stats }) => {
-  const consultor = reminder.consultor_principal_nome || reminder.consultor_nome || "—";
+  const consultor = reminder.consultor_principal_nome || reminder.consultor_nome || null;
   const isOtherConsultor =
     meuId &&
     reminder.consultor_principal_id &&
@@ -17,99 +22,105 @@ const FollowUpPendenteRow = memo(({ reminder, today, seqFU, score, onSelect, isL
   const isToday   = reminder.reminder_date === today;
   const days      = getDaysOverdue(reminder.reminder_date, today);
 
-  // Borda esquerda por urgência
   const borderColor = isOverdue
     ? "border-l-red-500"
     : isToday
     ? "border-l-amber-400"
     : "border-l-gray-200";
 
-  // Rótulo textual de status (acima do badge)
-  const statusLabel = isOverdue
-    ? days >= 3 ? `Urgente ${days}d` : `Vencido ${days}d`
-    : isToday
-    ? "Hoje"
-    : null;
+  const notesPreview = cleanNotesPreview(reminder.notes);
 
-  const statusLabelColor = isOverdue ? "text-red-600" : "text-amber-600";
+  // Progresso: concluidos / total
+  const pct = stats && stats.total > 0
+    ? Math.round((stats.concluidos / stats.total) * 100)
+    : 0;
 
   return (
     <div
       onClick={() => onSelect?.(reminder)}
       className={`
-        flex items-start gap-3 px-4 py-3
-        border-l-[3px] ${borderColor}
+        flex items-center border-l-[3px] ${borderColor}
         ${!isLast ? "border-b border-gray-100" : ""}
-        hover:bg-gray-50/70 cursor-pointer transition-colors
+        hover:bg-gray-50/60 cursor-pointer transition-colors
       `}
     >
-      {/* Avatar */}
-      <div className="flex-shrink-0 pt-0.5">
-        <WorkshopAvatar name={reminder.workshop_name} size="md" />
-      </div>
-
-      {/* Corpo principal */}
-      <div className="flex-1 min-w-0">
-
-        {/* Linha 1: Nome + tags */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-bold text-gray-900 leading-tight">
-            {seqFU != null ? `#${seqFU} ` : ""}{reminder.workshop_name || "Sem cliente"}
-          </span>
-          {isOtherConsultor && (
-            <span
-              className="text-[9px] font-medium text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded truncate max-w-[100px]"
-              title={`Consultor: ${consultor}`}
-            >
-              {consultor}
-            </span>
-          )}
-          <OriginBadge originType={reminder.origin_type} />
+      {/* ── CLIENTE ── flex-1 */}
+      <div className="flex-1 min-w-[240px] px-4 py-3 flex items-center gap-2.5 min-w-0">
+        <div className="flex-shrink-0">
+          <WorkshopAvatar name={reminder.workshop_name} size="md" />
         </div>
-
-        {/* Linha 2: Contadores FU */}
-        {stats && (
-          <p className="text-[11px] text-gray-500 mt-0.5 leading-tight">
-            {stats.total} FUs
-            {" · "}
-            <span className="text-emerald-600 font-medium">{stats.concluidos} ✓</span>
-            {" · "}
-            <span className="text-amber-600 font-medium">{stats.pendentes} pend.</span>
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-gray-900 truncate leading-tight">
+            {reminder.workshop_name || "Sem cliente"}
           </p>
-        )}
-
-        {/* Linha 3: Sequência */}
-        {seqFU != null && stats && (
-          <p className="text-[11px] text-blue-600 mt-0.5 leading-tight">
-            Follow-up #{seqFU} de {stats.total}
-          </p>
-        )}
-
-        {/* Linha 4: Datas + canal */}
-        <div className="flex items-center gap-2 mt-1 flex-wrap">
-          {reminder.created_date && (
-            <span className="text-[11px] text-gray-400">
-              Criado: {formatDateTime(reminder.created_date)}
-            </span>
-          )}
-          {reminder.reminder_date && (
-            <span className="text-[11px] text-gray-400">
-              · Agendado: {formatDate(reminder.reminder_date)}
-            </span>
-          )}
-          {reminder.canal_origem && (
-            <ChannelDot canal={reminder.canal_origem} />
+          {(notesPreview || isOtherConsultor) && (
+            <p className="text-[11px] text-gray-400 truncate mt-0.5 leading-tight">
+              {isOtherConsultor && consultor && (
+                <span className="text-blue-500 font-medium mr-1">{consultor} ·</span>
+              )}
+              {notesPreview}
+            </p>
           )}
         </div>
       </div>
 
-      {/* Coluna direita: status */}
-      <div className="flex-shrink-0 flex flex-col items-end gap-1 pt-0.5">
-        {statusLabel && (
-          <span className={`text-[11px] font-semibold ${statusLabelColor}`}>
-            {statusLabel}
+      {/* ── SEQ. ── 72px */}
+      <div className="w-[72px] flex-shrink-0 px-2 py-3">
+        {seqFU != null && stats ? (
+          <span className="text-[12px] font-bold text-blue-600 tabular-nums">
+            #{seqFU}/{stats.total}
           </span>
+        ) : seqFU != null ? (
+          <span className="text-[12px] font-bold text-blue-600 tabular-nums">#{seqFU}</span>
+        ) : (
+          <span className="text-gray-300">—</span>
         )}
+      </div>
+
+      {/* ── ORIGEM ── 200px */}
+      <div className="w-[200px] flex-shrink-0 px-2 py-3 flex flex-wrap gap-1">
+        <OriginBadge originType={reminder.origin_type} />
+      </div>
+
+      {/* ── FOLLOW-UPS ── 148px */}
+      <div className="w-[148px] flex-shrink-0 px-2 py-3">
+        {stats ? (
+          <>
+            <p className="text-[11px] text-gray-600 tabular-nums leading-tight">
+              {stats.total}
+              {" · "}
+              <span className="text-emerald-600 font-semibold">{stats.concluidos} ✓</span>
+              {" · "}
+              <span className="text-amber-600 font-semibold">{stats.pendentes}</span>
+            </p>
+            <div className="mt-1.5 w-full h-1 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-1 rounded-full bg-emerald-500 transition-all"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          </>
+        ) : (
+          <span className="text-gray-300 text-[11px]">—</span>
+        )}
+      </div>
+
+      {/* ── DATAS ── 176px */}
+      <div className="w-[176px] flex-shrink-0 px-2 py-3 space-y-0.5">
+        {reminder.created_date && (
+          <p className="text-[11px] text-gray-400 leading-tight">
+            Criado {formatDateTime(reminder.created_date)}
+          </p>
+        )}
+        {reminder.reminder_date && (
+          <p className="text-[11px] text-gray-400 leading-tight">
+            Agend. {formatDate(reminder.reminder_date)}
+          </p>
+        )}
+      </div>
+
+      {/* ── STATUS ── 112px */}
+      <div className="w-[112px] flex-shrink-0 px-3 py-3 flex justify-end">
         <StatusBadge reminder={reminder} today={today} />
       </div>
     </div>
