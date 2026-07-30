@@ -127,6 +127,46 @@
   animation: pulse-luma 3s ease-in-out infinite;
 }
 
+/* ── Botão "Iniciar Atendimento" — efeito de ondas (ripple) ── */
+.btn-ripple {
+  position: relative;
+  isolation: isolate;
+}
+
+.btn-ripple::before,
+.btn-ripple::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.btn-ripple::before {
+  animation: ripple-pulse 3s infinite;
+}
+
+.btn-ripple::after {
+  animation: ripple-pulse 3s infinite 1.5s;
+}
+
+@keyframes ripple-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  70% {
+    transform: scale(1.25);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.25);
+    opacity: 0;
+  }
+}
+
 @keyframes slide-up {
   from {
     transform: translateY(100%);

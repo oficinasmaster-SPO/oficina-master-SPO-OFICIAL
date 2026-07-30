@@ -294,7 +294,7 @@ function CockpitPanelInner({ reminder, seqNum, stats, today, onIniciarAtendiment
       <div className="flex-shrink-0 pb-2 mb-1">
         <Button
           onClick={() => onIniciarAtendimento?.(reminder)}
-          className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 gap-2"
+          className="btn-ripple w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 gap-2"
         >
           <PlayCircle className="w-4 h-4" />
           Iniciar Atendimento
