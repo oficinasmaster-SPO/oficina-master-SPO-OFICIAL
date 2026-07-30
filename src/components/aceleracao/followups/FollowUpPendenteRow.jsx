@@ -93,9 +93,9 @@ const FollowUpPendenteRow = memo(({
       </div>
 
       {/* ── CONSULTOR ── 140px */}
-      <div className="w-[140px] flex-shrink-0 px-2 py-2.5">
+      <div className="w-[140px] flex-shrink-0 px-2 py-2.5 overflow-hidden">
         {consultor ? (
-          <span className={`text-sm font-bold truncate leading-tight ${isOtherConsultor ? "text-blue-600" : "text-gray-900"}`} title={consultor}>
+          <span className={`block w-full text-sm font-bold truncate leading-tight ${isOtherConsultor ? "text-blue-600" : "text-gray-900"}`} title={consultor}>
             {consultor}
           </span>
         ) : (

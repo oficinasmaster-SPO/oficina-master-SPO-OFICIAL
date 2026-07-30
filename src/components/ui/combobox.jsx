@@ -50,8 +50,7 @@ export default function Combobox({
   const selected = optionMap.get(value);
 
   useEffect(() => {
-    if (process.env.NODE_ENV !== "production") {
-      if (value != null && options.length > 0) {
+    if (import.meta.env?.DEV !== false && value != null && options.length > 0) {
         const sampleOptionValue = getOptionValue(options[0]);
         if (typeof value !== typeof sampleOptionValue) {
           console.warn(
@@ -61,7 +60,6 @@ export default function Combobox({
             `Eles devem ser estritamente iguais (===) para a seleção funcionar corretamente.`
           );
         }
-      }
     }
   }, [value, options, getOptionValue]);
 
