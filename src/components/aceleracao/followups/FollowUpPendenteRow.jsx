@@ -21,37 +21,6 @@ function getAvatarColor(name) {
   return AVATAR_COLORS[sum % AVATAR_COLORS.length];
 }
 
-const ORIGIN_LABELS = {
-  ata: "FUAta",
-  suporte: "FUSp",
-  suporte_checkin: "FUSp",
-  tarefa_backlog: "Tarefa",
-  pedido_interno: "Pedido",
-  sprint: "Sprint",
-  manual: "Manual",
-  guarda_chuva: "Guarda-chuva",
-};
-
-const ORIGIN_BADGE_STYLES = {
-  FUAta: "bg-purple-50 text-purple-700",
-  FUSp: "bg-blue-50 text-blue-700",
-  Tarefa: "bg-orange-50 text-orange-700",
-  Pedido: "bg-cyan-50 text-cyan-700",
-  Sprint: "bg-emerald-50 text-emerald-700",
-  Manual: "bg-gray-100 text-gray-600",
-  "Guarda-chuva": "bg-amber-50 text-amber-700",
-};
-
-function formatDateTime(dateStr) {
-  if (!dateStr) return "—";
-  try {
-    const s = typeof dateStr === "string" ? dateStr : dateStr.toISOString();
-    return format(new Date(s), "dd/MM/yyyy, HH:mm");
-  } catch {
-    return "—";
-  }
-}
-
 function formatDate(dateStr) {
   if (!dateStr) return "—";
   try {
@@ -71,108 +40,179 @@ function getDaysOverdue(reminderDate, today) {
 
 function getStatusInfo(reminder, today) {
   if (reminder.is_completed) {
-    return { label: "Concluído", className: "bg-emerald-50 text-emerald-700" };
+    return { label: "Concluído", className: "bg-emerald-50 text-emerald-700 border-emerald-200" };
   }
-  const daysOverdue = getDaysOverdue(reminder.reminder_date, today);
+  const days = getDaysOverdue(reminder.reminder_date, today);
   if (reminder.reminder_date < today) {
-    if (daysOverdue >= 3) {
-      return {
-        label: `Urgente ${daysOverdue}d`,
-        className: "bg-red-50 text-red-700",
-        urgent: true,
-        days: daysOverdue,
-      };
+    if (days >= 3) {
+      return { label: `Urgente ${days}d`, className: "bg-red-100 text-red-700 border-red-300", urgent: true, days };
     }
-    return {
-      label: `Vencido ${daysOverdue}d`,
-      className: "bg-red-50 text-red-700",
-      days: daysOverdue,
-    };
+    return { label: `${days}d vencido`, className: "bg-red-50 text-red-600 border-red-200", days };
   }
   if (reminder.reminder_date === today) {
-    return { label: "Hoje", className: "bg-amber-50 text-amber-700" };
+    return { label: "Hoje", className: "bg-amber-50 text-amber-700 border-amber-200" };
   }
-  return { label: "Pendente", className: "bg-gray-100 text-gray-600" };
+  return { label: "Pendente", className: "bg-gray-100 text-gray-500 border-gray-200" };
 }
 
-const FollowUpPendenteRow = memo(({ reminder, today, seqFU, onSelect, isLast, meuId }) => {
+const ORIGIN_TAG = {
+  guarda_chuva:    { label: "💝 Encantamento",  cls: "bg-pink-50 text-pink-700 border-pink-200" },
+  suporte_checkin: { label: "🛟 Check-in Suporte", cls: "bg-orange-50 text-orange-700 border-orange-200" },
+  suporte:         { label: "🛟 Suporte",        cls: "bg-amber-50 text-amber-700 border-amber-200" },
+  ata:             { label: "📋 FU Ata",         cls: "bg-purple-50 text-purple-700 border-purple-200" },
+  pedido_interno:  { label: "📥 Pedido",         cls: "bg-cyan-50 text-cyan-700 border-cyan-200" },
+  sprint:          { label: "🏃 Sprint",          cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  tarefa_backlog:  { label: "✅ Tarefa",          cls: "bg-blue-50 text-blue-700 border-blue-200" },
+};
+
+const FollowUpPendenteRow = memo(({ reminder, today, seqFU, stats, onSelect, isLast, meuId }) => {
   const status = getStatusInfo(reminder, today);
   const isOverdue = !reminder.is_completed && reminder.reminder_date < today;
   const isToday = !reminder.is_completed && reminder.reminder_date === today;
 
   const avatarColor = getAvatarColor(reminder.workshop_name);
   const initials = getInitials(reminder.workshop_name);
+  const consultor = reminder.consultor_principal_nome || reminder.consultor_nome || null;
+  const isDelegated = meuId && reminder.consultor_principal_id && reminder.consultor_principal_id !== meuId && reminder.consultor_id !== meuId;
 
-  const originLabel = ORIGIN_LABELS[reminder.origin_type] || "Manual";
-  const originBadgeClass = ORIGIN_BADGE_STYLES[originLabel] || ORIGIN_BADGE_STYLES.Manual;
+  // Ticket reference for suporte_checkin
+  const ticketRef = reminder.suporte_ticket_id || reminder.ticket_reference || reminder.ticket_id || null;
+  const ataCodigo = reminder.ata_codigo || null;
 
-  const consultor = reminder.consultor_principal_nome || reminder.consultor_nome || "—";
+  // Note preview
+  const noteText = reminder.notas || reminder.notes || reminder.observacoes || reminder.last_note || null;
 
-  const rowBorder = isLast ? "" : "border-b border-gray-100";
-  const hoverClass = "hover:bg-gray-50/70 cursor-pointer";
+  // Origin tag
+  const originTag = ORIGIN_TAG[reminder.origin_type] || null;
+
+  // Left border accent
+  const borderAccent = isOverdue
+    ? "border-l-4 border-l-red-500"
+    : isToday
+    ? "border-l-4 border-l-amber-400"
+    : "border-l-4 border-l-gray-200";
+
+  const rowBg = isOverdue
+    ? "bg-red-50/20 hover:bg-red-50/40"
+    : isToday
+    ? "bg-amber-50/20 hover:bg-amber-50/40"
+    : "bg-white hover:bg-gray-50/70";
+
+  const separator = isLast ? "" : "border-b border-gray-100";
+
+  // Date display (right side)
+  const dateDisplay = (() => {
+    if (!reminder.reminder_date) return "—";
+    const days = getDaysOverdue(reminder.reminder_date, today);
+    if (reminder.reminder_date === today) return "Hoje";
+    if (isOverdue) return days >= 3 ? `${days}d vencido` : `${days}d vencido`;
+    try {
+      return format(new Date(reminder.reminder_date + "T12:00:00"), "dd/MM");
+    } catch {
+      return "—";
+    }
+  })();
 
   return (
     <div
       onClick={() => onSelect?.(reminder)}
-      className={`flex items-center px-4 py-3.5 ${rowBorder} ${hoverClass} transition-colors min-w-[1100px]`}
+      className={`flex gap-3 px-4 py-3.5 cursor-pointer transition-colors ${borderAccent} ${rowBg} ${separator}`}
     >
-      {/* # Sequencial */}
-      <div className="w-10 flex-shrink-0 text-center">
-        <span className="text-xs font-medium text-gray-400">
-          #{seqFU ?? "—"}
-        </span>
+      {/* Avatar */}
+      <div className="flex-shrink-0 pt-0.5">
+        <div className={`w-10 h-10 rounded-full ${avatarColor} flex items-center justify-center text-white text-sm font-bold`}>
+          {initials}
+        </div>
       </div>
 
-      {/* Cliente */}
-      <div className="flex-1 min-w-[180px] flex-shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className={`w-8 h-8 rounded-full ${avatarColor} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
-            {initials}
-          </div>
-          <span className="text-sm font-semibold text-gray-900 truncate">
-            {reminder.workshop_name || "Sem cliente"}
+      {/* Main content */}
+      <div className="flex-1 min-w-0 space-y-1">
+
+        {/* Line 1: workshop name + delegated indicator */}
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-sm font-bold text-gray-900 truncate">
+            {seqFU != null ? `#${seqFU} ` : ""}{reminder.workshop_name || "Sem cliente"}
           </span>
-          {meuId && reminder.consultor_principal_id && reminder.consultor_principal_id !== meuId && reminder.consultor_id !== meuId && (
-            <span className="flex-shrink-0 text-[9px] font-medium text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded truncate max-w-[100px]" title={`Consultor: ${reminder.consultor_principal_nome || reminder.consultor_nome}`}>
+          {isDelegated && (
+            <span className="flex-shrink-0 text-[9px] font-medium text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded truncate max-w-[120px]">
               {reminder.consultor_principal_nome || reminder.consultor_nome}
             </span>
           )}
         </div>
+
+        {/* Line 2: FU counter */}
+        {stats && (
+          <div className="text-[11px] text-gray-400">
+            <span className="font-medium text-gray-600">{stats.total}</span> FUs
+            {" · "}
+            <span className="font-medium text-emerald-600">{stats.concluidos}</span> ✓
+            {" · "}
+            <span className={`font-medium ${stats.pendentes > 0 ? "text-amber-600" : "text-gray-400"}`}>{stats.pendentes}</span> pend.
+          </div>
+        )}
+
+        {/* Line 3: FU sequence + consultor + ATA + time */}
+        <div className="flex items-center gap-1.5 flex-wrap text-[11px] text-gray-500">
+          {seqFU != null && stats && (
+            <span>Follow-up <span className="font-medium text-gray-700">#{seqFU}</span> de <span className="font-medium text-gray-700">{stats.total}</span></span>
+          )}
+          {consultor && (
+            <>
+              <span className="text-gray-300">·</span>
+              <span className="truncate max-w-[180px]">{consultor}</span>
+            </>
+          )}
+          {ataCodigo && (
+            <>
+              <span className="text-gray-300">·</span>
+              <span className="font-mono text-gray-600">{ataCodigo}</span>
+            </>
+          )}
+        </div>
+
+        {/* Line 4: Origin tag + ticket ref */}
+        {(originTag || ticketRef) && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {originTag && (
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${originTag.cls}`}>
+                {originTag.label}
+              </span>
+            )}
+            {ticketRef && (
+              <span className="text-[10px] text-gray-400 font-mono truncate max-w-[200px]">{ticketRef}</span>
+            )}
+          </div>
+        )}
+
+        {/* Line 5: Created + Scheduled dates */}
+        <div className="text-[11px] text-gray-400">
+          {reminder.created_date && (
+            <span>Criado: <span className="text-gray-500">{formatDate(reminder.created_date)}</span></span>
+          )}
+          {reminder.created_date && reminder.reminder_date && (
+            <span className="text-gray-300"> · </span>
+          )}
+          {reminder.reminder_date && (
+            <span>Agendado: <span className="text-gray-500">{formatDate(reminder.reminder_date)}</span></span>
+          )}
+        </div>
+
+        {/* Note preview */}
+        {noteText && (
+          <div className="mt-1 px-2.5 py-1.5 bg-amber-50 border-l-2 border-amber-300 rounded-r-md">
+            <p className="text-[11px] text-amber-800 leading-relaxed line-clamp-2">{noteText}</p>
+          </div>
+        )}
       </div>
 
-      {/* Tipo */}
-      <div className="w-28 flex-shrink-0">
-        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${originBadgeClass}`}>
-          {originLabel}
+      {/* Right side: date + status */}
+      <div className="flex-shrink-0 flex flex-col items-end gap-1.5 pt-0.5">
+        <span className={`text-xs font-semibold ${isOverdue ? "text-red-600" : isToday ? "text-amber-600" : "text-gray-500"}`}>
+          {dateDisplay}
         </span>
-      </div>
-
-      {/* Consultor */}
-      <div className="w-44 flex-shrink-0">
-        <span className="text-sm text-gray-700 truncate block">
-          {consultor}
-        </span>
-      </div>
-
-      {/* Data */}
-      <div className="w-36 flex-shrink-0">
-        <span className="text-sm text-gray-600">
-          {formatDate(reminder.reminder_date)}
-        </span>
-      </div>
-
-      {/* Criado em */}
-      <div className="w-36 flex-shrink-0">
-        <span className="text-sm text-gray-500">
-          {formatDateTime(reminder.created_date)}
-        </span>
-      </div>
-
-      {/* Status */}
-      <div className="w-28 flex-shrink-0 text-right ml-auto">
-        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold ${status.className}`}>
-          {isOverdue && <AlertCircle className="w-3 h-3 mr-1" />}
-          {isToday && <Clock className="w-3 h-3 mr-1" />}
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${status.className}`}>
+          {status.urgent && <AlertCircle className="w-2.5 h-2.5" />}
+          {isToday && !isOverdue && <Clock className="w-2.5 h-2.5" />}
           {status.label}
         </span>
       </div>

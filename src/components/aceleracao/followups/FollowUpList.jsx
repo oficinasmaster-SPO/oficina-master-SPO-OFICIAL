@@ -618,22 +618,14 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
           })}
         </div>
       ) : (
-        <div className="rounded-xl border border-gray-200 shadow-sm overflow-x-auto bg-white">
-          <div className="flex items-center px-4 py-3 bg-gray-50 border-b border-gray-200 text-[11px] font-bold text-gray-500 uppercase tracking-wide min-w-[1100px]">
-            <div className="w-10 flex-shrink-0 text-center">#</div>
-            <div className="flex-1 min-w-[180px] flex-shrink-0">Cliente</div>
-            <div className="w-28 flex-shrink-0">Tipo</div>
-            <div className="w-44 flex-shrink-0">Consultor</div>
-            <div className="w-36 flex-shrink-0">Data</div>
-            <div className="w-36 flex-shrink-0">Criado em</div>
-            <div className="w-28 flex-shrink-0 text-right ml-auto">Status</div>
-          </div>
+        <div className="rounded-xl border border-gray-200 shadow-sm overflow-hidden bg-white">
           {paginated.map((r, i) => (
             <FollowUpPendenteRow
               key={r.id}
               reminder={r}
               today={today}
               seqFU={seqByReminderId[r.id] ?? null}
+              stats={statsByWorkshopId[r.workshop_id] ?? null}
               onSelect={onSelect}
               isLast={i === paginated.length - 1}
               meuId={meuId}
