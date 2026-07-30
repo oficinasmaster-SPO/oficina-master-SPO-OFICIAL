@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import ReactDOM from "react-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -267,6 +268,30 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
     ? validFilaReminders[idxAtual + 1]
     : null;
   const isDirty = !!(canais.length > 0 || resultado || observacoes || compromissos || proximoPasso || pastedImages.length > 0);
+
+  // Observações do último atendimento do próximo cliente (preview no header)
+  const { data: proximoObs } = useQuery({
+    queryKey: ["proximo-cliente-obs", fuProximo?.workshop_id],
+    queryFn: async () => {
+      if (!fuProximo?.workshop_id) return null;
+      const concluidos = await base44.entities.FollowUpConcluido.filter(
+        { workshop_id: fuProximo.workshop_id },
+        "-completedAt",
+        1
+      );
+      const last = concluidos[0];
+      if (!last) return null;
+      const obsClean = last.observacoes
+        ? last.observacoes
+            .replace(/^\[SUPORTE\s+SUP-[^\]]+\]\s*/i, "")
+            .replace(/^\[Encerrado junto ao FU[^\]]+\]\s*/i, "")
+            .trim()
+        : null;
+      return { obs: obsClean, dataContato: last.dataContato, resultado: last.resultado };
+    },
+    enabled: !!fuProximo?.workshop_id,
+    staleTime: 2 * 60 * 1000,
+  });
 
   // ── Função central de troca de follow-up (sem fechar o modal) ──
    const trocarFollowUp = useCallback((novoFU) => {
@@ -1104,6 +1129,35 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
             >
               ▶
             </button>
+
+            {/* Preview do próximo cliente + tooltip com última observação do consultor */}
+            {fuProximo && (
+              <div className="group/next relative flex-shrink-0">
+                <button
+                  onClick={() => handleNavegar(fuProximo)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
+                >
+                  <span className="truncate max-w-[120px]">{fuProximo.workshop_name}</span>
+                </button>
+                <div className="absolute top-full right-0 mt-2 w-72 bg-gray-900 border border-gray-700 text-white rounded-lg p-3 opacity-0 invisible group-hover/next:opacity-100 group-hover/next:visible pointer-events-none transition-all z-50 shadow-2xl">
+                  <p className="font-bold text-xs mb-1.5 truncate">{fuProximo.workshop_name}</p>
+                  {proximoObs?.obs ? (
+                    <>
+                      {proximoObs.resultado && (
+                        <span className="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full mb-2 bg-gray-700 text-gray-200">{RESULTADO_LABELS[proximoObs.resultado] || proximoObs.resultado}</span>
+                      )}
+                      <p className="text-[10px] text-gray-400 mb-1 uppercase tracking-wide">Última observação do consultor</p>
+                      <p className="text-[11px] leading-snug line-clamp-5 text-gray-100">{proximoObs.obs}</p>
+                      {proximoObs.dataContato && (
+                        <p className="text-[9px] text-gray-500 mt-2">{format(new Date(proximoObs.dataContato + 'T00:00:00'), 'dd/MM/yyyy')}</p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-[11px] text-gray-500 italic">Sem observações registradas</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
         </div>
