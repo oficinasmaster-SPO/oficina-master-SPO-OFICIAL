@@ -6,6 +6,7 @@ import { Phone, MessageCircle, Mail, Video, MapPin, ChevronDown, ChevronUp, X, C
 import { Badge } from "@/components/ui/badge";
 import FollowUpConcluidoCard from "./FollowUpConcluidoCard";
 import { agruparFUsPorBatch } from "./FollowUpBatchClosureHelper";
+import InfoTooltip from "./ds/InfoTooltip";
 
 const CANAL_ICONS = {
   ligacao: Phone,
@@ -82,6 +83,11 @@ function ContatoCard({ contato, isFirst, workshopName }) {
     ? contato.observacoes.match(/\[SUPORTE\s+(SUP-[^\]]+)\]/i)?.[1]
     : null;
 
+  // Fechamento completo (observações limpas da tag de suporte) para o tooltip
+  const fechamentoFull = contato.observacoes
+    ? contato.observacoes.replace(/^\[SUPORTE\s+SUP-[^\]]+\]\s*/i, '')
+    : "Sem fechamento registrado.";
+
   return (
     <>
       {imgModalSrc && <ImageModal src={imgModalSrc} onClose={() => setImgModalSrc(null)} />}
@@ -90,40 +96,42 @@ function ContatoCard({ contato, isFirst, workshopName }) {
           ? (isFirst ? "border-amber-300 bg-amber-50" : "border-amber-200 bg-white")
           : (isFirst ? "border-red-200 bg-red-50" : "border-gray-200 bg-white")
       }`}>
-        {/* Header do card — sempre visível */}
-        <button
-          onClick={() => setExpanded(v => !v)}
-          className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-black/5 transition-colors text-left"
-        >
-          <div className="flex items-center gap-2 flex-wrap min-w-0">
-            {isFirst && <span className={`text-[9px] rounded px-1.5 py-0.5 font-bold flex-shrink-0 ${isSuporte ? "bg-amber-500 text-white" : "bg-red-600 text-white"}`}>ÚLTIMO</span>}
-            {/* Badge suporte */}
-            {isSuporte ? (
-              <span className="text-[9px] bg-amber-100 text-amber-700 border border-amber-300 rounded px-1.5 py-0.5 font-bold flex-shrink-0">
-                🛟 SUPORTE
+        {/* Header do card — tooltip com o fechamento completo ao pousar o mouse */}
+        <InfoTooltip content={fechamentoFull} side="right" maxW={360}>
+          <button
+            onClick={() => setExpanded(v => !v)}
+            className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-black/5 transition-colors text-left"
+          >
+            <div className="flex items-center gap-2 flex-wrap min-w-0">
+              {isFirst && <span className={`text-[9px] rounded px-1.5 py-0.5 font-bold flex-shrink-0 ${isSuporte ? "bg-amber-500 text-white" : "bg-red-600 text-white"}`}>ÚLTIMO</span>}
+              {/* Badge suporte */}
+              {isSuporte ? (
+                <span className="text-[9px] bg-amber-100 text-amber-700 border border-amber-300 rounded px-1.5 py-0.5 font-bold flex-shrink-0">
+                  🛟 SUPORTE
+                </span>
+              ) : (
+                /* Canais */
+                <div className="flex items-center gap-1">
+                  {canais.slice(0, 2).map(c => {
+                    const Icon = CANAL_ICONS[c] || MessageCircle;
+                    return <Icon key={c} className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />;
+                  })}
+                </div>
+              )}
+              {/* ID do suporte */}
+              {suporteId && (
+                <span className="text-[9px] text-amber-600 font-mono flex-shrink-0">{suporteId}</span>
+              )}
+              {/* Resultado */}
+              <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium flex-shrink-0 ${RESULTADO_COLORS[contato.resultado] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
+                {RESULTADO_LABELS[contato.resultado] || contato.resultado || "—"}
               </span>
-            ) : (
-              /* Canais */
-              <div className="flex items-center gap-1">
-                {canais.slice(0, 2).map(c => {
-                  const Icon = CANAL_ICONS[c] || MessageCircle;
-                  return <Icon key={c} className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />;
-                })}
-              </div>
-            )}
-            {/* ID do suporte */}
-            {suporteId && (
-              <span className="text-[9px] text-amber-600 font-mono flex-shrink-0">{suporteId}</span>
-            )}
-            {/* Resultado */}
-            <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium flex-shrink-0 ${RESULTADO_COLORS[contato.resultado] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
-              {RESULTADO_LABELS[contato.resultado] || contato.resultado || "—"}
-            </span>
-            {/* Data */}
-            <span className="text-[10px] text-gray-400 flex-shrink-0">{dataFormatada}</span>
-          </div>
-          {expanded ? <ChevronUp className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />}
-        </button>
+              {/* Data */}
+              <span className="text-[10px] text-gray-400 flex-shrink-0">{dataFormatada}</span>
+            </div>
+            {expanded ? <ChevronUp className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />}
+          </button>
+        </InfoTooltip>
 
         {/* Corpo expandido */}
         {expanded && (
