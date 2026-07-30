@@ -59,7 +59,7 @@ export default function CentralFollowUp() {
         user_status: 'ativo',
       }, 'full_name', 200);
       return employees
-        .filter(e => e.user_id && e.user_id !== user?.id)
+        .filter(e => e.user_id)
         .map(e => ({ id: e.user_id, full_name: e.full_name, email: e.email }))
         .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
     },
@@ -90,14 +90,13 @@ export default function CentralFollowUp() {
         {/* Consultant selector — DropdownMenu com checkmark no item selecionado */}
         {(() => {
           const selectedConsultor = consultores.find(c => c.id === consultorSelecionado);
-          // Default: usuário logado (user.id). "Meus Follow-ups" deixou de existir como opção.
+          // Default: usuário logado (user.id). O label usa o full_name do Employee (fonte canônica),
+          // assim "Rafael Marrafon" aparece mesmo que o User.full_name ainda seja "Aceleradora...".
           const triggerLabel = consultorSelecionado === 'todos'
             ? 'Todos os Consultores'
-            : consultorSelecionado === user?.id
-              ? (fullName || user?.email || 'Você')
-              : selectedConsultor
-                ? (selectedConsultor.full_name || selectedConsultor.email)
-                : (fullName || 'Consultor');
+            : selectedConsultor
+              ? (selectedConsultor.full_name || selectedConsultor.email)
+              : (fullName || user?.email || 'Consultor');
           const isSelected = (val) => consultorSelecionado === val;
           return (
             <DropdownMenu>
