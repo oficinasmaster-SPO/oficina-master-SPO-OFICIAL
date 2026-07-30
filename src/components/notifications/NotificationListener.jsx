@@ -1,41 +1,30 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNotificationPush } from './useNotificationPush';
 import { toast } from 'sonner';
-import { Bell, Clock, CheckCircle2, AlertTriangle, FileText } from 'lucide-react';
 
 export default function NotificationListener({ user }) {
   const queryClient = useQueryClient();
   const { permission, sendNotification } = useNotificationPush();
-  const [lastNotificationId, setLastNotificationId] = useState(null);
 
-  const { data: notifications = [] } = useQuery({
+  // Áudio instanciado uma única vez (fora do fluxo de renderização)
+  const somAlerta = useRef(typeof Audio !== "undefined" ? new Audio('/alerta.mp3') : null);
+
+  // Busca inicial para popular o sino/dropdown. staleTime maior pois as
+  // novidades virão pelo subscribe (tempo real), não por refetch.
+  useQuery({
     queryKey: ['notifications', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
       const allNotifications = await base44.entities.Notification.list('-created_date', 50);
-      return Array.isArray(allNotifications) 
+      return Array.isArray(allNotifications)
         ? allNotifications.filter(n => n.user_id === user.id && !n.is_read)
         : [];
     },
     enabled: !!user?.id,
-    staleTime: 2 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
-
-  useEffect(() => {
-    if (notifications.length === 0) return;
-
-    const latestNotification = notifications[0];
-    
-    // Só disparar se já tivermos visto uma notificação anterior (evita toast no primeiro render)
-    if (lastNotificationId && latestNotification.id !== lastNotificationId) {
-      showNotification(latestNotification);
-    }
-    
-    setLastNotificationId(prev => prev === latestNotification.id ? prev : latestNotification.id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notifications[0]?.id]); // Dep: somente o ID da última notificação — evita re-run em refetch sem mudança
 
   const showNotification = (notification) => {
     const icons = {
@@ -54,29 +43,60 @@ export default function NotificationListener({ user }) {
     };
 
     const icon = icons[notification.type] || '🔔';
-    
-    // Toast na aplicação
+
+    // Toca o som (catch captura bloqueio de autoplay do navegador)
+    if (somAlerta.current) {
+      somAlerta.current.play().catch(() => {/* Áudio bloqueado até interação */});
+    }
+
+    // Toast in-app
     toast(notification.title, {
       description: notification.message,
       icon: icon,
       duration: 8000,
       action: {
         label: 'Ver',
-        onClick: () => window.location.href = '/Notificacoes'
+        onClick: () => window.location.href = notification.link_acao || '/Notificacoes'
       }
     });
 
-    // Notificação push nativa do sistema (sempre dispara se tiver permissão)
+    // Push nativo do sistema (se permitido)
     if (permission === 'granted') {
       sendNotification(`${icon} ${notification.title}`, {
         body: notification.message,
         tag: notification.id,
         onClick: () => {
-          window.location.href = '/Notificacoes';
+          window.location.href = notification.link_acao || '/Notificacoes';
         }
       });
     }
   };
+
+  // Coração do tempo real: escuta eventos da entidade Notification
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const unsubscribe = base44.entities.Notification.subscribe((event) => {
+      // Nova notificação para este usuário
+      if (event.type === 'create' && event.data.user_id === user.id) {
+        // Atualização otimista do cache React Query — sincroniza o sino
+        queryClient.setQueryData(['notifications', user.id], (oldData = []) => {
+          return [event.data, ...oldData];
+        });
+        showNotification(event.data);
+      }
+
+      // Notificação marcada como lida (outra aba/dropdown) — remove do sino
+      if (event.type === 'update' && event.data.user_id === user.id && event.data.is_read) {
+        queryClient.setQueryData(['notifications', user.id], (oldData = []) => {
+          return oldData.filter(n => n.id !== event.data.id);
+        });
+      }
+    });
+
+    return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, permission]);
 
   return null;
 }
