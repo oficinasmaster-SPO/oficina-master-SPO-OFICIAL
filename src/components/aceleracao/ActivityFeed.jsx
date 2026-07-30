@@ -464,13 +464,17 @@ export function CommentInput({ entityType, entityId, workshopId, parentCommentId
     },
     onSuccess: (newComment) => {
       queryClient.invalidateQueries({ queryKey: ["taskComments", entityType, entityId] });
-      setContent(""); 
-      setAttachments([]); 
+      setContent("");
+      setAttachments([]);
       setIsInternal(false);
       setSubmitSuccess(true);
-      onSubmitted?.(newComment.id);
-      
+      // Guarda contra retorno inesperado da API (undefined/null)
+      onSubmitted?.(newComment?.id);
       setTimeout(() => setSubmitSuccess(false), 1200);
+    },
+    onError: (error) => {
+      console.error('Erro ao enviar comentário:', error);
+      toast.error('Não foi possível enviar o comentário. Tente novamente.');
     },
   });
 
