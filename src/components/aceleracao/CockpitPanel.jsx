@@ -65,7 +65,6 @@ function CockpitPanelInner({ reminder, seqNum, stats, today, onIniciarAtendiment
 
   return (
     <div className="space-y-3">
-      {/* Client header */}
       <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-3">
         <WorkshopAvatar name={reminder.workshop_name} size="md" />
         <div className="flex-1 min-w-0">
