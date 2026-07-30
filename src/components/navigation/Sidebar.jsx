@@ -4,7 +4,6 @@ import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Badge } from "@/components/ui/badge";
 import { usePermissions } from "@/components/hooks/usePermissions";
-import { pagePermissions as pagePermissionsMap } from "@/components/lib/pagePermissions";
 import { useUserType } from "@/hooks/useUserType";
 import { useAssistanceMode } from "@/components/hooks/useAssistanceMode";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
@@ -151,28 +150,9 @@ function UserProfileSection({ user, collapsed, workshop }) {
 
 export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const location = useLocation();
-  const { profile, currentRole, hasPermission, canAccessPage, permissions, loading: permissionsLoading } = usePermissions();
+  const { profile, currentRole, hasPermission, canAccessPage } = usePermissions();
   const { isInternal, isAcelerador, isAdmin } = useUserType();
 
-  React.useEffect(() => {
-    console.log('[SIDEBAR_PERMISSIONS]', {
-      userId: user?.id,
-      permissionsLoading,
-      permissionsCount: permissions?.length,
-      isAdmin,
-      isAcelerador,
-      profileId: profile?.id
-    });
-  }, [permissions, permissionsLoading, isAdmin]);
-
-  console.log('SIDEBAR_RENDER', {
-    permissionsCount: permissions?.length,
-    isLoading: permissionsLoading,
-    profileId: profile?.id,
-    profileName: profile?.name,
-    sidebarPermissionsCount: Object.keys(profile?.sidebar_permissions || {}).length,
-    modulesAllowedCount: profile?.modules_allowed?.length
-  });
   const { queryString } = useAssistanceMode();
   const { workshop: userWorkshop } = useWorkshopContext();
   const { getAdminUrl } = useAdminMode();
@@ -295,48 +275,6 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
       result = true;
       method = 'no_permission_required';
     }
-
-    // ── AUDITORIA SIDEBAR ──────────────────────────────────────────────────
-    // Logar apenas itens bloqueados OU itens específicos para debug
-    const AUDIT_PAGES = ['Colaboradores', 'GestaoOficina', 'DashboardOverview', 'Tarefas', 'HistoricoMetas'];
-    if (!result || pageKey && AUDIT_PAGES.includes(pageKey)) {
-      const requiredPerm = pagePermissionsMap[pageKey] ?? Object.entries(pagePermissionsMap).find(([k]) => k.toLowerCase() === String(pageKey).toLowerCase())?.[1];
-      const hasPermResult = requiredPerm ? permissions.includes(requiredPerm) : null;
-
-      console.log('MENU_CHECK', {
-        page: pageKey || item.name,
-        method,
-        result,
-        // A) permissions[] do PermissionsContext (systemRoles via profile.roles)
-        permissionsCount: permissions?.length,
-        permissionsArray: permissions,
-        // B) sidebar_permissions do UserProfile
-        sidebarPermissions: profile?.sidebar_permissions,
-        sidebarPermissionsCount: Object.keys(profile?.sidebar_permissions || {}).length,
-        // C) modules_allowed do UserProfile
-        modulesAllowed: profile?.modules_allowed,
-        modulesAllowedCount: profile?.modules_allowed?.length,
-        // Qual fonte está sendo usada:
-        // → canAccessPage usa pagePermissions[pageName] -> hasPermission() -> permissions[]
-        // → permissions[] vem de UserProfile.roles (systemRoles strings)
-        // → sidebar_permissions e modules_allowed NÃO são usados pelo canAccessItem
-        fonteUsada: 'A) permissions[] via UserProfile.roles (systemRoles)',
-        requiredPermissionForPage: requiredPerm,
-        hasPermissionResult: hasPermResult,
-        profileId: profile?.id,
-        profileName: profile?.name,
-        profileRoles: profile?.roles,
-        isOwnerOrPartner: permissions?.length > 50,
-        // Diagnóstico: qual condição falhou
-        diagnostico: !result ? [
-        !profile && 'SEM_PROFILE',
-        profile && (!profile.roles || profile.roles.length === 0) && 'PROFILE_SEM_ROLES',
-        profile?.roles?.length > 0 && requiredPerm && !permissions.includes(requiredPerm) && `PERMISSAO_FALTANDO: ${requiredPerm}`,
-        requiredPerm === undefined && 'PAGINA_NAO_MAPEADA_EM_pagePermissions (fail-close)'].
-        filter(Boolean) : ['OK']
-      });
-    }
-    // ─────────────────────────────────────────────────────────────────────
 
     return result;
   };

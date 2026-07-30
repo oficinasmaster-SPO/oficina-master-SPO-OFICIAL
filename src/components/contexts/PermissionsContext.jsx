@@ -97,8 +97,10 @@ export function PermissionsProvider({ children }) {
         granularConfig
       };
     },
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retry: 1,
     enabled: !!user && !!membership && !tenantLoading
   });
 
