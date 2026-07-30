@@ -3,7 +3,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Tabs } from "@/components/ui/tabs";
 import { RedTabsList, RedTabsTrigger } from "@/components/ui/RedTabs";
 import { base44 } from "@/api/base44Client";
-import { isValidWorkshopId } from "@/lib/workshopIdGuard";
 import { useAuth } from "@/lib/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +25,6 @@ import RelatoriosTab from "./RelatoriosTab";
 import TaxaRealizacaoRelatorio from "./TaxaRealizacaoRelatorio";
 import SugestoesAgendamentoTab from "./sugestoes/SugestoesAgendamentoTab";
 import { useFollowUpSequence } from "@/hooks/useFollowUpSequence";
-import { usePendentes, useConcluidos } from "./followups/useSharedFollowUpQueries";
 import IniciarAtendimentoModal from "@/components/aceleracao/IniciarAtendimentoModal";
 
 // ── Componentes de módulo (fora do corpo do componente para evitar re-mount) ──
@@ -34,20 +32,6 @@ import IniciarAtendimentoModal from "@/components/aceleracao/IniciarAtendimentoM
 // seqNum = número sequencial global do reminder (#1, #2...) vindo do useFollowUpSequence
 // stats = { total, concluidos, pendentes } do workshop desse reminder
 const ReminderRow = memo(({ reminder, today, showWorkshop, onComplete, onReopen, seqNum, stats }) => {
-  // 2B.3: registro inconsistente (workshop_id inválido) — sinaliza em vez de ocultar
-  if (!isValidWorkshopId(reminder.workshop_id)) {
-    return (
-      <div className="flex items-center gap-3 px-4 py-3 bg-red-50/50 border-l-2 border-red-400">
-        <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-        <div className="flex-1 min-w-0 text-xs text-red-700">
-          Registro inconsistente detectado. Contate o administrador.
-          <span className="block text-[10px] text-red-400 mt-0.5 truncate">
-            workshop_id: {reminder.workshop_id || "—"}
-          </span>
-        </div>
-      </div>
-    );
-  }
   const isOverdue = !reminder.is_completed && reminder.reminder_date < today;
   const displaySeq = seqNum ?? reminder.sequence_number ?? "?";
   return (
@@ -173,7 +157,7 @@ const TABS = [
   { id: "relatorios", label: "Relatórios" },
 ];
 
-export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId }) {
+export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId, onSelectForCockpit, selectedReminderId }) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
@@ -191,8 +175,25 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
 
   // ── Camada 1: sequência universal baseada em FollowUpReminder ──
   // Calculado APÓS carregar reminders — injetado em todas as sub-telas
-  // Sprint 3 — P1: cache único compartilhado com OperationSidebar (1 fetch serve ambos)
-  const { data: reminders = [], isLoading } = usePendentes(consultorEfetivo);
+  const { data: reminders = [], isLoading } = useQuery({
+    queryKey: ["follow-up-reminders-tab", consultorEfetivo],
+    queryFn: async () => {
+      // Busca TODOS os follow-ups pendentes do tenant (incluindo guarda-chuva)
+      // Se tiver consultor efetivo, filtra por ele OU traz follow-ups do sistema (guarda-chuva)
+      const query = { is_completed: false };
+      
+      if (consultorEfetivo) {
+        // Inclui follow-ups do consultor E follow-ups do sistema (guarda-chuva)
+        query.$or = [
+          { consultor_id: consultorEfetivo },
+          { origin_type: "guarda_chuva" }
+        ];
+      }
+      // Ordena por reminder_date para trazer os mais recentes primeiro
+      return base44.entities.FollowUpReminder.filter(query, "-reminder_date", 500);
+    },
+    staleTime: 2 * 60 * 1000,
+  });
 
   // Query separada para reminders CONCLUÍDOS (usada nas abas Concluídos e pill CRM)
   const { data: remindersConcluidos = [], isLoading: isLoadingConcluidos } = useQuery({
@@ -200,13 +201,9 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
     queryFn: async () => {
       const query = { is_completed: true };
       if (consultorEfetivo) query.consultor_id = consultorEfetivo;
-      const items = await base44.entities.FollowUpReminder.filter(query, "-completed_at", 200);
-      // 2B.3: NÃO esconde — preserva reminders inconsistentes para sinalização
-      return Array.isArray(items) ? items : [];
+      return base44.entities.FollowUpReminder.filter(query, "-completed_at", 500);
     },
     staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    retry: 1,
   });
 
   // Passa pendentes + concluídos para sequência real (#1/8, não #1/2)
@@ -234,18 +231,18 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
     }
   }, [reminders, user?.consulting_firm_id]);
 
-  // 2B.3: registra internamente reminders inconsistentes (workshop_id inválido) — nunca oculto
-  const remindersInconsistentes = useMemo(
-    () => reminders.filter(r => !isValidWorkshopId(r.workshop_id)),
-    [reminders]
-  );
-  useEffect(() => {
-    if (remindersInconsistentes.length === 0) return;
-    console.warn('⚠️ [FollowUp] Reminders inconsistentes (workshop_id inválido):', remindersInconsistentes.map(r => ({ id: r.id, workshop_id: r.workshop_id, workshop_name: r.workshop_name })));
-  }, [remindersInconsistentes]);
-
-  // Sprint 3 — P1: cache único compartilhado com OperationSidebar
-  const { data: concludedAttendances = [] } = useConcluidos(consultorEfetivo);
+  // Fetch dos atendimentos concluídos
+  const { data: concludedAttendances = [] } = useQuery({
+    queryKey: ["follow-up-concluidos-tab", consultorEfetivo],
+    queryFn: async () => {
+      const query = {};
+      if (consultorEfetivo) {
+        query.consultor_id = consultorEfetivo;
+      }
+      return base44.entities.FollowUpConcluido.filter(query, "-completedAt", 500);
+    },
+    staleTime: 2 * 60 * 1000,
+  });
 
   // Fetch dos FollowUpContadores (acompanhamento)
   const { data: followUpContadores = [], isLoading: isLoadingContadores } = useQuery({
@@ -253,11 +250,9 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
     queryFn: async () => {
       const query = {};
       if (consultorEfetivo) query.consultor_id = consultorEfetivo;
-      return base44.entities.FollowUpContador.filter(query, "-data_criacao", 200);
+      return base44.entities.FollowUpContador.filter(query, "-data_criacao", 500);
     },
     staleTime: 3 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    retry: 1,
   });
 
   const fuContadoresAtivos = useMemo(() =>
@@ -418,6 +413,18 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
     return Object.entries(map).sort(([a], [b]) => a.localeCompare(b));
   }, [reminders, searchTerm]);
 
+  const handleCrmSelect = useCallback((reminder) => {
+    if (onSelectForCockpit) {
+      onSelectForCockpit(
+        reminder,
+        seqByReminderId[reminder.id] ?? null,
+        statsByWorkshopId[reminder.workshop_id] ?? null,
+      );
+    } else {
+      setSelectedReminder(reminder);
+    }
+  }, [onSelectForCockpit, seqByReminderId, statsByWorkshopId]);
+
   const toggleFolder = (key) => setOpenFolders(prev => ({ ...prev, [key]: !prev[key] }));
   const expandAll = () => {
     const all = {};
@@ -451,14 +458,6 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
           <span className="w-2 h-2 rounded-full bg-green-400 inline-block" />
           <span className="font-medium text-gray-700">{counts.concluidos}</span> concluídos
         </span>
-
-        {/* Debug badge - guarda-chuva */}
-        {reminders.length > 0 && (
-          <span className="flex items-center gap-1.5 ml-2">
-            <span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />
-            <span className="font-medium text-blue-700">{reminders.filter(r => r.origin_type === 'guarda_chuva').length}</span> guarda-chuva
-          </span>
-        )}
 
         {/* Refresh button */}
         <Button
@@ -526,7 +525,24 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
 
       {/* CRM Tab */}
       {activeTab === "crm" && (
-        selectedReminder ? (
+        onSelectForCockpit ? (
+          // Cockpit mode: list always visible, row click updates cockpit panel
+          <FollowUpList
+            reminders={reminders}
+            remindersConcluidos={remindersConcluidos}
+            today={today}
+            isLoading={isLoading || isLoadingConcluidos}
+            onSelect={handleCrmSelect}
+            filterPill={crmFilterPill}
+            onFilterPill={setCrmFilterPill}
+            seqByReminderId={seqByReminderId}
+            statsByWorkshopId={statsByWorkshopId}
+            onSuporteRapido={() => setShowSuporteRapido(true)}
+            meuId={meuId}
+            selectedReminderId={selectedReminderId}
+          />
+        ) : selectedReminder ? (
+          // Legacy mode: navigate to detail view
           <FollowUpDetail
             reminder={selectedReminder}
             today={today}
@@ -706,28 +722,22 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
           ) : listConcluidos.length === 0 ? (
             <EmptyState label="Nenhum follow-up concluído" />
           ) : (
-            <Card className="border-gray-200 overflow-x-auto">
-              <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border-b border-gray-200 text-[11px] font-semibold text-gray-500 uppercase tracking-wide min-w-[1200px]">
-                <div className="w-10 flex-shrink-0 text-center">#FU</div>
-                <div className="w-36 flex-shrink-0">Cliente</div>
-                <div className="w-20 flex-shrink-0">Data</div>
-                <div className="w-28 flex-shrink-0">Consultor Resp.</div>
-                <div className="w-28 flex-shrink-0">Quem Realizou</div>
-                <div className="w-20 flex-shrink-0">Humor</div>
+            <Card className="overflow-hidden border-gray-200">
+              <div className="flex items-center gap-4 px-4 py-2.5 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-600">
+                <div className="w-24 flex-shrink-0">Data</div>
+                <div className="w-28 flex-shrink-0">Consultor</div>
                 <div className="w-20 flex-shrink-0">Canal</div>
-                <div className="w-20 flex-shrink-0">ATA</div>
-                <div className="w-24 flex-shrink-0">Tipo</div>
-                <div className="w-32 flex-shrink-0">Situação Reuniões</div>
-                <div className="w-24 flex-shrink-0">Próx. Contato</div>
                 <div className="flex-shrink-0 ml-auto">Status</div>
               </div>
-              {listConcluidos.map(item => (
-                <FollowUpConcluidoRow
-                  key={item.id}
-                  completed={item._attendanceData || item}
-                  onSelect={() => setSelectedConcluido(item)}
-                />
-              ))}
+              <div className="divide-y divide-gray-100">
+                {listConcluidos.map(item => (
+                  <FollowUpConcluidoRow
+                    key={item.id}
+                    completed={item._attendanceData || item}
+                    onSelect={() => setSelectedConcluido(item)}
+                  />
+                ))}
+              </div>
             </Card>
           )}
           {selectedConcluido && (
