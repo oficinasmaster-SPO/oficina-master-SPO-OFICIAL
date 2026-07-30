@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import FollowUpsTab from '@/components/aceleracao/FollowUpsTab';
-import CockpitPanel from '@/components/aceleracao/CockpitPanel';
+import SidePanel from '@/components/aceleracao/followups/SidePanel';
 import NewFollowUpFAB from '@/components/aceleracao/NewFollowUpFAB';
 import IniciarAtendimentoModal from '@/components/aceleracao/IniciarAtendimentoModal';
 import { useAuth } from '@/lib/AuthContext';
@@ -32,9 +32,37 @@ export default function CentralFollowUp() {
   const [showAtendimento, setShowAtendimento] = useState(false);
   const [atendimentoReminder, setAtendimentoReminder] = useState(null);
 
+  // Central Operacional state
+  const [prioridadeData, setPrioridadeData] = useState(null);
+  const [activePill, setActivePill] = useState("todos");
+  const [crmFilterPill, setCrmFilterPill] = useState("todos");
+
+  const PILL_MAP = {
+    sp_sem_followup: "por_empresa",
+    sp_sem_contato_7d: "atrasados",
+    sp_nao_respondeu: "concluidos",
+    sp_pedidos_abertos: "concluidos",
+    sp_vencidos: "atrasados",
+    sp_sem_contato_registrado: "por_empresa",
+  };
+
   const handleSelectForCockpit = useCallback((reminder, seqNum, stats) => {
     setCockpit({ reminder, seqNum, stats });
   }, []);
+
+  const handlePrioridadeClick = useCallback((spId) => {
+    setActivePill(spId);
+    setCrmFilterPill(PILL_MAP[spId] || "todos");
+  }, []);
+
+  const handleCrmFilterPillChange = useCallback((pillId) => {
+    setCrmFilterPill(pillId);
+    setActivePill(pillId);
+  }, []);
+
+  const handleSelectReminder = useCallback((r) => {
+    handleSelectForCockpit(r, null, null);
+  }, [handleSelectForCockpit]);
 
   const handleIniciarAtendimento = useCallback((reminder) => {
     setAtendimentoReminder(reminder);
@@ -126,16 +154,23 @@ export default function CentralFollowUp() {
             consultorSelecionado={consultorSelecionado}
             onConsultorChange={setConsultorSelecionado}
             consultores={consultores}
+            crmFilterPill={crmFilterPill}
+            onCrmFilterPillChange={handleCrmFilterPillChange}
+            onPrioridadeData={setPrioridadeData}
           />
         </div>
         <div className="hidden lg:block sticky top-20">
-          <CockpitPanel
+          <SidePanel
             reminder={cockpit.reminder}
             seqNum={cockpit.seqNum}
             stats={cockpit.stats}
             today={today}
             onIniciarAtendimento={handleIniciarAtendimento}
             onClear={handleClearCockpit}
+            prioridadeData={prioridadeData}
+            activePill={activePill}
+            onPrioridadeClick={handlePrioridadeClick}
+            onSelectReminder={handleSelectReminder}
           />
         </div>
       </div>

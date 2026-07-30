@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { differenceInDays } from "date-fns";
 import {
-  PlayCircle, X, MousePointerClick,
+  PlayCircle, MousePointerClick, ArrowLeft,
   Phone, MessageCircle, Mail, Video, MapPin,
   ChevronDown, ChevronUp, Sparkles,
 } from "lucide-react";
@@ -319,10 +319,11 @@ function CockpitPanelInner({ reminder, seqNum, stats, today, onIniciarAtendiment
           {onClear && (
             <button
               onClick={onClear}
-              className="flex-shrink-0 text-gray-300 hover:text-gray-500 transition-colors p-1 rounded"
-              title="Fechar cockpit"
+              className="flex-shrink-0 text-[11px] font-semibold text-gray-400 hover:text-gray-700 transition-colors px-2 py-1 rounded flex items-center gap-1"
+              title="Voltar à Central Operacional"
             >
-              <X className="w-4 h-4" />
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Central Operacional
             </button>
           )}
         </div>

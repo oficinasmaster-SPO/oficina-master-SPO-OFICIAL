@@ -167,6 +167,41 @@
   }
 }
 
+/* ── Side Panel — Central Operacional ↔ Cockpit (flip 3D) ── */
+.side-panel { position: relative; }
+
+/* Bolinha verde — painel vivo (pulso lento a cada 4s) */
+.live-dot {
+  animation: live-dot-pulse 4s ease-in-out infinite;
+}
+@keyframes live-dot-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+/* Ripple Material nos metric cards */
+.metric-card { position: relative; overflow: hidden; }
+.metric-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.12);
+  transform: scale(0);
+  animation: metric-ripple-anim 600ms ease-out;
+  pointer-events: none;
+}
+@keyframes metric-ripple-anim {
+  to { transform: scale(2.5); opacity: 0; }
+}
+
+/* Entrada suave do conteúdo do cockpit após flip */
+.cockpit-enter {
+  animation: cockpit-enter 350ms ease-out;
+}
+@keyframes cockpit-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes slide-up {
   from {
     transform: translateY(100%);

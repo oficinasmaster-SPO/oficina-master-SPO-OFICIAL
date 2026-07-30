@@ -158,7 +158,7 @@ const TABS = [
   { id: "relatorios", label: "Relatórios" },
 ];
 
-export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId, onSelectForCockpit, selectedReminderId, onIniciarAtendimento, consultorSelecionado, onConsultorChange, consultores = [] }) {
+export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId, onSelectForCockpit, selectedReminderId, onIniciarAtendimento, consultorSelecionado, onConsultorChange, consultores = [], crmFilterPill: propCrmFilterPill, onCrmFilterPillChange, onPrioridadeData }) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
@@ -167,7 +167,9 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId,
 
   // CRM sub-state
   const [selectedReminder, setSelectedReminder] = useState(null);
-  const [crmFilterPill, setCrmFilterPill] = useState("todos");
+  const [internalCrmFilterPill, setInternalCrmFilterPill] = useState("todos");
+  const crmFilterPill = onCrmFilterPillChange ? (propCrmFilterPill ?? "todos") : internalCrmFilterPill;
+  const setCrmFilterPill = onCrmFilterPillChange || setInternalCrmFilterPill;
   const [selectedConcluido, setSelectedConcluido] = useState(null);
   const [animating, setAnimating] = useState(false);
   const [showSuporteRapido, setShowSuporteRapido] = useState(false);
@@ -210,6 +212,13 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId,
   // Passa pendentes + concluídos para sequência real (#1/8, não #1/2)
   const allRemindersForSeq = useMemo(() => [...reminders, ...remindersConcluidos], [reminders, remindersConcluidos]);
   const { seqByReminderId, statsByWorkshopId } = useFollowUpSequence(allRemindersForSeq);
+
+  // Reporta dados de reminders para a Central Operacional (SidePanel)
+  useEffect(() => {
+    if (onPrioridadeData) {
+      onPrioridadeData({ reminders, remindersConcluidos });
+    }
+  }, [reminders, remindersConcluidos, onPrioridadeData]);
 
   // Verificação defensiva de vazamento de tenant
   useEffect(() => {
