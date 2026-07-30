@@ -197,6 +197,15 @@
 .cockpit-enter {
   animation: cockpit-enter 350ms ease-out;
 }
+
+/* Bolinha "Em atendimento" — pulso lento a cada 2s */
+.atendimento-dot {
+  animation: atendimento-dot-pulse 2s ease-in-out infinite;
+}
+@keyframes atendimento-dot-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
 @keyframes cockpit-enter {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
