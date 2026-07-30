@@ -1,4 +1,5 @@
 import React, { memo } from "react";
+import { PlayCircle } from "lucide-react";
 import WorkshopAvatar from "./ds/WorkshopAvatar";
 import StatusBadge from "./ds/StatusBadge";
 import OriginBadge from "./ds/OriginBadge";
@@ -20,7 +21,7 @@ function riscoToDotColor(risco) {
 }
 
 const FollowUpPendenteRow = memo(({
-  reminder, today, seqFU, score, onSelect, isLast, meuId, stats, isSelected, risco,
+  reminder, today, seqFU, score, onSelect, isLast, meuId, stats, isSelected, risco, onIniciarAtendimento,
 }) => {
   const consultor = reminder.consultor_principal_nome || reminder.consultor_nome || null;
   const isOtherConsultor =
@@ -52,7 +53,7 @@ const FollowUpPendenteRow = memo(({
     <div
       onClick={() => onSelect?.(reminder)}
       className={`
-        flex items-center border-l-[3px] ${borderColor}
+        group flex items-center border-l-[3px] ${borderColor}
         ${!isLast ? "border-b border-gray-100" : ""}
         ${isSelected
           ? "bg-blue-50/60 hover:bg-blue-50/80"
@@ -143,7 +144,16 @@ const FollowUpPendenteRow = memo(({
       </div>
 
       {/* ── STATUS ── 112px */}
-      <div className="w-[112px] flex-shrink-0 px-3 py-2.5 flex justify-end">
+      <div className="w-[112px] flex-shrink-0 px-3 py-2.5 flex items-center justify-end gap-2">
+        {onIniciarAtendimento && (
+          <button
+            onClick={e => { e.stopPropagation(); onIniciarAtendimento(reminder); }}
+            className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 p-1 rounded-md hover:bg-red-50 text-red-400 hover:text-red-600"
+            title="Iniciar atendimento"
+          >
+            <PlayCircle className="w-3.5 h-3.5" />
+          </button>
+        )}
         <StatusBadge reminder={reminder} today={today} />
       </div>
     </div>

@@ -271,7 +271,7 @@ function useAtasIndex(ataIds = []) {
   return byId;
 }
 
-export default function FollowUpList({ reminders, remindersConcluidos = [], today, isLoading, onSelect, filterPill, onFilterPill, seqByReminderId = {}, statsByWorkshopId = {}, onSuporteRapido, meuId, selectedReminderId }) {
+export default function FollowUpList({ reminders, remindersConcluidos = [], today, isLoading, onSelect, filterPill, onFilterPill, seqByReminderId = {}, statsByWorkshopId = {}, onSuporteRapido, meuId, selectedReminderId, onIniciarAtendimento }) {
   const [selectedCompleted, setSelectedCompleted] = useState(null);
   const [search, setSearch] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -596,6 +596,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
               stats={statsByWorkshopId[r.workshop_id] ?? null}
               isSelected={r.id === selectedReminderId}
               risco={reunioesIndex[r.workshop_id] ?? null}
+              onIniciarAtendimento={onIniciarAtendimento}
             />
           ))}
         </div>

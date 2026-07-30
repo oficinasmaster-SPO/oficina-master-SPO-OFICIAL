@@ -154,6 +154,7 @@ export default function CentralFollowUp() {
             userId={user?.id}
             onSelectForCockpit={handleSelectForCockpit}
             selectedReminderId={cockpit.reminder?.id}
+            onIniciarAtendimento={handleIniciarAtendimento}
           />
         </div>
         <div className="hidden lg:block sticky top-20">
