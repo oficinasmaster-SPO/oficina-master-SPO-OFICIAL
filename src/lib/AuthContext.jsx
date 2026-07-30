@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 import { getEffectiveUser } from '@/components/hooks/useImpersonation';
+import { initCrossTabSync, AUTH_EXPIRED_EVENT } from '@/lib/sessionManager';
 
 const AuthContext = createContext();
 
@@ -31,7 +32,23 @@ export const AuthProvider = ({ children }) => {
       } catch {}
     };
     window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+
+    // Sincroniza logout entre abas (outra aba removeu o token).
+    initCrossTabSync();
+
+    // Quando o sessionManager detecta expiração, zera o estado de auth imediatamente
+    // (antes do redirect) para a árvore React refletir o logout.
+    const onAuthExpired = () => {
+      setUser(null);
+      setAuthUser(null);
+      setIsAuthenticated(false);
+    };
+    window.addEventListener(AUTH_EXPIRED_EVENT, onAuthExpired);
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      window.removeEventListener(AUTH_EXPIRED_EVENT, onAuthExpired);
+    };
   }, []);
 
   const checkAppState = async () => {

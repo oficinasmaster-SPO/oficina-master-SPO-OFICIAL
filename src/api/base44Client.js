@@ -1,5 +1,6 @@
 import { createClient } from '@base44/sdk';
 import { appParams } from '@/lib/app-params';
+import { handleAuthExpired } from '@/lib/sessionManager';
 
 // --- Request Queue and Deduplication for Concurrency Control ---
 const originalFetch = window.fetch;
@@ -61,6 +62,14 @@ class RequestQueue {
         
         originalFetch(url, options)
             .then(async (res) => {
+                // SESSION-FIX: detecta 401 (token expirado) e dispara logout centralizado.
+                // Só trata respostas da API da Base44 — evita falsos positivos em outros hosts.
+                if (res.status === 401) {
+                    const urlStr = typeof url === 'string' ? url : (url?.url || '');
+                    if (urlStr.includes(appParams.serverUrl) || urlStr.includes('/api/')) {
+                        handleAuthExpired('expired');
+                    }
+                }
                 // Intercept limit exceeded responses
                 if (res.status === 403 || res.status === 429) {
                     try {
