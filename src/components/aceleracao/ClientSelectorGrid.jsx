@@ -72,7 +72,7 @@ export default function ClientSelectorGrid({ onSelect, onClose }) {
       onMouseDown={handleBackdropClick}
     >
       <div 
-        className="bg-white rounded-lg shadow-2xl w-[90vw] max-w-4xl max-h-[85vh] flex flex-col pointer-events-auto"
+        className="bg-white rounded-lg shadow-2xl w-[90vw] max-w-4xl h-[85vh] max-h-[900px] flex flex-col pointer-events-auto overflow-hidden"
         onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
       >
@@ -145,11 +145,22 @@ export default function ClientSelectorGrid({ onSelect, onClose }) {
           </div>
         </div>
 
-        {/* Grid de Clientes */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        {/* Grid de Clientes — única área com scroll */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 scrollbar-thin">
         {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 content-start">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="p-4 rounded-lg border border-gray-200 bg-white">
+                <div className="h-4 w-20 bg-gray-200 rounded animate-pulse mb-3" />
+                <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse mb-2" />
+                <div className="h-2 w-1/2 bg-gray-100 rounded animate-pulse mb-3" />
+                <div className="space-y-1.5 pt-2 border-t border-gray-100">
+                  <div className="h-3 w-full bg-gray-100 rounded animate-pulse" />
+                  <div className="h-3 w-full bg-gray-100 rounded animate-pulse" />
+                </div>
+                <div className="h-3 w-1/2 bg-gray-100 rounded animate-pulse mt-3" />
+              </div>
+            ))}
           </div>
         ) : error ? (
           <div className="flex items-center justify-center h-full text-center">
@@ -166,7 +177,7 @@ export default function ClientSelectorGrid({ onSelect, onClose }) {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 content-start">
               {filtered.map(client => (
                 <button
                   key={client.id}
