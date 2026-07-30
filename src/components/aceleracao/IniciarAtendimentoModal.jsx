@@ -43,6 +43,7 @@ import { isSuporteFlow, gerarSuporteId } from "@/utils/suporteHelper";
 import ClientIndicatorsSection from "@/components/atendimento/ClientIndicatorsSection";
 import ClientIndicatorsChart from "@/components/clientIndicators/ClientIndicatorsChart";
 import { getInitials } from "@/lib/avatarUtils";
+import StepIndicator from "@/components/aceleracao/followups/ds/StepIndicator";
 
 
 const RESULTADO_COLORS = {
@@ -188,6 +189,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   const [clienteAtual, setClienteAtual] = useState(cliente);
   const [showRegistrarAtendimento, setShowRegistrarAtendimento] = useState(false);
   const [showCheckpointModal, setShowCheckpointModal] = useState(false);
+  const [wizardStep, setWizardStep] = useState(1);
   
   // Toasts & Demands
   const { addToast } = useToasts();
@@ -1153,9 +1155,12 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
           {/* LEFT COLUMN - FORM (~40%) */}
           <div className="overflow-y-auto border-r border-gray-200 px-4 py-4" style={{ flex: '2 1 0%', minWidth: '320px', maxWidth: '42%' }}>
            <div className="space-y-6 max-w-2xl px-2 py-2 bg-white rounded-lg shadow-[inset_0_2px_8px_rgba(0,0,0,0.05)]">
-             {/* Banner Suporte */}
+
+              {/* Step Indicator */}
+              <StepIndicator currentStep={wizardStep} />
+
+              {/* Banners — always visible */}
               <SuporteFormBanner followUp={followUp} />
-              {/* Banner Origem Derivada (Tarefa/Pedido) */}
               <OrigemDerivadaBanner
                 followUp={followUp}
                 onVerAta={(ataId) => {
@@ -1163,7 +1168,9 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                   if (ataEncontrada) setSelectedAta(ataEncontrada);
                 }}
               />
-              {/* Canal */}
+
+              {/* ── Step 1 marker ──*/}
+              {false && null /* wizard gate below */}
               <div>
                 <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">
                   Canais de contato *
