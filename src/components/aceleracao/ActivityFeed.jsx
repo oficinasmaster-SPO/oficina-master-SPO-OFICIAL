@@ -739,7 +739,7 @@ export default function ActivityFeed({
   }, [highlightedId]);
 
   return (
-    <div className="flex flex-col w-full relative pb-20">
+    <div className="flex flex-col w-full relative min-h-full">
       <div className="w-full pb-2">
         {isLoading ? (
           <TimelineSkeleton />
@@ -789,7 +789,7 @@ export default function ActivityFeed({
 
       {/* ⚠️ Footer Fixo no Rodapé (Sticky) com Divisor Discreto border-t border-slate-100 */}
       {showComments && !isLoading && (
-        <div className="sticky bottom-0 z-30 w-full bg-white mt-6 pt-4 px-4 border-t border-slate-100">
+        <div className="sticky bottom-0 z-30 w-full bg-white pt-4 px-4 border-t border-slate-100 mt-auto">
           <CommentInput entityType={entityType} entityId={entityId} workshopId={workshopId}
             getName={getName} getPhoto={getPhoto}
             onSubmitted={(newId) => { if(newId) setPendingHighlightId(newId); }}
