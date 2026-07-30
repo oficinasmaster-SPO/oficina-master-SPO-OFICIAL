@@ -88,6 +88,20 @@ const FollowUpPendenteRow = memo(({
         </div>
       </div>
 
+      {/* ── CONSULTOR ── 140px */}
+      <div className="w-[140px] flex-shrink-0 px-2 py-2.5">
+        {consultor ? (
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isOtherConsultor ? "bg-blue-400" : "bg-gray-300"}`} title={isOtherConsultor ? "Atribuído a outro consultor" : "Consultor responsável"} />
+            <span className={`text-[11px] truncate leading-tight ${isOtherConsultor ? "text-blue-600 font-medium" : "text-gray-600"}`}>
+              {consultor}
+            </span>
+          </div>
+        ) : (
+          <span className="text-gray-300 text-[11px]">—</span>
+        )}
+      </div>
+
       {/* ── SEQ. ── 72px */}
       <div className="w-[72px] flex-shrink-0 px-2 py-2.5">
         {seqFU != null && stats ? (

@@ -378,6 +378,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
         <div className="rounded-xl border border-gray-200 shadow-sm overflow-x-auto bg-white">
           <div className="flex items-center border-b border-gray-200 bg-gray-50 text-[10px] font-bold uppercase tracking-widest text-gray-400 border-l-[3px] border-l-transparent">
             <div className="flex-1 min-w-[240px] px-4 py-2 pl-7">Cliente</div>
+            <div className="w-[140px] flex-shrink-0 px-2 py-2">Consultor</div>
             <div className="w-[72px] flex-shrink-0 px-2 py-2">Seq.</div>
             <div className="w-[200px] flex-shrink-0 px-2 py-2">Origem</div>
             <div className="w-[148px] flex-shrink-0 px-2 py-2">Follow-ups</div>
