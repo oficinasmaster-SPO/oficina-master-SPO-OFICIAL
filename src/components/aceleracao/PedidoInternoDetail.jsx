@@ -146,7 +146,12 @@ export default function PedidoInternoDetail({
   const advanceMutation = useMutation({
     mutationFn: async () => {
       const data = { status: nextStatus };
-      if (nextStatus === "concluido") data.data_conclusao = new Date().toISOString();
+      if (nextStatus === "concluido") {
+        const agora = new Date().toISOString();
+        data.data_conclusao = agora;
+        data.concluido_por_id = user?.id;
+        data.concluido_por_nome = user?.full_name || user?.email;
+      }
       return base44.entities.PedidoInterno.update(pedido.id, data);
     },
     onSuccess: () => { toast.success("Status atualizado!"); queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] }); },
@@ -294,7 +299,19 @@ export default function PedidoInternoDetail({
             )}
             {pedido.data_conclusao && (
               <InfoField label="Concluído em" icon={CheckCircle}>
-                <span className="font-medium text-green-700">{format(new Date(pedido.data_conclusao), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-medium text-green-700">{format(new Date(pedido.data_conclusao), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
+                  {(() => {
+                    const concluidoPorNome = getName(pedido.concluido_por_id, pedido.concluido_por_nome) || pedido.concluido_por_nome;
+                    if (!concluidoPorNome) return null;
+                    return (
+                      <span className="flex items-center gap-1 text-xs text-gray-500">
+                        <Avatar name={concluidoPorNome} src={getPhoto(pedido.concluido_por_id)} size="xs" className="h-4 w-4" />
+                        por {concluidoPorNome}
+                      </span>
+                    );
+                  })()}
+                </div>
               </InfoField>
             )}
           </div>
