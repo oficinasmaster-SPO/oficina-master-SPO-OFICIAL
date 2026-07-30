@@ -16,15 +16,16 @@ export default function Combobox({
   clearValue = "",
   className,
   
-  // 1. Data Extractors (Desacoplamento da estrutura dos dados)
+  // Data Extractors
   getOptionLabel = (option) => option.label,
   getOptionValue = (option) => option.value,
   
-  // 2. Custom Render (Inversão de Controle Visual)
+  // Custom Renderers & Filters
   renderOption,
-  
-  // 3. Custom Filter (Inversão de Controle Lógico)
   filterOption,
+  
+  // Abordagem Híbrida de Renderização
+  lazyRender = false, // Se true, destrói os nós do DOM da lista quando fechado
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -39,6 +40,8 @@ export default function Combobox({
     };
   }, []);
 
+  // Map usa igualdade estrita (===) por padrão para chaves. 
+  // O tipo de 'value' deve ser rigorosamente igual ao retornado por 'getOptionValue'.
   const optionMap = useMemo(() => {
     const map = new Map();
     options.forEach((opt) => map.set(getOptionValue(opt), opt));
@@ -47,7 +50,24 @@ export default function Combobox({
 
   const selected = optionMap.get(value);
 
-  // Ordenação usando o Data Extractor
+  // 1. CONTRATO DE TIPAGEM: Warning amigável em ambiente de desenvolvimento
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production") {
+      if (value != null && options.length > 0) {
+        // Pega o tipo de um valor da lista para comparar
+        const sampleOptionValue = getOptionValue(options[0]);
+        if (typeof value !== typeof sampleOptionValue) {
+          console.warn(
+            `⚠️ Combobox: Incompatibilidade de tipos detectada.\n` +
+            `A prop 'value' é do tipo '${typeof value}' (${value}), ` +
+            `mas 'getOptionValue' retorna o tipo '${typeof sampleOptionValue}' (${sampleOptionValue}).\n` +
+            `Eles devem ser estritamente iguais (===) para a seleção funcionar corretamente.`
+          );
+        }
+      }
+    }
+  }, [value, options, getOptionValue]);
+
   const sortedOptions = useMemo(() => {
     return [...options].sort((a, b) =>
       String(getOptionLabel(a)).localeCompare(String(getOptionLabel(b)), "pt-BR", {
@@ -56,15 +76,12 @@ export default function Combobox({
     );
   }, [options, getOptionLabel]);
 
-  // Filtragem flexível (usa o Custom Filter se fornecido, senão o padrão)
   const filteredOptions = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return sortedOptions;
 
     return sortedOptions.filter((item) => {
       if (filterOption) return filterOption(item, query);
-      
-      // Fallback padrão: pesquisa case-insensitive no label extraído
       return String(getOptionLabel(item)).toLowerCase().includes(query);
     });
   }, [sortedOptions, search, filterOption, getOptionLabel]);
@@ -105,6 +122,7 @@ export default function Combobox({
 
   function handleSelect(option) {
     const optionValue = getOptionValue(option);
+    // Comparação estrita preservada
     onChange?.(optionValue === value ? clearValue : optionValue);
     closeDropdown();
     inputRef.current?.blur();
@@ -132,7 +150,6 @@ export default function Combobox({
   const displayValue = open ? search : selectedLabel;
   const highlightQuery = open && search !== selectedLabel ? search.trim() : "";
 
-  // Componente interno para isolar a lógica de renderização padrão do Label + Highlight
   const renderDefaultOption = (option, query) => {
     const label = String(getOptionLabel(option));
     const match = label.match(/\(([^)]+)\)/);
@@ -168,6 +185,9 @@ export default function Combobox({
       </div>
     );
   };
+
+  // 2. ESTRATÉGIA HÍBRIDA: Decide se vai montar os itens ou poupar o DOM
+  const shouldRenderItems = !lazyRender || open;
 
   return (
     <CommandPrimitive
@@ -239,48 +259,47 @@ export default function Combobox({
         )}
       >
         <CommandPrimitive.List className="overflow-y-auto overflow-x-hidden p-1 max-h-[250px]">
-          {filteredOptions.length === 0 && (
-            <div className="py-6 text-center text-sm text-muted-foreground">
-              {emptyText}
-            </div>
+          {/* Se a lista for imensa e lazyRender estiver ativo, o DOM fica limpo quando o combo fecha */}
+          {shouldRenderItems && (
+            <>
+              {filteredOptions.length === 0 && (
+                <div className="py-6 text-center text-sm text-muted-foreground">
+                  {emptyText}
+                </div>
+              )}
+
+              {filteredOptions.map((option) => {
+                const optionValue = getOptionValue(option);
+                const isOptionSelected = optionValue === value;
+
+                return (
+                  <CommandPrimitive.Item
+                    key={String(optionValue)}
+                    value={String(optionValue)}
+                    onSelect={() => handleSelect(option)}
+                    className={cn(
+                      "flex cursor-pointer select-none items-start gap-2",
+                      "rounded-sm px-2 py-2 text-sm outline-none",
+                      "transition-colors",
+                      "aria-selected:bg-accent aria-selected:text-accent-foreground",
+                      isOptionSelected && !open ? "bg-accent/40" : ""
+                    )}
+                  >
+                    <Check
+                      className={cn(
+                        "mt-0.5 h-4 w-4 shrink-0 transition-opacity duration-200",
+                        isOptionSelected ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    
+                    {renderOption 
+                      ? renderOption(option, isOptionSelected, highlightQuery) 
+                      : renderDefaultOption(option, highlightQuery)}
+                  </CommandPrimitive.Item>
+                );
+              })}
+            </>
           )}
-
-          {filteredOptions.map((option) => {
-            const isOptionSelected = getOptionValue(option) === value;
-
-            return (
-              <CommandPrimitive.Item
-                // Transformamos em String caso a prop value seja um Number (ex: ID)
-                key={String(getOptionValue(option))}
-                value={String(getOptionValue(option))}
-                onSelect={() => handleSelect(option)}
-                className={cn(
-                  "flex cursor-pointer select-none items-start gap-2",
-                  "rounded-sm px-2 py-2 text-sm outline-none",
-                  "transition-colors",
-                  "aria-selected:bg-accent aria-selected:text-accent-foreground",
-                  isOptionSelected && !open ? "bg-accent/40" : ""
-                )}
-              >
-                <Check
-                  className={cn(
-                    "mt-0.5 h-4 w-4 shrink-0 transition-opacity duration-200",
-                    isOptionSelected ? "opacity-100" : "opacity-0"
-                  )}
-                />
-                
-                {/* 
-                  Delegação de Renderização: 
-                  Se renderOption for passado, a aplicação dita o visual.
-                  Se não for passado, executamos nosso bloco elegante de Highlight nativo.
-                */}
-                {renderOption 
-                  ? renderOption(option, isOptionSelected, highlightQuery) 
-                  : renderDefaultOption(option, highlightQuery)}
-
-              </CommandPrimitive.Item>
-            );
-          })}
         </CommandPrimitive.List>
       </div>
     </CommandPrimitive>
