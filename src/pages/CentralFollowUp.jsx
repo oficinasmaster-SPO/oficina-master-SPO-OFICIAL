@@ -6,6 +6,7 @@ import CockpitPanel from '@/components/aceleracao/CockpitPanel';
 import NewFollowUpFAB from '@/components/aceleracao/NewFollowUpFAB';
 import IniciarAtendimentoModal from '@/components/aceleracao/IniciarAtendimentoModal';
 import { useAuth } from '@/lib/AuthContext';
+import useEmployeeResolver from '@/hooks/useEmployeeResolver';
 import { Users } from 'lucide-react';
 import { getInitials } from '@/lib/avatarUtils';
 import {

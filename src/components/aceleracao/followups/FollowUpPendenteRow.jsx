@@ -9,7 +9,6 @@ function cleanNotesPreview(notes) {
   return notes.replace(/^Follow-up automático da sprint:\s*/i, "").trim() || null;
 }
 
-// Returns Tailwind bg color class for the meeting-risk dot overlay on the avatar
 function riscoToDotColor(risco) {
   if (!risco || risco.nivel === "sem_dados") return null;
   const { nivel, atrasadas = 0 } = risco;
@@ -61,7 +60,6 @@ const FollowUpPendenteRow = memo(({
         cursor-pointer transition-colors
       `}
     >
-      {/* ── CLIENTE ── flex-1 */}
       <div className="flex-1 min-w-[240px] px-4 py-2.5 flex items-center gap-2.5 min-w-0">
         <div className="flex-shrink-0 relative">
           <WorkshopAvatar name={reminder.workshop_name} size="md" />
@@ -87,7 +85,6 @@ const FollowUpPendenteRow = memo(({
         </div>
       </div>
 
-      {/* ── SEQ. ── 72px */}
       <div className="w-[72px] flex-shrink-0 px-2 py-2.5">
         {seqFU != null && stats ? (
           <span className="text-[12px] font-bold text-blue-600 tabular-nums">
@@ -100,12 +97,10 @@ const FollowUpPendenteRow = memo(({
         )}
       </div>
 
-      {/* ── ORIGEM ── 200px */}
       <div className="w-[200px] flex-shrink-0 px-2 py-2.5 flex flex-wrap gap-1">
         <OriginBadge originType={reminder.origin_type} />
       </div>
 
-      {/* ── FOLLOW-UPS ── 148px */}
       <div className="w-[148px] flex-shrink-0 px-2 py-2.5">
         {stats ? (
           <>
@@ -128,7 +123,6 @@ const FollowUpPendenteRow = memo(({
         )}
       </div>
 
-      {/* ── DATAS ── 176px */}
       <div className="w-[176px] flex-shrink-0 px-2 py-2.5 space-y-0.5">
         {reminder.created_date && (
           <p className="text-[11px] text-gray-400 leading-tight">
@@ -142,7 +136,6 @@ const FollowUpPendenteRow = memo(({
         )}
       </div>
 
-      {/* ── STATUS ── 112px */}
       <div className="w-[112px] flex-shrink-0 px-3 py-2.5 flex justify-end">
         <StatusBadge reminder={reminder} today={today} />
       </div>
