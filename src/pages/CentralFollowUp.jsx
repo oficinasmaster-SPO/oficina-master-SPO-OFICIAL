@@ -90,11 +90,14 @@ export default function CentralFollowUp() {
         {/* Consultant selector — DropdownMenu com checkmark no item selecionado */}
         {(() => {
           const selectedConsultor = consultores.find(c => c.id === consultorSelecionado);
+          // Default: usuário logado (user.id). "Meus Follow-ups" deixou de existir como opção.
           const triggerLabel = consultorSelecionado === 'todos'
             ? 'Todos os Consultores'
-            : selectedConsultor
-              ? (selectedConsultor.full_name || selectedConsultor.email)
-              : 'Meus Follow-ups';
+            : consultorSelecionado === user?.id
+              ? (fullName || user?.email || 'Você')
+              : selectedConsultor
+                ? (selectedConsultor.full_name || selectedConsultor.email)
+                : (fullName || 'Consultor');
           const isSelected = (val) => consultorSelecionado === val;
           return (
             <DropdownMenu>
@@ -109,13 +112,6 @@ export default function CentralFollowUp() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-[220px] max-h-[340px] overflow-y-auto">
-                <DropdownMenuItem
-                  onClick={() => setConsultorSelecionado(user?.id || 'me')}
-                  className={isSelected(user?.id) ? 'bg-gray-100' : ''}
-                >
-                  <span className="flex-1">Meus Follow-ups</span>
-                  {isSelected(user?.id) && <Check className="w-3.5 h-3.5 text-gray-700 ml-auto" />}
-                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => setConsultorSelecionado('todos')}
                   className={isSelected('todos') ? 'bg-gray-100' : ''}
