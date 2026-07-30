@@ -9,7 +9,9 @@ export default function NotificationListener({ user }) {
   const { permission, sendNotification } = useNotificationPush();
 
   // Áudio instanciado uma única vez (fora do fluxo de renderização)
-  const somAlerta = useRef(typeof Audio !== "undefined" ? new Audio('/alerta.mp3') : null);
+  const somAlerta = useRef(typeof Audio !== "undefined"
+    ? new Audio('https://media.base44.com/files/public/69540822472c4a70b54d47aa/2826bc406_universfield-simple-notification-152054.mp3')
+    : null);
 
   // Busca inicial para popular o sino/dropdown. staleTime maior pois as
   // novidades virão pelo subscribe (tempo real), não por refetch.
