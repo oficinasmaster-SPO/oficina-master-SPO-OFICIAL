@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import FollowUpsTab from '@/components/aceleracao/FollowUpsTab';
-import OperationSidebar from '@/components/aceleracao/OperationSidebar';
+import CockpitPanel from '@/components/aceleracao/CockpitPanel';
 import NewFollowUpFAB from '@/components/aceleracao/NewFollowUpFAB';
 import IniciarAtendimentoModal from '@/components/aceleracao/IniciarAtendimentoModal';
 import { useAuth } from '@/lib/AuthContext';
@@ -28,8 +28,29 @@ export default function CentralFollowUp() {
   }, []);
 
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const today = new Date().toISOString().split("T")[0];
+
   const [showNovoFollowUp, setShowNovoFollowUp] = useState(false);
   const [consultorSelecionado, setConsultorSelecionado] = useState(null);
+
+  // Cockpit state
+  const [cockpit, setCockpit] = useState({ reminder: null, seqNum: null, stats: null });
+  const [showAtendimento, setShowAtendimento] = useState(false);
+  const [atendimentoReminder, setAtendimentoReminder] = useState(null);
+
+  const handleSelectForCockpit = useCallback((reminder, seqNum, stats) => {
+    setCockpit({ reminder, seqNum, stats });
+  }, []);
+
+  const handleIniciarAtendimento = useCallback((reminder) => {
+    setAtendimentoReminder(reminder);
+    setShowAtendimento(true);
+  }, []);
+
+  const handleClearCockpit = useCallback(() => {
+    setCockpit({ reminder: null, seqNum: null, stats: null });
+  }, []);
 
   useEffect(() => {
     if (user?.id && !consultorSelecionado) {
@@ -125,13 +146,24 @@ export default function CentralFollowUp() {
         </div>
       </div>
 
-      {/* Grid 2 colunas — Fila (esquerda) + Painel (direita) */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4 items-start">
+      {/* Grid 2 colunas — Fila (esquerda) + Cockpit (direita) */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 items-start">
         <div className="min-w-0">
-          <FollowUpsTab consultorEfetivo={consultorEfetivo} userId={user?.id} />
+          <FollowUpsTab
+            consultorEfetivo={consultorEfetivo}
+            userId={user?.id}
+            onSelectForCockpit={handleSelectForCockpit}
+          />
         </div>
         <div className="hidden lg:block sticky top-20">
-          <OperationSidebar consultorId={consultorEfetivo || user?.id} />
+          <CockpitPanel
+            reminder={cockpit.reminder}
+            seqNum={cockpit.seqNum}
+            stats={cockpit.stats}
+            today={today}
+            onIniciarAtendimento={handleIniciarAtendimento}
+            onClear={handleClearCockpit}
+          />
         </div>
       </div>
 
@@ -145,6 +177,19 @@ export default function CentralFollowUp() {
           openClientSelectorOnMount={true}
           onClose={() => setShowNovoFollowUp(false)}
           onSaved={() => setShowNovoFollowUp(false)}
+        />
+      )}
+
+      {showAtendimento && atendimentoReminder && (
+        <IniciarAtendimentoModal
+          followUp={atendimentoReminder}
+          cliente={null}
+          onClose={() => setShowAtendimento(false)}
+          onSaved={() => {
+            setShowAtendimento(false);
+            queryClient.invalidateQueries({ queryKey: ["follow-up-reminders-tab"] });
+            queryClient.invalidateQueries({ queryKey: ["follow-up-reminders-concluidos-tab"] });
+          }}
         />
       )}
     </div>

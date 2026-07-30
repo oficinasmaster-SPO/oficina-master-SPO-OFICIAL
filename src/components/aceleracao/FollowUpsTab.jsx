@@ -157,7 +157,7 @@ const TABS = [
   { id: "relatorios", label: "Relatórios" },
 ];
 
-export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId }) {
+export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId, onSelectForCockpit }) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
@@ -413,6 +413,18 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
     return Object.entries(map).sort(([a], [b]) => a.localeCompare(b));
   }, [reminders, searchTerm]);
 
+  const handleCrmSelect = useCallback((reminder) => {
+    if (onSelectForCockpit) {
+      onSelectForCockpit(
+        reminder,
+        seqByReminderId[reminder.id] ?? null,
+        statsByWorkshopId[reminder.workshop_id] ?? null,
+      );
+    } else {
+      setSelectedReminder(reminder);
+    }
+  }, [onSelectForCockpit, seqByReminderId, statsByWorkshopId]);
+
   const toggleFolder = (key) => setOpenFolders(prev => ({ ...prev, [key]: !prev[key] }));
   const expandAll = () => {
     const all = {};
@@ -513,7 +525,23 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId 
 
       {/* CRM Tab */}
       {activeTab === "crm" && (
-        selectedReminder ? (
+        onSelectForCockpit ? (
+          // Cockpit mode: list always visible, row click updates cockpit panel
+          <FollowUpList
+            reminders={reminders}
+            remindersConcluidos={remindersConcluidos}
+            today={today}
+            isLoading={isLoading || isLoadingConcluidos}
+            onSelect={handleCrmSelect}
+            filterPill={crmFilterPill}
+            onFilterPill={setCrmFilterPill}
+            seqByReminderId={seqByReminderId}
+            statsByWorkshopId={statsByWorkshopId}
+            onSuporteRapido={() => setShowSuporteRapido(true)}
+            meuId={meuId}
+          />
+        ) : selectedReminder ? (
+          // Legacy mode: navigate to detail view
           <FollowUpDetail
             reminder={selectedReminder}
             today={today}
