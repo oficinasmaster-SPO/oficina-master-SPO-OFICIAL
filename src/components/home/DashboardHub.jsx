@@ -47,11 +47,16 @@ import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import { useAdminMode } from "@/components/hooks/useAdminMode";
 import { toBrazilDate, formatDateBR } from "@/utils/timezone";
 import SprintAtivaWidget from "./SprintAtivaWidget";
+import useDisplayName from "@/hooks/useDisplayName";
 
 export default function DashboardHub({ user, workshop: propWorkshop }) {
   const { workshop: contextWorkshop, isAdminMode } = useWorkshopContext();
   const { getAdminUrl } = useAdminMode();
   const workshop = contextWorkshop || propWorkshop;
+
+  // Name resolver: prefere Employee.full_name (nome real) ao User.full_name
+  // (campo protegido que, para contas Google, pode vir como "Aceleradora Oficinas Master").
+  const { displayName } = useDisplayName(user);
   
   const [isNoticeDialogOpen, setIsNoticeDialogOpen] = React.useState(false);
   const [isTipsDialogOpen, setIsTipsDialogOpen] = React.useState(false);
@@ -344,7 +349,7 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-5 md:mb-8">
         <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-1 leading-tight tracking-tight">
-          {isAdminMode && workshop ? `Visualizando: ${workshop.name}` : `Bem-vindo, ${currentEmployee?.full_name || user.full_name || user.email}!`}
+          {isAdminMode && workshop ? `Visualizando: ${workshop.name}` : `Bem-vindo, ${displayName || user.email}!`}
         </h1>
         <p className="text-sm md:text-base text-gray-600 font-medium">
           {isAdminMode ? 'Aqui está o resumo da oficina do cliente' : 'Aqui está o resumo da sua oficina'}
