@@ -309,35 +309,17 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   const carregarCliente = useCallback(async (clientData) => {
     try {
       setClienteAtual(clientData);
-      
-      // Buscar primeiro follow-up pendente — apenas quando o seletor já indicou que
-      // existem pendentes (followUpsCount > 0), evitando leitura redundante no caso
-      // mais comum de suporte (cliente sem FU aberto). Em 429/falha, cai no suporte local.
-      let followUps = [];
-      if (clientData.followUpsCount && clientData.followUpsCount > 0) {
-        try {
-          followUps = await base44.entities.FollowUpReminder.filter({
-            workshop_id: clientData.id,
-            is_completed: false
-          }, 'reminder_date', 1);
-        } catch (readErr) {
-          console.warn('FollowUpReminder indisponível (limite de leitura) — fluxo de suporte local:', readErr?.message);
-          followUps = [];
-        }
-      }
-
-      if (followUps && followUps.length > 0) {
-        trocarFollowUp(followUps[0]);
-      } else {
-        // Sem follow-ups — criar SUPORTE rastreável com prazo 24h (amanhã = vencido)
-        trocarFollowUp(buildSuporteFULocal(user, clientData));
-      }
+      // Suporte Rápido é sempre ad-hoc: cria um SUPORTE local rastreável sem
+      // leitura extra de FollowUpReminder. A leitura extra estoura 429 sob carga
+      // (cascata do useOperationalSync já dispara ~10 reads ao trocar workshop_id).
+      // Quem quer retomar um FU pendente clica nele na lista principal.
+      trocarFollowUp(buildSuporteFULocal(user, clientData));
       setShowClientSelector(false);
     } catch (err) {
       console.error('Erro ao carregar cliente:', err);
       toast.error('Erro ao carregar cliente');
     }
-  }, [user?.id, user?.full_name, trocarFollowUp]);
+  }, [user, trocarFollowUp]);
 
   // Derivações da aba Follow-ups
   const isSprintFUModal = followUp?.origin_type === 'sprint';
