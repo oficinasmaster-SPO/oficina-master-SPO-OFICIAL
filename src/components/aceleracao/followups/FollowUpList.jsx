@@ -8,51 +8,36 @@ import FollowUpPendenteRow from "@/components/aceleracao/followups/FollowUpPende
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
-// Calcula o nível de risco de reuniões para um workshop_id
-// Retorna: { nivel, realizadas, total, proxima, diasDesdeUltima, atrasadas, atrasadasList }
 function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendimentos) {
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
-  // Todos os ConsultoriaAtendimento deste workshop
   const atendimentos = consultoriaAtendimentos.filter(a => a.workshop_id === workshopId);
-
-  // Buckets do plano contratado (ContractAttendance)
   const buckets = contractAttendances.filter(a => a.workshop_id === workshopId);
 
-  // --- REALIZADAS: concluido, realizado, participando ---
   const REALIZADOS_STATUS = ["concluido", "realizado", "participando"];
   const realizadasList = atendimentos.filter(a => REALIZADOS_STATUS.includes(a.status));
   const realizadas = realizadasList.length;
 
-  // --- TOTAL DO PLANO: slots de ContractAttendance OU total de ConsultoriaAtendimento ---
   const total = buckets.length > 0 ? buckets.length : atendimentos.length;
 
-  // Helper: normaliza data para evitar UTC shift
-  // "2026-05-21" sem hora → JS interpreta como UTC midnight → no Brasil vira dia 20 às 21h
   const toLocalDate = (d) => {
     if (!d) return null;
     const s = typeof d === "string" ? d : d.toISOString();
     return new Date(s.includes("T") ? s : s + "T12:00:00");
   };
 
-  // Agora real — usado para comparação com tolerância de 30min
   const agora = new Date();
 
-  // --- ATRASADAS: passou do horário + 30 minutos de tolerância ---
-  // Lógica: se tem hora no campo (T) → usa datetime real + 30min de tolerância
-  //         se só data (sem T)       → considera atrasada se o DIA já passou
   const PENDENTES_STATUS = ["agendado", "confirmado", "reagendado", "atrasado"];
   const atrasadasList = atendimentos.filter(a => {
     if (!PENDENTES_STATUS.includes(a.status) || !a.data_agendada) return false;
     const s = typeof a.data_agendada === "string" ? a.data_agendada : a.data_agendada.toISOString();
     if (s.includes("T")) {
-      // Tem datetime: atrasada somente 30min APÓS o horário marcado
       const limite = new Date(s);
       limite.setMinutes(limite.getMinutes() + 30);
-      return limite < agora; // ← usa agora real (não hoje zerado)
+      return limite < agora;
     } else {
-      // Só data: atrasada se o dia já passou completamente
       const d = toLocalDate(s);
       const dSemHora = new Date(d.getFullYear(), d.getMonth(), d.getDate());
       return dSemHora < hoje;
@@ -60,23 +45,19 @@ function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendiment
   });
   const atrasadas = atrasadasList.length;
 
-  // --- PRÓXIMA: reuniões com data hoje ou futura, que NÃO entraram na lista de atrasadas ---
-  // Inclui "atrasado" no status pois o job markAtrasados pode ter marcado uma reunião de hoje/futuro
-  // antes da correção da lógica — o que importa é a DATA, não o status gravado no banco
   const atrasadasIds = new Set(atrasadasList.map(a => a.id));
   const futuras = atendimentos
     .filter(a => {
       if (!["agendado", "confirmado", "reagendado", "atrasado"].includes(a.status)) return false;
       if (!a.data_agendada) return false;
-      if (atrasadasIds.has(a.id)) return false; // foi calculada como realmente atrasada (passou +30min)
+      if (atrasadasIds.has(a.id)) return false;
       const d = toLocalDate(a.data_agendada);
       const dSemHora = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-      return dSemHora >= hoje; // data hoje ou futura → é próxima
+      return dSemHora >= hoje;
     })
     .sort((a, b) => toLocalDate(a.data_agendada) - toLocalDate(b.data_agendada));
   const proxima = futuras[0]?.data_agendada || null;
 
-  // --- ÚLTIMA REALIZADA: usa data_realizada, fallback data_agendada ---
   const ultimasOrdenadas = realizadasList
     .map(a => new Date(a.data_realizada || a.data_agendada))
     .filter(d => !isNaN(d.getTime()))
@@ -86,22 +67,21 @@ function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendiment
     ? Math.floor((hoje - ultimaData) / (1000 * 60 * 60 * 24))
     : null;
 
-  // --- NÍVEL DE RISCO ---
   let nivel;
   if (atendimentos.length === 0 && buckets.length === 0) {
     nivel = "sem_dados";
   } else if (realizadas === 0 && atrasadas === 0 && proxima) {
-    nivel = "ok"; // FIX: ainda não realizou NENHUMA mas JÁ TEM reunião futura agendada/confirmada → não é "nunca"
+    nivel = "ok";
   } else if (realizadas === 0 && atrasadas === 0) {
-    nivel = "nunca"; // nunca teve nenhuma atividade e nenhuma futura
+    nivel = "nunca";
   } else if (atrasadas > 0 && !proxima) {
-    nivel = "critico"; // tem reuniões atrasadas e nenhuma futura agendada
+    nivel = "critico";
   } else if (atrasadas > 0) {
-    nivel = "atencao"; // tem atrasadas mas ao menos tem próxima futura
+    nivel = "atencao";
   } else if (!proxima && realizadas > 0) {
-    nivel = "critico"; // realizou mas não tem nenhuma futura agendada
+    nivel = "critico";
   } else if (diasDesdeUltima !== null && diasDesdeUltima > 25) {
-    nivel = "atencao"; // última reunião há mais de 25 dias
+    nivel = "atencao";
   } else {
     nivel = "ok";
   }
@@ -109,7 +89,6 @@ function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendiment
   return { nivel, realizadas, total, proxima, diasDesdeUltima, atrasadas, atrasadasList };
 }
 
-// Hook para buscar ContractAttendance e ConsultoriaAtendimento em lote para workshops visíveis
 function useReunioesIndex(workshopIds = []) {
   const ids = [...new Set(workshopIds.filter(Boolean))];
 
@@ -157,11 +136,9 @@ function useReunioesIndex(workshopIds = []) {
     gcTime: 5 * 60 * 1000,
   });
 
-  // Pré-indexa por workshop_id (Map) — O(n) uma vez, lookup O(1) por workshop
   const index = React.useMemo(() => {
     const byWorkshop = {};
 
-    // Indexa ContractAttendance
     contractData.forEach(a => {
       const wid = a.workshop_id;
       if (!wid) return;
@@ -169,7 +146,6 @@ function useReunioesIndex(workshopIds = []) {
       byWorkshop[wid].contract.push(a);
     });
 
-    // Indexa ConsultoriaAtendimento
     consultoriaData.forEach(a => {
       const wid = a.workshop_id;
       if (!wid) return;
@@ -177,7 +153,6 @@ function useReunioesIndex(workshopIds = []) {
       byWorkshop[wid].consultoria.push(a);
     });
 
-    // Calcula risco para cada workshop usando arrays pré-indexados (O(1) lookup)
     const result = {};
     ids.forEach(wid => {
       const buckets = byWorkshop[wid]?.contract || [];
@@ -195,7 +170,6 @@ function getDaysOverdue(reminderDate, today) {
   return differenceInDays(new Date(today + "T00:00:00"), new Date(reminderDate + "T00:00:00"));
 }
 
-// Busca todos os FollowUpConcluidos de uma vez para enriquecer os cards
 function useConcluidosIndex() {
   const { data = [] } = useQuery({
     queryKey: ["follow-up-concluidos-list-index-v2"],
@@ -206,35 +180,27 @@ function useConcluidosIndex() {
 
   const byWorkshop = {};
   const byFollowupId = {};
-  // sequenceByFollowupId: followup_id → número sequencial cronológico (#1, #2, #3...)
   const sequenceByFollowupId = {};
 
-  // Agrupa por workshop e ordena cronologicamente (ASC) para atribuir sequência
   const byWorkshopRaw = {};
   data.forEach(c => {
     const wid = c.workshop_id;
     if (!wid) return;
     if (!byWorkshopRaw[wid]) byWorkshopRaw[wid] = [];
     byWorkshopRaw[wid].push(c);
-    // índice por followup_id (último encontrado — há no máximo 1 por FU)
     if (c.followup_id) byFollowupId[c.followup_id] = c;
-    // último concluído por workshop
     if (!byWorkshop[wid] || new Date(c.completedAt) > new Date(byWorkshop[wid].completedAt)) {
       byWorkshop[wid] = c;
     }
   });
 
-  // Ordena cada workshop por completedAt ASC e atribui sequência #1, #2, #3...
-  // Chave: followup_id (= id do FollowUpReminder) OU id do próprio FollowUpConcluido
   Object.entries(byWorkshopRaw).forEach(([wid, list]) => {
     list
       .slice()
       .sort((a, b) => new Date(a.completedAt || a.created_date) - new Date(b.completedAt || b.created_date))
       .forEach((c, idx) => {
         const seq = idx + 1;
-        // chave primária: followup_id vincula ao FollowUpReminder.id
         if (c.followup_id) sequenceByFollowupId[c.followup_id] = seq;
-        // chave secundária: id do próprio FollowUpConcluido (sem fallback cruzado)
         if (c.id) sequenceByFollowupId[c.id] = seq;
       });
   });
@@ -242,14 +208,12 @@ function useConcluidosIndex() {
   return { byWorkshop, byFollowupId, sequenceByFollowupId };
 }
 
-// Busca ATAs pelo conjunto de ata_ids dos reminders ativos — sem limite de data
 function useAtasIndex(ataIds = []) {
   const uniqueIds = [...new Set(ataIds.filter(Boolean))];
   const { data = [] } = useQuery({
     queryKey: ["meeting-minutes-by-ids", uniqueIds.sort().join(",")],
     queryFn: async () => {
       if (uniqueIds.length === 0) return [];
-      // Busca em lotes de 50 para não sobrecarregar
       const BATCH = 50;
       const results = [];
       for (let i = 0; i < uniqueIds.length; i += BATCH) {
@@ -277,19 +241,17 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
   const [isSearching, setIsSearching] = useState(false);
   const [page, setPage] = useState(1);
 
-  // Feedback visual de busca: indicador ativo por 300ms após última tecla
   React.useEffect(() => {
     if (!isSearching) return;
     const t = setTimeout(() => setIsSearching(false), 300);
     return () => clearTimeout(t);
   }, [isSearching, search]);
+
   const PAGE_SIZE = 20;
   const { byWorkshop: concluidosIndex, byFollowupId: concluidosByFuid, sequenceByFollowupId } = useConcluidosIndex();
-  // Extrai todos os ata_ids dos reminders para buscar apenas as ATAs necessárias
   const ataIds = reminders.map(r => r.ata_id).filter(Boolean);
   const atasIndex = useAtasIndex(ataIds);
 
-  // Índice: workshop_id → próximo FU pendente com reminder_date >= hoje (para coluna Próx. Contato)
   const proximoFuPorWorkshop = React.useMemo(() => {
     const mapa = {};
     reminders
@@ -313,12 +275,9 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
 
   const searchTerm = search.trim().toLowerCase();
 
-  // Para pills de concluídos, críticos e por_empresa, usa a lista de concluídos
   const isConcluidosPill = filterPill === "concluidos" || filterPill === "criticos" || filterPill === "por_empresa";
   const sourceList = isConcluidosPill ? remindersConcluidos : reminders;
 
-  // Workshop IDs de TODOS os reminders visíveis (pendentes + concluídos)
-  // FIX: antes só buscava para concluídos — mas pendentes também precisam da coluna Situação Reuniões
   const workshopIdsTodos = React.useMemo(
     () => [...new Set([
       ...remindersConcluidos.map(r => r.workshop_id),
@@ -328,7 +287,6 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
   );
   const reunioesIndex = useReunioesIndex(workshopIdsTodos);
 
-  // Contagem de FUs por empresa (para exibir badge no modo Por Empresa)
   const fusPorEmpresa = React.useMemo(() => {
     const mapa = {};
     remindersConcluidos.forEach(r => {
@@ -351,7 +309,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
         const risco = reunioesIndex[r.workshop_id];
         return risco && (risco.nivel === "critico" || risco.nivel === "nunca");
       }
-      if (filterPill === "por_empresa") return true; // todos os concluídos, deduplicamos abaixo
+      if (filterPill === "por_empresa") return true;
       if (filterPill === "atrasados") return !r.is_completed && r.reminder_date < today;
       if (filterPill === "hoje")      return !r.is_completed && r.reminder_date === today;
       if (filterPill === "urgentes")  return !r.is_completed && getDaysOverdue(r.reminder_date, today) >= 3;
@@ -363,10 +321,8 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
       return (a.reminder_date || "").localeCompare(b.reminder_date || "");
     });
 
-    // Deduplicação: "Por Empresa" → 1 por workshop_id (o mais recente)
     if (filterPill === "por_empresa") {
       const seen = new Set();
-      // Ordena por data decrescente para pegar o mais recente
       const sorted = [...base].sort((a, b) =>
         (b.created_date || "").localeCompare(a.created_date || "")
       );
@@ -380,7 +336,6 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
     return base;
   }, [sourceList, searchTerm, filterPill, today, reunioesIndex]);
 
-  // Reseta para a primeira página ao trocar filtro/busca/lista
   React.useEffect(() => { setPage(1); }, [searchTerm, filterPill, sourceList.length]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -390,10 +345,8 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
   const countAtrasados = reminders.filter(r => !r.is_completed && r.reminder_date < today).length;
   const countHoje      = reminders.filter(r => !r.is_completed && r.reminder_date === today).length;
   const countUrgentes  = reminders.filter(r => !r.is_completed && getDaysOverdue(r.reminder_date, today) >= 3).length;
-  const countEmpresasTotal = Object.keys(fusPorEmpresa).length;
   const countEmpresasCriticas = Object.values(fusPorEmpresa).filter(e => e.critico).length;
 
-  // Empresas distintas com pelo menos 1 FU vencido OU hoje OU urgente
   const countEmpresas = new Set(
     reminders.filter(r =>
       !r.is_completed && (
@@ -408,7 +361,6 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
 
   return (
     <div className="space-y-4">
-      {/* Search bar */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
         <input
@@ -430,7 +382,6 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
         ) : null}
       </div>
 
-      {/* Mini metric strip */}
       <div className="flex gap-3 text-sm">
         <div className="flex items-center gap-2 bg-red-50 border border-red-100 rounded-lg px-3 py-1.5">
           <AlertCircle className="w-3.5 h-3.5 text-red-500" />
@@ -462,7 +413,6 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
           )}
         </div>
 
-        {/* Botão Suporte Rápido — ao lado do card Empresas */}
         {onSuporteRapido && (
           <button
             onClick={onSuporteRapido}
@@ -475,7 +425,6 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
         )}
       </div>
 
-      {/* Pills */}
       <div className="flex gap-1.5 flex-wrap">
         {PILLS.map(p => (
           <button
@@ -492,7 +441,6 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
         ))}
       </div>
 
-      {/* List */}
       {filtered.length === 0 ? (
         <div className="py-16 flex flex-col items-center justify-center gap-3 text-center">
           <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
@@ -524,9 +472,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
           </div>
         </div>
       ) : isConcluidosPill ? (
-        /* Layout horizontal tipo planilha para concluídos / críticos / por_empresa */
         <div className="rounded-lg border border-gray-200 overflow-x-auto bg-white">
-          {/* Cabeçalho */}
           <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border-b border-gray-200 text-[11px] font-semibold text-gray-500 uppercase tracking-wide min-w-[1200px]">
             <div className="w-10 flex-shrink-0 text-center">#FU</div>
             <div className="w-36 flex-shrink-0">
@@ -574,7 +520,6 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
         </div>
       ) : (
         <div className="rounded-xl border border-gray-200 shadow-sm overflow-x-auto bg-white">
-          {/* Cabeçalho fixo — colunas alinhadas com FollowUpPendenteRow */}
           <div className="flex items-center border-b border-gray-200 bg-gray-50 text-[10px] font-bold uppercase tracking-widest text-gray-400 border-l-[3px] border-l-transparent">
             <div className="flex-1 min-w-[240px] px-4 py-2 pl-7">Cliente</div>
             <div className="w-[72px] flex-shrink-0 px-2 py-2">Seq.</div>
@@ -601,7 +546,6 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
         </div>
       )}
 
-      {/* Paginação — modo planilha (pendentes e concluídos) */}
       {filtered.length > PAGE_SIZE && (
         <div className="flex items-center justify-between pt-2">
           <span className="text-xs text-gray-400">
@@ -627,7 +571,6 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
         </div>
       )}
 
-      {/* Drawer for completed follow-ups */}
       <FollowUpCompletedDetailDrawer
         followUp={selectedCompleted}
         open={!!selectedCompleted}
