@@ -6,6 +6,7 @@ import OperationSidebar from '@/components/aceleracao/OperationSidebar';
 import NewFollowUpFAB from '@/components/aceleracao/NewFollowUpFAB';
 import IniciarAtendimentoModal from '@/components/aceleracao/IniciarAtendimentoModal';
 import { useAuth } from '@/lib/AuthContext';
+import useEmployeeResolver from '@/hooks/useEmployeeResolver';
 import { Users, Check, ChevronDown } from 'lucide-react';
 import { getInitials } from '@/lib/avatarUtils';
 import {
@@ -37,20 +38,11 @@ export default function CentralFollowUp() {
     }
   }, [user?.id]);
 
-  const { data: userData } = useQuery({
-    queryKey: ['user', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      return await base44.entities.User.get(user.id);
-    },
-    enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const consultingFirmId = userData?.data?.consulting_firm_id || user?.consulting_firm_id;
+  // Resolve nome real + foto via Employee (User.full_name pode vir como "Aceleradora...")
+  const { getName, getPhoto } = useEmployeeResolver();
 
   const { data: consultores = [] } = useQuery({
-    queryKey: ['consultores-internos', consultingFirmId],
+    queryKey: ['consultores-internos'],
     queryFn: async () => {
       // Fonte canônica: Employee.user_type === 'internal' (is_internal legado foi corrigido).
       // Lista todos os colaboradores internos da equipe Oficinas Master.
@@ -68,8 +60,8 @@ export default function CentralFollowUp() {
 
   const consultorEfetivo = consultorSelecionado === 'todos' ? null : consultorSelecionado;
 
-  const fullName = userData?.full_name || user?.full_name || user?.email || '';
-  const profilePicture = userData?.profile_picture_url || user?.profile_picture_url;
+  const fullName = getName(user?.id, user?.full_name || user?.email || '');
+  const profilePicture = getPhoto(user?.id) || user?.profile_picture_url;
   const firstName = fullName.split(' ')[0];
 
   return (
