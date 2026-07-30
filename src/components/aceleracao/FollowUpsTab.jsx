@@ -444,74 +444,64 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId,
   return (
     <div className="space-y-4">
 
-      {/* Discrete stats + search */}
-      <div className="flex items-center gap-4 text-sm text-gray-500">
-        <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
-          <span className="font-medium text-gray-700">{counts.pendentes}</span> pendentes
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
-          <span className="font-medium text-gray-700">{counts.atrasados}</span> atrasados
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-green-400 inline-block" />
-          <span className="font-medium text-gray-700">{counts.concluidos}</span> concluídos
-        </span>
-
-        {/* Refresh button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 text-xs text-gray-400 hover:text-gray-600 ml-auto"
-          onClick={() => {
-            queryClient.invalidateQueries({ queryKey: ["follow-up-reminders-tab"] });
-            toast.info("Atualizando lista...");
-          }}
-        >
-          Atualizar
-        </Button>
-
-        {showSearchBar && (
-          <div className="relative ml-2">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-            <Input
-              placeholder="Buscar cliente ou consultor..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="h-8 pl-8 pr-7 text-sm w-60"
-            />
-            {searchTerm && (
-              <button onClick={() => setSearchTerm("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Tab nav — RedTabs */}
+      {/* Compact tab nav — single thin row with embedded search + refresh */}
       <Tabs value={activeTab}>
-        <RedTabsList>
-          {TABS.map(tab => (
-            <RedTabsTrigger
-              key={tab.id}
-              value={tab.id}
-              data-state={activeTab === tab.id ? "active" : "inactive"}
-              onClick={() => {
-                if (tab.id === activeTab) return;
-                setAnimating(true);
-                setTimeout(() => {
-                  setActiveTab(tab.id);
-                  setSelectedReminder(null);
-                  setAnimating(false);
-                }, 80);
-              }}
-            >
-              {tab.label}
-            </RedTabsTrigger>
-          ))}
-        </RedTabsList>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide">
+            <RedTabsList>
+              {TABS.map(tab => (
+                <RedTabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  data-state={activeTab === tab.id ? "active" : "inactive"}
+                  onClick={() => {
+                    if (tab.id === activeTab) return;
+                    setAnimating(true);
+                    setTimeout(() => {
+                      setActiveTab(tab.id);
+                      setSelectedReminder(null);
+                      setAnimating(false);
+                    }, 80);
+                  }}
+                >
+                  {tab.label}
+                </RedTabsTrigger>
+              ))}
+            </RedTabsList>
+          </div>
+
+          {/* Refresh icon button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 flex-shrink-0"
+            title="Atualizar"
+            onClick={() => {
+              queryClient.invalidateQueries({ queryKey: ["follow-up-reminders-tab"] });
+              toast.info("Atualizando lista...");
+            }}
+          >
+            <Loader2 className="w-4 h-4" />
+          </Button>
+
+          {/* Compact search — only on non-CRM tabs */}
+          {showSearchBar && (
+            <div className="relative flex-shrink-0">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+              <Input
+                placeholder="Buscar..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="h-8 pl-8 pr-7 text-xs w-44"
+              />
+              {searchTerm && (
+                <button onClick={() => setSearchTerm("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </Tabs>
 
       {/* Tab content */}

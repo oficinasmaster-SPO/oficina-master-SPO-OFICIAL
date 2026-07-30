@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertCircle, Clock, StickyNote, Search, X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { AlertCircle, Clock, StickyNote, Search, X, ChevronLeft, ChevronRight, Loader2, Filter } from "lucide-react";
 import { differenceInDays } from "date-fns";
 import { calcPriorityScore } from "./ds/PriorityScore";
 import FollowUpCompletedDetailDrawer from "@/components/aceleracao/FollowUpCompletedDetailDrawer";
@@ -7,6 +7,13 @@ import FollowUpConcluidoRow from "@/components/aceleracao/FollowUpConcluidoRow.j
 import FollowUpPendenteRow from "@/components/aceleracao/followups/FollowUpPendenteRow";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendimentos) {
   const hoje = new Date();
@@ -279,32 +286,55 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
   if (isLoading) return <div className="py-20 text-center text-gray-400 text-sm">Carregando...</div>;
 
   return (
-    <div className="space-y-4">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-        <input type="text" value={search} onChange={e => { setSearch(e.target.value); setIsSearching(true); }} placeholder="Buscar cliente..." className="w-full pl-9 pr-9 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent placeholder-gray-400" />
-        {isSearching ? <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" /> : search ? <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button> : null}
-      </div>
-
-      <div className="flex gap-3 text-sm">
-        <div className="flex items-center gap-2 bg-red-50 border border-red-100 rounded-lg px-3 py-1.5"><AlertCircle className="w-3.5 h-3.5 text-red-500" /><span className="font-semibold text-red-700">{countAtrasados}</span><span className="text-red-500 text-xs">vencidos</span></div>
-        <div className="flex items-center gap-2 bg-amber-50 border border-amber-100 rounded-lg px-3 py-1.5"><Clock className="w-3.5 h-3.5 text-amber-500" /><span className="font-semibold text-amber-700">{countHoje}</span><span className="text-amber-500 text-xs">hoje</span></div>
-        <div className="flex items-center gap-2 bg-orange-50 border border-orange-100 rounded-lg px-3 py-1.5"><AlertCircle className="w-3.5 h-3.5 text-orange-500" /><span className="font-semibold text-orange-700">{countUrgentes}</span><span className="text-orange-500 text-xs">urgentes</span></div>
-        <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-purple-100 transition-colors" onClick={() => onFilterPill("por_empresa")} title="Ver 1 por empresa">
-          <AlertCircle className="w-3.5 h-3.5 text-purple-500" /><span className="font-semibold text-purple-700">{countEmpresas}</span><span className="text-purple-500 text-xs">empresas</span>
-          {countEmpresasCriticas > 0 && <span className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-1 py-0.5 rounded-full">{countEmpresasCriticas}🔴</span>}
+    <div className="space-y-3">
+      {/* Linha única compacta: busca + dropdown de filtros + chips informativos + suporte */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {/* Busca compacta */}
+        <div className="relative flex-shrink-0">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+          <input type="text" value={search} onChange={e => { setSearch(e.target.value); setIsSearching(true); }} placeholder="Buscar cliente..." className="w-48 pl-8 pr-8 py-1.5 text-xs border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent placeholder-gray-400" />
+          {isSearching ? <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 animate-spin" /> : search ? <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><X className="w-3.5 h-3.5" /></button> : null}
         </div>
+
+        {/* Dropdown de filtros consolidado */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs px-3 flex-shrink-0">
+              <Filter className="w-3.5 h-3.5 text-gray-500" />
+              <span className="text-gray-500">Filtros:</span>
+              <span className="font-semibold text-gray-900">{PILLS.find(p => p.id === filterPill)?.label || "Todos"}</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            {PILLS.map(p => (
+              <DropdownMenuItem
+                key={p.id}
+                onClick={() => onFilterPill(p.id)}
+                className="gap-2 text-xs justify-between"
+              >
+                <span className={filterPill === p.id ? "font-semibold" : ""}>{p.label}</span>
+                {filterPill === p.id && <span className="w-1.5 h-1.5 rounded-full bg-gray-900" />}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Chips informativos compactos */}
+        <div className="flex items-center gap-1.5 text-xs flex-shrink-0">
+          <div className="flex items-center gap-1 bg-red-50 border border-red-100 rounded-md px-2 py-1"><AlertCircle className="w-3 h-3 text-red-500" /><span className="font-semibold text-red-700">{countAtrasados}</span><span className="text-red-500 text-[11px]">vencidos</span></div>
+          <div className="flex items-center gap-1 bg-amber-50 border border-amber-100 rounded-md px-2 py-1"><Clock className="w-3 h-3 text-amber-500" /><span className="font-semibold text-amber-700">{countHoje}</span><span className="text-amber-500 text-[11px]">hoje</span></div>
+          <div className="flex items-center gap-1 bg-orange-50 border border-orange-100 rounded-md px-2 py-1"><AlertCircle className="w-3 h-3 text-orange-500" /><span className="font-semibold text-orange-700">{countUrgentes}</span><span className="text-orange-500 text-[11px]">urgentes</span></div>
+          <button className="flex items-center gap-1 bg-purple-50 border border-purple-100 rounded-md px-2 py-1 hover:bg-purple-100 transition-colors cursor-pointer" onClick={() => onFilterPill("por_empresa")} title="Ver 1 por empresa">
+            <AlertCircle className="w-3 h-3 text-purple-500" /><span className="font-semibold text-purple-700">{countEmpresas}</span><span className="text-purple-500 text-[11px]">empresas</span>
+            {countEmpresasCriticas > 0 && <span className="text-[9px] font-bold text-red-600 bg-red-50 border border-red-200 px-1 py-0.5 rounded-full">{countEmpresasCriticas}🔴</span>}
+          </button>
+        </div>
+
         {onSuporteRapido && (
-          <button onClick={onSuporteRapido} title="Suporte Rápido — atender cliente sem follow-up agendado" className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition-colors text-amber-700 font-semibold text-xs">
+          <button onClick={onSuporteRapido} title="Suporte Rápido — atender cliente sem follow-up agendado" className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5 hover:bg-amber-100 transition-colors text-amber-700 font-semibold text-xs flex-shrink-0 ml-auto">
             <span className="text-sm leading-none">🛟</span>Suporte
           </button>
         )}
-      </div>
-
-      <div className="flex gap-1.5 flex-wrap">
-        {PILLS.map(p => (
-          <button key={p.id} onClick={() => onFilterPill(p.id)} className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${filterPill === p.id ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"}`}>{p.label}</button>
-        ))}
       </div>
 
       {filtered.length === 0 ? (

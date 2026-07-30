@@ -2,7 +2,7 @@ import React from "react";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
-const TAB_BASE = "flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200";
+const TAB_BASE = "flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 whitespace-nowrap";
 const TAB_ACTIVE = "data-[state=active]:bg-[#FF0000] data-[state=active]:text-white data-[state=active]:shadow-md";
 const TAB_HOVER = "hover:bg-gray-100 data-[state=active]:hover:bg-[#FF0000]";
 export const RED_TAB_CLASS = `${TAB_BASE} ${TAB_ACTIVE} ${TAB_HOVER}`;
@@ -13,9 +13,9 @@ export const RED_TAB_CLASS = `${TAB_BASE} ${TAB_ACTIVE} ${TAB_HOVER}`;
  */
 export function RedTabsList({ className, children, ...props }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-1.5">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-1">
       <TabsList 
-        className={cn("flex flex-wrap w-full justify-start bg-transparent h-auto gap-1", className)} 
+        className={cn("flex flex-nowrap justify-start bg-transparent h-auto gap-0.5 w-max min-w-0", className)} 
         {...props}
       >
         {children}
