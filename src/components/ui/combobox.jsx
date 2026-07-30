@@ -24,8 +24,9 @@ export default function Combobox({
   renderOption,
   filterOption,
   
-  // Abordagem Híbrida de Renderização
-  lazyRender = false, // Se true, destrói os nós do DOM da lista quando fechado
+  // Layout & Comportamento
+  lazyRender = false,
+  maxHeight = 250, // Nova prop flexível (aceita Número ou String)
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -40,8 +41,6 @@ export default function Combobox({
     };
   }, []);
 
-  // Map usa igualdade estrita (===) por padrão para chaves. 
-  // O tipo de 'value' deve ser rigorosamente igual ao retornado por 'getOptionValue'.
   const optionMap = useMemo(() => {
     const map = new Map();
     options.forEach((opt) => map.set(getOptionValue(opt), opt));
@@ -50,11 +49,9 @@ export default function Combobox({
 
   const selected = optionMap.get(value);
 
-  // 1. CONTRATO DE TIPAGEM: Warning amigável em ambiente de desenvolvimento
   useEffect(() => {
     if (process.env.NODE_ENV !== "production") {
       if (value != null && options.length > 0) {
-        // Pega o tipo de um valor da lista para comparar
         const sampleOptionValue = getOptionValue(options[0]);
         if (typeof value !== typeof sampleOptionValue) {
           console.warn(
@@ -122,7 +119,6 @@ export default function Combobox({
 
   function handleSelect(option) {
     const optionValue = getOptionValue(option);
-    // Comparação estrita preservada
     onChange?.(optionValue === value ? clearValue : optionValue);
     closeDropdown();
     inputRef.current?.blur();
@@ -186,7 +182,6 @@ export default function Combobox({
     );
   };
 
-  // 2. ESTRATÉGIA HÍBRIDA: Decide se vai montar os itens ou poupar o DOM
   const shouldRenderItems = !lazyRender || open;
 
   return (
@@ -252,14 +247,19 @@ export default function Combobox({
         className={cn(
           "absolute top-full left-0 z-[150] w-full bg-popover text-popover-foreground overflow-hidden",
           "border border-t-0 border-input rounded-b-md shadow-md",
+          // O motor do tailwind cuida das interpolações:
           "origin-top transition-[opacity,transform,max-height] duration-200 ease-out",
           open
-            ? "opacity-100 visible max-h-[250px] scale-100 translate-y-0"
-            : "opacity-0 invisible max-h-0 scale-[0.98] -translate-y-0.5 pointer-events-none"
+            ? "opacity-100 visible scale-100 translate-y-0"
+            : "opacity-0 invisible scale-[0.98] -translate-y-0.5 pointer-events-none"
         )}
+        // O valor limite de height é injetado via style
+        style={{ maxHeight: open ? maxHeight : 0 }}
       >
-        <CommandPrimitive.List className="overflow-y-auto overflow-x-hidden p-1 max-h-[250px]">
-          {/* Se a lista for imensa e lazyRender estiver ativo, o DOM fica limpo quando o combo fecha */}
+        <CommandPrimitive.List 
+          className="overflow-y-auto overflow-x-hidden p-1"
+          style={{ maxHeight }} // Garante o limite do scroll interno
+        >
           {shouldRenderItems && (
             <>
               {filteredOptions.length === 0 && (
