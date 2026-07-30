@@ -59,37 +59,29 @@ export default function CentralFollowUp() {
     }
   }, [user?.id]);
 
-  const { data: userData } = useQuery({
-    queryKey: ['user', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      return await base44.entities.User.get(user.id);
-    },
-    enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const consultingFirmId = userData?.data?.consulting_firm_id || user?.consulting_firm_id;
+  // Resolve nome real + foto via Employee (User.full_name pode vir como "Aceleradora...")
+  const { getName, getPhoto } = useEmployeeResolver();
 
   const { data: consultores = [] } = useQuery({
-    queryKey: ['consultores-firma', consultingFirmId],
+    queryKey: ['consultores-internos'],
     queryFn: async () => {
-      if (!consultingFirmId) return [];
-      const users = await base44.entities.User.filter({
-        'data.consulting_firm_id': consultingFirmId,
-      });
-      return users.filter(u => u.id !== user?.id).sort((a, b) =>
-        (a.full_name || '').localeCompare(b.full_name || '')
-      );
+      // Fonte canônica: Employee.user_type === 'internal'.
+      const employees = await base44.entities.Employee.filter({
+        user_type: 'internal',
+        user_status: 'ativo',
+      }, 'full_name', 200);
+      return employees
+        .filter(e => e.user_id && e.user_id !== user?.id)
+        .map(e => ({ id: e.user_id, full_name: e.full_name, email: e.email }))
+        .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
     },
-    enabled: !!consultingFirmId,
     staleTime: 10 * 60 * 1000,
   });
 
   const consultorEfetivo = consultorSelecionado === 'todos' ? null : consultorSelecionado;
 
-  const fullName = userData?.full_name || user?.full_name || user?.email || '';
-  const profilePicture = userData?.profile_picture_url || user?.profile_picture_url;
+  const fullName = getName(user?.id, user?.full_name || user?.email || '');
+  const profilePicture = getPhoto(user?.id) || user?.profile_picture_url;
   const firstName = fullName.split(' ')[0];
 
   return (
