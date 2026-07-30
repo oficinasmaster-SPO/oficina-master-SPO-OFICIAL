@@ -39,7 +39,7 @@ import { useToasts } from "@/components/aceleracao/ToastContainer";
 import { useClientDemands } from "@/components/aceleracao/hooks/useClientDemands";
 import SuporteFormBanner from "@/components/aceleracao/suporte/SuporteFormBanner";
 import OrigemDerivadaBanner from "@/components/aceleracao/followups/OrigemDerivadaBanner";
-import { isSuporteFlow, gerarSuporteId } from "@/utils/suporteHelper";
+import { isSuporteFlow, gerarSuporteId, buildSuporteFULocal } from "@/utils/suporteHelper";
 import ClientIndicatorsSection from "@/components/atendimento/ClientIndicatorsSection";
 import ClientIndicatorsChart from "@/components/clientIndicators/ClientIndicatorsChart";
 import { getInitials } from "@/lib/avatarUtils";
@@ -330,26 +330,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
         trocarFollowUp(followUps[0]);
       } else {
         // Sem follow-ups — criar SUPORTE rastreável com prazo 24h (amanhã = vencido)
-        const suporteId = gerarSuporteId();
-        const hoje = new Date().toISOString().split('T')[0];
-        const novoSuporte = {
-          id: `suporte_${clientData.id}_${Date.now()}`,
-          workshop_id: clientData.id,
-          workshop_name: clientData.name,
-          consultor_id: user?.id,
-          consultor_nome: user?.full_name || "Consultor",
-          sequence_number: 0,
-          reminder_date: hoje, // prazo = hoje, amanhã já aparece como vencido
-          origin_type: 'suporte',
-          suporte_id: suporteId,
-          suporte_descricao: '',
-          is_completed: false,
-          atendimento_id: null,
-          ata_id: null,
-          notes: `Suporte ao Cliente · ${suporteId}`,
-          _isSuporteLocal: true, // flag para não salvar no BD ainda
-        };
-        trocarFollowUp(novoSuporte);
+        trocarFollowUp(buildSuporteFULocal(user, clientData));
       }
       setShowClientSelector(false);
     } catch (err) {
@@ -867,7 +848,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
 
       // Suporte: lógica de próximo FU dedicada (check-in +7d se resolvido, re-agenda amanhã se não)
       if (isFluxoSuporte) {
-        novoFollowUp = await criarProximoSuporteFU({ followUp, resultado });
+        novoFollowUp = await criarProximoSuporteFU({ followUp, resultado, user });
       }
       // Auto-reagendamento para amanhã: nao_atendeu ou aguardando resposta (fluxo normal)
       else if (resultado === "nao_atendeu" || resultado === "aguardando") {
