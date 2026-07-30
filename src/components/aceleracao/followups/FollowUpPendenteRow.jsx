@@ -4,13 +4,24 @@ import StatusBadge from "./ds/StatusBadge";
 import OriginBadge from "./ds/OriginBadge";
 import { getDaysOverdue, formatDate, formatDateTime } from "./ds/dateUtils";
 
-// Limpa o prefixo automático de sprint para exibir só o conteúdo relevante
 function cleanNotesPreview(notes) {
   if (!notes) return null;
   return notes.replace(/^Follow-up automático da sprint:\s*/i, "").trim() || null;
 }
 
-const FollowUpPendenteRow = memo(({ reminder, today, seqFU, score, onSelect, isLast, meuId, stats }) => {
+// Returns Tailwind bg color class for the meeting-risk dot overlay on the avatar
+function riscoToDotColor(risco) {
+  if (!risco || risco.nivel === "sem_dados") return null;
+  const { nivel, atrasadas = 0 } = risco;
+  if (nivel === "critico" || nivel === "nunca" || atrasadas > 0) return "bg-red-500";
+  if (nivel === "atencao") return "bg-amber-400";
+  if (nivel === "ok") return "bg-emerald-400";
+  return null;
+}
+
+const FollowUpPendenteRow = memo(({
+  reminder, today, seqFU, score, onSelect, isLast, meuId, stats, isSelected, risco,
+}) => {
   const consultor = reminder.consultor_principal_nome || reminder.consultor_nome || null;
   const isOtherConsultor =
     meuId &&
@@ -20,9 +31,10 @@ const FollowUpPendenteRow = memo(({ reminder, today, seqFU, score, onSelect, isL
 
   const isOverdue = reminder.reminder_date < today;
   const isToday   = reminder.reminder_date === today;
-  const days      = getDaysOverdue(reminder.reminder_date, today);
 
-  const borderColor = isOverdue
+  const borderColor = isSelected
+    ? "border-l-blue-500"
+    : isOverdue
     ? "border-l-red-500"
     : isToday
     ? "border-l-amber-400"
@@ -30,10 +42,11 @@ const FollowUpPendenteRow = memo(({ reminder, today, seqFU, score, onSelect, isL
 
   const notesPreview = cleanNotesPreview(reminder.notes);
 
-  // Progresso: concluidos / total
   const pct = stats && stats.total > 0
     ? Math.round((stats.concluidos / stats.total) * 100)
     : 0;
+
+  const dotColor = riscoToDotColor(risco);
 
   return (
     <div
@@ -41,13 +54,23 @@ const FollowUpPendenteRow = memo(({ reminder, today, seqFU, score, onSelect, isL
       className={`
         flex items-center border-l-[3px] ${borderColor}
         ${!isLast ? "border-b border-gray-100" : ""}
-        hover:bg-gray-50/60 cursor-pointer transition-colors
+        ${isSelected
+          ? "bg-blue-50/60 hover:bg-blue-50/80"
+          : "hover:bg-gray-50/60"
+        }
+        cursor-pointer transition-colors
       `}
     >
       {/* ── CLIENTE ── flex-1 */}
-      <div className="flex-1 min-w-[240px] px-4 py-3 flex items-center gap-2.5 min-w-0">
-        <div className="flex-shrink-0">
+      <div className="flex-1 min-w-[240px] px-4 py-2.5 flex items-center gap-2.5 min-w-0">
+        <div className="flex-shrink-0 relative">
           <WorkshopAvatar name={reminder.workshop_name} size="md" />
+          {dotColor && (
+            <span
+              className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${dotColor}`}
+              title={`Reuniões: ${risco.nivel}`}
+            />
+          )}
         </div>
         <div className="min-w-0">
           <p className="text-sm font-bold text-gray-900 truncate leading-tight">
@@ -65,7 +88,7 @@ const FollowUpPendenteRow = memo(({ reminder, today, seqFU, score, onSelect, isL
       </div>
 
       {/* ── SEQ. ── 72px */}
-      <div className="w-[72px] flex-shrink-0 px-2 py-3">
+      <div className="w-[72px] flex-shrink-0 px-2 py-2.5">
         {seqFU != null && stats ? (
           <span className="text-[12px] font-bold text-blue-600 tabular-nums">
             #{seqFU}/{stats.total}
@@ -78,12 +101,12 @@ const FollowUpPendenteRow = memo(({ reminder, today, seqFU, score, onSelect, isL
       </div>
 
       {/* ── ORIGEM ── 200px */}
-      <div className="w-[200px] flex-shrink-0 px-2 py-3 flex flex-wrap gap-1">
+      <div className="w-[200px] flex-shrink-0 px-2 py-2.5 flex flex-wrap gap-1">
         <OriginBadge originType={reminder.origin_type} />
       </div>
 
       {/* ── FOLLOW-UPS ── 148px */}
-      <div className="w-[148px] flex-shrink-0 px-2 py-3">
+      <div className="w-[148px] flex-shrink-0 px-2 py-2.5">
         {stats ? (
           <>
             <p className="text-[11px] text-gray-600 tabular-nums leading-tight">
@@ -106,7 +129,7 @@ const FollowUpPendenteRow = memo(({ reminder, today, seqFU, score, onSelect, isL
       </div>
 
       {/* ── DATAS ── 176px */}
-      <div className="w-[176px] flex-shrink-0 px-2 py-3 space-y-0.5">
+      <div className="w-[176px] flex-shrink-0 px-2 py-2.5 space-y-0.5">
         {reminder.created_date && (
           <p className="text-[11px] text-gray-400 leading-tight">
             Criado {formatDateTime(reminder.created_date)}
@@ -120,7 +143,7 @@ const FollowUpPendenteRow = memo(({ reminder, today, seqFU, score, onSelect, isL
       </div>
 
       {/* ── STATUS ── 112px */}
-      <div className="w-[112px] flex-shrink-0 px-3 py-3 flex justify-end">
+      <div className="w-[112px] flex-shrink-0 px-3 py-2.5 flex justify-end">
         <StatusBadge reminder={reminder} today={today} />
       </div>
     </div>

@@ -157,7 +157,7 @@ const TABS = [
   { id: "relatorios", label: "Relatórios" },
 ];
 
-export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId, onSelectForCockpit }) {
+export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId, onSelectForCockpit, selectedReminderId }) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
@@ -539,6 +539,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId,
             statsByWorkshopId={statsByWorkshopId}
             onSuporteRapido={() => setShowSuporteRapido(true)}
             meuId={meuId}
+            selectedReminderId={selectedReminderId}
           />
         ) : selectedReminder ? (
           // Legacy mode: navigate to detail view

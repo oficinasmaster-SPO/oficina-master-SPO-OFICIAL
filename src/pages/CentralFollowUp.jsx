@@ -153,6 +153,7 @@ export default function CentralFollowUp() {
             consultorEfetivo={consultorEfetivo}
             userId={user?.id}
             onSelectForCockpit={handleSelectForCockpit}
+            selectedReminderId={cockpit.reminder?.id}
           />
         </div>
         <div className="hidden lg:block sticky top-20">
