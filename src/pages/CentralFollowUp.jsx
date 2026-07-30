@@ -1,21 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import FollowUpsTab from '@/components/aceleracao/FollowUpsTab';
-import OperationSidebar from '@/components/aceleracao/OperationSidebar';
+import CockpitPanel from '@/components/aceleracao/CockpitPanel';
 import NewFollowUpFAB from '@/components/aceleracao/NewFollowUpFAB';
 import IniciarAtendimentoModal from '@/components/aceleracao/IniciarAtendimentoModal';
 import { useAuth } from '@/lib/AuthContext';
-import useEmployeeResolver from '@/hooks/useEmployeeResolver';
-import { Users, Check, ChevronDown } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { getInitials } from '@/lib/avatarUtils';
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export default function CentralFollowUp() {
   useEffect(() => {
@@ -29,8 +28,29 @@ export default function CentralFollowUp() {
   }, []);
 
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const today = new Date().toISOString().split("T")[0];
+
   const [showNovoFollowUp, setShowNovoFollowUp] = useState(false);
   const [consultorSelecionado, setConsultorSelecionado] = useState(null);
+
+  // Cockpit state
+  const [cockpit, setCockpit] = useState({ reminder: null, seqNum: null, stats: null });
+  const [showAtendimento, setShowAtendimento] = useState(false);
+  const [atendimentoReminder, setAtendimentoReminder] = useState(null);
+
+  const handleSelectForCockpit = useCallback((reminder, seqNum, stats) => {
+    setCockpit({ reminder, seqNum, stats });
+  }, []);
+
+  const handleIniciarAtendimento = useCallback((reminder) => {
+    setAtendimentoReminder(reminder);
+    setShowAtendimento(true);
+  }, []);
+
+  const handleClearCockpit = useCallback(() => {
+    setCockpit({ reminder: null, seqNum: null, stats: null });
+  }, []);
 
   useEffect(() => {
     if (user?.id && !consultorSelecionado) {
@@ -38,30 +58,37 @@ export default function CentralFollowUp() {
     }
   }, [user?.id]);
 
-  // Resolve nome real + foto via Employee (User.full_name pode vir como "Aceleradora...")
-  const { getName, getPhoto } = useEmployeeResolver();
+  const { data: userData } = useQuery({
+    queryKey: ['user', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      return await base44.entities.User.get(user.id);
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const consultingFirmId = userData?.data?.consulting_firm_id || user?.consulting_firm_id;
 
   const { data: consultores = [] } = useQuery({
-    queryKey: ['consultores-internos'],
+    queryKey: ['consultores-firma', consultingFirmId],
     queryFn: async () => {
-      // Fonte canônica: Employee.user_type === 'internal' (is_internal legado foi corrigido).
-      // Lista todos os colaboradores internos da equipe Oficinas Master.
-      const employees = await base44.entities.Employee.filter({
-        user_type: 'internal',
-        user_status: 'ativo',
-      }, 'full_name', 200);
-      return employees
-        .filter(e => e.user_id)
-        .map(e => ({ id: e.user_id, full_name: e.full_name, email: e.email }))
-        .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
+      if (!consultingFirmId) return [];
+      const users = await base44.entities.User.filter({
+        'data.consulting_firm_id': consultingFirmId,
+      });
+      return users.filter(u => u.id !== user?.id).sort((a, b) =>
+        (a.full_name || '').localeCompare(b.full_name || '')
+      );
     },
+    enabled: !!consultingFirmId,
     staleTime: 10 * 60 * 1000,
   });
 
   const consultorEfetivo = consultorSelecionado === 'todos' ? null : consultorSelecionado;
 
-  const fullName = getName(user?.id, user?.full_name || user?.email || '');
-  const profilePicture = getPhoto(user?.id) || user?.profile_picture_url;
+  const fullName = userData?.full_name || user?.full_name || user?.email || '';
+  const profilePicture = userData?.profile_picture_url || user?.profile_picture_url;
   const firstName = fullName.split(' ')[0];
 
   return (
@@ -79,52 +106,22 @@ export default function CentralFollowUp() {
         {/* Separator */}
         <div className="w-px h-5 bg-gray-700 flex-shrink-0" />
 
-        {/* Consultant selector — DropdownMenu com checkmark no item selecionado */}
-        {(() => {
-          const selectedConsultor = consultores.find(c => c.id === consultorSelecionado);
-          // Default: usuário logado (user.id). O label usa o full_name do Employee (fonte canônica),
-          // assim "Rafael Marrafon" aparece mesmo que o User.full_name ainda seja "Aceleradora...".
-          const triggerLabel = consultorSelecionado === 'todos'
-            ? 'Todos os Consultores'
-            : selectedConsultor
-              ? (selectedConsultor.full_name || selectedConsultor.email)
-              : (fullName || user?.email || 'Consultor');
-          const isSelected = (val) => consultorSelecionado === val;
-          return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="w-[200px] bg-gray-800/80 border border-gray-700 text-white text-xs h-7 rounded-md flex items-center px-2 flex-shrink-0 hover:bg-gray-700/80 transition-colors"
-                >
-                  <Users className="w-3 h-3 mr-1.5 text-gray-400 flex-shrink-0" />
-                  <span className="truncate flex-1 text-left">{triggerLabel}</span>
-                  <ChevronDown className="w-3 h-3 ml-1 text-gray-400 flex-shrink-0" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-[220px] max-h-[340px] overflow-y-auto">
-                <DropdownMenuItem
-                  onClick={() => setConsultorSelecionado('todos')}
-                  className={isSelected('todos') ? 'bg-gray-100' : ''}
-                >
-                  <span className="flex-1">Todos os Consultores</span>
-                  {isSelected('todos') && <Check className="w-3.5 h-3.5 text-gray-700 ml-auto" />}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                {consultores.map(c => (
-                  <DropdownMenuItem
-                    key={c.id}
-                    onClick={() => setConsultorSelecionado(c.id)}
-                    className={isSelected(c.id) ? 'bg-gray-100' : ''}
-                  >
-                    <span className="flex-1 truncate">{c.full_name || c.email}</span>
-                    {isSelected(c.id) && <Check className="w-3.5 h-3.5 text-gray-700 ml-auto" />}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          );
-        })()}
+        {/* Consultant selector */}
+        <Select value={consultorSelecionado || ''} onValueChange={setConsultorSelecionado}>
+          <SelectTrigger className="w-[200px] bg-gray-800/80 border-gray-700 text-white text-xs h-7 flex-shrink-0">
+            <Users className="w-3 h-3 mr-1.5 text-gray-400 flex-shrink-0" />
+            <SelectValue placeholder="Selecionar consultor" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={user?.id || 'me'}>Meus Follow-ups</SelectItem>
+            <SelectItem value="todos">Todos os Consultores</SelectItem>
+            {consultores.map(c => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.full_name || c.email}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* Spacer */}
         <div className="flex-1" />
@@ -149,13 +146,25 @@ export default function CentralFollowUp() {
         </div>
       </div>
 
-      {/* Grid 2 colunas — Fila (esquerda) + Painel (direita) */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4 items-start">
+      {/* Grid 2 colunas — Fila (esquerda) + Cockpit (direita) */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 items-start">
         <div className="min-w-0">
-          <FollowUpsTab consultorEfetivo={consultorEfetivo} userId={user?.id} />
+          <FollowUpsTab
+            consultorEfetivo={consultorEfetivo}
+            userId={user?.id}
+            onSelectForCockpit={handleSelectForCockpit}
+            selectedReminderId={cockpit.reminder?.id}
+          />
         </div>
         <div className="hidden lg:block sticky top-20">
-          <OperationSidebar consultorId={consultorEfetivo || user?.id} />
+          <CockpitPanel
+            reminder={cockpit.reminder}
+            seqNum={cockpit.seqNum}
+            stats={cockpit.stats}
+            today={today}
+            onIniciarAtendimento={handleIniciarAtendimento}
+            onClear={handleClearCockpit}
+          />
         </div>
       </div>
 
@@ -169,6 +178,19 @@ export default function CentralFollowUp() {
           openClientSelectorOnMount={true}
           onClose={() => setShowNovoFollowUp(false)}
           onSaved={() => setShowNovoFollowUp(false)}
+        />
+      )}
+
+      {showAtendimento && atendimentoReminder && (
+        <IniciarAtendimentoModal
+          followUp={atendimentoReminder}
+          cliente={null}
+          onClose={() => setShowAtendimento(false)}
+          onSaved={() => {
+            setShowAtendimento(false);
+            queryClient.invalidateQueries({ queryKey: ["follow-up-reminders-tab"] });
+            queryClient.invalidateQueries({ queryKey: ["follow-up-reminders-concluidos-tab"] });
+          }}
         />
       )}
     </div>
