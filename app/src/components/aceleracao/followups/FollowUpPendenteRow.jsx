@@ -3,74 +3,113 @@ import WorkshopAvatar from "./ds/WorkshopAvatar";
 import StatusBadge from "./ds/StatusBadge";
 import OriginBadge from "./ds/OriginBadge";
 import { ChannelDot } from "./ds/ChannelIcon";
-import { PriorityBadge } from "./ds/PriorityScore";
-import { formatDate, formatDateTime } from "./ds/dateUtils";
+import { getDaysOverdue, formatDate, formatDateTime } from "./ds/dateUtils";
 
-const FollowUpPendenteRow = memo(({ reminder, today, seqFU, score, onSelect, isLast, meuId }) => {
+const FollowUpPendenteRow = memo(({ reminder, today, seqFU, score, onSelect, isLast, meuId, stats }) => {
   const consultor = reminder.consultor_principal_nome || reminder.consultor_nome || "—";
-  const rowBorder = isLast ? "" : "border-b border-gray-100";
   const isOtherConsultor =
     meuId &&
     reminder.consultor_principal_id &&
     reminder.consultor_principal_id !== meuId &&
     reminder.consultor_id !== meuId;
 
+  const isOverdue = reminder.reminder_date < today;
+  const isToday   = reminder.reminder_date === today;
+  const days      = getDaysOverdue(reminder.reminder_date, today);
+
+  // Borda esquerda por urgência
+  const borderColor = isOverdue
+    ? "border-l-red-500"
+    : isToday
+    ? "border-l-amber-400"
+    : "border-l-gray-200";
+
+  // Rótulo textual de status (acima do badge)
+  const statusLabel = isOverdue
+    ? days >= 3 ? `Urgente ${days}d` : `Vencido ${days}d`
+    : isToday
+    ? "Hoje"
+    : null;
+
+  const statusLabelColor = isOverdue ? "text-red-600" : "text-amber-600";
+
   return (
     <div
       onClick={() => onSelect?.(reminder)}
-      className={`flex items-center px-3 py-2 ${rowBorder} hover:bg-gray-50/70 cursor-pointer transition-colors`}
+      className={`
+        flex items-start gap-3 px-4 py-3
+        border-l-[3px] ${borderColor}
+        ${!isLast ? "border-b border-gray-100" : ""}
+        hover:bg-gray-50/70 cursor-pointer transition-colors
+      `}
     >
-      {/* Prioridade */}
-      <div className="w-10 flex-shrink-0 flex flex-col items-center gap-0.5">
-        <PriorityBadge score={score} />
-        <span className="text-[9px] text-gray-300 tabular-nums">#{seqFU ?? "—"}</span>
+      {/* Avatar */}
+      <div className="flex-shrink-0 pt-0.5">
+        <WorkshopAvatar name={reminder.workshop_name} size="md" />
       </div>
 
-      {/* Cliente */}
-      <div className="flex-1 min-w-[180px] flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <WorkshopAvatar name={reminder.workshop_name} size="sm" />
-          <span className="text-sm font-semibold text-gray-900 truncate">
-            {reminder.workshop_name || "Sem cliente"}
+      {/* Corpo principal */}
+      <div className="flex-1 min-w-0">
+
+        {/* Linha 1: Nome + tags */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-bold text-gray-900 leading-tight">
+            {seqFU != null ? `#${seqFU} ` : ""}{reminder.workshop_name || "Sem cliente"}
           </span>
           {isOtherConsultor && (
             <span
-              className="flex-shrink-0 text-[9px] font-medium text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded truncate max-w-[100px]"
+              className="text-[9px] font-medium text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded truncate max-w-[100px]"
               title={`Consultor: ${consultor}`}
             >
               {consultor}
             </span>
           )}
+          <OriginBadge originType={reminder.origin_type} />
+        </div>
+
+        {/* Linha 2: Contadores FU */}
+        {stats && (
+          <p className="text-[11px] text-gray-500 mt-0.5 leading-tight">
+            {stats.total} FUs
+            {" · "}
+            <span className="text-emerald-600 font-medium">{stats.concluidos} ✓</span>
+            {" · "}
+            <span className="text-amber-600 font-medium">{stats.pendentes} pend.</span>
+          </p>
+        )}
+
+        {/* Linha 3: Sequência */}
+        {seqFU != null && stats && (
+          <p className="text-[11px] text-blue-600 mt-0.5 leading-tight">
+            Follow-up #{seqFU} de {stats.total}
+          </p>
+        )}
+
+        {/* Linha 4: Datas + canal */}
+        <div className="flex items-center gap-2 mt-1 flex-wrap">
+          {reminder.created_date && (
+            <span className="text-[11px] text-gray-400">
+              Criado: {formatDateTime(reminder.created_date)}
+            </span>
+          )}
+          {reminder.reminder_date && (
+            <span className="text-[11px] text-gray-400">
+              · Agendado: {formatDate(reminder.reminder_date)}
+            </span>
+          )}
+          {reminder.canal_origem && (
+            <ChannelDot canal={reminder.canal_origem} />
+          )}
         </div>
       </div>
 
-      {/* Tipo */}
-      <div className="w-28 flex-shrink-0">
-        <OriginBadge originType={reminder.origin_type} />
-      </div>
-
-      {/* Canal */}
-      <div className="w-10 flex-shrink-0 flex items-center justify-center">
-        <ChannelDot canal={reminder.canal_origem} />
-      </div>
-
-      {/* Consultor */}
-      <div className="w-40 flex-shrink-0">
-        <span className="text-sm text-gray-700 truncate block">{consultor}</span>
-      </div>
-
-      {/* Data */}
-      <div className="w-32 flex-shrink-0">
-        <span className="text-sm text-gray-600">{formatDate(reminder.reminder_date)}</span>
-      </div>
-
-      {/* Criado em */}
-      <div className="w-36 flex-shrink-0">
-        <span className="text-sm text-gray-500">{formatDateTime(reminder.created_date)}</span>
-      </div>
-
-      {/* Status */}
-      <div className="w-28 flex-shrink-0 text-right ml-auto">
+      {/* Coluna direita: status */}
+      <div className="flex-shrink-0 flex flex-col items-end gap-1 pt-0.5">
+        {statusLabel && (
+          <span className={`text-[11px] font-semibold ${statusLabelColor}`}>
+            {statusLabel}
+          </span>
+        )}
         <StatusBadge reminder={reminder} today={today} />
       </div>
     </div>
