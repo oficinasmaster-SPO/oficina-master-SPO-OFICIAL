@@ -78,12 +78,10 @@ function ClientTimeline({ concluidos }) {
 
               return (
                 <div key={c.id} className="flex items-start gap-2.5">
-                  {/* Timeline spine */}
                   <div className="flex flex-col items-center flex-shrink-0 pt-1.5">
                     <div className={`w-2 h-2 rounded-full flex-shrink-0 ${idx === 0 ? "bg-red-500" : "bg-gray-300"}`} />
                     {!isLast && <div className="w-px flex-1 min-h-[24px] bg-gray-100 mt-1" />}
                   </div>
-                  {/* Content */}
                   <div className={`flex-1 min-w-0 ${!isLast ? "pb-3" : ""}`}>
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <Icon className="w-3 h-3 text-gray-400 flex-shrink-0" />
@@ -291,67 +289,72 @@ function CockpitPanelInner({ reminder, seqNum, stats, today, onIniciarAtendiment
   const healthScore = calcHealthScore({ reminder, allFollowUps, atas, concluidos, today });
 
   return (
-    <div className="space-y-3">
-      {/* Client header */}
-      <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-3">
-        <WorkshopAvatar name={reminder.workshop_name} size="md" />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-gray-900 truncate leading-tight">
-            {reminder.workshop_name || "Cliente"}
-          </p>
-          {reminder.consultor_nome && (
-            <p className="text-[11px] text-gray-400 truncate mt-0.5">
-              {reminder.consultor_nome}
+    <div className="flex flex-col" style={{ maxHeight: "calc(100vh - 5.5rem)" }}>
+      {/* Scrollable content */}
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pb-1">
+        {/* Client header */}
+        <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-3">
+          <WorkshopAvatar name={reminder.workshop_name} size="md" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-gray-900 truncate leading-tight">
+              {reminder.workshop_name || "Cliente"}
             </p>
+            {reminder.consultor_nome && (
+              <p className="text-[11px] text-gray-400 truncate mt-0.5">
+                {reminder.consultor_nome}
+              </p>
+            )}
+          </div>
+          {onClear && (
+            <button
+              onClick={onClear}
+              className="flex-shrink-0 text-gray-300 hover:text-gray-500 transition-colors p-1 rounded"
+              title="Fechar cockpit"
+            >
+              <X className="w-4 h-4" />
+            </button>
           )}
         </div>
-        {onClear && (
-          <button
-            onClick={onClear}
-            className="flex-shrink-0 text-gray-300 hover:text-gray-500 transition-colors p-1 rounded"
-            title="Fechar cockpit"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
+
+        {/* D1–D3: Overview rings + health + progress + stats */}
+        <OverviewCockpit
+          reminder={reminder}
+          allFollowUps={allFollowUps}
+          atas={atas}
+          concluidos={concluidos}
+          today={today}
+          currentStep={currentStep}
+          totalSteps={totalSteps}
+          daysOver={daysOver}
+          isOverdue={isOverdue}
+          stats={stats}
+        />
+
+        {/* D4: Compact contact history timeline */}
+        <ClientTimeline concluidos={concluidos} />
+
+        {/* D5: IA insights — collapsed by default */}
+        <IaInsights
+          concluidos={concluidos}
+          atas={atas}
+          allFollowUps={allFollowUps}
+          reminder={reminder}
+          healthScore={healthScore}
+          isOverdue={isOverdue}
+          daysOver={daysOver}
+        />
       </div>
 
-      {/* D1–D3: Overview rings + health + progress + stats */}
-      <OverviewCockpit
-        reminder={reminder}
-        allFollowUps={allFollowUps}
-        atas={atas}
-        concluidos={concluidos}
-        today={today}
-        currentStep={currentStep}
-        totalSteps={totalSteps}
-        daysOver={daysOver}
-        isOverdue={isOverdue}
-        stats={stats}
-      />
-
-      {/* D4: Compact contact history timeline */}
-      <ClientTimeline concluidos={concluidos} />
-
-      {/* D5: IA insights — collapsed by default */}
-      <IaInsights
-        concluidos={concluidos}
-        atas={atas}
-        allFollowUps={allFollowUps}
-        reminder={reminder}
-        healthScore={healthScore}
-        isOverdue={isOverdue}
-        daysOver={daysOver}
-      />
-
-      {/* CTA */}
-      <Button
-        onClick={() => onIniciarAtendimento?.(reminder)}
-        className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 gap-2"
-      >
-        <PlayCircle className="w-4 h-4" />
-        Iniciar Atendimento
-      </Button>
+      {/* E1: Sticky CTA — always visible at bottom */}
+      <div className="flex-shrink-0 pt-2 mt-1 border-t border-gray-100">
+        <Button
+          onClick={() => onIniciarAtendimento?.(reminder)}
+          className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 gap-2"
+        >
+          <PlayCircle className="w-4 h-4" />
+          Iniciar Atendimento
+        </Button>
+      </div>
     </div>
   );
 }
