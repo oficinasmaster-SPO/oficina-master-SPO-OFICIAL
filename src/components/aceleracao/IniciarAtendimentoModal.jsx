@@ -1201,264 +1201,292 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                     );
                   })}
                 </div>
-                {errors.canais && <p className="text-xs text-red-600 mt-1">{errors.canais}</p>}
-              </div>
-
-              {/* Resultado */}
-              <div>
-                <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">
-                  Resultado do contato *
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {RESULTADO_OPTIONS.map(opt => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => {
-                      setResultado(opt.id);
-                      setErrors(e => ({ ...e, resultado: null }));
-                    }}
-                      className={`px-3 py-2 rounded-lg border-2 text-xs font-medium transition flex items-center justify-center gap-1 ${
-                        resultado === opt.id
-                          ? `${RESULTADO_COLORS[opt.id]} ring-2 ring-offset-1 ring-current`
-                          : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
-                      } ${errors.resultado && !resultado ? "border-red-300" : ""}`}
-                    >
-                      {resultado === opt.id && <Check className="w-3 h-3" />}
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-                {errors.resultado && <p className="text-xs text-red-600 mt-1">{errors.resultado}</p>}
-              </div>
-
-              {/* Informações */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Data do contato</label>
-                  <Input type="date" value={dataContato} disabled className="bg-gray-100 cursor-not-allowed" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Duração (min)</label>
-                  <Input type="number" value={duracao} disabled className="bg-gray-100 cursor-not-allowed text-center font-semibold" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Humor do cliente</label>
-                  <Select value={humor} onValueChange={setHumor}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecionar..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {["Receptivo", "Neutro", "Resistente", "Animado", "Preocupado"].map(h => (
-                        <SelectItem key={h} value={h}>{h}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Engajamento</label>
-                  <Select value={engajamento} onValueChange={setEngajamento}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecionar..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {["Alto", "Médio", "Baixo"].map(e => (
-                        <SelectItem key={e} value={e}>{e}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Observações */}
-              <div>
-                <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Observações *</label>
-                <Textarea
-                  placeholder="Descreva detalhes do contato..."
-                  value={observacoes}
-                  onChange={e => {
-                    setObservacoes(e.target.value);
-                    if (e.target.value.length >= 10) setErrors(er => ({ ...er, observacoes: null }));
-                  }}
-                  className={`min-h-24 text-sm ${errors.observacoes ? "border-red-500 bg-red-50" : ""}`}
-                />
-                <p className="text-xs text-gray-500 mt-1">{observacoes.length}/10 caracteres</p>
-                {errors.observacoes && <p className="text-xs text-red-600">{errors.observacoes}</p>}
-              </div>
-
-              {/* Compromissos */}
-              <div>
-                <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Compromissos do cliente</label>
-                <Textarea
-                  placeholder="O que o cliente se comprometeu em fazer..."
-                  value={compromissos}
-                  onChange={e => setCompromissos(e.target.value)}
-                  className="min-h-20 text-sm"
-                />
-              </div>
-
-              {/* Indicadores do Cliente */}
-              {followUp?.workshop_id && (
-                <ClientIndicatorsSection
-                  workshopId={followUp.workshop_id}
-                  followUpId={followUp.id}
-                />
-              )}
-
-              {/* Próximo passo — oculto para nao_atendeu e aguardando (auto-reagendamento) */}
-              {!isAutoReagendar && (
-              <div>
-                <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Próximo passo *</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {PROXIMO_PASSO_OPTIONS.map(opt => (
-                    <button
-                      key={opt.id}
-                      onClick={() => {
-                        setProximoPasso(opt.id);
-                        setErrors(e => ({ ...e, proximoPasso: null }));
-                      }}
-                      className={`px-3 py-2 rounded-lg border-2 text-xs font-medium transition ${
-                        proximoPasso === opt.id
-                          ? opt.id === "cancelar"
-                            ? "bg-red-100 text-red-700 border-red-300"
-                            : "bg-gray-900 text-white border-gray-900"
-                          : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
-                      } ${errors.proximoPasso ? "border-red-500 bg-red-50" : ""}`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-                {errors.proximoPasso && <p className="text-xs text-red-600 mt-1">{errors.proximoPasso}</p>}
-              </div>
-              )}
-
-              {/* Banner informativo para auto-reagendamento */}
-              {isAutoReagendar && (
-                <div className={`rounded-lg border px-3 py-2.5 flex items-center gap-2 text-xs font-medium ${resultado === "aguardando" ? "bg-blue-50 border-blue-200 text-blue-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
-                  <span className="text-base">{resultado === "aguardando" ? ({ ligacao: "📞", email: "✉️", presencial: "🏠", meet: "🎥" }[canais[0]] || "💬") : "🔁"}</span>
-                  <span>
-                    {resultado === "aguardando"
-                      ? `Um novo follow-up será criado automaticamente para amanhã — aguardando retorno via ${({ ligacao: "Ligação", whatsapp: "WhatsApp", email: "E-mail", meet: "Meet", presencial: "Presencial" }[canais[0]] || "WhatsApp")}`
-                      : "Um novo follow-up de retentativa será criado automaticamente para amanhã"}
-                  </span>
+                  {errors.canais && <p className="text-xs text-red-600 mt-1">{errors.canais}</p>}
                 </div>
               )}
 
-              {/* Data/Hora próximo contato */}
-              {["reagendar", "agendar", "enviar"].includes(proximoPasso) && (
-                <div className="grid grid-cols-2 gap-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+              {/* Step 2: Resultado + Data/Duração + Humor/Engajamento */}
+              {wizardStep === 2 && (
+                <>
                   <div>
-                    <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Data próximo contato</label>
-                    <Input type="date" value={proxData} onChange={e => setProxData(e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Horário</label>
-                    <Input type="time" value={proxHora} onChange={e => setProxHora(e.target.value)} />
-                  </div>
-                </div>
-              )}
-
-              {/* Documentos */}
-              <div>
-                <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Documentos e anexos</label>
-                
-                {/* Upload Area */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  className="hidden"
-                  accept=".pdf,.xlsx,.docx,.png,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png"
-                  onChange={handleFileInput}
-                />
-                <div
-                  onClick={() => !uploadingDoc && fileInputRef.current?.click()}
-                  onDrop={handleDrop}
-                  onDragOver={(e) => e.preventDefault()}
-                  className={`border-2 border-dashed rounded-lg p-6 text-center transition cursor-pointer mb-3 ${
-                    uploadingDoc ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
-                  }`}
-                >
-                  {uploadingDoc ? (
-                    <>
-                      <Loader2 className="w-6 h-6 text-blue-500 mx-auto mb-2 animate-spin" />
-                      <p className="text-xs text-blue-600">Enviando documento...</p>
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
-                      <p className="text-xs text-gray-600">Arraste arquivos ou clique para selecionar</p>
-                      <p className="text-xs text-gray-400 mt-1">PDF, XLSX, DOCX, PNG (máx 10MB)</p>
-                    </>
-                  )}
-                </div>
-
-                {uploadedDocs.length > 0 && (
-                  <div className="space-y-2 mb-3">
-                    <p className="text-xs font-semibold text-gray-600">Documentos enviados ({uploadedDocs.length})</p>
-                    {uploadedDocs.map((doc, idx) => (
-                      <div key={idx} className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-                        <FileText className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="text-xs text-gray-700 truncate flex-1">{doc.name}</span>
-                        <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">Ver</a>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Paste Screenshot Area */}
-                <div 
-                  onPaste={(e) => {
-                    e.preventDefault();
-                    const items = e.clipboardData.items;
-                    for (let item of items) {
-                      if (item.type.startsWith('image/')) {
-                        const file = item.getAsFile();
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                          setPastedImages(prev => [...prev, {
-                            id: Math.random(),
-                            src: event.target.result,
-                            name: `Screenshot ${new Date().toLocaleTimeString('pt-BR')}`
-                          }]);
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }
-                  }}
-                  className="border-2 border-blue-300 border-dashed rounded-lg p-6 bg-blue-50 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3 cursor-pointer transition"
-                  tabIndex="0"
-                >
-                  <p className="text-sm font-medium text-blue-700 mb-1">Colar screenshot aqui</p>
-                  <p className="text-xs text-blue-600">Use Ctrl+V (ou Cmd+V) para colar uma imagem da área de transferência</p>
-                </div>
-
-                {/* Pasted Images Preview */}
-                {pastedImages.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-semibold text-gray-600">Screenshots coladas ({pastedImages.length})</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {pastedImages.map(img => (
-                        <div key={img.id} className="relative group rounded-lg overflow-hidden border border-gray-200 bg-white">
-                          <img 
-                            src={img.src} 
-                            alt={img.name}
-                            className="w-full h-24 object-cover"
-                          />
-                          <button
-                            onClick={() => setPastedImages(prev => prev.filter(p => p.id !== img.id))}
-                            className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                          <p className="text-xs text-gray-600 p-1 bg-white text-center truncate">{img.name}</p>
-                        </div>
+                    <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">
+                      Resultado do contato *
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {RESULTADO_OPTIONS.map(opt => (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => {
+                            setResultado(opt.id);
+                            setErrors(e => ({ ...e, resultado: null }));
+                          }}
+                          className={`px-3 py-2 rounded-lg border-2 text-xs font-medium transition flex items-center justify-center gap-1 ${
+                            resultado === opt.id
+                              ? `${RESULTADO_COLORS[opt.id]} ring-2 ring-offset-1 ring-current`
+                              : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+                          } ${errors.resultado && !resultado ? "border-red-300" : ""}`}
+                        >
+                          {resultado === opt.id && <Check className="w-3 h-3" />}
+                          {opt.label}
+                        </button>
                       ))}
                     </div>
+                    {errors.resultado && <p className="text-xs text-red-600 mt-1">{errors.resultado}</p>}
                   </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Data do contato</label>
+                      <Input type="date" value={dataContato} disabled className="bg-gray-100 cursor-not-allowed" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Duração (min)</label>
+                      <Input type="number" value={duracao} disabled className="bg-gray-100 cursor-not-allowed text-center font-semibold" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Humor do cliente</label>
+                      <Select value={humor} onValueChange={setHumor}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecionar..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {["Receptivo", "Neutro", "Resistente", "Animado", "Preocupado"].map(h => (
+                            <SelectItem key={h} value={h}>{h}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Engajamento</label>
+                      <Select value={engajamento} onValueChange={setEngajamento}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecionar..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {["Alto", "Médio", "Baixo"].map(e => (
+                            <SelectItem key={e} value={e}>{e}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Step 3: Observações + Compromissos + Indicadores + Documentos */}
+              {wizardStep === 3 && (
+                <>
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Observações *</label>
+                    <Textarea
+                      placeholder="Descreva detalhes do contato..."
+                      value={observacoes}
+                      onChange={e => {
+                        setObservacoes(e.target.value);
+                        if (e.target.value.length >= 10) setErrors(er => ({ ...er, observacoes: null }));
+                      }}
+                      className={`min-h-24 text-sm ${errors.observacoes ? "border-red-500 bg-red-50" : ""}`}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">{observacoes.length}/10 caracteres</p>
+                    {errors.observacoes && <p className="text-xs text-red-600">{errors.observacoes}</p>}
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Compromissos do cliente</label>
+                    <Textarea
+                      placeholder="O que o cliente se comprometeu em fazer..."
+                      value={compromissos}
+                      onChange={e => setCompromissos(e.target.value)}
+                      className="min-h-20 text-sm"
+                    />
+                  </div>
+
+                  {followUp?.workshop_id && (
+                    <ClientIndicatorsSection
+                      workshopId={followUp.workshop_id}
+                      followUpId={followUp.id}
+                    />
+                  )}
+
+                  <div>
+                    <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Documentos e anexos</label>
+
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      className="hidden"
+                      accept=".pdf,.xlsx,.docx,.png,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png"
+                      onChange={handleFileInput}
+                    />
+                    <div
+                      onClick={() => !uploadingDoc && fileInputRef.current?.click()}
+                      onDrop={handleDrop}
+                      onDragOver={(e) => e.preventDefault()}
+                      className={`border-2 border-dashed rounded-lg p-6 text-center transition cursor-pointer mb-3 ${
+                        uploadingDoc ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+                      }`}
+                    >
+                      {uploadingDoc ? (
+                        <>
+                          <Loader2 className="w-6 h-6 text-blue-500 mx-auto mb-2 animate-spin" />
+                          <p className="text-xs text-blue-600">Enviando documento...</p>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                          <p className="text-xs text-gray-600">Arraste arquivos ou clique para selecionar</p>
+                          <p className="text-xs text-gray-400 mt-1">PDF, XLSX, DOCX, PNG (máx 10MB)</p>
+                        </>
+                      )}
+                    </div>
+
+                    {uploadedDocs.length > 0 && (
+                      <div className="space-y-2 mb-3">
+                        <p className="text-xs font-semibold text-gray-600">Documentos enviados ({uploadedDocs.length})</p>
+                        {uploadedDocs.map((doc, idx) => (
+                          <div key={idx} className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                            <FileText className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <span className="text-xs text-gray-700 truncate flex-1">{doc.name}</span>
+                            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">Ver</a>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div
+                      onPaste={(e) => {
+                        e.preventDefault();
+                        const items = e.clipboardData.items;
+                        for (let item of items) {
+                          if (item.type.startsWith('image/')) {
+                            const file = item.getAsFile();
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                              setPastedImages(prev => [...prev, {
+                                id: Math.random(),
+                                src: event.target.result,
+                                name: `Screenshot ${new Date().toLocaleTimeString('pt-BR')}`
+                              }]);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }
+                      }}
+                      className="border-2 border-blue-300 border-dashed rounded-lg p-6 bg-blue-50 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3 cursor-pointer transition"
+                      tabIndex="0"
+                    >
+                      <p className="text-sm font-medium text-blue-700 mb-1">Colar screenshot aqui</p>
+                      <p className="text-xs text-blue-600">Use Ctrl+V (ou Cmd+V) para colar uma imagem da área de transferência</p>
+                    </div>
+
+                    {pastedImages.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold text-gray-600">Screenshots coladas ({pastedImages.length})</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {pastedImages.map(img => (
+                            <div key={img.id} className="relative group rounded-lg overflow-hidden border border-gray-200 bg-white">
+                              <img
+                                src={img.src}
+                                alt={img.name}
+                                className="w-full h-24 object-cover"
+                              />
+                              <button
+                                onClick={() => setPastedImages(prev => prev.filter(p => p.id !== img.id))}
+                                className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                              <p className="text-xs text-gray-600 p-1 bg-white text-center truncate">{img.name}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Step 4: Proximos passos */}
+              {wizardStep === 4 && (
+                <>
+                  {!isAutoReagendar && (
+                    <div>
+                      <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Próximo passo *</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {PROXIMO_PASSO_OPTIONS.map(opt => (
+                          <button
+                            key={opt.id}
+                            onClick={() => {
+                              setProximoPasso(opt.id);
+                              setErrors(e => ({ ...e, proximoPasso: null }));
+                            }}
+                            className={`px-3 py-2 rounded-lg border-2 text-xs font-medium transition ${
+                              proximoPasso === opt.id
+                                ? opt.id === "cancelar"
+                                  ? "bg-red-100 text-red-700 border-red-300"
+                                  : "bg-gray-900 text-white border-gray-900"
+                                : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+                            } ${errors.proximoPasso ? "border-red-500 bg-red-50" : ""}`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                      {errors.proximoPasso && <p className="text-xs text-red-600 mt-1">{errors.proximoPasso}</p>}
+                    </div>
+                  )}
+
+                  {isAutoReagendar && (
+                    <div className={`rounded-lg border px-3 py-2.5 flex items-center gap-2 text-xs font-medium ${resultado === "aguardando" ? "bg-blue-50 border-blue-200 text-blue-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
+                      <span className="text-base">{resultado === "aguardando" ? ({ ligacao: "📞", email: "✉️", presencial: "🏠", meet: "🎥" }[canais[0]] || "💬") : "🔁"}</span>
+                      <span>
+                        {resultado === "aguardando"
+                          ? `Um novo follow-up será criado automaticamente para amanhã — aguardando retorno via ${({ ligacao: "Ligação", whatsapp: "WhatsApp", email: "E-mail", meet: "Meet", presencial: "Presencial" }[canais[0]] || "WhatsApp")}`
+                          : "Um novo follow-up de retentativa será criado automaticamente para amanhã"}
+                      </span>
+                    </div>
+                  )}
+
+                  {["reagendar", "agendar", "enviar"].includes(proximoPasso) && (
+                    <div className="grid grid-cols-2 gap-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div>
+                        <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Data próximo contato</label>
+                        <Input type="date" value={proxData} onChange={e => setProxData(e.target.value)} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Horário</label>
+                        <Input type="time" value={proxHora} onChange={e => setProxHora(e.target.value)} />
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Wizard Navigation */}
+              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                <button
+                  onClick={() => setWizardStep(s => Math.max(1, s - 1))}
+                  disabled={wizardStep === 1}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Anterior
+                </button>
+                <span className="text-xs text-gray-400">{wizardStep} de 4</span>
+                {wizardStep < 4 ? (
+                  <button
+                    onClick={() => setWizardStep(s => Math.min(4, s + 1))}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition-colors"
+                  >
+                    Próximo
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <div className="w-24" />
                 )}
               </div>
             </div>
