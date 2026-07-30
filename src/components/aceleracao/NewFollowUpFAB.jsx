@@ -1,14 +1,25 @@
 import React, { memo } from "react";
-import { Plus } from "lucide-react";
+import { LifeBuoy } from "lucide-react";
 
+/**
+ * FAB "Suporte" — abre o fluxo de Suporte Rápido (follow-up ad-hoc rastreável).
+ * Estilo: pílula amarelo-pálido com ícone LifeBuoy magenta (referência print 2).
+ */
 const NewFollowUpFAB = memo(({ onClick }) => (
   <button
     onClick={onClick}
-    className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center"
-    title="Novo Follow-up"
-    aria-label="Novo Follow-up"
+    className="fixed bottom-6 right-6 z-40 flex items-center gap-2 pl-2.5 pr-4 py-2.5 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+    style={{
+      backgroundColor: "#fffef0",
+      border: "1px solid #e6d7a4",
+    }}
+    title="Iniciar Suporte"
+    aria-label="Iniciar Suporte"
   >
-    <Plus className="w-6 h-6" />
+    <LifeBuoy className="w-5 h-5" style={{ color: "#d94d76" }} />
+    <span className="text-sm font-semibold" style={{ color: "#a36136" }}>
+      Suporte
+    </span>
   </button>
 ));
 

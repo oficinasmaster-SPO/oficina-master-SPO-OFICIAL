@@ -290,6 +290,17 @@ function CockpitPanelInner({ reminder, seqNum, stats, today, onIniciarAtendiment
 
   return (
     <div className="flex flex-col" style={{ maxHeight: "calc(100vh - 5.5rem)" }}>
+      {/* E1: CTA no topo — sempre visível acima do conteúdo */}
+      <div className="flex-shrink-0 pb-2 mb-1">
+        <Button
+          onClick={() => onIniciarAtendimento?.(reminder)}
+          className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 gap-2"
+        >
+          <PlayCircle className="w-4 h-4" />
+          Iniciar Atendimento
+        </Button>
+      </div>
+
       {/* Scrollable content */}
       <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pb-1">
         {/* Client header */}
@@ -345,16 +356,6 @@ function CockpitPanelInner({ reminder, seqNum, stats, today, onIniciarAtendiment
         />
       </div>
 
-      {/* E1: Sticky CTA — always visible at bottom */}
-      <div className="flex-shrink-0 pt-2 mt-1 border-t border-gray-100">
-        <Button
-          onClick={() => onIniciarAtendimento?.(reminder)}
-          className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 gap-2"
-        >
-          <PlayCircle className="w-4 h-4" />
-          Iniciar Atendimento
-        </Button>
-      </div>
     </div>
   );
 }
