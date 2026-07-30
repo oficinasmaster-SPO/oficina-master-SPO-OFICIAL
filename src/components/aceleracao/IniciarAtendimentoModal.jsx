@@ -43,7 +43,6 @@ import { isSuporteFlow, gerarSuporteId } from "@/utils/suporteHelper";
 import ClientIndicatorsSection from "@/components/atendimento/ClientIndicatorsSection";
 import ClientIndicatorsChart from "@/components/clientIndicators/ClientIndicatorsChart";
 import { getInitials } from "@/lib/avatarUtils";
-import StepIndicator from "@/components/aceleracao/followups/ds/StepIndicator";
 
 
 const RESULTADO_COLORS = {
@@ -189,7 +188,6 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   const [clienteAtual, setClienteAtual] = useState(cliente);
   const [showRegistrarAtendimento, setShowRegistrarAtendimento] = useState(false);
   const [showCheckpointModal, setShowCheckpointModal] = useState(false);
-  const [wizardStep, setWizardStep] = useState(1);
   
   // Toasts & Demands
   const { addToast } = useToasts();
@@ -1156,8 +1154,6 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
           <div className="overflow-y-auto border-r border-gray-200 px-4 py-4" style={{ flex: '2 1 0%', minWidth: '320px', maxWidth: '42%' }}>
            <div className="space-y-6 max-w-2xl px-2 py-2 bg-white rounded-lg shadow-[inset_0_2px_8px_rgba(0,0,0,0.05)]">
 
-              {/* Step Indicator */}
-              <StepIndicator currentStep={wizardStep} />
 
               {/* Banners — always visible */}
               <SuporteFormBanner followUp={followUp} />
@@ -1170,8 +1166,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
               />
 
               {/* ── Step 1: Canal ── */}
-              {wizardStep === 1 && (
-                <div>
+              <div>
                   <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">
                     Canais de contato *
                 </label>
@@ -1203,11 +1198,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                 </div>
                   {errors.canais && <p className="text-xs text-red-600 mt-1">{errors.canais}</p>}
                 </div>
-              )}
 
-              {/* Step 2: Resultado + Data/Duração + Humor/Engajamento */}
-              {wizardStep === 2 && (
-                <>
                   <div>
                     <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">
                       Resultado do contato *
@@ -1274,12 +1265,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                       </Select>
                     </div>
                   </div>
-                </>
-              )}
 
-              {/* Step 3: Observações + Compromissos + Indicadores + Documentos */}
-              {wizardStep === 3 && (
-                <>
                   <div>
                     <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Observações *</label>
                     <Textarea
@@ -1407,12 +1393,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                       </div>
                     )}
                   </div>
-                </>
-              )}
 
-              {/* Step 4: Proximos passos */}
-              {wizardStep === 4 && (
-                <>
                   {!isAutoReagendar && (
                     <div>
                       <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">Próximo passo *</label>
@@ -1463,32 +1444,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                       </div>
                     </div>
                   )}
-                </>
-              )}
 
-              {/* Wizard Navigation */}
-              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                <button
-                  onClick={() => setWizardStep(s => Math.max(1, s - 1))}
-                  disabled={wizardStep === 1}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Anterior
-                </button>
-                <span className="text-xs text-gray-400">{wizardStep} de 4</span>
-                {wizardStep < 4 ? (
-                  <button
-                    onClick={() => setWizardStep(s => Math.min(4, s + 1))}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-700 transition-colors"
-                  >
-                    Próximo
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                ) : (
-                  <div className="w-24" />
-                )}
-              </div>
             </div>
           </div>
 
