@@ -50,18 +50,19 @@ export default function CentralFollowUp() {
   const consultingFirmId = userData?.data?.consulting_firm_id || user?.consulting_firm_id;
 
   const { data: consultores = [] } = useQuery({
-    queryKey: ['consultores-firma', consultingFirmId],
+    queryKey: ['consultores-internos', consultingFirmId],
     queryFn: async () => {
-      if (!consultingFirmId) return [];
-      const users = await base44.entities.User.filter({
-        'data.consulting_firm_id': consultingFirmId,
-        'data.is_internal': true,
+      // Fonte canônica: Employee.user_type === 'internal' (is_internal legado foi corrigido).
+      // Lista todos os colaboradores internos da equipe Oficinas Master.
+      const employees = await base44.entities.Employee.filter({
+        user_type: 'internal',
+        user_status: 'ativo',
       }, 'full_name', 200);
-      return users.filter(u => u.id !== user?.id).sort((a, b) =>
-        (a.full_name || '').localeCompare(b.full_name || '')
-      );
+      return employees
+        .filter(e => e.user_id && e.user_id !== user?.id)
+        .map(e => ({ id: e.user_id, full_name: e.full_name, email: e.email }))
+        .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
     },
-    enabled: !!consultingFirmId,
     staleTime: 10 * 60 * 1000,
   });
 
