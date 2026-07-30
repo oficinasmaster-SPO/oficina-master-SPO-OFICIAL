@@ -356,11 +356,6 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
           </button>
         </div>
 
-        {onSuporteRapido && (
-          <button onClick={onSuporteRapido} title="Suporte Rápido — atender cliente sem follow-up agendado" className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5 hover:bg-amber-100 transition-colors text-amber-700 font-semibold text-xs flex-shrink-0 ml-auto">
-            <span className="text-sm leading-none">🛟</span>Suporte
-          </button>
-        )}
       </div>
 
       {filtered.length === 0 ? (
