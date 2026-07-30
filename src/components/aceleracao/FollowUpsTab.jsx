@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import FollowUpList from "./followups/FollowUpList";
+import ConsultorSelect from "./followups/ConsultorSelect";
 import FollowUpDetail from "./followups/FollowUpDetail";
 import FollowUpCompletedDetailDrawer from "./FollowUpCompletedDetailDrawer";
 import FollowUpContadorRow from "./followups/FollowUpContadorRow";
@@ -157,7 +158,7 @@ const TABS = [
   { id: "relatorios", label: "Relatórios" },
 ];
 
-export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId, onSelectForCockpit, selectedReminderId, onIniciarAtendimento }) {
+export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId, onSelectForCockpit, selectedReminderId, onIniciarAtendimento, consultorSelecionado, onConsultorChange, consultores = [] }) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
@@ -447,6 +448,13 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId,
       {/* Compact tab nav — single thin row with embedded search + refresh */}
       <Tabs value={activeTab}>
         <div className="flex items-center gap-2">
+          {/* Consultant selector — primeiro item da nav bar */}
+          <ConsultorSelect
+            value={consultorSelecionado}
+            onChange={onConsultorChange}
+            consultores={consultores}
+            user={user}
+          />
           <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide">
             <RedTabsList>
               {TABS.map(tab => (

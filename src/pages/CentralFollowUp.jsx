@@ -7,15 +7,7 @@ import NewFollowUpFAB from '@/components/aceleracao/NewFollowUpFAB';
 import IniciarAtendimentoModal from '@/components/aceleracao/IniciarAtendimentoModal';
 import { useAuth } from '@/lib/AuthContext';
 import useEmployeeResolver from '@/hooks/useEmployeeResolver';
-import { Users } from 'lucide-react';
 import { getInitials } from '@/lib/avatarUtils';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 export default function CentralFollowUp() {
   useEffect(() => {
@@ -99,23 +91,6 @@ export default function CentralFollowUp() {
         {/* Separator */}
         <div className="w-px h-5 bg-gray-700 flex-shrink-0" />
 
-        {/* Consultant selector */}
-        <Select value={consultorSelecionado || ''} onValueChange={setConsultorSelecionado}>
-          <SelectTrigger className="w-[200px] bg-gray-800/80 border-gray-700 text-white text-xs h-7 flex-shrink-0">
-            <Users className="w-3 h-3 mr-1.5 text-gray-400 flex-shrink-0" />
-            <SelectValue placeholder="Selecionar consultor" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={user?.id || 'me'}>Meus Follow-ups</SelectItem>
-            <SelectItem value="todos">Todos os Consultores</SelectItem>
-            {consultores.map(c => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.full_name || c.email}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
         {/* Spacer */}
         <div className="flex-1" />
 
@@ -148,6 +123,9 @@ export default function CentralFollowUp() {
             onSelectForCockpit={handleSelectForCockpit}
             selectedReminderId={cockpit.reminder?.id}
             onIniciarAtendimento={handleIniciarAtendimento}
+            consultorSelecionado={consultorSelecionado}
+            onConsultorChange={setConsultorSelecionado}
+            consultores={consultores}
           />
         </div>
         <div className="hidden lg:block sticky top-20">
