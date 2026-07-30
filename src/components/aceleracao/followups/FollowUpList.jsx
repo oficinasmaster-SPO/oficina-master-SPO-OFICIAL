@@ -359,6 +359,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
               key={r.id} reminder={r} today={today} seqFU={seqByReminderId[r.id] ?? null} score={calcPriorityScore(r, today)}
               onSelect={onSelect} isLast={i === paginated.length - 1} meuId={meuId}
               stats={statsByWorkshopId[r.workshop_id] ?? null} isSelected={r.id === selectedReminderId} risco={reunioesIndex[r.workshop_id] ?? null}
+              onIniciarAtendimento={onIniciarAtendimento}
             />
           ))}
         </div>
