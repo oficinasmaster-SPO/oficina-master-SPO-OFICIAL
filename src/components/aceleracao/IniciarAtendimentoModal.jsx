@@ -1169,11 +1169,11 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                 }}
               />
 
-              {/* ── Step 1 marker ──*/}
-              {false && null /* wizard gate below */}
-              <div>
-                <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">
-                  Canais de contato *
+              {/* ── Step 1: Canal ── */}
+              {wizardStep === 1 && (
+                <div>
+                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2 block">
+                    Canais de contato *
                 </label>
                 <div className="grid grid-cols-5 gap-2">
                   {CANAL_OPTIONS.map(opt => {
