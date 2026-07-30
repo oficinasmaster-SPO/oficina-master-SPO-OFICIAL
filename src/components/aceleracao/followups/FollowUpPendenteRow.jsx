@@ -21,7 +21,7 @@ function riscoToDotColor(risco) {
 }
 
 const FollowUpPendenteRow = memo(({
-  reminder, today, seqFU, score, onSelect, isLast, meuId, stats, isSelected, risco, onIniciarAtendimento,
+  reminder, today, seqFU, score, onSelect, isLast, meuId, stats, isSelected, risco, onIniciarAtendimento, plano,
 }) => {
   const consultor = reminder.consultor_principal_nome || reminder.consultor_nome || null;
   const isOtherConsultor =
@@ -77,8 +77,12 @@ const FollowUpPendenteRow = memo(({
           <p className="text-sm font-bold text-gray-900 truncate leading-tight">
             {reminder.workshop_name || "Sem cliente"}
           </p>
-          {(notesPreview || isOtherConsultor) && (
+          {(plano || notesPreview || isOtherConsultor) && (
             <p className="text-[11px] text-gray-400 truncate mt-0.5 leading-tight">
+              {plano && (
+                <span className="text-gray-500 font-medium mr-1">{plano}</span>
+              )}
+              {plano && (notesPreview || isOtherConsultor) && <span className="text-gray-300 mr-1">·</span>}
               {isOtherConsultor && consultor && (
                 <span className="text-blue-500 font-medium mr-1">{consultor} ·</span>
               )}
@@ -91,14 +95,11 @@ const FollowUpPendenteRow = memo(({
       {/* ── CONSULTOR ── 140px */}
       <div className="w-[140px] flex-shrink-0 px-2 py-2.5">
         {consultor ? (
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isOtherConsultor ? "bg-blue-400" : "bg-gray-300"}`} title={isOtherConsultor ? "Atribuído a outro consultor" : "Consultor responsável"} />
-            <span className={`text-[11px] truncate leading-tight ${isOtherConsultor ? "text-blue-600 font-medium" : "text-gray-600"}`}>
-              {consultor}
-            </span>
-          </div>
+          <span className={`text-sm font-bold truncate leading-tight ${isOtherConsultor ? "text-blue-600" : "text-gray-900"}`} title={consultor}>
+            {consultor}
+          </span>
         ) : (
-          <span className="text-gray-300 text-[11px]">—</span>
+          <span className="text-gray-300 text-sm">—</span>
         )}
       </div>
 

@@ -169,6 +169,30 @@ function useConcluidosIndex() {
   return { byWorkshop, byFollowupId, sequenceByFollowupId };
 }
 
+function useWorkshopsPlanIndex(workshopIds = []) {
+  const ids = [...new Set(workshopIds.filter(Boolean))];
+  const { data = [] } = useQuery({
+    queryKey: ["workshops-plan-index", ids.sort().join(",")],
+    queryFn: async () => {
+      if (ids.length === 0) return [];
+      const BATCH = 100;
+      const results = [];
+      for (let i = 0; i < ids.length; i += BATCH) {
+        const batch = ids.slice(i, i + BATCH);
+        const items = await base44.entities.Workshop.filter({ id: { $in: batch } }, undefined, BATCH);
+        results.push(...items);
+      }
+      return results;
+    },
+    enabled: ids.length > 0,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+  const byId = {};
+  data.forEach(w => { if (w.id) byId[w.id] = w.planoAtual || null; });
+  return byId;
+}
+
 function useAtasIndex(ataIds = []) {
   const uniqueIds = [...new Set(ataIds.filter(Boolean))];
   const { data = [] } = useQuery({
@@ -236,6 +260,8 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
     [remindersConcluidos, reminders]
   );
   const reunioesIndex = useReunioesIndex(workshopIdsTodos);
+
+  const planosByWorkshop = useWorkshopsPlanIndex(workshopIdsTodos);
 
   const fusPorEmpresa = React.useMemo(() => {
     const mapa = {};
@@ -391,6 +417,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
               onSelect={onSelect} isLast={i === paginated.length - 1} meuId={meuId}
               stats={statsByWorkshopId[r.workshop_id] ?? null} isSelected={r.id === selectedReminderId} risco={reunioesIndex[r.workshop_id] ?? null}
               onIniciarAtendimento={onIniciarAtendimento}
+              plano={planosByWorkshop[r.workshop_id] ?? null}
             />
           ))}
         </div>
