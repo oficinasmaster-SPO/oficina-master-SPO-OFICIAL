@@ -29,7 +29,9 @@ export default function ClientSelectorGrid({ onSelect, onClose }) {
     queryFn: async () => {
       try {
         const res = await base44.functions.invoke('getClientsWithPlans', {});
-        return res?.data || { clients: [] };
+        // O SDK retorna o body parseado diretamente (interceptor response.data),
+        // então `res` já é { clients: [...] } — não há wrapper `.data`.
+        return { clients: res?.clients || res?.data?.clients || [] };
       } catch (err) {
         console.error('Erro ao buscar clientes:', err);
         return { clients: [] };
