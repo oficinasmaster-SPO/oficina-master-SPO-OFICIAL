@@ -303,7 +303,7 @@ export default function PedidoInternoDetail({
                   <span className="font-medium text-green-700">{format(new Date(pedido.data_conclusao), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
                   {(() => {
                     const concluidoPorNome = getName(pedido.concluido_por_id, pedido.concluido_por_nome) || pedido.concluido_por_nome;
-                    if (!concluidoPorNome) return null;
+                    if (!concluidoPorNome || concluidoPorNome === "—") return null;
                     return (
                       <span className="flex items-center gap-1 text-xs text-gray-500">
                         <Avatar name={concluidoPorNome} src={getPhoto(pedido.concluido_por_id)} size="xs" className="h-4 w-4" />
