@@ -18,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export default function RelatorioSociosWorkshops() {
   const { data: workshops = [], isLoading: lw } = useQuery({
     queryKey: ["rel-socios-workshops"],
-    queryFn: () => base44.entities.Workshop.list("-created_date", 1000),
+    queryFn: () => base44.entities.Workshop.filter({ status: "ativo" }, "-created_date", 1000),
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
