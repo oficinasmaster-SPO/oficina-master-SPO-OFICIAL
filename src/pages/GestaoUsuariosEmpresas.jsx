@@ -63,14 +63,6 @@ export default function GestaoUsuariosEmpresas() {
     }
   });
 
-  const { data: users = [], isLoading: usersLoading } = useQuery({
-    queryKey: ['users-list'],
-    queryFn: async () => {
-      const allUsers = await base44.entities.User.list();
-      return Array.isArray(allUsers) ? allUsers : [];
-    }
-  });
-
   const { data: employees = [], isLoading: employeesLoading } = useQuery({
     queryKey: ['employees-list'],
     queryFn: async () => {
@@ -79,7 +71,7 @@ export default function GestaoUsuariosEmpresas() {
     }
   });
 
-  const isLoading = usersLoading || employeesLoading;
+  const isLoading = employeesLoading;
 
   const updateUserMutation = useMutation({
     mutationFn: async ({ userId, data }) => {
