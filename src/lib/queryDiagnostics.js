@@ -1,31 +1,42 @@
 /**
- * queryDiagnostics — INSTRUMENTAÇÃO TEMPORÁRIA
- * --------------------------------------------------------------
- * Objetivo: mapear QUEM dispara a avalanche de leituras (429) no boot
- * da CentralFollowUp, em vez de tratar apenas os sintomas.
+ * queryDiagnostics — INSTRUMENTAÇÃO TEMPORÁRIA (dev-only)
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Mapeia QUEM dispara cada leitura ao React Query, incluindo:
+ *   - queryKey serializada
+ *   - timestamp do primeiro e último disparo
+ *   - contagem acumulada por chave
+ *   - componentHints: linhas de src/pages|components|hooks|lib extraídas
+ *     do stack no momento do fetch — identifica o provider/hook/página exato
  *
- * Registra cada fetch do React Query:
- *  - queryKey (chave serializada)
- *  - timestamp do disparo
- *  - contagem acumulada por chave
- *  - stack trace de origem (capturado no momento do fetch)
+ * Console API (window.__QUERY_DIAG__):
+ *   printTop(n = 20)  → console.table dos top-N por nº de execuções
+ *   raw()             → array completo com componentHints por chave
+ *   reset()           → zera contadores (isola uma ação específica)
+ *   enabled           → true se instrumentação ativa
  *
- * Exposição em window.__QUERY_DIAG__:
- *  - summary():        lista ordenada por nº de execuções
- *  - raw():            Map completo { key -> {count, firstSeen, lastSeen, stacks[]} }
- *  - reset():          zera os contadores
- *  - printTop(n):      console.table dos top-N
- *
- * Remover após a investigação concluir (ver nota no query-client.js).
+ * ⚠️  Remover queryDiagnostics.js e o import/call em query-client.js após
+ *     concluir a investigação.
  */
 
-const enabled = import.meta.env?.DEV === true;
+const DEV = import.meta.env?.DEV === true;
 
-/** Map<keyString, { count, firstSeen, lastSeen, stacks: string[], sampleComponentHints: string[] }> */
-const _counts = new Map();
+// ─── estado interno ───────────────────────────────────────────────────────────
 
-/** Guarda o último fetchStatus visto por queryId p/ logar só no início do fetch. */
-const _lastFetchStatus = new Map();
+/**
+ * Map<keyString, {
+ *   count: number,
+ *   firstSeen: string,   // ISO timestamp
+ *   lastSeen:  string,
+ *   hints: string[],     // union de todas as origens vistas (dedup)
+ *   stacks: string[],    // até 3 stacks completos para debug profundo
+ * }>
+ */
+const _records = new Map();
+
+/** queryHash → último fetchStatus visto (evita logar duplicatas dentro do mesmo fetch) */
+const _lastStatus = new Map();
+
+// ─── utilitários ─────────────────────────────────────────────────────────────
 
 function _serializeKey(queryKey) {
   try {
@@ -38,102 +49,162 @@ function _serializeKey(queryKey) {
 }
 
 /**
- * Extrai pistas do componente responsável a partir do stack.
- * Procura por linhas /src/pages, /src/components ou /src/hooks.
+ * Extrai pistas de origem a partir do stack trace.
+ * Retorna até 5 entradas do tipo "src/pages/Foo.jsx:42:7".
+ *
+ * FIX: era `entry.componentHints.add(...array)` — Set.add() aceita apenas UM
+ * argumento; o spread silenciosamente descartava todos os hints além do primeiro.
+ * Agora retorna um array limpo e o caller itera sobre ele.
  */
-function _extractComponentHints(stack) {
+function _extractHints(stack) {
   if (!stack) return [];
-  const hints = new Set();
-  const lines = stack.split('\n');
-  for (const line of lines) {
-    const m = line.match(/(\/src\/(?:pages|components|hooks|lib)\/[^\s)]+\.jsx?[^\s:]*:\d+:\d+)/);
+  const seen = new Set();
+  const result = [];
+  for (const line of stack.split('\n')) {
+    const m = line.match(/\/(src\/(?:pages|components|hooks|lib)\/[^\s?)]+\.jsx?)[^:]*:(\d+)/);
     if (m) {
-      const compact = m[1].replace(/^.*\/src\//, 'src/').replace(/\?.*$/, '');
-      hints.add(compact);
+      const hint = `${m[1]}:${m[2]}`;
+      if (!seen.has(hint)) {
+        seen.add(hint);
+        result.push(hint);
+        if (result.length === 5) break;
+      }
     }
   }
-  return Array.from(hints).slice(0, 5);
+  return result;
 }
 
+// ─── instalação ──────────────────────────────────────────────────────────────
+
 export function installQueryDiagnostics(queryClient) {
-  if (!enabled) return;
+  if (!DEV) return;
 
-  const cache = queryClient.getQueryCache();
+  queryClient.getQueryCache().subscribe((event) => {
+    if (!event?.query) return;
 
-  cache.subscribe((event) => {
-    if (!event || !event.query) return;
-    const query = event.query;
-    const keyStr = _serializeKey(query.queryKey);
-    const qid = query.queryHash || keyStr;
-
-    const prevStatus = _lastFetchStatus.get(qid);
+    const { query } = event;
     const nowFetching = query.state.fetchStatus === 'fetching';
+    const id = query.queryHash || _serializeKey(query.queryKey);
 
-    // Loga apenas na transição para 'fetching' (evita duplicar em updates intermediários).
-    if (nowFetching && prevStatus !== 'fetching') {
-      const now = new Date();
-      const ts = now.toISOString();
-      let entry = _counts.get(keyStr);
-      if (!entry) {
-        entry = { count: 0, firstSeen: ts, lastSeen: ts, stacks: [], componentHints: new Set() };
-        _counts.set(keyStr, entry);
-      }
-      entry.count += 1;
-      entry.lastSeen = ts;
+    // Só loga na transição idle/paused → fetching.
+    if (!nowFetching || _lastStatus.get(id) === 'fetching') {
+      _lastStatus.set(id, query.state.fetchStatus);
+      return;
+    }
+    _lastStatus.set(id, 'fetching');
 
-      const stack = new Error().stack || '';
-      entry.componentHints.add(..._extractComponentHints(stack));
-      if (entry.stacks.length < 2) entry.stacks.push(stack);
+    const keyStr = _serializeKey(query.queryKey);
+    const ts = new Date().toISOString();
 
-      const hints = _extractComponentHints(stack);
-      // eslint-disable-next-line no-console
-      console.warn(
-        `%c[QUERY-DIAG] fetch #${entry.count}`,
-        'color:#eab308;font-weight:bold',
-        { queryKey: query.queryKey, ts, componentHints: hints }
-      );
+    let rec = _records.get(keyStr);
+    if (!rec) {
+      rec = { count: 0, firstSeen: ts, lastSeen: ts, hints: [], stacks: [] };
+      _records.set(keyStr, rec);
     }
 
-    _lastFetchStatus.set(qid, query.state.fetchStatus);
+    rec.count += 1;
+    rec.lastSeen = ts;
+
+    // Captura o stack no microtask atual — a chamada vem do subscriber do QueryCache,
+    // que ainda tem o call-site real no frame superior.
+    const stack = new Error().stack ?? '';
+    const newHints = _extractHints(stack);
+
+    // Acumula hints únicos (corrige o bug do Set.add(...spread)).
+    const existingSet = new Set(rec.hints);
+    for (const h of newHints) {
+      if (!existingSet.has(h)) {
+        existingSet.add(h);
+        rec.hints.push(h);
+      }
+    }
+
+    // Guarda até 3 stacks completos para inspeção profunda (raw()).
+    if (rec.stacks.length < 3) rec.stacks.push(stack);
+
+    // eslint-disable-next-line no-console
+    console.warn(
+      `%c[QUERY-DIAG] fetch #${rec.count}`,
+      'color:#eab308;font-weight:bold',
+      {
+        queryKey: query.queryKey,
+        ts,
+        componentHints: newHints.length ? newHints : ['(sem hints — sem source maps?)'],
+      }
+    );
   });
 
-  // Exposição para inspeção manual no console do navegador.
-  if (typeof window !== 'undefined') {
-    window.__QUERY_DIAG__ = {
-      enabled: true,
-      reset() {
-        _counts.clear();
-        _lastFetchStatus.clear();
-        // eslint-disable-next-line no-console
-        console.info('[QUERY-DIAG] contadores zerados');
-      },
-      raw() {
-        return Array.from(_counts.entries()).map(([key, v]) => ({
+  // ─── API pública ────────────────────────────────────────────────────────────
+
+  if (typeof window === 'undefined') return;
+
+  window.__QUERY_DIAG__ = {
+    enabled: true,
+
+    /** Zera todos os contadores. Use antes de uma ação para isolar seus fetches. */
+    reset() {
+      _records.clear();
+      _lastStatus.clear();
+      // eslint-disable-next-line no-console
+      console.info('%c[QUERY-DIAG] contadores zerados', 'color:#22c55e');
+    },
+
+    /**
+     * Retorna o array completo ordenado por contagem decrescente.
+     * Cada entrada inclui queryKey, count, firstSeen, lastSeen, componentHints, stacks.
+     */
+    raw() {
+      return Array.from(_records.entries())
+        .map(([key, r]) => ({
           queryKey: key,
-          count: v.count,
-          firstSeen: v.firstSeen,
-          lastSeen: v.lastSeen,
-          componentHints: Array.from(v.componentHints),
-        }));
-      },
-      summary() {
-        return this.raw().sort((a, b) => b.count - a.count);
-      },
-      printTop(n = 20) {
-        const top = this.summary().slice(0, n);
+          count: r.count,
+          firstSeen: r.firstSeen,
+          lastSeen: r.lastSeen,
+          componentHints: r.hints,
+          stacks: r.stacks,
+        }))
+        .sort((a, b) => b.count - a.count);
+    },
+
+    /**
+     * Imprime console.table dos top-N disparadores.
+     * @param {number} n — quantos mostrar (default 20)
+     */
+    printTop(n = 20) {
+      const top = this.raw().slice(0, n);
+      if (!top.length) {
         // eslint-disable-next-line no-console
-        console.table(top.map(r => ({
-          'queryKey': r.queryKey.slice(0, 80),
+        console.info('[QUERY-DIAG] Nenhum fetch registrado ainda. Navegue para a página e tente novamente.');
+        return [];
+      }
+      // eslint-disable-next-line no-console
+      console.table(
+        top.map((r, i) => ({
+          '#': i + 1,
+          'queryKey': r.queryKey.slice(0, 72),
           'execuções': r.count,
-          'origem (hints)': r.componentHints.join(' | ').slice(0, 100),
-        })));
-        return top;
-      },
-    };
-    // eslint-disable-next-line no-console
-    console.info(
-      '%c[QUERY-DIAG] Instrumentação ativa. Use window.__QUERY_DIAG__.printTop(20) para ver os maiores disparadores.',
-      'color:#eab308'
-    );
-  }
+          'primeiro': r.firstSeen.slice(11, 23),
+          'último': r.lastSeen.slice(11, 23),
+          'origem (hints)': (r.componentHints[0] ?? '—').slice(0, 80),
+        }))
+      );
+      // Detalha hints completos em follow-up (console.table trunca strings).
+      top.forEach((r, i) => {
+        if (r.componentHints.length > 1) {
+          // eslint-disable-next-line no-console
+          console.groupCollapsed(`  #${i + 1} ${r.queryKey.slice(0, 60)} — todos os hints`);
+          r.componentHints.forEach(h => console.log(' ', h)); // eslint-disable-line no-console
+          // eslint-disable-next-line no-console
+          console.groupEnd();
+        }
+      });
+      return top;
+    },
+  };
+
+  // eslint-disable-next-line no-console
+  console.info(
+    '%c[QUERY-DIAG] Instrumentação ativa — window.__QUERY_DIAG__.printTop(20)',
+    'color:#eab308;font-weight:bold'
+  );
 }
