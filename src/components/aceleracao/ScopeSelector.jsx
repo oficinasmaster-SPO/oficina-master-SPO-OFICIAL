@@ -1,6 +1,6 @@
 import React from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Inbox, Send as SendIcon, Users } from "lucide-react";
+import Combobox from "@/components/ui/combobox";
 
 const SCOPE_OPTIONS = [
   { key: "todos",        label: "Todos os pedidos", icon: Users },
@@ -9,21 +9,26 @@ const SCOPE_OPTIONS = [
 ];
 
 export default function ScopeSelector({ value, onChange }) {
-  const current = SCOPE_OPTIONS.find(o => o.key === value) || SCOPE_OPTIONS[0];
-  const Icon = current.icon;
   return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-8 w-[160px] bg-white border-gray-200 shadow-sm text-[12.5px] font-medium text-gray-700">
-        <div className="flex items-center gap-2">
-          <Icon className="h-3.5 w-3.5 text-gray-500" />
-          <span>{current.label}</span>
-        </div>
-      </SelectTrigger>
-      <SelectContent>
-        {SCOPE_OPTIONS.map(opt => (
-          <SelectItem key={opt.key} value={opt.key} className="text-[12.5px]">{opt.label}</SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <Combobox
+      value={value}
+      onChange={onChange}
+      options={SCOPE_OPTIONS}
+      getOptionValue={(o) => o.key}
+      getOptionLabel={(o) => o.label}
+      placeholder="Todos os pedidos"
+      searchPlaceholder="Pesquisar..."
+      emptyText="Nenhuma opção encontrada."
+      className="h-8 w-[160px]"
+      renderOption={(option) => {
+        const Icon = option.icon;
+        return (
+          <div className="flex items-center gap-2">
+            <Icon className="h-3.5 w-3.5 text-gray-500" />
+            <span className="text-[12.5px] font-medium text-gray-700">{option.label}</span>
+          </div>
+        );
+      }}
+    />
   );
 }

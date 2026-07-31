@@ -1,10 +1,10 @@
 import React from "react";
 import { Search, X } from "lucide-react";
-import {
-  Select, SelectTrigger, SelectValue, SelectContent, SelectItem
-} from "@/components/ui/select";
+import Combobox from "@/components/ui/combobox";
 import { PEDIDO_STATUS_OPTIONS } from "@/components/shared/backlogConstants";
 import ScopeSelector from "./ScopeSelector";
+
+const STATUS_OPTIONS = [{ value: "all", label: "Todos status" }, ...PEDIDO_STATUS_OPTIONS];
 
 export default function OrderFilterBar({
   scope,
@@ -24,19 +24,15 @@ export default function OrderFilterBar({
       <div className="flex items-center gap-2">
         <ScopeSelector value={scope} onChange={setScope} />
 
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="h-8 w-[140px] bg-white border-gray-200 shadow-sm text-[12.5px] font-medium text-gray-700">
-            <SelectValue placeholder="Todos status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all" className="text-[12.5px]">Todos status</SelectItem>
-            {PEDIDO_STATUS_OPTIONS.map(opt => (
-              <SelectItem key={opt.value} value={opt.value} className="text-[12.5px]">
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Combobox
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={STATUS_OPTIONS}
+          placeholder="Todos status"
+          searchPlaceholder="Pesquisar status..."
+          emptyText="Nenhum status encontrado."
+          className="h-8 w-[140px]"
+        />
       </div>
 
       {/* CAMPO DE PESQUISA */}
