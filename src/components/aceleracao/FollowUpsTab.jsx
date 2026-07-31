@@ -241,7 +241,9 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId,
     }
   }, [reminders, user?.consulting_firm_id]);
 
-  // Fetch dos atendimentos concluídos
+  // Fetch dos atendimentos concluídos — só dispara quando o usuário abre a aba
+  // "Concluídos". Antes esta query (limit 500) era disparada no mount junto com
+  // outras 3 pesadas, contribuindo para a cascata 429 no reload da Central.
   const { data: concludedAttendances = [] } = useQuery({
     queryKey: ["follow-up-concluidos-tab", consultorEfetivo],
     queryFn: async () => {
@@ -251,10 +253,12 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId,
       }
       return base44.entities.FollowUpConcluido.filter(query, "-completedAt", 500);
     },
+    enabled: activeTab === "concluidos",
     staleTime: 2 * 60 * 1000,
   });
 
-  // Fetch dos FollowUpContadores (acompanhamento)
+  // Fetch dos FollowUpContadores — só dispara na aba "Acompanhamento".
+  // Antes disparava no mount e contribuía para a cascata 429 no reload.
   const { data: followUpContadores = [], isLoading: isLoadingContadores } = useQuery({
     queryKey: ["follow-up-contador-tab", consultorEfetivo],
     queryFn: async () => {
@@ -262,6 +266,7 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId,
       if (consultorEfetivo) query.consultor_id = consultorEfetivo;
       return base44.entities.FollowUpContador.filter(query, "-data_criacao", 500);
     },
+    enabled: activeTab === "acompanhamento",
     staleTime: 3 * 60 * 1000,
   });
 
