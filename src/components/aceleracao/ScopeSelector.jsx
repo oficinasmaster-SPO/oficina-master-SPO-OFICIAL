@@ -1,11 +1,10 @@
 import React from "react";
-import { Inbox, Send as SendIcon, Users } from "lucide-react";
 import Combobox from "@/components/ui/combobox";
 
 const SCOPE_OPTIONS = [
-  { key: "todos",        label: "Todos os pedidos", icon: Users },
-  { key: "para_mim",     label: "Para mim",         icon: Inbox },
-  { key: "meus_pedidos", label: "Meus pedidos",     icon: SendIcon },
+  { key: "todos",        label: "Todos os pedidos" },
+  { key: "para_mim",     label: "Para mim" },
+  { key: "meus_pedidos", label: "Meus pedidos" },
 ];
 
 export default function ScopeSelector({ value, onChange }) {
@@ -20,15 +19,7 @@ export default function ScopeSelector({ value, onChange }) {
       searchPlaceholder="Pesquisar..."
       emptyText="Nenhuma opção encontrada."
       className="h-8 w-[160px]"
-      renderOption={(option) => {
-        const Icon = option.icon;
-        return (
-          <div className="flex items-center gap-2">
-            <Icon className="h-3.5 w-3.5 text-gray-500" />
-            <span className="text-[12.5px] font-medium text-gray-700">{option.label}</span>
-          </div>
-        );
-      }}
+      autoSelectOnOpen={false}
     />
   );
 }
