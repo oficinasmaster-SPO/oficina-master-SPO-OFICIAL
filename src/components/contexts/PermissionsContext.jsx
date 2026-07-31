@@ -40,7 +40,7 @@ export function PermissionsProvider({ children }) {
   const { data: permissionsData, isLoading: permissionsLoading } = useQuery({
     queryKey: ['permissions', user?.id, workshopId, membership?.id, profileId, isAdminMode, isImpersonating],
     gcTime: 5 * 60 * 1000,
-    retry: 2,
+    // RAIZ-429: herda retry global (ignora 429). Antes retry: 2 retentava em 429.
     queryFn: async () => {
       if (!user || !membership) {
         return { permissions: [], profile: null, customRole: null, currentRole: null, isOwnerOrPartner: false, granularConfig: {} };
@@ -100,7 +100,7 @@ export function PermissionsProvider({ children }) {
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    retry: 1,
+    // RAIZ-429: herda retry global (ignora 429). Antes retry: 1 retentava em 429.
     enabled: !!user && !!membership && !tenantLoading
   });
 

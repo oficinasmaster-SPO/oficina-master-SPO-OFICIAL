@@ -17,7 +17,14 @@ export const queryClientInstance = new QueryClient({
 	defaultOptions: {
 		queries: {
 			refetchOnWindowFocus: false,
-			retry: 1,
+			// RAIZ-429: NUNCA retentar em 429 (rate limit / "App entity read traffic
+			// volume limit exceeded"). Retentar um 429 só adiciona tráfego ao limite
+			// agregado, piorando a cascata. Outros erros (rede/transient) retentam 1x.
+			retry: (failureCount, error) => {
+				const status = error?.status || error?.response?.status || error?.statusCode;
+				if (status === 429) return false;
+				return failureCount < 1;
+			},
 			staleTime: 5 * 60 * 1000,
 			gcTime: 10 * 60 * 1000,
 		},

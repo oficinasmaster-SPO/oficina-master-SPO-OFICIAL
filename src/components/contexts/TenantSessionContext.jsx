@@ -75,7 +75,7 @@ export function TenantSessionProvider({ children }) {
     enabled: isAuthenticated && !isLoadingAuth && !!realUser?.id,
     staleTime: 2 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    retry: 1,
+    // RAIZ-429: herda retry global (ignora 429). Antes retry: 1 retentava em 429.
     refetchOnWindowFocus: false,
     placeholderData: (prev) => prev,
   });

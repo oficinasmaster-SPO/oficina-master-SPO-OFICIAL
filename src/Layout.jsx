@@ -89,7 +89,8 @@ export default function Layout({ children, currentPageName }) {
       }
     },
     enabled: !!displayUser?.id && isAuthenticated && !isCheckingAuth,
-    staleTime: 5 * 60 * 1000
+    staleTime: 5 * 60 * 1000,
+    retry: false, // RAIZ-429: não retentar notification em rate limit
   });
 
   const unreadCount = notifications.length;
