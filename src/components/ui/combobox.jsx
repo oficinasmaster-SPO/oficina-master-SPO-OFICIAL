@@ -193,16 +193,19 @@ export default function Combobox({
       ref={containerRef}
       shouldFilter={false}
       loop
-      className={cn("relative w-full min-w-0 h-10", className)}
+      className={cn(
+        "relative w-full min-w-0 h-10", 
+        open ? "z-[100]" : "z-10", // 🔥 CORREÇÃO: Eleva o Combobox aberto acima dos outros
+        className
+      )}
     >
       <div
         className={cn(
           "absolute inset-0 z-30 flex items-center w-full h-full bg-background border transition-colors duration-200",
           open
-            // O SEGREDO AQUI:
             // Sem ring-2 quando aberto. border-b-transparent faz ele se fundir com a lista abaixo.
             ? "border-input border-b-transparent rounded-t-md rounded-b-none"
-            // Quando fechado, mantém o highlight de foco nativo que você já tinha.
+            // Quando fechado, mantém o highlight de foco nativo.
             : "border-input rounded-md focus-within:ring-2 focus-within:ring-ring"
         )}
       >
@@ -213,7 +216,7 @@ export default function Combobox({
           value={displayValue}
           onValueChange={handleInputChange}
           onFocus={openDropdown}
-          onClick={openDropdown} // CORREÇÃO 2: Garante que clicar no nome sempre abra a lista
+          onClick={openDropdown} // Garante que clicar no nome sempre abra a lista
           onKeyDown={handleKeyDown}
           onCompositionStart={() => (isComposing.current = true)}
           onCompositionEnd={() => (isComposing.current = false)}
@@ -237,7 +240,7 @@ export default function Combobox({
             tabIndex={-1}
             onClick={() => {
               if (open) closeDropdown();
-              else openDropdown(); // O clique na setinha já chama essa função nativamente
+              else openDropdown();
             }}
             className="rounded p-1 hover:bg-muted transition-colors"
           >
