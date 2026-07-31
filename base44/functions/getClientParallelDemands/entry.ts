@@ -130,29 +130,34 @@ Deno.serve(async (req) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // [1] Busca Sprints abertas
-    const sprints = await base44.asServiceRole.entities.ConsultoriaSprint.filter({
-      workshop_id: effectiveWorkshopId,
-      status: { '$ne': 'completed' }
-    }, '-created_date', 50);
+    // [FIX-CARGA] 4 leituras em paralelo (Promise.all) + fail-open por entidade.
+    // Antes: 4 leituras sequenciais sem try/catch — sob carga, uma única falha
+    // (429/timeout) em qualquer entidade derrubava o endpoint inteiro em 500,
+    // e a latência acumulava 4x. Agora cada leitura é isolada (.catch → []),
+    // rodam concorrentes e o endpoint responde 200 com o que conseguiu ler.
+    // Correção adicional: PedidoInterno e TarefaBacklog filtravam por
+    // `cliente_id` (campo inexistente no schema) — corrigido para `workshop_id`.
+    const [sprints, pedidosInternos, backlogTarefas, cronogramaItems] = await Promise.all([
+      base44.asServiceRole.entities.ConsultoriaSprint.filter({
+        workshop_id: effectiveWorkshopId,
+        status: { '$ne': 'completed' }
+      }, '-created_date', 50).catch(() => []),
 
-    // [2] Busca Pedidos Internos
-    const pedidosInternos = await base44.asServiceRole.entities.PedidoInterno.filter({
-      cliente_id: effectiveWorkshopId,
-      status: { '$ne': 'concluido' }
-    }, '-created_date', 50);
+      base44.asServiceRole.entities.PedidoInterno.filter({
+        workshop_id: effectiveWorkshopId,
+        status: { '$ne': 'concluido' }
+      }, '-created_date', 50).catch(() => []),
 
-    // [3] Busca Backlog Tarefas
-    const backlogTarefas = await base44.asServiceRole.entities.TarefaBacklog.filter({
-      cliente_id: effectiveWorkshopId,
-      status: { '$in': ['aberta', 'bloqueada'] }
-    }, '-created_date', 50);
+      base44.asServiceRole.entities.TarefaBacklog.filter({
+        workshop_id: effectiveWorkshopId,
+        status: { '$in': ['aberta', 'bloqueada'] }
+      }, '-created_date', 50).catch(() => []),
 
-    // [4] Busca Cronograma Itens
-    const cronogramaItems = await base44.asServiceRole.entities.CronogramaImplementacao.filter({
-      workshop_id: effectiveWorkshopId,
-      status: { '$ne': 'concluido' }
-    }, '-created_date', 50);
+      base44.asServiceRole.entities.CronogramaImplementacao.filter({
+        workshop_id: effectiveWorkshopId,
+        status: { '$ne': 'concluido' }
+      }, '-created_date', 50).catch(() => []),
+    ]);
 
     // Helper para calcular dias até/desde data
     const calculateDaysDiff = (dateStr) => {
