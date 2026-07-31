@@ -1,42 +1,34 @@
 /**
- * queryDiagnostics — INSTRUMENTAÇÃO TEMPORÁRIA (dev-only)
- * ─────────────────────────────────────────────────────────────────────────────
- * Mapeia QUEM dispara cada leitura ao React Query, incluindo:
- *   - queryKey serializada
- *   - timestamp do primeiro e último disparo
- *   - contagem acumulada por chave
- *   - componentHints: linhas de src/pages|components|hooks|lib extraídas
- *     do stack no momento do fetch — identifica o provider/hook/página exato
+ * queryDiagnostics — INSTRUMENTAÇÃO TEMPORÁRIA
+ * --------------------------------------------------------------
+ * Objetivo: mapear QUEM dispara a avalanche de leituras (429) no boot
+ * da CentralFollowUp, em vez de tratar apenas os sintomas.
  *
- * Console API (window.__QUERY_DIAG__):
- *   printTop(n = 20)  → console.table dos top-N por nº de execuções
- *   raw()             → array completo com componentHints por chave
- *   reset()           → zera contadores (isola uma ação específica)
- *   enabled           → true se instrumentação ativa
+ * Registra cada fetch do React Query:
+ *  - queryKey (chave serializada)
+ *  - timestamp do disparo
+ *  - contagem acumulada por chave
+ *  - stack trace de origem (capturado no momento do fetch)
  *
- * ⚠️  Remover queryDiagnostics.js e o import/call em query-client.js após
- *     concluir a investigação.
+ * Exposição em window.__QUERY_DIAG__:
+ *  - summary():        lista ordenada por nº de execuções
+ *  - raw():            detalhe completo { key -> {count, firstSeen, lastSeen, hints[]} }
+ *  - reset():          zera os contadores
+ *  - printTop(n):      console.groupCollapsed por chave (hints completos, não truncados)
+ *
+ * Remover após a investigação concluir (ver nota no query-client.js).
  */
 
-const DEV = import.meta.env?.DEV === true;
-
-// ─── estado interno ───────────────────────────────────────────────────────────
+const enabled = import.meta.env?.DEV === true;
 
 /**
- * Map<keyString, {
- *   count: number,
- *   firstSeen: string,   // ISO timestamp
- *   lastSeen:  string,
- *   hints: string[],     // union de todas as origens vistas (dedup)
- *   stacks: string[],    // até 3 stacks completos para debug profundo
- * }>
+ * Map<keyString, { count, firstSeen, lastSeen, hints: string[], stacks: string[] }>
+ * `hints` é um array ordenado (inserção) com dedup implícita via _pushUnique.
  */
-const _records = new Map();
+const _counts = new Map();
 
-/** queryHash → último fetchStatus visto (evita logar duplicatas dentro do mesmo fetch) */
-const _lastStatus = new Map();
-
-// ─── utilitários ─────────────────────────────────────────────────────────────
+/** Guarda o último fetchStatus visto por queryId p/ logar só na borda idle→fetching. */
+const _lastFetchStatus = new Map();
 
 function _serializeKey(queryKey) {
   try {
@@ -49,162 +41,130 @@ function _serializeKey(queryKey) {
 }
 
 /**
- * Extrai pistas de origem a partir do stack trace.
- * Retorna até 5 entradas do tipo "src/pages/Foo.jsx:42:7".
- *
- * FIX: era `entry.componentHints.add(...array)` — Set.add() aceita apenas UM
- * argumento; o spread silenciosamente descartava todos os hints além do primeiro.
- * Agora retorna um array limpo e o caller itera sobre ele.
+ * Extrai pistas do componente responsável a partir do stack.
+ * Regex ancorada em `/src/` — captura `path:linha` de arquivos do projeto
+ * e ignora linhas de node_modules (que podem conter "src/" em substrings)
+ * e parâmetros de URL `?v=hash`.
  */
-function _extractHints(stack) {
+function _extractComponentHints(stack) {
   if (!stack) return [];
-  const seen = new Set();
-  const result = [];
-  for (const line of stack.split('\n')) {
-    const m = line.match(/\/(src\/(?:pages|components|hooks|lib)\/[^\s?)]+\.jsx?)[^:]*:(\d+)/);
-    if (m) {
-      const hint = `${m[1]}:${m[2]}`;
-      if (!seen.has(hint)) {
-        seen.add(hint);
-        result.push(hint);
-        if (result.length === 5) break;
-      }
-    }
+  const hints = new Set();
+  const lines = stack.split('\n');
+  const re = /\/(src\/(?:pages|components|hooks|lib)\/[^\s?)]+\.jsx?)[^:]*:(\d+)/;
+  for (const line of lines) {
+    const m = line.match(re);
+    if (m) hints.add(`${m[1]}:${m[2]}`);
   }
-  return result;
+  return Array.from(hints).slice(0, 5);
 }
 
-// ─── instalação ──────────────────────────────────────────────────────────────
+/** Adiciona `value` a `arr` apenas se ainda não existir — mantém ordem de inserção. */
+function _pushUnique(arr, value) {
+  if (value && !arr.includes(value)) {
+    arr.push(value);
+    return true;
+  }
+  return false;
+}
 
 export function installQueryDiagnostics(queryClient) {
-  if (!DEV) return;
+  if (!enabled) return;
 
-  queryClient.getQueryCache().subscribe((event) => {
-    if (!event?.query) return;
+  const cache = queryClient.getQueryCache();
 
-    const { query } = event;
-    const nowFetching = query.state.fetchStatus === 'fetching';
-    const id = query.queryHash || _serializeKey(query.queryKey);
-
-    // Só loga na transição idle/paused → fetching.
-    if (!nowFetching || _lastStatus.get(id) === 'fetching') {
-      _lastStatus.set(id, query.state.fetchStatus);
-      return;
-    }
-    _lastStatus.set(id, 'fetching');
-
+  cache.subscribe((event) => {
+    if (!event || !event.query) return;
+    const query = event.query;
     const keyStr = _serializeKey(query.queryKey);
-    const ts = new Date().toISOString();
+    const qid = query.queryHash || keyStr;
 
-    let rec = _records.get(keyStr);
-    if (!rec) {
-      rec = { count: 0, firstSeen: ts, lastSeen: ts, hints: [], stacks: [] };
-      _records.set(keyStr, rec);
-    }
+    const nowFetching = query.state.fetchStatus === 'fetching';
+    // Marca o status ANTES de processar — garante que apenas a borda
+    // idle→fetching dispara o log, mesmo em reinvocações rápidas.
+    const prevStatus = _lastFetchStatus.get(qid);
+    _lastFetchStatus.set(qid, query.state.fetchStatus);
 
-    rec.count += 1;
-    rec.lastSeen = ts;
-
-    // Captura o stack no microtask atual — a chamada vem do subscriber do QueryCache,
-    // que ainda tem o call-site real no frame superior.
-    const stack = new Error().stack ?? '';
-    const newHints = _extractHints(stack);
-
-    // Acumula hints únicos (corrige o bug do Set.add(...spread)).
-    const existingSet = new Set(rec.hints);
-    for (const h of newHints) {
-      if (!existingSet.has(h)) {
-        existingSet.add(h);
-        rec.hints.push(h);
+    if (nowFetching && prevStatus !== 'fetching') {
+      const ts = new Date().toISOString();
+      let entry = _counts.get(keyStr);
+      if (!entry) {
+        entry = { count: 0, firstSeen: ts, lastSeen: ts, hints: [], stacks: [] };
+        _counts.set(keyStr, entry);
       }
-    }
+      entry.count += 1;
+      entry.lastSeen = ts;
 
-    // Guarda até 3 stacks completos para inspeção profunda (raw()).
-    if (rec.stacks.length < 3) rec.stacks.push(stack);
-
-    // eslint-disable-next-line no-console
-    console.warn(
-      `%c[QUERY-DIAG] fetch #${rec.count}`,
-      'color:#eab308;font-weight:bold',
-      {
-        queryKey: query.queryKey,
-        ts,
-        componentHints: newHints.length ? newHints : ['(sem hints — sem source maps?)'],
+      const stack = new Error().stack || '';
+      const newHints = _extractComponentHints(stack);
+      // CORREÇÃO: itera e adiciona um por vez (Set.add(...spread) só adicionava
+      // o primeiro argumento). Mantém array com inserção na ordem + dedup.
+      for (const h of newHints) {
+        _pushUnique(entry.hints, h);
       }
-    );
+      if (entry.stacks.length < 2) entry.stacks.push(stack);
+
+      // eslint-disable-next-line no-console
+      console.warn(
+        `%c[QUERY-DIAG] fetch #${entry.count}`,
+        'color:#eab308;font-weight:bold',
+        { queryKey: query.queryKey, ts, componentHints: entry.hints }
+      );
+    }
   });
 
-  // ─── API pública ────────────────────────────────────────────────────────────
-
-  if (typeof window === 'undefined') return;
-
-  window.__QUERY_DIAG__ = {
-    enabled: true,
-
-    /** Zera todos os contadores. Use antes de uma ação para isolar seus fetches. */
-    reset() {
-      _records.clear();
-      _lastStatus.clear();
-      // eslint-disable-next-line no-console
-      console.info('%c[QUERY-DIAG] contadores zerados', 'color:#22c55e');
-    },
-
-    /**
-     * Retorna o array completo ordenado por contagem decrescente.
-     * Cada entrada inclui queryKey, count, firstSeen, lastSeen, componentHints, stacks.
-     */
-    raw() {
-      return Array.from(_records.entries())
-        .map(([key, r]) => ({
-          queryKey: key,
-          count: r.count,
-          firstSeen: r.firstSeen,
-          lastSeen: r.lastSeen,
-          componentHints: r.hints,
-          stacks: r.stacks,
-        }))
-        .sort((a, b) => b.count - a.count);
-    },
-
-    /**
-     * Imprime console.table dos top-N disparadores.
-     * @param {number} n — quantos mostrar (default 20)
-     */
-    printTop(n = 20) {
-      const top = this.raw().slice(0, n);
-      if (!top.length) {
+  // Exposição para inspeção manual no console do navegador.
+  if (typeof window !== 'undefined') {
+    window.__QUERY_DIAG__ = {
+      enabled: true,
+      reset() {
+        _counts.clear();
+        _lastFetchStatus.clear();
         // eslint-disable-next-line no-console
-        console.info('[QUERY-DIAG] Nenhum fetch registrado ainda. Navegue para a página e tente novamente.');
-        return [];
-      }
-      // eslint-disable-next-line no-console
-      console.table(
-        top.map((r, i) => ({
-          '#': i + 1,
-          'queryKey': r.queryKey.slice(0, 72),
-          'execuções': r.count,
-          'primeiro': r.firstSeen.slice(11, 23),
-          'último': r.lastSeen.slice(11, 23),
-          'origem (hints)': (r.componentHints[0] ?? '—').slice(0, 80),
-        }))
-      );
-      // Detalha hints completos em follow-up (console.table trunca strings).
-      top.forEach((r, i) => {
-        if (r.componentHints.length > 1) {
+        console.info('[QUERY-DIAG] contadores zerados');
+      },
+      raw() {
+        return Array.from(_counts.entries()).map(([key, v]) => ({
+          queryKey: key,
+          count: v.count,
+          firstSeen: v.firstSeen,
+          lastSeen: v.lastSeen,
+          hints: v.hints,
+        }));
+      },
+      summary() {
+        return this.raw().sort((a, b) => b.count - a.count);
+      },
+      printTop(n = 20) {
+        const top = this.summary().slice(0, n);
+        // console.table trunca strings ~60 chars; usa groupCollapsed para mostrar
+        // todos os hints por entrada, expandíveis com um clique.
+        for (const r of top) {
           // eslint-disable-next-line no-console
-          console.groupCollapsed(`  #${i + 1} ${r.queryKey.slice(0, 60)} — todos os hints`);
-          r.componentHints.forEach(h => console.log(' ', h)); // eslint-disable-line no-console
+          console.groupCollapsed(
+            `%c[QUERY-DIAG] %c${r.count}x %c${r.queryKey.slice(0, 80)}`,
+            'color:#eab308;font-weight:bold',
+            'color:#f87171;font-weight:bold',
+            'color:#9ca3af'
+          );
+          // eslint-disable-next-line no-console
+          console.table([{ queryKey: r.queryKey, execuções: r.count }]);
+          if (r.hints && r.hints.length) {
+            // eslint-disable-next-line no-console
+            console.log('componentHints (origem):', r.hints);
+          } else {
+            // eslint-disable-next-line no-console
+            console.log('componentHints: (nenhum hint de /src/ capturado)');
+          }
           // eslint-disable-next-line no-console
           console.groupEnd();
         }
-      });
-      return top;
-    },
-  };
-
-  // eslint-disable-next-line no-console
-  console.info(
-    '%c[QUERY-DIAG] Instrumentação ativa — window.__QUERY_DIAG__.printTop(20)',
-    'color:#eab308;font-weight:bold'
-  );
+        return top;
+      },
+    };
+    // eslint-disable-next-line no-console
+    console.info(
+      '%c[QUERY-DIAG] Instrumentação ativa. Use window.__QUERY_DIAG__.printTop(20) para ver os maiores disparadores.',
+      'color:#eab308'
+    );
+  }
 }
