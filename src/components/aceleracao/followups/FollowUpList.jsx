@@ -138,7 +138,7 @@ function getDaysOverdue(reminderDate, today) {
 function useConcluidosIndex() {
   // Índice leve via backend (projeção mínima, últimos 30 dias, top 100).
   // Substitui a leitura de 2000 registros completos com pastedImages.
-  const data = useFollowupIndex();
+  const data = useFollowupIndex().data ?? [];
   const byWorkshop = {};
   const byFollowupId = {};
   const sequenceByFollowupId = {};
