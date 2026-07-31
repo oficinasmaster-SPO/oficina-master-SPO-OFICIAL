@@ -27,15 +27,26 @@ export default function SprintAtivaWidget({ workshopId }) {
   const { getAdminUrl } = useAdminMode();
   const queryClient = useQueryClient();
 
-  // Subscribe em tempo real para atualizar imediatamente quando sprint for criada/atualizada
+  // Subscribe em tempo real para atualizar quando sprint for criada/atualizada.
+  // LEAK-FIX: debounce de 2s — se o SDK entregar uma rajada de eventos (WebSocket
+  // flapping ou automações em loop), cada invalidateQueries dispara um refetch +
+  // re-render + ArrayBuffer (via RequestQueue) + closures. Sem debounce, uma
+  // rajada de 10 eventos/s = 10 refetches/s = crescimento contínuo de heap/nodes.
   useEffect(() => {
     if (!workshopId) return;
+    let debounceTimer = null;
     const unsubscribe = base44.entities.ConsultoriaSprint.subscribe((event) => {
-      if (event.data?.workshop_id === workshopId) {
+      if (event.data?.workshop_id !== workshopId) return;
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ["active-sprint-widget", workshopId] });
-      }
+        debounceTimer = null;
+      }, 2000);
     });
-    return unsubscribe;
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      unsubscribe();
+    };
   }, [workshopId, queryClient]);
 
   const { data: activeSprint } = useQuery({
