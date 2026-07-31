@@ -79,7 +79,7 @@ export default function IAAnalytics() {
       }
     },
     enabled: !!workshop,
-    retry: 1
+    retry: false
   });
 
   const { data: osAssessments = [] } = useQuery({
@@ -94,7 +94,7 @@ export default function IAAnalytics() {
       }
     },
     enabled: !!workshop,
-    retry: 1
+    retry: false
   });
 
   if (loading) {

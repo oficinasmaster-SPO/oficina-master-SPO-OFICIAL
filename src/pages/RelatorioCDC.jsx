@@ -56,7 +56,7 @@ export default function RelatorioCDC() {
       return { ...reportData, employee, cdcRecord };
     },
     enabled: !!reportId || !!cdcRecordId,
-    retry: 1
+    retry: false
   });
 
   const handlePrint = () => {

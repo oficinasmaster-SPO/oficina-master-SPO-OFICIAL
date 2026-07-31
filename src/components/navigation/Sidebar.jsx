@@ -47,7 +47,7 @@ function UserProfileSection({ user, collapsed, workshop }) {
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    retry: 1,
+    retry: false,
     retryDelay: 3000,
   });
 
@@ -198,7 +198,7 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    retry: 1,
+    retry: false,
   });
 
   React.useEffect(() => {

@@ -89,7 +89,7 @@ export default function Gamificacao() {
       }
     },
     enabled: !!user,
-    retry: 1
+    retry: false
   });
 
   const { data: rewards = [], isLoading: loadingRewards } = useQuery({
@@ -104,7 +104,7 @@ export default function Gamificacao() {
       }
     },
     enabled: !!user,
-    retry: 1
+    retry: false
   });
 
   const { data: workshops = [] } = useQuery({
@@ -122,7 +122,7 @@ export default function Gamificacao() {
     },
     enabled: !!user,
     staleTime: 1000 * 60 * 5, // 5 minutos de cache
-    retry: 1
+    retry: false
   });
 
   // Workshop do usuário atual ou do admin view
@@ -142,7 +142,7 @@ export default function Gamificacao() {
       }
     },
     enabled: !!currentWorkshop,
-    retry: 1
+    retry: false
   });
 
   const myEmployeeRecord = employees.find((e) => e.email === user?.email);

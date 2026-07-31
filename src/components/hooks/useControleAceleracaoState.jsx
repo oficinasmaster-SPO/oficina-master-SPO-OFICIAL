@@ -115,7 +115,7 @@ export default function useControleAceleracaoState() {
     enabled: missingWorkshopIds.length > 0,
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: false,
     retryDelay: 2000,
   });
 

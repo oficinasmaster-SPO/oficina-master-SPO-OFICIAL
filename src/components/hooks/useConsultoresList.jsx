@@ -36,7 +36,7 @@ export default function useConsultoresList(user) {
     },
     enabled: !!user,
     staleTime: 10 * 60 * 1000,
-    retry: 1,
+    retry: false,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000)
   });
 }

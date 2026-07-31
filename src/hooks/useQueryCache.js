@@ -23,7 +23,7 @@ export function useQueryCache(queryKey, queryFn, cacheType = 'STABLE', options =
 export function useEntityCache(entityName, queryFn, cacheType = 'MODERATE', options = {}) {
   return useQueryCache([entityName], queryFn, cacheType, {
     enabled: true,
-    retry: 1,
+    retry: false,
     ...options,
   });
 }

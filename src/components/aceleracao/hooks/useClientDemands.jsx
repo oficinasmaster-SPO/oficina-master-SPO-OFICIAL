@@ -64,7 +64,7 @@ export function useClientDemands(workshopId, followUpType, isOpen = false) {
     gcTime: 5 * 60 * 1000,
     refetchInterval: isOpen ? 30 * 1000 : false,
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: false,
   });
 
   const demands = useMemo(

@@ -89,7 +89,7 @@ export default function Tarefas() {
       }
     },
     enabled: !!workshop?.id,
-    retry: 1
+    retry: false
   });
 
   const { data: employees = [] } = useQuery({
@@ -106,7 +106,7 @@ export default function Tarefas() {
       }
     },
     enabled: !!workshop,
-    retry: 1
+    retry: false
   });
 
   const { data: workshops = [] } = useQuery({
@@ -121,7 +121,7 @@ export default function Tarefas() {
       }
     },
     enabled: !!user && (user.role === 'admin' || user.role === 'user'),
-    retry: 1
+    retry: false
   });
 
   const createTaskMutation = useMutation({

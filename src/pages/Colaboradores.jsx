@@ -89,7 +89,7 @@ export default function Colaboradores() {
         return [];
       }
     },
-    retry: 1
+    retry: false
   });
 
   const statusColors = {

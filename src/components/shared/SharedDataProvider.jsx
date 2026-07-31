@@ -74,7 +74,7 @@ export function SharedDataProvider({ children, workshop, workshopId, userId }) {
     gcTime: 10 * 60 * 1000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: false,
     placeholderData: keepPreviousData,
   });
 

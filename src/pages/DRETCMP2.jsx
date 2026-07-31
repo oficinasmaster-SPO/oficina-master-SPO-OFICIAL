@@ -122,7 +122,7 @@ export default function DRETCMP2() {
       }
     },
     enabled: !!workshop?.id,
-    retry: 1
+    retry: false
   });
 
   const currentDRE = dreList.find(d => d.month === selectedMonth);

@@ -27,7 +27,7 @@ export function usePendentes(consultorId) {
     enabled: consultorId !== undefined,
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: false,
   });
 }
 
@@ -47,6 +47,6 @@ export function useConcluidos(consultorId) {
     enabled: consultorId !== undefined,
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: false,
   });
 }

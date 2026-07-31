@@ -92,7 +92,7 @@ export default function CronogramaConsultoria() {
     staleTime: 2 * 60 * 1000,
     refetchInterval: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: false,
   });
 
   const { data: allAtas, isLoading: loadingAtas } = useQuery({
@@ -108,7 +108,7 @@ export default function CronogramaConsultoria() {
     enabled: !!activeWorkshopId,
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: false,
   });
 
   // Follow-ups realizados — filtrados por workshop_id ativo
@@ -127,7 +127,7 @@ export default function CronogramaConsultoria() {
     enabled: !!activeWorkshopId,
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: false,
   });
 
   const { data: consultores } = useQuery({

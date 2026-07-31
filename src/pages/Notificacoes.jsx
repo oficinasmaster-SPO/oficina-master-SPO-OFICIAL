@@ -62,7 +62,7 @@ export default function Notificacoes() {
       }
     },
     enabled: !!user?.id,
-    retry: 2
+    retry: false
   });
 
   const { data: tasks = [] } = useQuery({
@@ -91,7 +91,7 @@ export default function Notificacoes() {
       }
     },
     enabled: !!user?.id,
-    retry: 1
+    retry: false
   });
 
   const markAsReadMutation = useMutation({

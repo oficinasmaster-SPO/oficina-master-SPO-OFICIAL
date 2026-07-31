@@ -45,7 +45,7 @@ export default function OrigemPedidoBanner({ tarefa, compact = false }) {
     },
     enabled: tarefa.origin_type === 'pedido' && !!tarefa.origin_id,
     staleTime: 60 * 1000,
-    retry: 1,
+    retry: false,
   });
 
   if (tarefa.origin_type !== 'pedido' || !tarefa.origin_id) return null;

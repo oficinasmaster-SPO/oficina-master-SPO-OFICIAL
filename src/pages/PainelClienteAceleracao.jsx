@@ -61,7 +61,7 @@ export default function PainelClienteAceleracao() {
     },
     enabled: !loadingUser && !!user?.id,
     staleTime: 5 * 60 * 1000,
-    retry: 1
+    retry: false
   });
 
   const { data: atendimentos, isLoading: loadingAtendimentos } = useQuery({
@@ -188,7 +188,7 @@ export default function PainelClienteAceleracao() {
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    retry: 1
+    retry: false
   });
 
 

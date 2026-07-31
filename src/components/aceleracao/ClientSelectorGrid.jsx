@@ -39,7 +39,7 @@ export default function ClientSelectorGrid({ onSelect, onClose }) {
     },
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: false,
   });
 
   // Filtrar
