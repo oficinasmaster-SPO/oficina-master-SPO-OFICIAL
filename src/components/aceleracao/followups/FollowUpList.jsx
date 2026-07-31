@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertCircle, Clock, StickyNote, Search, X, ChevronLeft, ChevronRight, Loader2, Filter } from "lucide-react";
+import { AlertCircle, Clock, StickyNote, Search, X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { differenceInDays } from "date-fns";
 import { calcPriorityScore } from "./ds/PriorityScore";
 import FollowUpCompletedDetailDrawer from "@/components/aceleracao/FollowUpCompletedDetailDrawer";
@@ -8,13 +8,7 @@ import FollowUpPendenteRow from "@/components/aceleracao/followups/FollowUpPende
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { sanitizeWorkshopIdArray } from "@/lib/workshopIdGuard";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import Combobox from "@/components/ui/combobox";
 
 function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendimentos) {
   const hoje = new Date();
@@ -323,28 +317,19 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
           {isSearching ? <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 animate-spin" /> : search ? <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><X className="w-3.5 h-3.5" /></button> : null}
         </div>
 
-        {/* Dropdown de filtros consolidado */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs px-3 flex-shrink-0">
-              <Filter className="w-3.5 h-3.5 text-gray-500" />
-              <span className="text-gray-500">Filtros:</span>
-              <span className="font-semibold text-gray-900">{PILLS.find(p => p.id === filterPill)?.label || "Todos"}</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-48">
-            {PILLS.map(p => (
-              <DropdownMenuItem
-                key={p.id}
-                onClick={() => onFilterPill(p.id)}
-                className="gap-2 text-xs justify-between"
-              >
-                <span className={filterPill === p.id ? "font-semibold" : ""}>{p.label}</span>
-                {filterPill === p.id && <span className="w-1.5 h-1.5 rounded-full bg-gray-900" />}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Filtros via Combobox */}
+        <div className="w-[200px] flex-shrink-0">
+          <Combobox
+            options={PILLS.map(p => ({ value: p.id, label: p.label }))}
+            value={filterPill}
+            onChange={onFilterPill}
+            placeholder="Filtros"
+            searchPlaceholder="Buscar filtro..."
+            emptyText="Nenhum filtro encontrado."
+            clearValue="todos"
+            className="h-8"
+          />
+        </div>
 
         {/* Chips informativos compactos */}
         <div className="flex items-center gap-1.5 text-xs flex-shrink-0">
