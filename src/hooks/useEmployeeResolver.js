@@ -78,31 +78,22 @@ export default function useEmployeeResolver() {
    */
   const getName = useCallback((userId, fallbackName) => {
     if (userId && byUserId[userId]) return byUserId[userId].full_name;
-    // Fallback: tenta resolver via User
-    if (userId && userById[userId]) {
-      const u = userById[userId];
-      return u.full_name || (u.email ? u.email.split("@")[0] : null) || fallbackName || "—";
-    }
-    // Tenta pelo fallback como email
+    // Tenta pelo fallback como email → Employee
     if (fallbackName && fallbackName.includes("@")) {
       const emp = byEmail[fallbackName.toLowerCase()];
       if (emp) return emp.full_name;
-    }
-    // Se o fallbackName parece email, tenta limpar
-    if (fallbackName && fallbackName.includes("@")) {
       return fallbackName.split("@")[0];
     }
     return fallbackName || "—";
-  }, [byUserId, userById, byEmail]);
+  }, [byUserId, byEmail]);
 
   /**
    * Resolve a foto de perfil.
    */
   const getPhoto = useCallback((userId) => {
     if (userId && byUserId[userId]) return byUserId[userId].profile_picture_url || null;
-    if (userId && userById[userId]) return userById[userId].photo_url || null;
     return null;
-  }, [byUserId, userById]);
+  }, [byUserId]);
 
   /**
    * Resolve Employee completo.
