@@ -21,7 +21,7 @@ const MS_DAY = 1000 * 60 * 60 * 24;
  * nova requisição) — consistente com a mitigação de 429 da Central.
  */
 export function useSidePanelPriorities({ reminders = [], remindersConcluidos = [], today, userId, period = "today" }) {
-  const concluidos = useFollowupIndex();
+  const concluidos = useFollowupIndex().data ?? [];
 
   const { data: pedidosAbertos = [] } = useQuery({
     queryKey: ["pedidos-internos-abertos-sidepanel"],
