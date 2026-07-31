@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { Phone, MessageCircle, Mail, Video, MapPin, ChevronDown, ChevronUp, X, Clock, User, MessageSquare } from "lucide-react";
@@ -232,7 +232,8 @@ function ContatoCard({ contato, isFirst, workshopName }) {
 }
 
 export default function HistoricoContatosPanel({ workshopId, workshopName }) {
-  const { data: historico = [], isLoading } = useQuery({
+  const queryClient = useQueryClient();
+  const { data: historico = [], isLoading, isError } = useQuery({
     queryKey: ["historico-contatos", workshopId],
     queryFn: () => base44.entities.FollowUpConcluido.filter(
       { workshop_id: workshopId },
@@ -241,6 +242,9 @@ export default function HistoricoContatosPanel({ workshopId, workshopName }) {
     ),
     enabled: !!workshopId,
     staleTime: 2 * 60 * 1000,
+    // 429 agregado: preserva o histórico anterior durante refetchs transientes
+    // (rate-limit) em vez de zerar a lista e exibir a falsa mensagem "nenhum contato".
+    placeholderData: keepPreviousData,
   });
 
   if (isLoading) {
@@ -248,6 +252,25 @@ export default function HistoricoContatosPanel({ workshopId, workshopName }) {
       <div className="px-3 py-6 flex flex-col items-center gap-2">
         <div className="w-5 h-5 border-2 border-gray-200 border-t-red-500 rounded-full animate-spin" />
         <p className="text-xs text-gray-400">Carregando histórico...</p>
+      </div>
+    );
+  }
+
+  // Estado de erro (típico 429 agregado): mostra "Tentar novamente" em vez do
+  // empty-state enganoso. Se ainda há dados anteriores (placeholderData), o
+  // fluxo continua para renderizá-los abaixo.
+  if (isError && (!historico || historico.length === 0)) {
+    return (
+      <div className="px-3 py-8 flex flex-col items-center gap-2 text-center">
+        <MessageSquare className="w-8 h-8 text-amber-300" />
+        <p className="text-xs text-amber-600 font-medium">Não foi possível carregar o histórico</p>
+        <p className="text-[10px] text-gray-400">Limite de leitura atingido. Tente novamente em instantes.</p>
+        <button
+          onClick={() => queryClient.invalidateQueries({ queryKey: ["historico-contatos", workshopId] })}
+          className="text-[10px] font-semibold text-blue-600 hover:underline mt-1"
+        >
+          Tentar novamente
+        </button>
       </div>
     );
   }
