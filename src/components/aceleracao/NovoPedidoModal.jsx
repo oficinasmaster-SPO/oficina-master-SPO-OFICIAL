@@ -9,11 +9,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   ArrowLeft, X, Plus, Upload, Link2, Image as ImageIcon,
-  FileText, ChevronDown, Loader2,
+  FileText, Loader2,
 } from "lucide-react";
 import {
   TIPO_PEDIDO_OPTIONS, PRIORIDADE_OPTIONS, IMPACTO_CLIENTE_OPTIONS,
 } from "@/components/shared/backlogConstants";
+import Combobox from "@/components/ui/combobox";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    DESIGN TOKENS (inline — mesmos do spec)
@@ -34,26 +35,6 @@ function Lbl({ children, required }) {
       {children}
       {required && <span className="text-red-500 ml-0.5">*</span>}
     </span>
-  );
-}
-
-/* ── Custom Select (chevron SVG embutido) ──────────────────────────────── */
-function CSelect({ value, onChange, options, placeholder, required }) {
-  return (
-    <div className="relative">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        required={required}
-        className={selectBase}
-      >
-        {placeholder && <option value="">{placeholder}</option>}
-        {options.map(o => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </select>
-      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-    </div>
   );
 }
 
@@ -354,21 +335,24 @@ export default function NovoPedidoModal({ user, onClose }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px]">
             <label className="block">
               <Lbl required>Tipo de Pedido</Lbl>
-              <CSelect
-                ref={firstFieldRef}
+              <Combobox
                 value={form.tipo}
                 onChange={(v) => set("tipo", v)}
                 options={TIPO_PEDIDO_OPTIONS}
-                required
+                placeholder="Selecione o tipo"
+                searchPlaceholder="Pesquisar tipo..."
+                emptyText="Nenhum tipo encontrado."
               />
             </label>
             <label className="block">
               <Lbl required>Prioridade</Lbl>
-              <CSelect
+              <Combobox
                 value={form.prioridade}
                 onChange={(v) => set("prioridade", v)}
                 options={PRIORIDADE_OPTIONS}
-                required
+                placeholder="Selecione a prioridade"
+                searchPlaceholder="Pesquisar prioridade..."
+                emptyText="Nenhuma prioridade encontrada."
               />
             </label>
           </div>
@@ -401,21 +385,29 @@ export default function NovoPedidoModal({ user, onClose }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px]">
             <label className="block">
               <Lbl required>Responsável</Lbl>
-              <CSelect
+              <Combobox
                 value={form.assignee_id}
                 onChange={handleResponsavel}
-                options={employees.map(e => ({ value: e.user_id, label: e.full_name }))}
+                options={employees}
+                getOptionValue={(e) => e.user_id}
+                getOptionLabel={(e) => e.full_name}
                 placeholder="Selecione o responsável"
-                required
+                searchPlaceholder="Pesquisar responsável..."
+                emptyText="Nenhum responsável encontrado."
               />
             </label>
             <label className="block">
               <Lbl>Cliente Relacionado</Lbl>
-              <CSelect
+              <Combobox
                 value={form.workshop_id}
                 onChange={handleCliente}
-                options={workshops.map(w => ({ value: w.id, label: w.name }))}
+                options={workshops}
+                getOptionValue={(w) => w.id}
+                getOptionLabel={(w) => w.name}
                 placeholder="Selecione o cliente"
+                searchPlaceholder="Pesquisar cliente..."
+                emptyText="Nenhum cliente encontrado."
+                lazyRender
               />
             </label>
           </div>
@@ -434,10 +426,13 @@ export default function NovoPedidoModal({ user, onClose }) {
             </label>
             <label className="block">
               <Lbl>Impacto no Cliente</Lbl>
-              <CSelect
+              <Combobox
                 value={form.impacto_cliente}
                 onChange={(v) => set("impacto_cliente", v)}
                 options={IMPACTO_CLIENTE_OPTIONS}
+                placeholder="Selecione o impacto"
+                searchPlaceholder="Pesquisar impacto..."
+                emptyText="Nenhum impacto encontrado."
               />
             </label>
           </div>
