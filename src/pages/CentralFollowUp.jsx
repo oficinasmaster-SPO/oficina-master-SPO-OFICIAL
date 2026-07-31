@@ -47,6 +47,9 @@ export default function CentralFollowUp() {
     sp_sem_contato_registrado: "por_empresa",
   };
 
+  // Declarado ANTES dos callbacks que o referenciam — evita TDZ (temporal dead zone).
+  const consultorEfetivo = consultorSelecionado === 'todos' ? null : consultorSelecionado;
+
   const handleSelectForCockpit = useCallback((reminder, seqNum, stats) => {
     setCockpit({ reminder, seqNum, stats });
   }, []);
@@ -102,8 +105,6 @@ export default function CentralFollowUp() {
     },
     staleTime: 10 * 60 * 1000,
   });
-
-  const consultorEfetivo = consultorSelecionado === 'todos' ? null : consultorSelecionado;
 
   const fullName = getName(user?.id, user?.full_name || user?.email || '');
   const profilePicture = getPhoto(user?.id) || user?.profile_picture_url;
