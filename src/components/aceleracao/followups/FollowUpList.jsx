@@ -7,6 +7,7 @@ import FollowUpConcluidoRow from "@/components/aceleracao/FollowUpConcluidoRow.j
 import FollowUpPendenteRow from "@/components/aceleracao/followups/FollowUpPendenteRow";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { sanitizeWorkshopIdArray } from "@/lib/workshopIdGuard";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -76,7 +77,7 @@ function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendiment
 }
 
 function useReunioesIndex(workshopIds = []) {
-  const ids = [...new Set(workshopIds.filter(Boolean))];
+  const ids = sanitizeWorkshopIdArray(workshopIds);
   const { data: contractData = [] } = useQuery({
     queryKey: ["contract-attendances-bulk", ids.sort().join(",")],
     queryFn: async () => {
@@ -170,7 +171,7 @@ function useConcluidosIndex() {
 }
 
 function useWorkshopsPlanIndex(workshopIds = []) {
-  const ids = [...new Set(workshopIds.filter(Boolean))];
+  const ids = sanitizeWorkshopIdArray(workshopIds);
   const { data = [] } = useQuery({
     queryKey: ["workshops-plan-index", ids.sort().join(",")],
     queryFn: async () => {
@@ -256,7 +257,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
   const sourceList = isConcluidosPill ? remindersConcluidos : reminders;
 
   const workshopIdsTodos = React.useMemo(
-    () => [...new Set([...remindersConcluidos.map(r => r.workshop_id), ...reminders.map(r => r.workshop_id)].filter(Boolean))],
+    () => sanitizeWorkshopIdArray([...remindersConcluidos.map(r => r.workshop_id), ...reminders.map(r => r.workshop_id)]),
     [remindersConcluidos, reminders]
   );
   const reunioesIndex = useReunioesIndex(workshopIdsTodos);
