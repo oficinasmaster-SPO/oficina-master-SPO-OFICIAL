@@ -13,19 +13,26 @@ export default function NotificationListener({ user }) {
     ? new Audio('https://media.base44.com/files/public/69540822472c4a70b54d47aa/2826bc406_universfield-simple-notification-152054.mp3')
     : null);
 
-  // Busca inicial para popular o sino/dropdown. staleTime maior pois as
-  // novidades virão pelo subscribe (tempo real), não por refetch.
+  // BOOT-FIX-01: trocado Notification.list(50) + filtro client-side por
+  // Notification.filter({ user_id, is_read:false }, limit:20) server-side.
+  // A versão anterior lia 50 notificações de todos os usuários e descartava
+  // as que não eram deste user — uma leitura inteira desperdiçada no boot.
+  // Agora a query key é ['notifications-unread', id] para não colidir com
+  // a query do Layout (['notifications', id]) que também filtra não-lidas.
   useQuery({
-    queryKey: ['notifications', user?.id],
+    queryKey: ['notifications-unread', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const allNotifications = await base44.entities.Notification.list('-created_date', 50);
-      return Array.isArray(allNotifications)
-        ? allNotifications.filter(n => n.user_id === user.id && !n.is_read)
-        : [];
+      const notifications = await base44.entities.Notification.filter(
+        { user_id: user.id, is_read: false },
+        '-created_date',
+        20
+      );
+      return Array.isArray(notifications) ? notifications : [];
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
+    retry: false,
   });
 
   const showNotification = (notification) => {
@@ -82,7 +89,8 @@ export default function NotificationListener({ user }) {
       // Nova notificação para este usuário
       if (event.type === 'create' && event.data.user_id === user.id) {
         // Atualização otimista do cache React Query — sincroniza o sino
-        queryClient.setQueryData(['notifications', user.id], (oldData = []) => {
+        // Atualiza a key canônica do Listener (notifications-unread)
+      queryClient.setQueryData(['notifications-unread', user.id], (oldData = []) => {
           return [event.data, ...oldData];
         });
         showNotification(event.data);
@@ -90,7 +98,7 @@ export default function NotificationListener({ user }) {
 
       // Notificação marcada como lida (outra aba/dropdown) — remove do sino
       if (event.type === 'update' && event.data.user_id === user.id && event.data.is_read) {
-        queryClient.setQueryData(['notifications', user.id], (oldData = []) => {
+        queryClient.setQueryData(['notifications-unread', user.id], (oldData = []) => {
           return oldData.filter(n => n.id !== event.data.id);
         });
       }
