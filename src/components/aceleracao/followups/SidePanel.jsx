@@ -17,10 +17,13 @@ export default function SidePanel({
   onIniciarAtendimento, onClear,
   prioridadeData, activePill, onPrioridadeClick, onSelectReminder,
 }) {
+  const [period, setPeriod] = useState("today"); // 'today' | 'week' | 'month'
+
   const { metrics, insight, allClear, actions } = useSidePanelPriorities({
     reminders: prioridadeData?.reminders || [],
     remindersConcluidos: prioridadeData?.remindersConcluidos || [],
     today,
+    period,
   });
 
   const [face, setFace] = useState("dashboard"); // 'dashboard' | 'cockpit'
@@ -93,8 +96,15 @@ export default function SidePanel({
             allClear={allClear}
             actions={actions}
             activePill={activePill}
+            period={period}
+            onPeriodChange={setPeriod}
             onCardClick={onPrioridadeClick}
-            onActionClick={(a) => onSelectReminder?.(a.reminder)}
+            onActionClick={(a) => {
+              // Ações agregadas (Semana/Mês) abrem a lista filtrada;
+              // ações do modo Hoje abrem o cockpit do cliente.
+              if (a?.pillId) onPrioridadeClick?.(a.pillId);
+              else onSelectReminder?.(a?.reminder);
+            }}
           />
         </div>
 

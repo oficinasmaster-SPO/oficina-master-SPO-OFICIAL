@@ -58,16 +58,47 @@ function MetricCard({ metric, isActive, onClick }) {
   );
 }
 
-export default function SidePanelDashboard({ metrics, insight, allClear, actions, activePill, onCardClick, onActionClick }) {
+const PERIOD_OPTIONS = [
+  { id: "today", label: "Hoje" },
+  { id: "week", label: "Semana" },
+  { id: "month", label: "Mês" },
+];
+
+export default function SidePanelDashboard({ metrics, insight, allClear, actions, activePill, onCardClick, onActionClick, period = "today", onPeriodChange }) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3.5 h-full overflow-y-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-extrabold text-gray-900 tracking-tight">Central Operacional</h2>
         <div className="flex items-center gap-1.5">
-          <span className="live-dot w-1.5 h-1.5 rounded-full bg-green-500" />
-          <span className="text-[10px] text-gray-400">Atualizado agora</span>
+          {period === "today" ? (
+            <>
+              <span className="live-dot w-1.5 h-1.5 rounded-full bg-green-500" />
+              <span className="text-[10px] text-gray-400">Atualizado agora</span>
+            </>
+          ) : (
+            <span className="text-[10px] text-gray-400 font-medium">
+              {period === "week" ? "Acumulado · sem" : "Acumulado · mês"}
+            </span>
+          )}
         </div>
+      </div>
+
+      {/* Toggle de período — estilo iPhone */}
+      <div className="flex p-0.5 bg-gray-100 rounded-lg">
+        {PERIOD_OPTIONS.map(opt => (
+          <button
+            key={opt.id}
+            onClick={() => onPeriodChange?.(opt.id)}
+            className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all duration-200 ${
+              period === opt.id
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
       </div>
 
       {/* Insight ou Tudo em dia */}
@@ -77,7 +108,11 @@ export default function SidePanelDashboard({ metrics, insight, allClear, actions
           <div>
             <p className="text-sm font-bold text-green-700">Excelente!</p>
             <p className="text-xs text-green-600 leading-snug mt-0.5">
-              Todos os clientes possuem Follow-up ativo. Continue assim.
+              {period === "today"
+                ? "Todos os clientes possuem Follow-up ativo. Continue assim."
+                : period === "week"
+                ? "Semana produtiva — sem pendências em aberto."
+                : "Mês produtivo — sem pendências em aberto."}
             </p>
           </div>
         </div>
@@ -85,14 +120,16 @@ export default function SidePanelDashboard({ metrics, insight, allClear, actions
         <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50 border border-amber-200">
           <Sparkles className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
           <div className="min-w-0">
-            <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wide">Prioridade do momento</p>
+            <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wide">
+              {period === "today" ? "Prioridade do momento" : "Resumo da " + (period === "week" ? "semana" : "mês")}
+            </p>
             <p className="text-xs text-gray-700 leading-snug mt-1">{insight?.text}</p>
           </div>
         </div>
       )}
 
-      {/* Grid 2×3 de cards */}
-      <div className="grid grid-cols-2 gap-2.5">
+      {/* Grid 2×3 de cards — re-anima ao trocar período */}
+      <div key={period} className="grid grid-cols-2 gap-2.5 cockpit-enter">
         {metrics.map(m => (
           <MetricCard
             key={m.id}
