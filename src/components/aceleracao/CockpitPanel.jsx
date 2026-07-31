@@ -243,8 +243,11 @@ function EmptyState() {
 // ── CockpitPanelInner ─────────────────────────────────────────────────────────
 
 function CockpitPanelInner({ reminder, seqNum, stats, today, onIniciarAtendimento, onClear }) {
+  // RAIZ-429: chaves UNIFICADAS com FollowUpDetail para compartilhar cache entre
+  // cockpit e detalhe (mesmo workshop = mesma resposta, 1 read em vez de 2).
+  // staleTime 10 min: clicar de volta num cliente já visitado NÃO refaz reads.
   const { data: atas = [] } = useQuery({
-    queryKey: ["atas-cockpit", reminder.workshop_id],
+    queryKey: ["workshop-atas", reminder.workshop_id],
     queryFn: () =>
       base44.entities.MeetingMinutes.filter(
         { workshop_id: reminder.workshop_id },
@@ -252,11 +255,12 @@ function CockpitPanelInner({ reminder, seqNum, stats, today, onIniciarAtendiment
         20
       ),
     enabled: !!reminder.workshop_id,
-    staleTime: 3 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: concluidos = [] } = useQuery({
-    queryKey: ["concluidos-cockpit", reminder.workshop_id],
+    queryKey: ["workshop-concluidos", reminder.workshop_id],
     queryFn: () =>
       base44.entities.FollowUpConcluido.filter(
         { workshop_id: reminder.workshop_id },
@@ -264,11 +268,12 @@ function CockpitPanelInner({ reminder, seqNum, stats, today, onIniciarAtendiment
         20
       ),
     enabled: !!reminder.workshop_id,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: allFollowUps = [] } = useQuery({
-    queryKey: ["all-followups-cockpit", reminder.workshop_id],
+    queryKey: ["workshop-followups", reminder.workshop_id],
     queryFn: () =>
       base44.entities.FollowUpReminder.filter(
         { workshop_id: reminder.workshop_id },
@@ -276,7 +281,8 @@ function CockpitPanelInner({ reminder, seqNum, stats, today, onIniciarAtendiment
         100
       ),
     enabled: !!reminder.workshop_id,
-    staleTime: 2 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const isOverdue = !!reminder.reminder_date && reminder.reminder_date < today;

@@ -99,8 +99,11 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
   const totalSteps = stats?.total || 4;
   const currentStep = seqNum ?? reminder.sequence_number ?? 1;
 
+  // RAIZ-429: chaves UNIFICADAS com CockpitPanel — mesmo workshop compartilha o
+  // mesmo cache (3 reads em vez de 6 ao alternar cockpit↔detalhe). staleTime 10 min
+  // para revisitas não refazerem reads e evitar estouro do limite de volume.
   const { data: allFollowUps = [] } = useQuery({
-    queryKey: ["all-followups-workshop", reminder.workshop_id],
+    queryKey: ["workshop-followups", reminder.workshop_id],
     queryFn: async () => {
       if (!reminder.workshop_id) return [];
       return base44.entities.FollowUpReminder.filter(
@@ -110,11 +113,12 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
       );
     },
     enabled: !!reminder.workshop_id,
-    staleTime: 2 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: atas = [] } = useQuery({
-    queryKey: ["atas-followup-detail", reminder.workshop_id],
+    queryKey: ["workshop-atas", reminder.workshop_id],
     queryFn: async () => {
       if (!reminder.workshop_id) return [];
       return base44.entities.MeetingMinutes.filter(
@@ -124,21 +128,23 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
       );
     },
     enabled: !!reminder.workshop_id,
-    staleTime: 3 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: concluidos = [] } = useQuery({
-    queryKey: ["concluidos-detail-ia", reminder.workshop_id],
+    queryKey: ["workshop-concluidos", reminder.workshop_id],
     queryFn: async () => {
       if (!reminder.workshop_id) return [];
       return base44.entities.FollowUpConcluido.filter(
         { workshop_id: reminder.workshop_id },
         "-completedAt",
-        5
+        20
       );
     },
     enabled: !!reminder.workshop_id,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   // Query dos sprints referenciados pelos FUSp da semana
@@ -397,7 +403,7 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
       queryClient.invalidateQueries({ queryKey: ["follow-up-reminders-tab"] });
       queryClient.invalidateQueries({ queryKey: ["follow-up-reminders"] });
       queryClient.invalidateQueries({ queryKey: ["central-followup-stats"] });
-      queryClient.invalidateQueries({ queryKey: ["all-followups-workshop", reminder.workshop_id] });
+      queryClient.invalidateQueries({ queryKey: ["workshop-followups", reminder.workshop_id] });
       onBack();
     } finally {
       setSaving(false);
