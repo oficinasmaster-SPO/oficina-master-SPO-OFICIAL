@@ -31,16 +31,9 @@ export default function GlobalGoalsIndicator({ workshop, className = "" }) {
     meta: 0 
   });
 
-  // Buscar dados de metas do workshop
-  const { data: workshopData, isLoading: loadingWorkshop } = useQuery({
-    queryKey: ['workshop-goals', workshop?.id],
-    queryFn: async () => {
-      if (!workshop?.id) return null;
-      const ws = await base44.entities.Workshop.filter({ id: workshop.id });
-      return ws?.[0] || null;
-    },
-    enabled: !!workshop?.id
-  });
+  // OOM/429-FIX: workshop já chega via prop (do useWorkshopContext) com todos os dados
+  // (best_month_history, monthly_goals). Re-buscá-lo por ID era uma leitura redundante.
+  const workshopData = workshop;
 
   // Buscar registros de metas mensais realizadas
   const { data: monthlyHistory = [], isLoading: loadingHistory } = useQuery({
@@ -51,10 +44,14 @@ export default function GlobalGoalsIndicator({ workshop, className = "" }) {
         workshop_id: workshop.id,
         entity_type: "workshop",
         month: currentMonth
-      });
+      }, '-created_date', 50);
       return history || [];
     },
-    enabled: !!workshop?.id
+    enabled: !!workshop?.id,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retry: false,
   });
 
   const formatCurrency = (value) => {
@@ -70,7 +67,7 @@ export default function GlobalGoalsIndicator({ workshop, className = "" }) {
     return value.toLocaleString('pt-BR');
   };
 
-  if (loadingWorkshop || loadingHistory) {
+  if (loadingHistory) {
     return (
       <Card className={className}>
         <CardContent className="flex items-center justify-center py-12">

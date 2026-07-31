@@ -41,19 +41,20 @@ export default function SprintAtivaWidget({ workshopId }) {
   const { data: activeSprint } = useQuery({
     queryKey: ["active-sprint-widget", workshopId],
     queryFn: async () => {
-      // Buscar todos os sprints do workshop e filtrar localmente
-      // ($in não é suportado de forma confiável no filter do base44)
+      // 429-FIX: limita a 20 mais recentes (o sprint ativo está entre eles) — antes sem limit.
       const sprints = await base44.entities.ConsultoriaSprint.filter(
         { workshop_id: workshopId },
-        "-updated_date"
+        "-updated_date",
+        20
       );
       if (!Array.isArray(sprints)) return null;
       return sprints.find(s => s.status === "in_progress" || s.status === "pending") || null;
     },
     enabled: !!workshopId,
-    staleTime: 15 * 1000,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retry: false,
   });
 
   if (!activeSprint) return null;

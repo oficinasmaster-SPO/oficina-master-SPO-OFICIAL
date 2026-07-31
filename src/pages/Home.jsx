@@ -27,9 +27,12 @@ export default function Home() {
   // Buscar diagnósticos separadamente — evita N+1 (query dentro de query)
   const { data: userDiagnostics = [] } = useQuery({
     queryKey: ['home-diagnostics', user?.id, tenant?.id],
-    queryFn: () => base44.entities.Diagnostic.filter({ user_id: user.id }),
+    // 429-FIX: limita a 50 mais recentes + retry: false (antes sem limit, retry padrão 3x)
+    queryFn: () => base44.entities.Diagnostic.filter({ user_id: user.id }, '-created_date', 50),
     enabled: !!user?.id && !!tenant?.id,
     staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: false,
   });
 
   const queryClient = useQueryClient();

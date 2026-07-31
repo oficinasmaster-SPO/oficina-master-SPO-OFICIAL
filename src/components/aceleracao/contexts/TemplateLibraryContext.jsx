@@ -19,7 +19,12 @@ export function TemplateLibraryProvider({ children }) {
         return [];
       }
     },
-    staleTime: 5 * 1000,
+    // 429-FIX: staleTime era 5s — refetch constante em TODAS as páginas (provider está no App root).
+    // Missões raramente mudam; 10min + sem refetch on focus/mount reduz tráfego drasticamente.
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retry: false,
   });
 
   return (
