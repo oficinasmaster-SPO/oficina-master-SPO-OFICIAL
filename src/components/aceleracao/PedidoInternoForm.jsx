@@ -8,13 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import PedidoInternoMediaUpload from "./PedidoInternoMediaUpload";
 import Combobox from "@/components/ui/combobox";
 import { TIPO_PEDIDO_OPTIONS, PRIORIDADE_OPTIONS, PEDIDO_STATUS_OPTIONS, IMPACTO_CLIENTE_OPTIONS } from "@/components/shared/backlogConstants";
@@ -129,26 +122,26 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <Label>Tipo de Pedido *</Label>
-              <Select value={formData.tipo} onValueChange={(value) => setFormData({...formData, tipo: value})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TIPO_PEDIDO_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={formData.tipo}
+                onChange={(value) => setFormData({...formData, tipo: value})}
+                options={TIPO_PEDIDO_OPTIONS}
+                placeholder="Selecione o tipo"
+                searchPlaceholder="Pesquisar tipo..."
+                emptyText="Nenhum tipo encontrado."
+              />
             </div>
 
             <div>
               <Label>Prioridade *</Label>
-              <Select value={formData.prioridade} onValueChange={(value) => setFormData({...formData, prioridade: value})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRIORIDADE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={formData.prioridade}
+                onChange={(value) => setFormData({...formData, prioridade: value})}
+                options={PRIORIDADE_OPTIONS}
+                placeholder="Selecione a prioridade"
+                searchPlaceholder="Pesquisar prioridade..."
+                emptyText="Nenhuma prioridade encontrada."
+              />
             </div>
           </div>
 
@@ -175,18 +168,14 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <Label>Responsável *</Label>
-              <Select value={formData.assignee_id} onValueChange={handleResponsavelChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o responsável" />
-                </SelectTrigger>
-                <SelectContent>
-                  {usuarios.map(u => (
-                    <SelectItem key={u.user_id} value={u.user_id}>
-                      {u.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={formData.assignee_id}
+                onChange={handleResponsavelChange}
+                options={usuarios.map(u => ({ value: u.user_id, label: u.full_name }))}
+                placeholder="Selecione o responsável"
+                searchPlaceholder="Pesquisar responsável..."
+                emptyText="Nenhum responsável encontrado."
+              />
             </div>
 
             <div>
@@ -215,27 +204,27 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
 
             <div>
               <Label>Impacto no Cliente</Label>
-              <Select value={formData.impacto_cliente} onValueChange={(value) => setFormData({...formData, impacto_cliente: value})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {IMPACTO_CLIENTE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={formData.impacto_cliente}
+                onChange={(value) => setFormData({...formData, impacto_cliente: value})}
+                options={IMPACTO_CLIENTE_OPTIONS}
+                placeholder="Selecione o impacto"
+                searchPlaceholder="Pesquisar impacto..."
+                emptyText="Nenhum impacto encontrado."
+              />
             </div>
 
             {pedido && (
               <div>
                 <Label>Status</Label>
-                <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PEDIDO_STATUS_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <Combobox
+                  value={formData.status}
+                  onChange={(value) => setFormData({...formData, status: value})}
+                  options={PEDIDO_STATUS_OPTIONS}
+                  placeholder="Selecione o status"
+                  searchPlaceholder="Pesquisar status..."
+                  emptyText="Nenhum status encontrado."
+                />
               </div>
             )}
           </div>
