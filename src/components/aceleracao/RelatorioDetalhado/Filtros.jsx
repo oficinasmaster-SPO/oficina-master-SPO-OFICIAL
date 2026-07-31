@@ -1,6 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import useEmployeeResolver from '@/hooks/useEmployeeResolver';
 import {
   Select,
   SelectContent,
@@ -13,14 +14,10 @@ import { X } from 'lucide-react';
 
 // Bug #4 fix: SelectItem não aceita value={null} — usar string vazia como sentinela
 export default function Filtros({ filters, onChange }) {
-  const { data: consultores = [] } = useQuery({
-    queryKey: ['consultoresRelatorio'],
-    queryFn: async () => {
-      const users = await base44.entities.User.filter({ role: 'admin' }, '-created_date', 50);
-      return (Array.isArray(users) ? users : []).filter(u => u.full_name && u.id);
-    },
-    staleTime: 10 * 60 * 1000
-  });
+  // USER-ARCH: User.filter({ role:'admin' }) -> useEmployeeResolver.
+  // Employee é a fonte canônica de identidade operacional. Cache compartilhado.
+  const { employees: allEmployees } = useEmployeeResolver();
+  const consultores = (allEmployees || []).filter(e => e.full_name && e.user_id);
 
   const hasActiveFilters = filters.consultor || filters.canal || (filters.status && filters.status !== 'todos');
 
