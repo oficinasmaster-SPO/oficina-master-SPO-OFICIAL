@@ -1165,7 +1165,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
         {/* CONTENT - SCROLLÁVEL */}
         <div className="flex-1 overflow-hidden flex min-h-0">
           {/* LEFT COLUMN - FORM (~40%) */}
-          <div className="overflow-y-auto border-r border-gray-200 px-4 py-4" style={{ flex: '2 1 0%', minWidth: '320px', maxWidth: '42%' }}>
+          <div className="overflow-y-auto scrollbar-stable border-r border-gray-200 px-4 py-4" style={{ flex: '2 1 0%', minWidth: '320px', maxWidth: '42%' }}>
            <div className="space-y-6 max-w-2xl px-2 py-2 bg-white rounded-lg shadow-[inset_0_2px_8px_rgba(0,0,0,0.05)]">
 
 
@@ -1552,7 +1552,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                     </div>
 
                     {/* Panel Content */}
-                    <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                    <div className="flex-1 overflow-y-auto scrollbar-stable scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
 
                       {/* ATAS */}
                       {activePanel === 'atas' && (
