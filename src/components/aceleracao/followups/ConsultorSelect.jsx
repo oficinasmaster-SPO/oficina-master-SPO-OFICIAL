@@ -36,6 +36,7 @@ export default function ConsultorSelect({ value, onChange, consultores = [], use
         emptyText="Nenhum consultor encontrado."
         clearValue={user?.id || "me"}
         className="h-8"
+        autoSelectOnOpen={false}
       />
     </div>
   );

@@ -328,6 +328,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
             emptyText="Nenhum filtro encontrado."
             clearValue="todos"
             className="h-8"
+            autoSelectOnOpen={false}
           />
         </div>
 

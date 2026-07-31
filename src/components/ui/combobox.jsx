@@ -27,6 +27,7 @@ export default function Combobox({
   // Layout & Comportamento
   lazyRender = false,
   maxHeight = 250, // Nova prop flexível (aceita Número ou String)
+  autoSelectOnOpen = true, // true = seleciona todo o texto ao abrir (modo busca); false = só foca (modo seletor)
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -89,10 +90,10 @@ export default function Combobox({
     rafRef.current = requestAnimationFrame(() => {
       if (inputRef.current) {
         inputRef.current.focus();
-        inputRef.current.select();
+        if (autoSelectOnOpen) inputRef.current.select();
       }
     });
-  }, [open, selected, getOptionLabel]);
+  }, [open, selected, getOptionLabel, autoSelectOnOpen]);
 
   const closeDropdown = useCallback(() => {
     setOpen(false);
