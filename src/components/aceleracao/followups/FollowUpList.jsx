@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { sanitizeWorkshopIdArray } from "@/lib/workshopIdGuard";
 import Combobox from "@/components/ui/combobox";
+import { useFollowupIndex } from "./useFollowupIndex";
 
 function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendimentos) {
   const hoje = new Date();
@@ -135,12 +136,9 @@ function getDaysOverdue(reminderDate, today) {
 }
 
 function useConcluidosIndex() {
-  const { data = [] } = useQuery({
-    queryKey: ["follow-up-concluidos-list-index-v2"],
-    queryFn: () => base44.entities.FollowUpConcluido.list("-completedAt", 2000),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-  });
+  // Índice leve via backend (projeção mínima, últimos 30 dias, top 100).
+  // Substitui a leitura de 2000 registros completos com pastedImages.
+  const data = useFollowupIndex();
   const byWorkshop = {};
   const byFollowupId = {};
   const sequenceByFollowupId = {};

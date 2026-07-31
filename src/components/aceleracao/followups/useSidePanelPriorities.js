@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { differenceInDays } from "date-fns";
 import { calcPriorityScore } from "./ds/PriorityScore";
 import { isValidWorkshopId } from "@/lib/workshopIdGuard";
+import { useFollowupIndex } from "./useFollowupIndex";
 
 /**
  * Calcula métricas, insight determinístico e ações recomendadas
@@ -11,13 +12,10 @@ import { isValidWorkshopId } from "@/lib/workshopIdGuard";
  * (mesma query key do FollowUpList) e faz uma query leve de PedidoInterno.
  */
 export function useSidePanelPriorities({ reminders = [], remindersConcluidos = [], today, userId }) {
-  // Reaproveita cache do FollowUpList (mesma query key)
-  const { data: concluidos = [] } = useQuery({
-    queryKey: ["follow-up-concluidos-list-index-v2"],
-    queryFn: () => base44.entities.FollowUpConcluido.list("-completedAt", 2000),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-  });
+  // Índice leve via backend (projeção mínima, últimos 30 dias, top 100).
+  // Substitui a leitura de 2000 registros completos. Mesma query key do
+  // FollowUpList.useConcluidosIndex → 1 read compartilhado para toda a Central.
+  const concluidos = useFollowupIndex();
 
   // Query leve de pedidos abertos
   const { data: pedidosAbertos = [] } = useQuery({

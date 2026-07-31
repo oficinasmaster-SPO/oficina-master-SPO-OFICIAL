@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import WorkshopAvatar from "./followups/ds/WorkshopAvatar";
 import OverviewCockpit from "./followups/OverviewCockpit";
 import { calcHealthScore } from "./followups/ds/HealthScore";
+import { useWorkshopCockpitBootstrap } from "./followups/useWorkshopCockpitBootstrap";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -246,44 +247,14 @@ function CockpitPanelInner({ reminder, seqNum, stats, today, onIniciarAtendiment
   // RAIZ-429: chaves UNIFICADAS com FollowUpDetail para compartilhar cache entre
   // cockpit e detalhe (mesmo workshop = mesma resposta, 1 read em vez de 2).
   // staleTime 10 min: clicar de volta num cliente já visitado NÃO refaz reads.
-  const { data: atas = [] } = useQuery({
-    queryKey: ["workshop-atas", reminder.workshop_id],
-    queryFn: () =>
-      base44.entities.MeetingMinutes.filter(
-        { workshop_id: reminder.workshop_id },
-        "-meeting_date",
-        20
-      ),
-    enabled: !!reminder.workshop_id,
-    staleTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
-
-  const { data: concluidos = [] } = useQuery({
-    queryKey: ["workshop-concluidos", reminder.workshop_id],
-    queryFn: () =>
-      base44.entities.FollowUpConcluido.filter(
-        { workshop_id: reminder.workshop_id },
-        "-completedAt",
-        20
-      ),
-    enabled: !!reminder.workshop_id,
-    staleTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
-
-  const { data: allFollowUps = [] } = useQuery({
-    queryKey: ["workshop-followups", reminder.workshop_id],
-    queryFn: () =>
-      base44.entities.FollowUpReminder.filter(
-        { workshop_id: reminder.workshop_id },
-        "-reminder_date",
-        100
-      ),
-    enabled: !!reminder.workshop_id,
-    staleTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
+  // Bootstrap único: 1 chamada HTTP substitui as 3 queries paralelas
+  // (atas + concluidos + followups) e mitiga a cascata de 429 ao clicar
+  // em vários follow-ups na Central. staleTime 10 min = clicar de volta
+  // num cliente já visitado NÃO refaz reads.
+  const { data: bootstrap } = useWorkshopCockpitBootstrap(reminder.workshop_id);
+  const atas = bootstrap?.atas ?? [];
+  const concluidos = bootstrap?.concluidos ?? [];
+  const allFollowUps = bootstrap?.followUps ?? [];
 
   const isOverdue = !!reminder.reminder_date && reminder.reminder_date < today;
   const daysOver =
