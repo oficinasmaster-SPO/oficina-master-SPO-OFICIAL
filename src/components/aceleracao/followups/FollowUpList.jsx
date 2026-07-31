@@ -242,8 +242,8 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
     { id: "hoje", label: "Hoje" },
     { id: "urgentes", label: "Urgentes" },
     { id: "concluidos", label: "Concluídos" },
-    { id: "criticos", label: "🔴 Críticos" },
-    { id: "por_empresa", label: "🏢 Por Empresa" },
+    { id: "criticos", label: "Críticos" },
+    { id: "por_empresa", label: "Por Empresa" },
   ];
 
   const searchTerm = search.trim().toLowerCase();

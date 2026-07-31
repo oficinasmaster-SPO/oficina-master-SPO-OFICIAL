@@ -29,12 +29,12 @@ export default function ConsultorSelect({ value, onChange, consultores = [], use
     <div className="w-[220px] flex-shrink-0">
       <Combobox
         options={options}
-        value={value || user?.id || "me"}
+        value={value || "todos"}
         onChange={onChange}
         placeholder="Selecionar consultor..."
         searchPlaceholder="Buscar consultor..."
         emptyText="Nenhum consultor encontrado."
-        clearValue={user?.id || "me"}
+        clearValue="todos"
         className="h-8"
         autoSelectOnOpen={false}
       />

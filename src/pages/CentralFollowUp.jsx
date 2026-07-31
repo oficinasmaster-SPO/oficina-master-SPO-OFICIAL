@@ -82,10 +82,10 @@ export default function CentralFollowUp() {
   }, []);
 
   useEffect(() => {
-    if (user?.id && !consultorSelecionado) {
-      setConsultorSelecionado(user.id);
+    if (!consultorSelecionado) {
+      setConsultorSelecionado("todos");
     }
-  }, [user?.id]);
+  }, [consultorSelecionado]);
 
   // Resolve nome real + foto via Employee (User.full_name pode vir como "Aceleradora...")
   const { getName, getPhoto } = useEmployeeResolver();
