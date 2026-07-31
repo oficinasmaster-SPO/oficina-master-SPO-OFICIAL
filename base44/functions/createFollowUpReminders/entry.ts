@@ -90,17 +90,29 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fetch workshop — verificar se está ativa antes de criar follow-ups
+    // ── Guard de integridade referencial: NUNCA persistir FollowUpReminder
+    //    com workshop_id inexistente/inválido. Previne reminders órfãos que
+    //    quebram queries $in downstream (BSONError/InvalidId → 500).
+    const OBJECT_ID_RE = /^[a-fA-F0-9]{24}$/;
+    if (!OBJECT_ID_RE.test(String(workshopId))) {
+      console.warn(`[createFollowUpReminders] workshop_id com formato inválido: "${workshopId}". Follow-ups não criados.`);
+      return Response.json({ skipped: true, reason: 'workshop_id com formato inválido' });
+    }
     let workshopName = '';
+    let workshop = null;
     try {
-      const workshop = await base44.asServiceRole.entities.Workshop.get(workshopId);
-      workshopName = workshop?.name || '';
-      if (workshop?.status === 'inativo') {
-        console.log(`[createFollowUpReminders] Oficina ${workshopName} está inativa. Follow-ups não criados.`);
-        return Response.json({ skipped: true, reason: 'Workshop inativo' });
-      }
+      workshop = await base44.asServiceRole.entities.Workshop.get(workshopId);
     } catch (e) {
-      console.warn('Could not fetch workshop:', e.message);
+      console.warn(`[createFollowUpReminders] Erro ao buscar workshop ${workshopId}:`, e.message);
+    }
+    if (!workshop) {
+      console.warn(`[createFollowUpReminders] Workshop ${workshopId} não encontrado. Follow-ups não criados (previne órfão).`);
+      return Response.json({ skipped: true, reason: 'Workshop não encontrado' });
+    }
+    workshopName = workshop.name || '';
+    if (workshop.status === 'inativo') {
+      console.log(`[createFollowUpReminders] Oficina ${workshopName} está inativa. Follow-ups não criados.`);
+      return Response.json({ skipped: true, reason: 'Workshop inativo' });
     }
 
     // B4 FIX: normaliza data base corretamente (legados sem TZ assumem BRT, date-only âncora ao meio-dia BRT)
