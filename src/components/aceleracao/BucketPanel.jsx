@@ -19,14 +19,33 @@ export default function BucketPanel({ workshopId, followUp, onClose }) {
   const [agendarForm, setAgendarForm] = useState({ data: '', hora: '', consultor_id: '' });
   const [search, setSearch] = useState("");
 
-  // Fetch consultores (admins)
+  // Fetch consultores via Employee — fonte canônica de identidade operacional.
+  // USER-ARCH: User.filter({ role:'admin' }) substituído por Employee.filter
+  // com filtro de papel operacional. Elimina 403 de RLS em User e reduz carga.
+  const { workshopId: ctxWorkshopId } = useWorkshopContext ? useWorkshopContext() : { workshopId: null };
   const { data: consultores = [] } = useQuery({
-    queryKey: ['consultores-list'],
+    queryKey: ['consultores-list', ctxWorkshopId || 'all'],
     queryFn: async () => {
-      const users = await base44.entities.User.filter({ role: 'admin' }, 'full_name', 100);
-      return users || [];
+      try {
+        const filter = { status: 'ativo' };
+        if (ctxWorkshopId) filter.owner_id = ctxWorkshopId;
+        // Busca employees que atuam como consultores/aceleradores
+        const employees = await base44.entities.Employee.filter(
+          filter, 'full_name', 200
+        );
+        return (employees || []).filter(e =>
+          e.user_id && (
+            e.job_role === 'acelerador' ||
+            e.job_role === 'consultor' ||
+            e.is_partner === true
+          )
+        );
+      } catch {
+        return [];
+      }
     },
-    staleTime: 5 * 60 * 1000
+    staleTime: 5 * 60 * 1000,
+    retry: false,
   });
 
   // Fetch pending ContractAttendances APENAS deste workshop
