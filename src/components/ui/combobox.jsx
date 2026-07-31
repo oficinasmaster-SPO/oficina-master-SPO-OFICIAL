@@ -74,13 +74,18 @@ export default function Combobox({
 
   const filteredOptions = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return sortedOptions;
+    const currentLabel = selected ? String(getOptionLabel(selected)) : "";
+
+    // Se a busca estiver vazia OU for exatamente o texto do item já selecionado,
+    // significa que o dropdown acabou de abrir e não houve digitação nova.
+    // Mostramos a lista completa!
+    if (!query || search === currentLabel) return sortedOptions;
 
     return sortedOptions.filter((item) => {
       if (filterOption) return filterOption(item, query);
       return String(getOptionLabel(item)).toLowerCase().includes(query);
     });
-  }, [sortedOptions, search, filterOption, getOptionLabel]);
+  }, [sortedOptions, search, filterOption, getOptionLabel, selected]);
 
   const openDropdown = useCallback(() => {
     if (open) return;
