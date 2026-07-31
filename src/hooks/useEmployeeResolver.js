@@ -16,7 +16,7 @@ import { useUserType } from "@/hooks/useUserType";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
 export default function useEmployeeResolver() {
-  const { isAdmin, canViewAllWorkshops } = useUserType();
+  const { isAdmin, isInternal, canViewAllWorkshops } = useUserType();
   const { workshopId } = useWorkshopContext();
 
   // ── Employees ──────────────────────────────────────────────────────────
@@ -53,19 +53,18 @@ export default function useEmployeeResolver() {
   });
 
   // ── Users (fallback de nomes) ───────────────────────────────────────────
-  // FIX-403: User.list só é permitido a ADMINS. O RLS do User bloqueia
-  // listagem por qualquer não-admin — inclusive internos (consultores). Antes
-  // gateávamos por canViewAllWorkshops (isInternal || isAdmin), então internos
-  // ainda disparavam `User?sort=full_name` → 403. Agora gate estrito por isAdmin.
-  // Internos não precisam deste fallback: Employee.list resolve nomes via
-  // branch internal do RLS de Employee.
+  // FIX-403: a plataforma só permite User.list a COLABORADORES (internos).
+  // Admins que não são internos (ex: sócio/dono admin de oficina cliente) ainda
+  // recebiam 403 "Only collaborators can view the list of users". Gate estrito
+  // por isInternal — eles não precisam deste fallback: Employee.list (gated por
+  // canViewAllWorkshops) resolve nomes via branch admin/internal do RLS de Employee.
   const { data: users = [] } = useQuery({
     queryKey: ["users-resolver"],
     queryFn: async () => {
       const all = await base44.entities.User.list("full_name", 500);
       return all || [];
     },
-    enabled: isAdmin,
+    enabled: isInternal,
     staleTime: 5 * 60 * 1000,
     retry: false,
   });

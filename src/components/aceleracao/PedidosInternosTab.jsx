@@ -48,10 +48,9 @@ export default function PedidosInternosTab({ workshopId, user }) {
     }
   });
 
-  const { data: usuarios = [] } = useQuery({
-    queryKey: ["usuarios-sistema"],
-    queryFn: async () => (await base44.entities.User.list()) || []
-  });
+  // REMOVIDO: query usuarios-sistema (User.list) — era dead code (resultado nunca
+  // usado) e disparava 403 "Only collaborators can view the list of users" para
+  // admins não-internos. Nomes dos usuários são resolvidos via useEmployeeResolver.
 
   // Métricas rápidas para o topo (Estilo pílulas sutis)
   const metrics = useMemo(() => {
