@@ -16,7 +16,7 @@ import { useUserType } from "@/hooks/useUserType";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
 export default function useEmployeeResolver() {
-  const { isAdmin, isInternal, canViewAllWorkshops } = useUserType();
+  const { canViewAllWorkshops } = useUserType();
   const { workshopId } = useWorkshopContext();
 
   // ── Employees ──────────────────────────────────────────────────────────
@@ -52,22 +52,11 @@ export default function useEmployeeResolver() {
     retry: false, // 403 de permissão não retenta
   });
 
-  // ── Users (fallback de nomes) ───────────────────────────────────────────
-  // FIX-403: a plataforma só permite User.list a COLABORADORES (internos).
-  // Admins que não são internos (ex: sócio/dono admin de oficina cliente) ainda
-  // recebiam 403 "Only collaborators can view the list of users". Gate estrito
-  // por isInternal — eles não precisam deste fallback: Employee.list (gated por
-  // canViewAllWorkshops) resolve nomes via branch admin/internal do RLS de Employee.
-  const { data: users = [] } = useQuery({
-    queryKey: ["users-resolver"],
-    queryFn: async () => {
-      const all = await base44.entities.User.list("full_name", 500);
-      return all || [];
-    },
-    enabled: isInternal,
-    staleTime: 5 * 60 * 1000,
-    retry: false,
-  });
+  // REMOVIDO: fallback de User.list. A plataforma Base44 bloqueia User.list com
+  // 403 "Only collaborators can view the list of users" — até para admins com
+  // user_type=internal (ex: Vitor Albuquerque). Employee.list é a fonte canônica
+  // de nomes (Name Resolver) e funciona para todos os colaboradores internos via
+  // branch admin/internal do RLS de Employee. Zero chamadas User.list = zero 403.
 
   // Map user_id → Employee
   const byUserId = useMemo(() => {
@@ -75,13 +64,6 @@ export default function useEmployeeResolver() {
     employees.forEach((e) => { if (e.user_id) m[e.user_id] = e; });
     return m;
   }, [employees]);
-
-  // Map user_id → User (fallback)
-  const userById = useMemo(() => {
-    const m = {};
-    users.forEach((u) => { if (u.id) m[u.id] = u; });
-    return m;
-  }, [users]);
 
   // Map email → Employee (fallback)
   const byEmail = useMemo(() => {
