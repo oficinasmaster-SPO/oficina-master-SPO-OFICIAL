@@ -1,5 +1,6 @@
 import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
 import { handleAuthExpired } from '@/lib/sessionManager';
+import { installQueryDiagnostics } from '@/lib/queryDiagnostics'; // TEMP: mapear disparadores da cascata 429 — remover após investigação
 
 // Backup em camada React Query: se algum erro 401 chegar pelas queries/mutations,
 // dispara o logout centralizado (a trava em sessionManager impede duplicação).
@@ -39,3 +40,8 @@ export const queryClientInstance = new QueryClient({
 if (typeof window !== 'undefined') {
   window.__REACT_QUERY_CLIENT__ = queryClientInstance;
 }
+
+// TEMP: instrumenta o QueryCache para mapear quem dispara a cascata de 429 no boot.
+// Registra cada fetch (queryKey, timestamp, contagem, stack/origem) e expõe
+// window.__QUERY_DIAG__.printTop(20). Dev-only — remover após a investigação.
+installQueryDiagnostics(queryClientInstance);
