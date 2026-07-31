@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Video, Loader2, MessageSquare, Copy, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +11,13 @@ import { ATENDIMENTO_STATUS_COLORS as STATUS_COLORS, ATENDIMENTO_STATUS_LABELS a
 import TipoAtendimentoManager from "@/components/aceleracao/TipoAtendimentoManager";
 import WorkshopSearchSelect from "@/components/aceleracao/WorkshopSearchSelect";
 import Combobox from "@/components/ui/combobox";
+
+const STATUS_CLIENTE_OPTIONS = [
+  { value: "crescente", label: "Crescente" },
+  { value: "decrescente", label: "Decrescente" },
+  { value: "estagnado", label: "Estagnado" },
+  { value: "nao_responde", label: "Não Responde" },
+];
 
 export default function BasicInfoSection({
   formData, setFormData, user, workshops, consultores,
@@ -37,28 +43,23 @@ export default function BasicInfoSection({
           {user?.role === 'admin' &&
           <div>
               <Label>Consultor Responsável</Label>
-              <Select
-              value={formData.consultor_id || user.id}
-              onValueChange={(value) => {
-                 const consultor = consultores?.find((c) => c.id === value);
-                 setFormData((prev) => ({
-                   ...prev,
-                   consultor_id: value,
-                   consultor_nome: consultor?.full_name || user.full_name
-                 }));
-              }}>
-              
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {consultores?.map((c) =>
-                <SelectItem key={c.id} value={c.id}>
-                      {c.full_name}
-                    </SelectItem>
-                )}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={formData.consultor_id || user.id}
+                onChange={(value) => {
+                  const consultor = consultores?.find((c) => c.id === value);
+                  setFormData((prev) => ({
+                    ...prev,
+                    consultor_id: value,
+                    consultor_nome: consultor?.full_name || user.full_name
+                  }));
+                }}
+                options={consultores || []}
+                getOptionValue={(c) => c.id}
+                getOptionLabel={(c) => c.full_name}
+                placeholder="Selecione o consultor"
+                searchPlaceholder="Pesquisar consultor..."
+                emptyText="Nenhum consultor encontrado."
+              />
             </div>
           }
         </div>
@@ -99,20 +100,14 @@ export default function BasicInfoSection({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label>Status do Cliente</Label>
-            <Select
+            <Combobox
               value={formData.status_cliente || ""}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, status_cliente: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="crescente">Crescente</SelectItem>
-                <SelectItem value="decrescente">Decrescente</SelectItem>
-                <SelectItem value="estagnado">Estagnado</SelectItem>
-                <SelectItem value="nao_responde">Não Responde</SelectItem>
-              </SelectContent>
-            </Select>
+              onChange={(value) => setFormData(prev => ({ ...prev, status_cliente: value }))}
+              options={STATUS_CLIENTE_OPTIONS}
+              placeholder="Selecione..."
+              searchPlaceholder="Pesquisar status..."
+              emptyText="Nenhum status encontrado."
+            />
           </div>
           <div>
             <Label>Observações do Status do Cliente</Label>

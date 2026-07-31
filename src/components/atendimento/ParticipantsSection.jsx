@@ -2,9 +2,9 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import Combobox from "@/components/ui/combobox";
 
 export default function ParticipantsSection({ formData, setFormData, colaboradores, colaboradoresInternos }) {
   // E1: Check for duplicate by name (case-insensitive)
@@ -46,64 +46,62 @@ export default function ParticipantsSection({ formData, setFormData, colaborador
               Manual
             </Button>
             {colaboradores && colaboradores.length > 0 && (
-              <Select value="" onValueChange={(value) => {
-                const colab = colaboradores.find(c => c.id === value);
-                if (colab) {
-                  if (isDuplicate(colab.full_name)) {
-                    toast.warning(`${colab.full_name} já está na lista de participantes`);
-                    return;
+              <Combobox
+                value=""
+                onChange={(value) => {
+                  const colab = colaboradores.find(c => c.id === value);
+                  if (colab) {
+                    if (isDuplicate(colab.full_name)) {
+                      toast.warning(`${colab.full_name} já está na lista de participantes`);
+                      return;
+                    }
+                    setFormData(prev => ({
+                      ...prev,
+                      participantes: [...prev.participantes, {
+                        nome: colab.full_name,
+                        cargo: colab.position,
+                        email: colab.email
+                      }]
+                    }));
                   }
-                  setFormData(prev => ({
-                    ...prev,
-                    participantes: [...prev.participantes, {
-                      nome: colab.full_name,
-                      cargo: colab.position,
-                      email: colab.email
-                    }]
-                  }));
-                }
-              }}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Da oficina" />
-                </SelectTrigger>
-                <SelectContent>
-                  {colaboradores.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.full_name} - {c.position}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                }}
+                options={colaboradores}
+                getOptionValue={(c) => c.id}
+                getOptionLabel={(c) => `${c.full_name} - ${c.position}`}
+                placeholder="Da oficina"
+                searchPlaceholder="Pesquisar colaborador..."
+                emptyText="Nenhum colaborador encontrado."
+                className="w-48"
+              />
             )}
             {colaboradoresInternos && colaboradoresInternos.length > 0 && (
-              <Select value="" onValueChange={(value) => {
-                const colab = colaboradoresInternos.find(c => c.id === value);
-                if (colab) {
-                  if (isDuplicate(colab.full_name)) {
-                    toast.warning(`${colab.full_name} já está na lista de participantes`);
-                    return;
+              <Combobox
+                value=""
+                onChange={(value) => {
+                  const colab = colaboradoresInternos.find(c => c.id === value);
+                  if (colab) {
+                    if (isDuplicate(colab.full_name)) {
+                      toast.warning(`${colab.full_name} já está na lista de participantes`);
+                      return;
+                    }
+                    setFormData(prev => ({
+                      ...prev,
+                      participantes: [...prev.participantes, {
+                        nome: colab.full_name,
+                        cargo: "Consultor (Interno)",
+                        email: ""
+                      }]
+                    }));
                   }
-                  setFormData(prev => ({
-                    ...prev,
-                    participantes: [...prev.participantes, {
-                      nome: colab.full_name,
-                      cargo: "Consultor (Interno)",
-                      email: ""
-                    }]
-                  }));
-                }
-              }}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Interno" />
-                </SelectTrigger>
-                <SelectContent>
-                  {colaboradoresInternos.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                }}
+                options={colaboradoresInternos}
+                getOptionValue={(c) => c.id}
+                getOptionLabel={(c) => c.full_name}
+                placeholder="Interno"
+                searchPlaceholder="Pesquisar consultor..."
+                emptyText="Nenhum consultor encontrado."
+                className="w-48"
+              />
             )}
           </div>
         </div>

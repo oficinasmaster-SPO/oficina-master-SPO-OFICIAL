@@ -2,10 +2,10 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Package, Video, Trash2 } from "lucide-react";
 import MediaUploadField from "@/components/aceleracao/MediaUploadField";
 import ProcessSearchSelect from "@/components/aceleracao/ProcessSearchSelect";
+import Combobox from "@/components/ui/combobox";
 
 export default function ContentSection({ formData, setFormData, processos, todasAulas, cursos }) {
   const addProcesso = (processoId) => {
@@ -116,21 +116,19 @@ export default function ContentSection({ formData, setFormData, processos, todas
               Videoaulas e Treinamentos
             </Label>
             <div className="space-y-2">
-              <Select onValueChange={addVideoaula}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Adicionar videoaula..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {todasAulas?.filter(a => !formData.videoaulas_vinculadas.find(v => v.id === a.id)).map((aula) => {
-                    const curso = cursos?.find(c => c.id === aula.course_id);
-                    return (
-                      <SelectItem key={aula.id} value={aula.id}>
-                        {curso?.title} - {aula.title}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value=""
+                onChange={addVideoaula}
+                options={(todasAulas || []).filter(a => !formData.videoaulas_vinculadas.find(v => v.id === a.id))}
+                getOptionValue={(a) => a.id}
+                getOptionLabel={(a) => {
+                  const curso = cursos?.find(c => c.id === a.course_id);
+                  return `${curso?.title || ""} - ${a.title}`;
+                }}
+                placeholder="Adicionar videoaula..."
+                searchPlaceholder="Pesquisar videoaula..."
+                emptyText="Nenhuma videoaula encontrada."
+              />
               {formData.videoaulas_vinculadas.length > 0 && (
                 <div className="mt-3 space-y-2">
                   {formData.videoaulas_vinculadas.map((video, idx) => (
