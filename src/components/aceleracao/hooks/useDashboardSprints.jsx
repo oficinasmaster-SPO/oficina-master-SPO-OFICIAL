@@ -101,18 +101,13 @@ export default function useDashboardSprints(workshops = [], user = null) {
     let refetchPending = false;
     
     const unsubscribe = base44.entities.ConsultoriaSprint.subscribe((event) => {
-      // RT-BUG-FIX: a condição anterior era:
-      //   usesFirmId ? (firmId === firmId || event.data?.workshop_id)
-      // O segundo operando era uma string (sempre truthy) — qualquer sprint
-      // de qualquer workshop no sistema disparava invalidate + refetch de 1.000
-      // registros. Corrigido: comparar consulting_firm_id OU workshop_id está
-      // no idSet (fallback). Nunca usar o valor da string como boolean.
-      const eventFirmId    = event.data?.consulting_firm_id;
-      const eventWorkshopId = event.data?.workshop_id;
+      // FIX-burst: o 2º operando era `|| event.data?.workshop_id` (string truthy)
+      // → TODO evento de sprint no sistema era considerado "relevante" e disparava
+      // invalidate → refetch de até 1000 sprints em loop → 429.
+      // Quando usa firm_id, relevância = firm_id do evento === firm_id do usuário.
       const isRelevant = usesFirmId
-        ? (eventFirmId === consultingFirmId ||
-           (eventWorkshopId != null && idSet.has(eventWorkshopId)))
-        : (eventWorkshopId != null && idSet.has(eventWorkshopId));
+        ? (event.data?.consulting_firm_id === consultingFirmId)
+        : (event.data?.workshop_id && idSet.has(event.data.workshop_id));
       if (isRelevant) {
         // Guardrail: evita múltiplas invalidações em cascata
         if (refetchPending) return;
