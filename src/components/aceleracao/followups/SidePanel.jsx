@@ -19,7 +19,7 @@ export default function SidePanel({
 }) {
   const [period, setPeriod] = useState("today"); // 'today' | 'week' | 'month'
 
-  const { metrics, insight, allClear, actions } = useSidePanelPriorities({
+  const { metrics, insight, allClear, actions, coverage } = useSidePanelPriorities({
     reminders: prioridadeData?.reminders || [],
     remindersConcluidos: prioridadeData?.remindersConcluidos || [],
     today,
@@ -98,6 +98,7 @@ export default function SidePanel({
             activePill={activePill}
             period={period}
             onPeriodChange={setPeriod}
+            coverage={coverage}
             onCardClick={onPrioridadeClick}
             onActionClick={(a) => {
               // Ações agregadas (Semana/Mês) abrem a lista filtrada;

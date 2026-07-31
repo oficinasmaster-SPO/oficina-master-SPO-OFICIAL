@@ -1,30 +1,28 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { differenceInDays, startOfDay, startOfWeek, startOfMonth } from "date-fns";
+import { differenceInDays, startOfDay, startOfWeek, startOfMonth, subMonths } from "date-fns";
 import { calcPriorityScore } from "./ds/PriorityScore";
 import { isValidWorkshopId } from "@/lib/workshopIdGuard";
 import { useFollowupIndex } from "./useFollowupIndex";
 
+const MS_DAY = 1000 * 60 * 60 * 24;
+
 /**
- * Calcula métricas, insight determinístico e ações recomendadas
+ * Calcula métricas, insight, ações, cobertura, produção e tendência
  * para a Central Operacional, em 3 contextos temporais:
  *
  *   "today"  → Estado operacional (o que resolver AGORA)
  *   "week"   → Performance acumulada desde segunda (produção da semana)
  *   "month"  → Performance acumulada desde o dia 1 (produção do mês)
  *
- * Reutiliza o cache de FollowUpConcluido (useFollowupIndex) e faz uma
- * query leve de PedidoInterno. Todos os cálculos respeitam `startDate`
- * derivado do período.
+ * A agregação roda no client sobre dados já cacheados (useFollowupIndex
+ * + query leve de pedidos), então trocar de período é instantâneo (sem
+ * nova requisição) — consistente com a mitigação de 429 da Central.
  */
 export function useSidePanelPriorities({ reminders = [], remindersConcluidos = [], today, userId, period = "today" }) {
-  // Índice leve via backend (projeção mínima, últimos 30 dias, top 100).
-  // Substitui a leitura de 2000 registros completos. Mesma query key do
-  // FollowUpList.useConcluidosIndex → 1 read compartilhado para toda a Central.
   const concluidos = useFollowupIndex();
 
-  // Query leve de pedidos abertos
   const { data: pedidosAbertos = [] } = useQuery({
     queryKey: ["pedidos-internos-abertos-sidepanel"],
     queryFn: async () => {
@@ -38,18 +36,22 @@ export function useSidePanelPriorities({ reminders = [], remindersConcluidos = [
   });
 
   return useMemo(() => {
-    const msDay = 1000 * 60 * 60 * 24;
     const now = Date.now();
     const todayDate = new Date(today + "T00:00:00");
 
-    // ── Janela temporal do período
     const startDate =
       period === "today" ? startOfDay(todayDate)
       : period === "week" ? startOfWeek(todayDate, { weekStartsOn: 1 })
       : startOfMonth(todayDate);
     const startMs = startDate.getTime();
 
-    // ── Mapas comuns (universo, pendentes, último contato, concluidos, nomes)
+    // Janela do período anterior (para tendência)
+    const prevStartMs =
+      period === "week" ? startMs - 7 * MS_DAY
+      : period === "month" ? startOfMonth(subMonths(todayDate, 1)).getTime()
+      : null;
+
+    // ── Mapas comuns
     const universe = new Set();
     const pushId = (wid) => { if (isValidWorkshopId(wid)) universe.add(wid); };
     reminders.forEach(r => pushId(r.workshop_id));
@@ -83,7 +85,6 @@ export function useSidePanelPriorities({ reminders = [], remindersConcluidos = [
     reminders.forEach(r => { if (r.workshop_id && r.workshop_name) nameByWorkshop[r.workshop_id] = r.workshop_name; });
     remindersConcluidos.forEach(r => { if (r.workshop_id && r.workshop_name) nameByWorkshop[r.workshop_id] = r.workshop_name; });
 
-    // Vencidos (estado residual — independente do período)
     const vencidos = reminders.filter(r => !r.is_completed && r.reminder_date && r.reminder_date < today);
     const vencidosOver15 = vencidos.filter(r => {
       const days = differenceInDays(new Date(today + "T00:00:00"), new Date(r.reminder_date + "T00:00:00"));
@@ -94,7 +95,7 @@ export function useSidePanelPriorities({ reminders = [], remindersConcluidos = [
     const pct = (n) => Math.round((n / totalUniverse) * 100);
 
     // ════════════════════════════════════════════════════════════════════
-    // MODO HOJE — estado operacional (comportamento original, intocado)
+    // MODO HOJE — estado operacional (sem tendência: não há snapshot anterior)
     // ════════════════════════════════════════════════════════════════════
     if (period === "today") {
       const semFollowup = [];
@@ -106,7 +107,7 @@ export function useSidePanelPriorities({ reminders = [], remindersConcluidos = [
         if (!last) {
           if (pendingByWorkshop[wid]) semContato7d.push(wid);
         } else {
-          const days = Math.floor((now - new Date(last)) / msDay);
+          const days = Math.floor((now - new Date(last)) / MS_DAY);
           if (days > 7) semContato7d.push(wid);
         }
       });
@@ -115,7 +116,7 @@ export function useSidePanelPriorities({ reminders = [], remindersConcluidos = [
       concluidos.forEach(c => {
         if (c.resultado === "nao_atendeu" && c.workshop_id) {
           const d = c.completedAt || c.created_date;
-          if (d && (now - new Date(d)) / msDay <= 30) naoRespondeuMap[c.workshop_id] = true;
+          if (d && (now - new Date(d)) / MS_DAY <= 30) naoRespondeuMap[c.workshop_id] = true;
         }
       });
       const naoRespondeu = Object.keys(naoRespondeuMap);
@@ -156,7 +157,7 @@ export function useSidePanelPriorities({ reminders = [], remindersConcluidos = [
           emoji: "🔵", label: "Sem contato reg.", count: semContatoRegistrado.length, color: "blue",
           tooltip: "Clientes que ainda não receberam o primeiro contato.",
           sample: semContatoRegistrado.slice(0, 3).map(wid => nameByWorkshop[wid]).filter(Boolean) },
-      ].map(m => ({ ...m, pct: pct(m.count) }));
+      ].map(m => ({ ...m, pct: pct(m.count), trend: null }));
 
       let insight = null;
       const priorityOrder = ["vencidos", "sem_followup", "sem_contato_7d", "nao_respondeu", "pedidos_abertos"];
@@ -186,68 +187,95 @@ export function useSidePanelPriorities({ reminders = [], remindersConcluidos = [
           return { id: r.id, name: r.workshop_name || "Cliente", reason, urgency, reminder: r };
         });
 
-      return { metrics, insight, allClear, actions, vencidosOver15Count: vencidosOver15.length };
+      return { metrics, insight, allClear, actions, vencidosOver15Count: vencidosOver15.length,
+               coverage: null, production: null, trend: null };
     }
 
     // ════════════════════════════════════════════════════════════════════
-    // MODO SEMANA / MÊS — performance acumulada (produção + pendências)
+    // MODO SEMANA / MÊS — performance acumulada + tendência vs período anterior
     // ════════════════════════════════════════════════════════════════════
     const inPeriod = (d) => {
       if (!d) return false;
       const t = new Date(d).getTime();
       return t >= startMs && t <= now;
     };
+    const inPrev = (d) => {
+      if (!d || prevStartMs == null) return false;
+      const t = new Date(d).getTime();
+      return t >= prevStartMs && t < startMs;
+    };
 
     const concluidosPeriod = concluidos.filter(c => inPeriod(c.completedAt || c.created_date));
+    const concluidosPrev = concluidos.filter(c => inPrev(c.completedAt || c.created_date));
+
     const realizados = concluidosPeriod.length;
+    const realizadosPrev = concluidosPrev.length;
 
     const atendeuSet = new Set();
     concluidosPeriod.forEach(c => { if (c.resultado === "atendeu" && c.workshop_id) atendeuSet.add(c.workshop_id); });
     const atendidos = atendeuSet.size;
+    const atendeuSetPrev = new Set();
+    concluidosPrev.forEach(c => { if (c.resultado === "atendeu" && c.workshop_id) atendeuSetPrev.add(c.workshop_id); });
+    const atendidosPrev = atendeuSetPrev.size;
 
     const naoRespondeuPeriod = concluidosPeriod.filter(c => c.resultado === "nao_atendeu");
     const naoRespondeuCount = naoRespondeuPeriod.length;
+    const naoRespondeuPrev = concluidosPrev.filter(c => c.resultado === "nao_atendeu").length;
     const naoRespondeuWorkshops = new Set(naoRespondeuPeriod.map(c => c.workshop_id).filter(Boolean));
 
     const criados = [...reminders, ...remindersConcluidos].filter(r => inPeriod(r.created_date)).length;
+    const criadosPrev = [...reminders, ...remindersConcluidos].filter(r => inPrev(r.created_date)).length;
+
     const pedidosPeriod = pedidosAbertos.filter(p => inPeriod(p.created_date));
     const pendencias = vencidos.length;
 
-    const pctAtendida = Math.round((atendidos / totalUniverse) * 100);
+    const coverage = Math.round((atendidos / totalUniverse) * 100);
     const periodLabel = period === "week" ? "semana" : "mês";
+
+    const trendOf = (cur, prev, goodWhenUp) => {
+      const delta = cur - prev;
+      if (delta === 0) return null;
+      return { delta, direction: delta > 0 ? "up" : "down", goodWhenUp };
+    };
 
     const metrics = [
       { id: "realizados", spId: "sp_realizados", pillId: "concluidos",
         emoji: "✓", label: "Realizados", count: realizados, color: "green",
         tooltip: `Follow-ups com contato registrado nesta ${periodLabel}.`,
-        sample: [], pct: 0 },
+        sample: [], pct: 0, trend: trendOf(realizados, realizadosPrev, true) },
       { id: "atendidos", spId: "sp_atendidos", pillId: "concluidos",
         emoji: "☎", label: "Atendidos", count: atendidos, color: "blue",
         tooltip: `Clientes distintos que responderam nesta ${periodLabel}.`,
-        sample: [], pct: pctAtendida },
+        sample: [], pct: coverage, trend: trendOf(atendidos, atendidosPrev, true) },
       { id: "criados", spId: "sp_criados", pillId: null,
         emoji: "📅", label: "Criados", count: criados, color: "purple",
         tooltip: `Novos follow-ups criados nesta ${periodLabel}.`,
-        sample: [], pct: 0 },
+        sample: [], pct: 0, trend: trendOf(criados, criadosPrev, true) },
       { id: "nao_respondeu", spId: "sp_nao_respondeu", pillId: "concluidos",
         emoji: "❌", label: "Não responderam", count: naoRespondeuCount, color: "red",
         tooltip: `Contatos encerrados sem resposta nesta ${periodLabel}.`,
-        sample: [], pct: pct(naoRespondeuWorkshops.size) },
+        sample: [], pct: pct(naoRespondeuWorkshops.size), trend: trendOf(naoRespondeuCount, naoRespondeuPrev, false) },
       { id: "pedidos_abertos", spId: "sp_pedidos_abertos", pillId: "concluidos",
         emoji: "📦", label: "Pedidos abertos", count: pedidosPeriod.length, color: "green",
         tooltip: `Pedidos internos abertos nesta ${periodLabel}.`,
-        sample: [], pct: 0 },
+        sample: [], pct: 0, trend: null },
       { id: "pendencias", spId: "sp_pendencias", pillId: "atrasados",
         emoji: "⏰", label: "Pendências", count: pendencias, color: "orange",
         tooltip: "Follow-ups que seguem vencidos (residual atual).",
         sample: vencidos.slice(0, 3).map(r => r.workshop_name).filter(Boolean),
-        pct: pct(pendencias) },
+        pct: pct(pendencias), trend: null },
     ];
 
-    const insight = {
-      metricId: "realizados",
-      text: buildInsightText("realizados_periodo", realizados, pctAtendida, periodLabel, pendencias, naoRespondeuCount),
-    };
+    // Insight gerencial com cobertura e nome do mês
+    const insightText = period === "month"
+      ? (() => {
+          const monthName = new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(startDate);
+          const cap = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+          return `${cap}: ${realizados} contatos realizados. ${coverage}% da carteira atendida. ${pendencias} pendências abertas.`;
+        })()
+      : `Nesta semana foram realizados ${realizados} follow-ups. ${coverage}% da carteira já recebeu atendimento. Ainda existem ${pendencias} pendências.`;
+
+    const insight = { metricId: "realizados", text: insightText };
     const allClear = false;
 
     const actions = [];
@@ -270,7 +298,14 @@ export function useSidePanelPriorities({ reminders = [], remindersConcluidos = [
       });
     }
 
-    return { metrics, insight, allClear, actions, vencidosOver15Count: vencidosOver15.length };
+    const headlineTrend = trendOf(realizados, realizadosPrev, true);
+
+    return {
+      metrics, insight, allClear, actions, vencidosOver15Count: vencidosOver15.length,
+      coverage,
+      production: { followups: realizados, clients: atendidos },
+      trend: headlineTrend ? { variation: headlineTrend.delta, direction: headlineTrend.direction } : null,
+    };
   }, [reminders, remindersConcluidos, concluidos, pedidosAbertos, today, userId, period]);
 }
 
@@ -286,8 +321,6 @@ function buildInsightText(id, count, pct, periodLabel, pendencias = 0, naoRespon
       return `Existem ${count} cliente(s) que não responderam ao último contato (${pct}% da carteira). Considere mudar canal ou horário.`;
     case "pedidos_abertos":
       return `Existem ${count} pedido(s) interno(s) em aberto (${pct}% da carteira) aguardando retorno.`;
-    case "realizados_periodo":
-      return `Nesta ${periodLabel} foram realizados ${count} follow-up(s). ${pct}% da carteira já foi atendida. Ainda existem ${pendencias} pendência(s) e ${naoRespondeu} sem resposta.`;
     default:
       return "";
   }

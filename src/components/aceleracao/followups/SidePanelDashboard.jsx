@@ -39,10 +39,18 @@ function MetricCard({ metric, isActive, onClick }) {
             <span className={`text-[9px] font-bold ${c.text}`}>{metric.pct}%</span>
           )}
         </div>
-        <div className="mt-1.5">
+        <div className="mt-1.5 flex items-baseline gap-1.5">
           <span className={`text-2xl font-extrabold tabular-nums ${metric.count > 0 ? "text-gray-900" : "text-gray-300"}`}>
             {metric.count}
           </span>
+          {metric.trend && (
+            <span className={`text-[10px] font-bold ${
+              metric.trend.goodWhenUp === (metric.trend.direction === "up")
+                ? "text-green-600" : "text-red-500"
+            }`}>
+              {metric.trend.direction === "up" ? "↑" : "↓"} {Math.abs(metric.trend.delta)}
+            </span>
+          )}
         </div>
         <p className="text-[11px] font-semibold text-gray-600 leading-tight mt-0.5">{metric.label}</p>
         {metric.count > 0 && metric.sample.length > 0 && (
@@ -64,7 +72,7 @@ const PERIOD_OPTIONS = [
   { id: "month", label: "Mês" },
 ];
 
-export default function SidePanelDashboard({ metrics, insight, allClear, actions, activePill, onCardClick, onActionClick, period = "today", onPeriodChange }) {
+export default function SidePanelDashboard({ metrics, insight, allClear, actions, activePill, onCardClick, onActionClick, period = "today", onPeriodChange, coverage = null }) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3.5 h-full overflow-y-auto">
       {/* Header */}
@@ -124,6 +132,22 @@ export default function SidePanelDashboard({ metrics, insight, allClear, actions
               {period === "today" ? "Prioridade do momento" : "Resumo da " + (period === "week" ? "semana" : "mês")}
             </p>
             <p className="text-xs text-gray-700 leading-snug mt-1">{insight?.text}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Barra de cobertura da carteira (apenas Semana/Mês) */}
+      {period !== "today" && coverage != null && (
+        <div>
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Cobertura da carteira</span>
+            <span className="text-xs font-extrabold text-gray-900 tabular-nums">{coverage}%</span>
+          </div>
+          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-700 ease-out"
+              style={{ width: `${Math.min(coverage, 100)}%`, background: coverage >= 80 ? "#22c55e" : coverage >= 50 ? "#f59e0b" : "#ef4444" }}
+            />
           </div>
         </div>
       )}
