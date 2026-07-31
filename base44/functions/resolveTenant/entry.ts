@@ -133,25 +133,75 @@ async function resolveTenantCore(sr, authUser, params = {}) {
 }
 // ── Fim da cópia fiel ─────────────────────────────────────────────────────────
 
+// ── INSTRUMENTAÇÃO TEMPORÁRIA (diagnóstico F5 × Ctrl+Shift+R) ──────────────────
+// Registra user_id, e-mail, timestamp, origem da chamada (quando enviada pelo
+// front) e o motivo exato de qualquer 500. Remover após confirmação da causa.
 Deno.serve(async (req) => {
+  const startedAt = new Date().toISOString();
+  let authUser = null;
+  let origin = null;
   try {
     const base44 = createClientFromRequest(req);
-    const authUser = await base44.auth.me();
-    if (!authUser) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    authUser = await base44.auth.me();
+    if (!authUser) {
+      console.warn('[resolveTenant] NO_AUTH', { ts: startedAt, origin: null });
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const body = await req.json().catch(() => ({}));
-    const result = await resolveTenantCore(base44.asServiceRole, authUser, {
+    origin = body?.origin || null;
+    const params = {
       workshop_id: body?.workshop_id || null,
       admin_workshop_id: body?.admin_workshop_id || null,
       impersonated_user_id: body?.impersonated_user_id || null,
       sync_user_field: true,
+    };
+
+    console.log('[resolveTenant] INVOKE', {
+      ts: startedAt,
+      user_id: authUser.id,
+      email: authUser.email,
+      role: authUser.role,
+      origin,
+      params,
     });
 
+    const result = await resolveTenantCore(base44.asServiceRole, authUser, params);
+
     if (result.status !== 200) {
+      console.warn('[resolveTenant] NON_200', {
+        ts: startedAt,
+        user_id: authUser.id,
+        email: authUser.email,
+        role: authUser.role,
+        origin,
+        status: result.status,
+        error: result.error,
+      });
       return Response.json({ error: result.error }, { status: result.status });
     }
+
+    console.log('[resolveTenant] OK', {
+      ts: startedAt,
+      user_id: authUser.id,
+      email: authUser.email,
+      origin,
+      workshop_id: result.data?.workshop?.id || null,
+      fallback_used: result.data?.fallback_used || false,
+      memberships_count: (result.data?.memberships || []).length,
+    });
     return Response.json(result.data);
   } catch (error) {
+    console.error('[resolveTenant] 500', {
+      ts: startedAt,
+      user_id: authUser?.id || null,
+      email: authUser?.email || null,
+      role: authUser?.role || null,
+      origin,
+      error_message: error?.message || String(error),
+      error_stack: error?.stack || null,
+      error_name: error?.name || null,
+    });
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

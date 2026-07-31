@@ -56,6 +56,12 @@ export function TenantSessionProvider({ children }) {
       } else if (selectedWorkshopId) {
         params.workshop_id = selectedWorkshopId;
       }
+      // TEMP (diagnóstico F5 × Ctrl+Shift+R): tag de origem lida pela Function.
+      params.origin = impersonatedUserId
+        ? 'tenant-session-impersonation'
+        : (!impersonatedUserId && isAdminMode && adminWorkshopId)
+          ? 'tenant-session-admin'
+          : selectedWorkshopId ? 'tenant-session-pref' : 'tenant-session-default';
       try {
         const res = await base44.functions.invoke('resolveTenant', params);
         return res.data;
@@ -64,7 +70,8 @@ export function TenantSessionProvider({ children }) {
         if (status === 403 && params.workshop_id) {
           // Preferência sem autorização — descartar e resolver o default
           try { if (prefKey) localStorage.removeItem(prefKey); } catch (_) {}
-          const retryParams = impersonatedUserId ? { impersonated_user_id: impersonatedUserId } : {};
+          const retryParams = { origin: 'tenant-session-retry-403' };
+          if (impersonatedUserId) retryParams.impersonated_user_id = impersonatedUserId;
           const res = await base44.functions.invoke('resolveTenant', retryParams);
           return res.data;
         }
