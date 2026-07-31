@@ -31,6 +31,7 @@ export default function CentralFollowUp() {
   const [cockpit, setCockpit] = useState({ reminder: null, seqNum: null, stats: null });
   const [showAtendimento, setShowAtendimento] = useState(false);
   const [atendimentoReminder, setAtendimentoReminder] = useState(null);
+  const [atendimentoFila, setAtendimentoFila] = useState([]);
 
   // Central Operacional state
   const [prioridadeData, setPrioridadeData] = useState(null);
@@ -65,9 +66,13 @@ export default function CentralFollowUp() {
   }, [handleSelectForCockpit]);
 
   const handleIniciarAtendimento = useCallback((reminder) => {
+    // Ler a fila atual do cache (mesma query key do FollowUpsTab) — sem disparar nova leitura.
+    // Sem a fila, as setas ◀ ▶ do modal ficam desabilitadas e o follow-up atual não é encontrado.
+    const fila = queryClient.getQueryData(["follow-up-reminders-tab", consultorEfetivo]) || [];
+    setAtendimentoFila(Array.isArray(fila) ? fila : []);
     setAtendimentoReminder(reminder);
     setShowAtendimento(true);
-  }, []);
+  }, [queryClient, consultorEfetivo]);
 
   const handleClearCockpit = useCallback(() => {
     setCockpit({ reminder: null, seqNum: null, stats: null });
@@ -192,6 +197,7 @@ export default function CentralFollowUp() {
         <IniciarAtendimentoModal
           followUp={atendimentoReminder}
           cliente={null}
+          filaReminders={atendimentoFila}
           onClose={() => setShowAtendimento(false)}
           onSaved={() => {
             setShowAtendimento(false);
