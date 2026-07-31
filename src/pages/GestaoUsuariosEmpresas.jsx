@@ -12,26 +12,21 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   UserPlus, Loader2, Mail, Phone, Trash2, UserX, Building2, Eye, Edit, 
-  ExternalLink, Filter, X, Users, Key, Copy, CheckCircle, ChevronDown,
+  ExternalLink, Filter, X, Users, CheckCircle, ChevronDown,
   Home, BarChart3, Wrench, Calculator, Target, Brain, Package, FileCheck,
   GraduationCap, Lightbulb, Briefcase, ArrowUpDown, CalendarCheck, Package2
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import AIProfileSuggestions from "@/components/admin/users/AIProfileSuggestions";
 import RelatorioPlanos from "@/components/admin/RelatorioPlanos";
 
 export default function GestaoUsuariosEmpresas() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingWorkshop, setEditingWorkshop] = useState(null);
   const [isWorkshopDialogOpen, setIsWorkshopDialogOpen] = useState(false);
-  const [resetPasswordDialog, setResetPasswordDialog] = useState({ open: false, password: "" });
   const [expandedRow, setExpandedRow] = useState(null);
-  const [aiFormData, setAiFormData] = useState({ cargo: "", area: "" });
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [showRelatorioPlanos, setShowRelatorioPlanos] = useState(false);
   
@@ -72,50 +67,6 @@ export default function GestaoUsuariosEmpresas() {
   });
 
   const isLoading = employeesLoading;
-
-  const updateUserMutation = useMutation({
-    mutationFn: async ({ userId, data }) => {
-      return await base44.entities.User.update(userId, data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['users-list']);
-      toast.success("Usuário atualizado!");
-      setIsDialogOpen(false);
-      setSelectedUser(null);
-    },
-    onError: () => toast.error("Erro ao atualizar usuário")
-  });
-
-  const deleteUserMutation = useMutation({
-    mutationFn: async (userId) => {
-      return await base44.entities.User.delete(userId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['users-list']);
-      toast.success("Usuário excluído!");
-    },
-    onError: () => toast.error("Erro ao excluir usuário")
-  });
-
-  const resetPasswordMutation = useMutation({
-    mutationFn: async ({ userId, userEmail }) => {
-      // Gerar senha temporária (12 caracteres alfanuméricos + especiais)
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*';
-      let tempPassword = '';
-      for (let i = 0; i < 12; i++) {
-        tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      
-      // Como a plataforma Base44 não expõe reset de senha diretamente,
-      // retornamos apenas a senha gerada para o admin compartilhar manualmente
-      return { temporary_password: tempPassword };
-    },
-    onSuccess: (data) => {
-      setResetPasswordDialog({ open: true, password: data.temporary_password });
-      toast.success("Senha temporária gerada!");
-    },
-    onError: () => toast.error("Erro ao gerar senha temporária")
-  });
 
   const updateWorkshopMutation = useMutation({
     mutationFn: async ({ id, data, oldPlan, workshopName }) => {
@@ -206,69 +157,6 @@ export default function GestaoUsuariosEmpresas() {
       oldPlan: editingWorkshop.planoAtual || 'FREE',
       workshopName: editingWorkshop.name
     });
-  };
-
-  const handleSaveUser = async (e) => {
-    e.preventDefault();
-    if (!selectedUser) return;
-
-    const formData = new FormData(e.target);
-    const workshopId = formData.get('workshop_id');
-    const jobRole = formData.get('job_role');
-    const newPlan = formData.get('plano');
-    
-    // Buscar perfil correspondente à job_role
-    let profileId = selectedUser.profile_id;
-    if (jobRole) {
-      try {
-        // W8 FIX (2026-06-10): busca por job_roles substituída por autoAssignProfile (ID fixo).
-        // UserProfile.list() sem filtro expunha Admin System e perfis internos.
-        const assignResponse = await base44.functions.invoke('autoAssignProfile', {
-          job_role: jobRole,
-          current_profile_id: selectedUser.profile_id
-        });
-        const matchingProfile = assignResponse?.data?.has_suggestion
-          ? { id: assignResponse.data.suggested_profile_id, name: assignResponse.data.suggested_profile_name }
-          : null;
-        if (matchingProfile) {
-          profileId = matchingProfile.id;
-          console.log(`✅ Auto-vinculado ao perfil: ${matchingProfile.name}`);
-        }
-      } catch (error) {
-        console.warn("Erro ao buscar perfil:", error);
-      }
-    }
-    
-    const data = {
-      workshop_id: workshopId,
-      position: formData.get('position'),
-      job_role: jobRole,
-      area: formData.get('area'),
-      telefone: formData.get('telefone'),
-      profile_id: profileId
-    };
-
-    try {
-      // Atualizar usuário
-      await updateUserMutation.mutateAsync({ userId: selectedUser.id, data });
-
-      // Se o plano foi alterado, atualizar a Workshop
-      if (workshopId && newPlan && newPlan !== selectedUser.workshopPlan) {
-        const response = await base44.functions.invoke("adminUpdateWorkshopPlan", {
-          workshop_id: workshopId,
-          data: {
-            planoAtual: newPlan,
-            dataAssinatura: new Date().toISOString()
-          }
-        });
-        if (response.data.error) throw new Error(response.data.error);
-        
-        toast.success("Plano da oficina atualizado!");
-        queryClient.invalidateQueries(['workshops']);
-      }
-    } catch (error) {
-      toast.error("Erro ao salvar: " + error.message);
-    }
   };
 
   // Combinar WORKSHOPS com employees para tabela
@@ -1134,232 +1022,6 @@ export default function GestaoUsuariosEmpresas() {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={resetPasswordDialog.open} onOpenChange={(open) => setResetPasswordDialog({ ...resetPasswordDialog, open })}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                Senha Temporária Gerada
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-sm text-yellow-800 mb-3">
-                  ⚠️ Copie esta senha e compartilhe com o usuário de forma segura. Esta senha não será exibida novamente.
-                </p>
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={resetPasswordDialog.password}
-                    readOnly
-                    className="font-mono text-lg bg-white"
-                  />
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      navigator.clipboard.writeText(resetPasswordDialog.password);
-                      toast.success("Senha copiada!");
-                    }}
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-blue-800">
-                  📧 Compartilhe esta senha com <strong>{selectedUser?.email}</strong> via canal seguro (WhatsApp, email, etc.)
-                </p>
-              </div>
-              <Button
-                className="w-full"
-                onClick={() => setResetPasswordDialog({ open: false, password: "" })}
-              >
-                Fechar
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Editar Usuário: {selectedUser?.full_name}</DialogTitle>
-            </DialogHeader>
-            {selectedUser && (
-              <form onSubmit={handleSaveUser} className="space-y-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-blue-900">Email</Label>
-                      <Input
-                        value={selectedUser.email || ""}
-                        disabled
-                        className="bg-white"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-blue-900">Senha</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          type="password"
-                          value="••••••••"
-                          disabled
-                          className="bg-white"
-                        />
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="border-orange-600 text-orange-700 hover:bg-orange-50"
-                          onClick={() => {
-                            if (confirm(`Resetar senha de ${selectedUser.full_name}?\n\nUma senha temporária será gerada e exibida para você.`)) {
-                              resetPasswordMutation.mutate({ 
-                                userId: selectedUser.id,
-                                userEmail: selectedUser.email 
-                              });
-                            }
-                          }}
-                          disabled={resetPasswordMutation.isPending}
-                        >
-                          {resetPasswordMutation.isPending ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Key className="w-4 h-4" />
-                          )}
-                        </Button>
-                      </div>
-                      <p className="text-xs text-blue-700 mt-1">Clique no botão para gerar nova senha temporária</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Empresa *</Label>
-                  <Select name="workshop_id" defaultValue={selectedUser.workshop_id || ""} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a empresa" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {workshops.map(w => (
-                        <SelectItem key={w.id} value={w.id}>
-                          {w.name} - {w.planoAtual || "FREE"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Plano da Oficina *</Label>
-                  <Select name="plano" defaultValue={selectedUser.workshopPlan || "FREE"} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o plano" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="FREE">FREE</SelectItem>
-                      <SelectItem value="START">START</SelectItem>
-                      <SelectItem value="BRONZE">BRONZE</SelectItem>
-                      <SelectItem value="PRATA">PRATA</SelectItem>
-                      <SelectItem value="GOLD">GOLD</SelectItem>
-                      <SelectItem value="IOM">IOM</SelectItem>
-                      <SelectItem value="MILLIONS">MILLIONS</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Sugestões de IA */}
-                <AIProfileSuggestions
-                  cargo={aiFormData.cargo || selectedUser.position}
-                  area={aiFormData.area || selectedUser.area}
-                  workshopId={selectedUser.workshop_id}
-                  onApplySuggestion={(suggestions) => {
-                    // Aplicar sugestões nos campos do form
-                    const jobRoleSelect = document.querySelector('select[name="job_role"]');
-                    if (jobRoleSelect && suggestions.job_role) {
-                      jobRoleSelect.value = suggestions.job_role;
-                      jobRoleSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                    }
-                  }}
-                />
-
-                <div>
-                  <Label>Cargo *</Label>
-                  <Input 
-                    name="position" 
-                    defaultValue={selectedUser.position || ""} 
-                    placeholder="Ex: Gerente de Operações" 
-                    required
-                    onChange={(e) => setAiFormData(prev => ({ ...prev, cargo: e.target.value }))}
-                  />
-                </div>
-
-                <div>
-                  <Label>Função *</Label>
-                  <Select 
-                    name="job_role" 
-                    defaultValue={selectedUser.job_role || ""} 
-                    required
-                    onValueChange={(val) => setAiFormData(prev => ({ ...prev, job_role: val }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma função" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="socio">Sócio</SelectItem>
-                      <SelectItem value="diretor">Diretor</SelectItem>
-                      <SelectItem value="gerente">Gerente</SelectItem>
-                      <SelectItem value="supervisor_loja">Supervisor</SelectItem>
-                      <SelectItem value="tecnico">Técnico</SelectItem>
-                      <SelectItem value="comercial">Comercial</SelectItem>
-                      <SelectItem value="financeiro">Financeiro</SelectItem>
-                      <SelectItem value="rh">RH</SelectItem>
-                      <SelectItem value="marketing">Marketing</SelectItem>
-                      <SelectItem value="acelerador">Acelerador</SelectItem>
-                      <SelectItem value="consultor">Consultor</SelectItem>
-                      <SelectItem value="outros">Outros</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Área *</Label>
-                  <Select 
-                    name="area" 
-                    defaultValue={selectedUser.area || ""} 
-                    required
-                    onValueChange={(val) => setAiFormData(prev => ({ ...prev, area: val }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma área" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="vendas">Vendas</SelectItem>
-                      <SelectItem value="comercial">Comercial</SelectItem>
-                      <SelectItem value="marketing">Marketing</SelectItem>
-                      <SelectItem value="tecnico">Técnico</SelectItem>
-                      <SelectItem value="administrativo">Administrativo</SelectItem>
-                      <SelectItem value="financeiro">Financeiro</SelectItem>
-                      <SelectItem value="gerencia">Gerência</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Telefone *</Label>
-                  <Input name="telefone" defaultValue={selectedUser.telefone || ""} placeholder="(00) 00000-0000" required />
-                </div>
-
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={updateUserMutation.isPending}>
-                    {updateUserMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar"}
-                  </Button>
-                </div>
-              </form>
-            )}
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );
