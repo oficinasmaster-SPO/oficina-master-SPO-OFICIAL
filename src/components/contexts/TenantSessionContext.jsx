@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
@@ -34,16 +34,21 @@ export function TenantSessionProvider({ children }) {
 
   const prefKey = prefKeyFor(realUser?.email);
   const [selectedWorkshopId, setSelectedWorkshopId] = useState(null);
-
-  // Carrega a preferência persistida quando o usuário estiver disponível
-  useEffect(() => {
-    if (!prefKey) return;
+  // Lê a preferência persistida de forma SÍNCRONA quando o e-mail (prefKey) muda,
+  // via ajuste de estado durante o render (padrão React "adjusting state when a
+  // prop changes"). Assim a query de tenant já enxerga o valor final no primeiro
+  // enable — elimina a transição null→pref que disparava duas chamadas
+  // (default + pref) no boot. O bloco só roda quando prefKey muda; o re-render
+  // imediato ocorre antes do commit, sem ciclo extra.
+  const [prevPrefKey, setPrevPrefKey] = useState(prefKey);
+  if (prefKey !== prevPrefKey) {
+    setPrevPrefKey(prefKey);
     try {
-      setSelectedWorkshopId(localStorage.getItem(prefKey) || null);
+      setSelectedWorkshopId(prefKey ? (localStorage.getItem(prefKey) || null) : null);
     } catch (_) {
       setSelectedWorkshopId(null);
     }
-  }, [prefKey]);
+  }
 
   // Resolução de tenant — SEMPRE via resolveTenant (backend valida membership)
   const { data: session, isLoading: isSessionLoading } = useQuery({
