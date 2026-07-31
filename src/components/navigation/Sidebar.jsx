@@ -28,25 +28,19 @@ import { getNavigationGroups } from "./navigationGroups";
 function UserProfileSection({ user, collapsed, workshop }) {
   const { workshopId } = useWorkshopContext();
 
-  // LOAD-02: useQuery com cache, deduplicação e fallback — substitui useState/useEffect manual
-  const { data: employee, isLoading: loading } = useQuery({
-    queryKey: ['sidebar-employee', user?.id, workshopId],
+  // FIX-2: UMA única leitura Employee.filter({ user_id }) — compartilhada com o
+  // checkGlobalContext do Sidebar via mesma queryKey (React Query dedupes).
+  // Antes: leitura workshop-scoped (l.42) + fallback all (l.45) + 3ª leitura
+  // idêntica no checkGlobalContext (l.203). Workshop-scoping agora é client-side.
+  const { data: allEmployees = [], isLoading: loading } = useQuery({
+    queryKey: ['sidebar-employee-all', user?.id],
     queryFn: async () => {
-      if (!user?.id) return null;
-      // Timeout de 5s para evitar loading infinito
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 5000);
+      if (!user?.id) return [];
       try {
-        let employees = [];
-        if (workshopId) {
-          employees = await base44.entities.Employee.filter({ user_id: user.id, workshop_id: workshopId });
-        }
-        if (!employees?.length) {
-          employees = await base44.entities.Employee.filter({ user_id: user.id });
-        }
-        return employees?.[0] || null;
-      } finally {
-        clearTimeout(timer);
+        const employees = await base44.entities.Employee.filter({ user_id: user.id });
+        return Array.isArray(employees) ? employees : [];
+      } catch {
+        return [];
       }
     },
     enabled: !!user?.id,
@@ -55,9 +49,15 @@ function UserProfileSection({ user, collapsed, workshop }) {
     refetchOnMount: false,
     retry: 1,
     retryDelay: 3000,
-    // LOAD-02: fallback imediato com dados do authUser — perfil nunca fica em branco
-    placeholderData: null
   });
+
+  const employee = React.useMemo(
+    () => {
+      if (!allEmployees.length) return null;
+      return allEmployees.find(e => e.workshop_id === workshopId) || allEmployees[0];
+    },
+    [allEmployees, workshopId]
+  );
 
   const jobRoleLabels = {
     socio: "Sócio",
@@ -181,36 +181,45 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
   const [isGlobalContext, setIsGlobalContext] = React.useState(false);
   const GLOBAL_ADMIN_ID = '69540822472c4a70b54d47ab';
 
-  React.useEffect(() => {
-    const checkGlobalContext = async () => {
-      if (!user) return;
-      // 0. FIX (2026-07-07): Admin da plataforma e equipe interna SEMPRE têm contexto global.
-      // Antes, apenas o ID hardcoded do owner (ou Employees dele) viam itens globalAdminOnly,
-      // escondendo menus de admins legítimos como a equipe de CS interna.
-      // Não se aplica durante impersonação (_isImpersonated), que deve refletir o usuário alvo.
-      const isImpersonated = user._isImpersonated === true;
-      if (!isImpersonated && (user.role === 'admin' || user.user_type === 'internal' || user.is_internal === true || user.data?.is_internal === true)) {
-        setIsGlobalContext(true);
-        return;
-      }
-      // 1. Verificar ID direto (Owner Global)
-      if (user.id === GLOBAL_ADMIN_ID) {
-        setIsGlobalContext(true);
-        return;
-      }
-      // 2. Verificar colaboradores do Admin Global
+  // FIX-2: reusa a mesma queryKey ['sidebar-employee-all', user?.id] do
+  // UserProfileSection — React Query dedupes, sem segunda leitura de Employee.
+  const { data: sidebarAllEmployees = [] } = useQuery({
+    queryKey: ['sidebar-employee-all', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
       try {
         const employees = await base44.entities.Employee.filter({ user_id: user.id });
-        if (employees && employees.length > 0) {
-          const isGlobalEmployee = employees.some((emp) => emp.owner_id === GLOBAL_ADMIN_ID);
-          if (isGlobalEmployee) setIsGlobalContext(true);
-        }
-      } catch (e) {
-        console.error("Erro ao verificar contexto global:", e);
+        return Array.isArray(employees) ? employees : [];
+      } catch {
+        return [];
       }
-    };
-    checkGlobalContext();
-  }, [user?.id]);
+    },
+    enabled: !!user?.id,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retry: 1,
+  });
+
+  React.useEffect(() => {
+    if (!user) return;
+    // 0. FIX (2026-07-07): Admin da plataforma e equipe interna SEMPRE têm contexto global.
+    const isImpersonated = user._isImpersonated === true;
+    if (!isImpersonated && (user.role === 'admin' || user.user_type === 'internal' || user.is_internal === true || user.data?.is_internal === true)) {
+      setIsGlobalContext(true);
+      return;
+    }
+    // 1. Verificar ID direto (Owner Global)
+    if (user.id === GLOBAL_ADMIN_ID) {
+      setIsGlobalContext(true);
+      return;
+    }
+    // 2. Verificar colaboradores do Admin Global (dados compartilhados da query)
+    if (sidebarAllEmployees.length > 0) {
+      const isGlobalEmployee = sidebarAllEmployees.some((emp) => emp.owner_id === GLOBAL_ADMIN_ID);
+      if (isGlobalEmployee) setIsGlobalContext(true);
+    }
+  }, [user, sidebarAllEmployees]);
 
   const toggleCollapse = () => {
     const newState = !isCollapsed;

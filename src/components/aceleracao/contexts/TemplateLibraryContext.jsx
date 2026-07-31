@@ -9,26 +9,12 @@ const TemplateLibraryContext = createContext();
  * Evita queries N+1 quando MissionPicker renderiza
  */
 export function TemplateLibraryProvider({ children }) {
-  const { data: missions = [] } = useQuery({
-    queryKey: ['global_missions_list'],
-    queryFn: async () => {
-      try {
-        return await base44.entities.Mission.list('-updated_date', 100);
-      } catch (error) {
-        console.error('Erro ao carregar missões globais:', error);
-        return [];
-      }
-    },
-    // 429-FIX: staleTime era 5s — refetch constante em TODAS as páginas (provider está no App root).
-    // Missões raramente mudam; 10min + sem refetch on focus/mount reduz tráfego drasticamente.
-    staleTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    retry: false,
-  });
-
+  // FIX-3: provider virou pass-through. A query de Mission agora vive no hook
+  // useGlobalMissions() — lazy. Antes o provider (no App root) disparava
+  // Mission.list em TODAS as páginas no boot, mesmo as que nunca usam missões.
+  // Agora: zero leituras de Mission até o primeiro MissionPicker montar.
   return (
-    <TemplateLibraryContext.Provider value={{ missions }}>
+    <TemplateLibraryContext.Provider value={{}}>
       {children}
     </TemplateLibraryContext.Provider>
   );
@@ -39,5 +25,22 @@ export function useGlobalMissions() {
   if (!context) {
     throw new Error('useGlobalMissions deve ser usado dentro de TemplateLibraryProvider');
   }
-  return context.missions;
+  const { data: missions = [] } = useQuery({
+    queryKey: ['global_missions_list'],
+    queryFn: async () => {
+      try {
+        return await base44.entities.Mission.list('-updated_date', 100);
+      } catch (error) {
+        console.error('Erro ao carregar missões globais:', error);
+        return [];
+      }
+    },
+    // 429-FIX: lazy — só dispara quando um componente chama useGlobalMissions()
+    // (hoje apenas MissionPicker). 10min de cache + sem refetch on focus/mount.
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retry: false,
+  });
+  return missions;
 }

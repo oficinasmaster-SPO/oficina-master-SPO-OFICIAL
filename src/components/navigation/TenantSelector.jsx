@@ -18,9 +18,14 @@ export default function TenantSelector({ isMobileSidebar = false }) {
   const [hoveredFirmId, setHoveredFirmId] = useState(null);
   const [hoveredCompanyId, setHoveredCompanyId] = useState(null);
 
+  // FIX-4: ConsultingFirm.list() só é usado pelo popover de consultorias, que
+  // só renderiza para admins (l.63). Não há motivo de ler a entidade no boot
+  // para usuários comuns — gateia por role === 'admin' (mono-firm incluído).
+  const isAdmin = user?.role === 'admin';
   const { data: firms = [], isLoading: isLoadingFirms } = useQuery({
     queryKey: ['consultingFirms'],
-    queryFn: () => base44.entities.ConsultingFirm.list()
+    queryFn: () => base44.entities.ConsultingFirm.list(),
+    enabled: isAdmin,
   });
 
   const companiesToDisplay = useMemo(() => {
