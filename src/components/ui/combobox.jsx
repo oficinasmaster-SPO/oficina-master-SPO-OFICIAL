@@ -197,9 +197,12 @@ export default function Combobox({
     >
       <div
         className={cn(
-          "absolute inset-0 z-20 flex items-center w-full h-full bg-background border transition-all duration-200",
+          "absolute inset-0 z-30 flex items-center w-full h-full bg-background border transition-colors duration-200",
           open
-            ? "border-input border-b-transparent rounded-t-md rounded-b-none ring-2 ring-ring shadow-sm"
+            // O SEGREDO AQUI:
+            // Sem ring-2 quando aberto. border-b-transparent faz ele se fundir com a lista abaixo.
+            ? "border-input border-b-transparent rounded-t-md rounded-b-none"
+            // Quando fechado, mantém o highlight de foco nativo que você já tinha.
             : "border-input rounded-md focus-within:ring-2 focus-within:ring-ring"
         )}
       >
@@ -250,8 +253,10 @@ export default function Combobox({
 
       <div
         className={cn(
-          "absolute top-full left-0 z-[150] w-full bg-popover text-popover-foreground overflow-hidden",
-          "border border-t-0 border-input rounded-b-md shadow-md",
+          "absolute top-full left-0 z-20 w-full bg-popover text-popover-foreground overflow-hidden",
+          // Borda superior 0 (border-t-0) cola perfeitamente na borda do input.
+          // shadow-lg dá aquela sombra de menu nativo do Mac flutuando sobre a tela.
+          "border border-t-0 border-input rounded-b-md shadow-lg",
           "origin-top transition-[opacity,transform,max-height] duration-200 ease-out",
           open
             ? "opacity-100 visible scale-100 translate-y-0"
