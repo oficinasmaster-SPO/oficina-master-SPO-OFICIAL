@@ -110,9 +110,9 @@ Deno.serve(async (req) => {
       return Response.json({ skipped: true, reason: 'Workshop não encontrado' });
     }
     workshopName = workshop.name || '';
-    if (workshop.status === 'inativo') {
-      console.log(`[createFollowUpReminders] Oficina ${workshopName} está inativa. Follow-ups não criados.`);
-      return Response.json({ skipped: true, reason: 'Workshop inativo' });
+    if (workshop.status !== 'ativo') {
+      console.log(`[createFollowUpReminders] Oficina ${workshopName} não está ativa (status="${workshop.status}"). Follow-ups não criados.`);
+      return Response.json({ skipped: true, reason: `Workshop não ativo: ${workshop.status}` });
     }
 
     // B4 FIX: normaliza data base corretamente (legados sem TZ assumem BRT, date-only âncora ao meio-dia BRT)

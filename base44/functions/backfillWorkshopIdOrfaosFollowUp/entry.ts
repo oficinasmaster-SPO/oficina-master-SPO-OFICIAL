@@ -15,39 +15,43 @@ function sanitizeIdArray(ids) {
   return out;
 }
 
+// Valores inválidos conhecidos (test data) — fallback caso $not/$regex não seja suportado.
+const KNOWN_INVALID_WORKSHOP_IDS = ['test', 'ws-firm-001', 'ws-test-002'];
+const OID_PATTERN = '^[a-fA-F0-9]{24}$';
+
 /**
  * Backfill de SANEAMENTO DE INTEGRIDADE REFERENCIAL (Camada 1 — Root Cause).
  *
- * Para cada entidade que possui FK `workshop_id`:
- *   - FollowUpReminder
- *   - FollowUpConcluido
- *   - ConsultoriaAtendimento
- *   - PedidoInterno
- *   - TarefaBacklog
+ * Para cada entidade com FK `workshop_id`:
+ *   - FollowUpReminder, FollowUpConcluido, ConsultoriaAtendimento,
+ *     PedidoInterno, TarefaBacklog
  *
- * Fluxo:
- *   1. Carrega a página mais recente de registros da entidade.
- *   2. workshop_id com FORMATO inválido (não-OID 24-hex: "test", "ws-firm-001",
- *      "ws-test-002") → REMOVE sempre. São dados de teste/corrompidos sem
- *      workshop real para reatribuir; é a causa-raiz do 500 (BSON InvalidId)
- *      no Workshop.filter({ id: { $in } }).
- *   3. workshop_id válido mas inexistente (órfão — workshop foi deletado) →
- *      por padrão apenas RELATA (count + amostra); remove somente se
+ * Três classes de problema:
+ *   1. FORMATO inválido (workshop_id não é ObjectId 24-hex: "test",
+ *      "ws-firm-001", "ws-test-002") → REMOVE sempre. Causa-raiz do 500
+ *      (BSON InvalidId) no Workshop.filter({ id: { $in } }).
+ *      **Consulta direta via $not $regex — atinge TODOS os registros,
+ *      qualquer idade, superando a limitação de paginação do SDK.**
+ *   2. Órfão (formato válido, workshop inexistente) → relata; remove só com
  *      `remover_orfaos: true`.
+ *   3. Workshop inativo (formato válido, workshop existe mas status != "ativo")
+ *      → relata; remove só com `remover_inativos: true`. Previne o cenário
+ *      futuro em que follow-ups continuam sendo criados para oficinas
+ *      desativadas.
  *
- * Limitação da plataforma: o SDK `.list(sort, limit)` não pagina além da
- * primeira página (sem offset). O saneamento cobre os registros mais recentes
- * — onde residem os dados de teste. Rode novamente após novos importes.
+ * Limitação: a checagem de órfão/inativo varre a página mais recente (SDK
+ * sem offset). A checagem de FORMATO inválido é total (query direta).
  *
  * Payload: {
- *   dry_run?: boolean      (default true),
- *   remover_orfaos?: boolean (default false — só relata órfãos válidos),
- *   entidades?: string[]   (default todas as 5)
+ *   dry_run?: boolean        (default true),
+ *   remover_orfaos?: boolean (default false),
+ *   remover_inativos?: boolean (default false),
+ *   entidades?: string[]     (default todas as 5)
  * }
  */
 const ENT_CONFIG = {
   FollowUpReminder: { sort: '-created_date', page: 200 },
-  FollowUpConcluido: { sort: '-completedAt', page: 50 }, // OOM risk (base64 pastedImages)
+  FollowUpConcluido: { sort: '-completedAt', page: 50 },
   ConsultoriaAtendimento: { sort: '-created_date', page: 100 },
   PedidoInterno: { sort: '-created_date', page: 200 },
   TarefaBacklog: { sort: '-created_date', page: 200 },
@@ -64,6 +68,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const dry_run = body.dry_run !== false;
     const remover_orfaos = body.remover_orfaos === true;
+    const remover_inativos = body.remover_inativos === true;
     const entidades = body.entidades || Object.keys(ENT_CONFIG);
 
     const resultados = {};
@@ -76,43 +81,61 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      let allRecords;
+      // ── 1) FORMATO inválido — query direta, atinge qualquer idade ──
+      let invalidosRaw = [];
+      let metodo_invalidos = 'not_regex';
       try {
-        allRecords = await ent.list(cfg.sort, cfg.page);
+        invalidosRaw = await ent.filter(
+          { workshop_id: { $not: { $regex: OID_PATTERN } } }, cfg.sort, 1000
+        );
       } catch (e) {
-        resultados[entName] = { erro_carga: e.message };
-        continue;
+        metodo_invalidos = 'known_in_fallback';
+        try {
+          invalidosRaw = await ent.filter(
+            { workshop_id: { $in: KNOWN_INVALID_WORKSHOP_IDS } }, cfg.sort, 1000
+          );
+        } catch (e2) {
+          invalidosRaw = [];
+        }
       }
-      allRecords = allRecords || [];
+      const invalidos = (invalidosRaw || []).filter(
+        (r) => r.workshop_id && !isValidObjectId(r.workshop_id)
+      );
 
-      // IDs com formato válido (sanitizados) — para o $in de existência.
-      const validIds = sanitizeIdArray(allRecords.map((r) => r.workshop_id).filter(Boolean));
+      // ── 2) Página recente — checagem de existência + status ativo ──
+      let recent;
+      try {
+        recent = await ent.list(cfg.sort, cfg.page);
+      } catch (e) {
+        recent = [];
+      }
+      recent = recent || [];
+      const recentValid = recent.filter((r) => isValidObjectId(r.workshop_id));
+      const validIds = sanitizeIdArray(recentValid.map((r) => r.workshop_id));
 
-      // Existence check: UMA query $in com ids já sanitizados (seguro — não lança InvalidId).
-      let existingSet = new Set();
+      // ── 3) Workshop lookup (uma query $in sanitizada — segura) ──
+      const workshopMap = new Map();
       if (validIds.length > 0) {
         try {
-          const existing = await base44.asServiceRole.entities.Workshop.filter(
+          const ws = await base44.asServiceRole.entities.Workshop.filter(
             { id: { $in: validIds } }, undefined, validIds.length
           );
-          existingSet = new Set((existing || []).map((w) => w.id));
+          (ws || []).forEach((w) => workshopMap.set(w.id, w));
         } catch (e) {
-          resultados[entName] = { erro_workshop_lookup: e.message };
-          continue;
+          // sem lookup, não classifica órfão/inativo
         }
       }
 
-      // Classificar
-      const invalidos = []; // formato inválido (test/ws-firm/...)
-      const orfaos = [];    // formato válido, workshop inexistente
-      for (const r of allRecords) {
-        const wid = r.workshop_id;
-        if (!wid) continue;
-        if (!isValidObjectId(wid)) {
-          invalidos.push(r);
-          continue;
+      // ── 4) Classificar (Workshop existe AND status == ativo) ──
+      const orfaos = [];
+      const inativos = [];
+      for (const r of recentValid) {
+        const w = workshopMap.get(r.workshop_id);
+        if (!w) {
+          orfaos.push(r);
+        } else if (w.status !== 'ativo') {
+          inativos.push(r);
         }
-        if (!existingSet.has(wid)) orfaos.push(r);
       }
 
       const amostra = (arr) =>
@@ -122,55 +145,65 @@ Deno.serve(async (req) => {
           workshop_name: r.workshop_name,
           created_date: r.created_date,
         }));
+      const amostraInativos = (arr) =>
+        arr.slice(0, 15).map((r) => {
+          const w = workshopMap.get(r.workshop_id);
+          return {
+            id: r.id,
+            workshop_id: r.workshop_id,
+            workshop_name: r.workshop_name || w?.name,
+            workshop_status: w?.status,
+            created_date: r.created_date,
+          };
+        });
 
-      let removidos = 0;
+      // ── 5) Ações ──
+      let invalidosRemovidos = 0;
       let orfaosRemovidos = 0;
+      let inativosRemovidos = 0;
       const erros = [];
       if (!dry_run) {
-        // Inválidos: sempre remove.
         for (const r of invalidos) {
-          try {
-            await ent.delete(r.id);
-            removidos++;
-          } catch (e) {
-            erros.push({ id: r.id, error: e.message });
-          }
+          try { await ent.delete(r.id); invalidosRemovidos++; }
+          catch (e) { erros.push({ id: r.id, error: e.message }); }
         }
-        // Órfãos: só remove se explicitamente solicitado.
         if (remover_orfaos) {
           for (const r of orfaos) {
-            try {
-              await ent.delete(r.id);
-              orfaosRemovidos++;
-            } catch (e) {
-              erros.push({ id: r.id, error: e.message });
-            }
+            try { await ent.delete(r.id); orfaosRemovidos++; }
+            catch (e) { erros.push({ id: r.id, error: e.message }); }
+          }
+        }
+        if (remover_inativos) {
+          for (const r of inativos) {
+            try { await ent.delete(r.id); inativosRemovidos++; }
+            catch (e) { erros.push({ id: r.id, error: e.message }); }
           }
         }
       }
 
       resultados[entName] = {
-        total_registros: allRecords.length,
+        total_recentes: recent.length,
         total_invalidos: invalidos.length,
         total_orfaos: orfaos.length,
+        total_inativos: inativos.length,
+        metodo_invalidos,
         amostra_invalidos: amostra(invalidos),
         amostra_orfaos: amostra(orfaos),
-        invalidos_removidos: !dry_run ? invalidos.length : 0,
+        amostra_inativos: amostraInativos(inativos),
+        invalidos_removidos: !dry_run ? invalidosRemovidos : 0,
         orfaos_removidos: !dry_run ? orfaosRemovidos : 0,
+        inativos_removidos: !dry_run ? inativosRemovidos : 0,
         erros: erros.slice(0, 10),
       };
     }
 
     return Response.json({
-      dry_run,
-      remover_orfaos,
-      resultados,
+      dry_run, remover_orfaos, remover_inativos, resultados,
       message: dry_run
         ? 'DRY RUN — nada alterado. Revise as amostras e rode com { "dry_run": false } para remover inválidos.'
-        : 'Saneamento concluído. Registros com workshop_id inválido removidos.' +
-          (remover_orfaos
-            ? ' Órfãos (workshop inexistente) também removidos.'
-            : ' Órfãos apenas relatados (use remover_orfaos: true para removê-los).'),
+        : 'Saneamento concluído. Inválidos removidos.' +
+          (remover_orfaos ? ' Órfãos removidos.' : '') +
+          (remover_inativos ? ' Inativos removidos.' : ''),
     });
   } catch (error) {
     return Response.json({ error: error.message, stack: error.stack }, { status: 500 });
