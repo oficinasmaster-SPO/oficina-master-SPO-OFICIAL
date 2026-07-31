@@ -46,12 +46,19 @@ export default function TarefaBacklogDetalhe({ tarefa, user, onVoltar, onEditar,
 
       const ids = idMap.map(({ id }) => id);
       try {
-        const users = await base44.entities.User.filter({ id: { $in: ids } });
-        const userMap = {};
-        (users || []).forEach(u => { userMap[u.id] = u.full_name || u.email; });
-        idMap.forEach(({ id, setter }) => setter(userMap[id] || null));
+        // USER-ARCH: substituído User.filter({ id: { $in: ids } }) por Employee.filter.
+        // User é reservado para autenticação/sessão; Employee é a fonte canônica
+        // de identidade operacional (nome real, cargo, foto). Elimina 403 de RLS.
+        const employees = await base44.entities.Employee.filter(
+          { user_id: { $in: ids } },
+          undefined,
+          ids.length
+        );
+        const empMap = {};
+        (employees || []).forEach(e => { if (e.user_id) empMap[e.user_id] = e.full_name || e.email; });
+        idMap.forEach(({ id, setter }) => setter(empMap[id] || null));
       } catch (err) {
-        console.error("Erro ao buscar usuários:", err);
+        console.error("Erro ao buscar colaboradores:", err);
       }
     };
     buscarNomes();
