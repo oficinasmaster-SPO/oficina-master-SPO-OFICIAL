@@ -12,25 +12,59 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
+import { useUserType } from "@/hooks/useUserType";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
 export default function useEmployeeResolver() {
+  const { canViewAllWorkshops } = useUserType();
+  const { workshopId } = useWorkshopContext();
+
+  // ── Employees ──────────────────────────────────────────────────────────
+  // Admins/internos (canViewAllWorkshops): lista tudo (RLS permite leitura
+  //   irrestrita via branch admin/internal).
+  // Usuário comum: filtra pelo próprio workshop. Antes um Employee.list sem
+  //   escopo podia 403 quando o user não caía em nenhuma branch do RLS de
+  //   leitura (workshop legado não resolvido). O filter com workshop_id casiona
+  //   a branch `data.workshop_id == user.workshop_id` → sem 403.
   const { data: employees = [], isLoading } = useQuery({
-    queryKey: ["employees-resolver"],
+    queryKey: [
+      "employees-resolver",
+      canViewAllWorkshops ? "all" : workshopId || "none",
+    ],
     queryFn: async () => {
-      const all = await base44.entities.Employee.list("full_name", 500);
+      let all;
+      if (canViewAllWorkshops) {
+        all = await base44.entities.Employee.list("full_name", 500);
+      } else if (workshopId) {
+        all = await base44.entities.Employee.filter(
+          { workshop_id: workshopId },
+          "full_name",
+          200
+        );
+      } else {
+        all = [];
+      }
       return (all || []).filter((e) => e.user_id);
     },
+    // Só monta a query quando há contexto suficiente para não falhar.
+    enabled: canViewAllWorkshops || !!workshopId,
     staleTime: 5 * 60 * 1000, // cache 5 min
+    retry: false, // 403 de permissão não retenta
   });
 
-  // Fallback: carrega Users visíveis para resolver nomes quando Employee não existe
+  // ── Users (fallback de nomes) ───────────────────────────────────────────
+  // FIX-403: User.list só é permitido a admins (RLS do User bloqueia listagem
+  // por não-admins). Gateado por canViewAllWorkshops: zero requisições 403 para
+  // usuários comuns. Internos não precisam deste fallback (Employee resolve).
   const { data: users = [] } = useQuery({
     queryKey: ["users-resolver"],
     queryFn: async () => {
       const all = await base44.entities.User.list("full_name", 500);
       return all || [];
     },
+    enabled: canViewAllWorkshops,
     staleTime: 5 * 60 * 1000,
+    retry: false,
   });
 
   // Map user_id → Employee
