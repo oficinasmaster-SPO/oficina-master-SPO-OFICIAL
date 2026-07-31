@@ -26,8 +26,7 @@ export default function Combobox({
   
   // Layout & Comportamento
   lazyRender = false,
-  maxHeight = 250, // Nova prop flexível (aceita Número ou String)
-  autoSelectOnOpen = true, // true = seleciona todo o texto ao abrir (modo busca); false = só foca (modo seletor)
+  maxHeight = 250, 
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -72,14 +71,15 @@ export default function Combobox({
     );
   }, [options, getOptionLabel]);
 
+  // CORREÇÃO 1: O Filtro inteligente!
   const filteredOptions = useMemo(() => {
     const query = search.trim().toLowerCase();
-    const currentLabel = selected ? String(getOptionLabel(selected)) : "";
+    const currentLabel = selected ? String(getOptionLabel(selected)).trim().toLowerCase() : "";
 
-    // Se a busca estiver vazia OU for exatamente o texto do item já selecionado,
-    // significa que o dropdown acabou de abrir e não houve digitação nova.
-    // Mostramos a lista completa!
-    if (!query || search === currentLabel) return sortedOptions;
+    // Se a busca estiver vazia OU for igualzinho ao texto já selecionado,
+    // significa que o usuário acabou de abrir o dropdown e não digitou nada.
+    // Mostramos a lista completa para baixo!
+    if (!query || query === currentLabel) return sortedOptions;
 
     return sortedOptions.filter((item) => {
       if (filterOption) return filterOption(item, query);
@@ -95,10 +95,10 @@ export default function Combobox({
     rafRef.current = requestAnimationFrame(() => {
       if (inputRef.current) {
         inputRef.current.focus();
-        if (autoSelectOnOpen) inputRef.current.select();
+        inputRef.current.select();
       }
     });
-  }, [open, selected, getOptionLabel, autoSelectOnOpen]);
+  }, [open, selected, getOptionLabel]);
 
   const closeDropdown = useCallback(() => {
     setOpen(false);
@@ -210,6 +210,7 @@ export default function Combobox({
           value={displayValue}
           onValueChange={handleInputChange}
           onFocus={openDropdown}
+          onClick={openDropdown} // CORREÇÃO 2: Garante que clicar no nome sempre abra a lista
           onKeyDown={handleKeyDown}
           onCompositionStart={() => (isComposing.current = true)}
           onCompositionEnd={() => (isComposing.current = false)}
@@ -233,7 +234,7 @@ export default function Combobox({
             tabIndex={-1}
             onClick={() => {
               if (open) closeDropdown();
-              else openDropdown();
+              else openDropdown(); // O clique na setinha já chama essa função nativamente
             }}
             className="rounded p-1 hover:bg-muted transition-colors"
           >
@@ -251,18 +252,16 @@ export default function Combobox({
         className={cn(
           "absolute top-full left-0 z-[150] w-full bg-popover text-popover-foreground overflow-hidden",
           "border border-t-0 border-input rounded-b-md shadow-md",
-          // O motor do tailwind cuida das interpolações:
           "origin-top transition-[opacity,transform,max-height] duration-200 ease-out",
           open
             ? "opacity-100 visible scale-100 translate-y-0"
             : "opacity-0 invisible scale-[0.98] -translate-y-0.5 pointer-events-none"
         )}
-        // O valor limite de height é injetado via style
         style={{ maxHeight: open ? maxHeight : 0 }}
       >
         <CommandPrimitive.List 
           className="overflow-y-auto overflow-x-hidden p-1"
-          style={{ maxHeight }} // Garante o limite do scroll interno
+          style={{ maxHeight }} 
         >
           {shouldRenderItems && (
             <>
