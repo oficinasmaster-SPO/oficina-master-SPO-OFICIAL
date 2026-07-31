@@ -19,34 +19,18 @@ export default function BucketPanel({ workshopId, followUp, onClose }) {
   const [agendarForm, setAgendarForm] = useState({ data: '', hora: '', consultor_id: '' });
   const [search, setSearch] = useState("");
 
-  // Fetch consultores via Employee — fonte canônica de identidade operacional.
-  // USER-ARCH: User.filter({ role:'admin' }) substituído por Employee.filter
-  // com filtro de papel operacional. Elimina 403 de RLS em User e reduz carga.
-  const { workshopId: ctxWorkshopId } = useWorkshopContext ? useWorkshopContext() : { workshopId: null };
-  const { data: consultores = [] } = useQuery({
-    queryKey: ['consultores-list', ctxWorkshopId || 'all'],
-    queryFn: async () => {
-      try {
-        const filter = { status: 'ativo' };
-        if (ctxWorkshopId) filter.owner_id = ctxWorkshopId;
-        // Busca employees que atuam como consultores/aceleradores
-        const employees = await base44.entities.Employee.filter(
-          filter, 'full_name', 200
-        );
-        return (employees || []).filter(e =>
-          e.user_id && (
-            e.job_role === 'acelerador' ||
-            e.job_role === 'consultor' ||
-            e.is_partner === true
-          )
-        );
-      } catch {
-        return [];
-      }
-    },
-    staleTime: 5 * 60 * 1000,
-    retry: false,
-  });
+  // USER-ARCH: User.filter({ role:'admin' }) substituído por useEmployeeResolver.
+  // Employee é a fonte canônica de identidade operacional — elimina 403 de RLS.
+  // useEmployeeResolver lista com escopo correto (admin = tudo, user = workshop)
+  // e reutiliza o cache compartilhado ['employees-resolver', ...].
+  const { employees: allEmployees } = useEmployeeResolver();
+  const consultores = (allEmployees || []).filter(e =>
+    e.user_id && (
+      e.job_role === 'acelerador' ||
+      e.job_role === 'consultor' ||
+      e.is_partner === true
+    )
+  );
 
   // Fetch pending ContractAttendances APENAS deste workshop
   const { data: bucketItems = [], isLoading } = useQuery({
