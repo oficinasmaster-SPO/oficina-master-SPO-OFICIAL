@@ -1,24 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import React, { useState } from 'react';
+import useEmployeeResolver from '@/hooks/useEmployeeResolver';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Filter, X } from 'lucide-react';
 
 export default function RelatorioFiltros({ filters, onChange, onPageChange }) {
-  const [consultores, setConsultores] = useState([]);
-
-  // Buscar consultores
-  useEffect(() => {
-    const fetchConsultores = async () => {
-      try {
-        const users = await base44.entities.User.filter({ role: 'admin' }, '-full_name', 50);
-        setConsultores(users || []);
-      } catch (error) {
-        console.error('Erro ao buscar consultores:', error);
-      }
-    };
-    fetchConsultores();
-  }, []);
+  // USER-ARCH: User.filter({ role:'admin' }) -> useEmployeeResolver.
+  // Employee é a fonte canônica de identidade operacional. Zero chamadas User. Zero 403.
+  const { employees: allEmployees } = useEmployeeResolver();
+  const consultores = (allEmployees || []).filter(e => e.full_name && e.user_id);
 
   const handleFilterChange = (key, value) => {
     onChange({ ...filters, [key]: value });
