@@ -171,7 +171,9 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
               <Combobox
                 value={formData.assignee_id}
                 onChange={handleResponsavelChange}
-                options={usuarios.map(u => ({ value: u.user_id, label: u.full_name }))}
+                options={usuarios}
+                getOptionValue={(u) => u.user_id}
+                getOptionLabel={(u) => u.full_name}
                 placeholder="Selecione o responsável"
                 searchPlaceholder="Pesquisar responsável..."
                 emptyText="Nenhum responsável encontrado."
@@ -183,10 +185,13 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
               <Combobox
                 value={formData.workshop_id}
                 onChange={handleClienteChange}
-                options={workshops.map(w => ({ value: w.id, label: w.name }))}
+                options={workshops}
+                getOptionValue={(w) => w.id}
+                getOptionLabel={(w) => w.name}
                 placeholder="Selecione o cliente"
                 searchPlaceholder="Pesquisar cliente..."
                 emptyText="Nenhum cliente encontrado."
+                lazyRender
               />
             </div>
           </div>
