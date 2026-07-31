@@ -84,7 +84,12 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const requestedIds = Array.isArray(body.workshopIds)
+    // Distinção entre os dois usos da função:
+    //  - bulk (workshopIds[]): resolver NOMES de oficinas faltantes (ex: workshops-missing
+    //    no /controleaceleracao). Não deve falhar o batch inteiro se um id é órfão.
+    //  - escalar (workshopId): seleção/troca de tenant (ex: TenantSelector).
+    const isBulkResolve = Array.isArray(body.workshopIds);
+    const requestedIds = isBulkResolve
       ? [...new Set(body.workshopIds.filter(Boolean))]
       : body.workshopId ? [body.workshopId] : [];
     const impersonatedUserId = body.impersonated_user_id || null;
@@ -103,10 +108,25 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Admin bulk-resolve: carrega direto sem resolver tenant. Workshops órfãos
+    // (deletados) são filtrados como null em vez de falhar o batch com 404.
+    if (authenticatedUser.role === 'admin' && isBulkResolve && !impersonatedUserId) {
+      const workshops = (await Promise.all(
+        requestedIds.map((id) => base44.asServiceRole.entities.Workshop.get(id).catch(() => null))
+      )).filter(Boolean);
+      return Response.json(
+        { workshops, user: authenticatedUser },
+        { headers: { 'X-Cache': 'MISS' } }
+      );
+    }
+
     const firstRequested = requestedIds[0] || null;
     let params = {};
     if (impersonatedUserId) params.impersonated_user_id = impersonatedUserId;
-    if (firstRequested) {
+    // Seleção de tenant por ID específico SOMENTE no caminho escalar.
+    // No bulk, resolvemos o tenant default do usuário (params vazio) — o filtro
+    // de autorização abaixo já bloqueia ids não permitidos para não-admins.
+    if (firstRequested && !isBulkResolve) {
       if (authenticatedUser.role === 'admin' && !impersonatedUserId) {
         params.admin_workshop_id = firstRequested;
       } else {
