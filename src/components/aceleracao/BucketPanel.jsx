@@ -12,6 +12,7 @@ import { Calendar, CalendarPlus, Inbox, Loader2, Search, X } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { formatDateTimeBR } from "@/utils/timezone";
+import useEmployeeResolver from "@/hooks/useEmployeeResolver";
 
 export default function BucketPanel({ workshopId, followUp, onClose }) {
   const queryClient = useQueryClient();
