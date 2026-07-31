@@ -12,14 +12,17 @@ export default function ControleAceleracao() {
   const [atendimentoPendente, setAtendimentoPendente] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
-  // Buscar sugestões pendentes ao carregar page
+  // Buscar sugestões pendentes ao carregar page.
+  // RAIZ-429: refetchInterval de 10s removido — causava polling agressivo que
+  // estourava o limite agregado de leitura (auth.me() + filter a cada 10s).
+  // staleTime de 3min é suficiente para um popup de sugestão pendente.
   const { data: sugestoesP } = useQuery({
-    queryKey: ['sugestoes-pendentes'],
+    queryKey: ['sugestoes-pendentes', state.user?.id, state.user?.role],
     queryFn: async () => {
       try {
-        const user = await base44.auth.me();
-        const isInternal = user?.user_type === 'internal' || user?.data?.user_type === 'internal';
-        if (!user || (user.role !== 'admin' && !isInternal)) return [];
+        const u = state.user;
+        const isInternal = u?.user_type === 'internal' || u?.data?.user_type === 'internal';
+        if (!u || (u.role !== 'admin' && !isInternal)) return [];
         
         const allAtendimentos = await base44.entities.ConsultoriaAtendimento.filter({
           status: { $in: ['agendado', 'confirmado', 'reagendado'] }
@@ -36,8 +39,11 @@ export default function ControleAceleracao() {
         return [];
       }
     },
-    staleTime: 10 * 1000, // Atualiza a cada 10s para teste
-    refetchInterval: 10 * 1000
+    enabled: !!state.user?.id,
+    staleTime: 3 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: 'stale',
+    retry: false, // RAIZ-429: não retentar em rate limit
   });
 
   useEffect(() => {
