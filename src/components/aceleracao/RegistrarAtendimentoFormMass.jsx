@@ -17,17 +17,20 @@ export default function RegistrarAtendimentoFormMass({ formData, onFormChange, o
   const [consultorSelecionado, setConsultorSelecionado] = useState(user?.id || "");
   const [conflitosModal, setConflitosModal] = useState({ open: false, conflitos: [], dataHorario: null });
 
-  const { data: consultores = [] } = useQuery({
-    queryKey: ['consultores-massa'],
-    queryFn: async () => {
-      try {
-        const users = await base44.entities.User.list(null, 1000);
-        return users.filter(u => u.role === 'interno');
-      } catch {
-        return [];
-      }
-    }
-  });
+  // USER-ARCH: User.list(null, 1000) substituído por useEmployeeResolver.
+  // User.list busca 1.000 usuários da plataforma inteira e filtrava client-side
+  // por role='interno' (campo inexistente no schema Base44 -> retornava []).
+  // Employee é a fonte canônica de identidade operacional. Cache compartilhado.
+  // Nota: useEmployeeResolver já foi chamado neste componente via prop 'user';
+  // criamos uma instância local para obter a lista de consultores do workshop.
+  const { employees: allEmployees } = useEmployeeResolver();
+  const consultores = (allEmployees || []).filter(e =>
+    e.user_id && (
+      e.job_role === 'acelerador' ||
+      e.job_role === 'consultor' ||
+      e.is_partner === true
+    )
+  );
 
   const handleChange = (field, value) => {
     onFormChange({ ...formData, [field]: value });
