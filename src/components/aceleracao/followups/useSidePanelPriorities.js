@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { differenceInDays } from "date-fns";
 import { calcPriorityScore } from "./ds/PriorityScore";
+import { isValidWorkshopId } from "@/lib/workshopIdGuard";
 
 /**
  * Calcula métricas, insight determinístico e ações recomendadas
@@ -35,11 +36,13 @@ export function useSidePanelPriorities({ reminders = [], remindersConcluidos = [
     const msDay = 1000 * 60 * 60 * 24;
     const now = Date.now();
 
-    // Universo de workshop_ids
+    // Universo de workshop_ids (defesa em profundidade: só IDs válidos entram,
+    // impedindo que lixo ("test", "ws-firm-001") polua as métricas do painel)
     const universe = new Set();
-    reminders.forEach(r => { if (r.workshop_id) universe.add(r.workshop_id); });
-    remindersConcluidos.forEach(r => { if (r.workshop_id) universe.add(r.workshop_id); });
-    concluidos.forEach(c => { if (c.workshop_id) universe.add(c.workshop_id); });
+    const pushId = (wid) => { if (isValidWorkshopId(wid)) universe.add(wid); };
+    reminders.forEach(r => pushId(r.workshop_id));
+    remindersConcluidos.forEach(r => pushId(r.workshop_id));
+    concluidos.forEach(c => pushId(c.workshop_id));
 
     // Reminders pendentes por workshop
     const pendingByWorkshop = {};

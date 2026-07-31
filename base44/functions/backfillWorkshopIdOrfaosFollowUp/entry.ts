@@ -2,27 +2,57 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const OBJECT_ID_RE = /^[a-fA-F0-9]{24}$/;
 const isValidObjectId = (id) => typeof id === 'string' && OBJECT_ID_RE.test(id.trim());
+function sanitizeIdArray(ids) {
+  const seen = new Set();
+  const out = [];
+  for (const id of ids) {
+    if (!isValidObjectId(id)) continue;
+    const t = id.trim();
+    if (seen.has(t)) continue;
+    seen.add(t);
+    out.push(t);
+  }
+  return out;
+}
 
 /**
- * Backfill — corrige FollowUpReminder / FollowUpConcluido cujo `workshop_id`
- * tem FORMATO inválido (não é ObjectId de 24 hex).
+ * Backfill de SANEAMENTO DE INTEGRIDADE REFERENCIAL (Camada 1 — Root Cause).
  *
- * Causa-raiz EXATA do 500 (BSON InvalidId) no Workshop.filter({ id: { $in } })
- * da Central de Follow-up em "Todos os Consultores": registros legados/de teste
- * com workshop_id === "test" | "ws-firm-001" | "ws-test-002" chegavam intactos
- * ao $in, e o MongoDB rejeita strings curtas/não-hex como ObjectId.
+ * Para cada entidade que possui FK `workshop_id`:
+ *   - FollowUpReminder
+ *   - FollowUpConcluido
+ *   - ConsultoriaAtendimento
+ *   - PedidoInterno
+ *   - TarefaBacklog
  *
- * Escopo: somente FORMATO inválido. "Workshop inexistente" (ObjectId válido mas
- * órfão) NÃO lança InvalidId — retorna vazio, não quebra. Logo não consultamos
- * Workshop (evita OOM por logo_url/base64). Higiene de órfãos pode ser outro
- * backfill se necessário.
+ * Fluxo:
+ *   1. Carrega a página mais recente de registros da entidade.
+ *   2. workshop_id com FORMATO inválido (não-OID 24-hex: "test", "ws-firm-001",
+ *      "ws-test-002") → REMOVE sempre. São dados de teste/corrompidos sem
+ *      workshop real para reatribuir; é a causa-raiz do 500 (BSON InvalidId)
+ *      no Workshop.filter({ id: { $in } }).
+ *   3. workshop_id válido mas inexistente (órfão — workshop foi deletado) →
+ *      por padrão apenas RELATA (count + amostra); remove somente se
+ *      `remover_orfaos: true`.
  *
- * Ação: REMOVER os registros com formato inválido (o campo workshop_id é
- * obrigatório/string no schema — não aceita null; registros de teste/órfãos
- * não têm workshop real para reatribuir).
+ * Limitação da plataforma: o SDK `.list(sort, limit)` não pagina além da
+ * primeira página (sem offset). O saneamento cobre os registros mais recentes
+ * — onde residem os dados de teste. Rode novamente após novos importes.
  *
- * Payload: { dry_run?: boolean (default true), entidades?: string[] }
+ * Payload: {
+ *   dry_run?: boolean      (default true),
+ *   remover_orfaos?: boolean (default false — só relata órfãos válidos),
+ *   entidades?: string[]   (default todas as 5)
+ * }
  */
+const ENT_CONFIG = {
+  FollowUpReminder: { sort: '-created_date', page: 200 },
+  FollowUpConcluido: { sort: '-completedAt', page: 50 }, // OOM risk (base64 pastedImages)
+  ConsultoriaAtendimento: { sort: '-created_date', page: 100 },
+  PedidoInterno: { sort: '-created_date', page: 200 },
+  TarefaBacklog: { sort: '-created_date', page: 200 },
+};
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -33,64 +63,114 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const dry_run = body.dry_run !== false;
-    const entidades = body.entidades || ['FollowUpReminder', 'FollowUpConcluido'];
+    const remover_orfaos = body.remover_orfaos === true;
+    const entidades = body.entidades || Object.keys(ENT_CONFIG);
 
     const resultados = {};
 
     for (const entName of entidades) {
+      const cfg = ENT_CONFIG[entName];
       const ent = base44.asServiceRole.entities[entName];
-      if (!ent) continue;
+      if (!ent || !cfg) {
+        resultados[entName] = { erro: 'entidade desconhecida' };
+        continue;
+      }
 
-      let records;
+      let allRecords;
       try {
-        const sortField = entName === 'FollowUpConcluido' ? '-completedAt' : '-created_date';
-        records = await ent.list(sortField, 200);
+        allRecords = await ent.list(cfg.sort, cfg.page);
       } catch (e) {
         resultados[entName] = { erro_carga: e.message };
         continue;
       }
+      allRecords = allRecords || [];
 
-      const invalidos = records.filter(r => {
+      // IDs com formato válido (sanitizados) — para o $in de existência.
+      const validIds = sanitizeIdArray(allRecords.map((r) => r.workshop_id).filter(Boolean));
+
+      // Existence check: UMA query $in com ids já sanitizados (seguro — não lança InvalidId).
+      let existingSet = new Set();
+      if (validIds.length > 0) {
+        try {
+          const existing = await base44.asServiceRole.entities.Workshop.filter(
+            { id: { $in: validIds } }, undefined, validIds.length
+          );
+          existingSet = new Set((existing || []).map((w) => w.id));
+        } catch (e) {
+          resultados[entName] = { erro_workshop_lookup: e.message };
+          continue;
+        }
+      }
+
+      // Classificar
+      const invalidos = []; // formato inválido (test/ws-firm/...)
+      const orfaos = [];    // formato válido, workshop inexistente
+      for (const r of allRecords) {
         const wid = r.workshop_id;
-        if (!wid) return false; // null/empty não quebra $in
-        return !isValidObjectId(wid);
-      });
+        if (!wid) continue;
+        if (!isValidObjectId(wid)) {
+          invalidos.push(r);
+          continue;
+        }
+        if (!existingSet.has(wid)) orfaos.push(r);
+      }
 
-      const amostra = invalidos.slice(0, 30).map(r => ({
-        id: r.id,
-        workshop_id: r.workshop_id,
-        workshop_name: r.workshop_name,
-        created_date: r.created_date,
-      }));
+      const amostra = (arr) =>
+        arr.slice(0, 15).map((r) => ({
+          id: r.id,
+          workshop_id: r.workshop_id,
+          workshop_name: r.workshop_name,
+          created_date: r.created_date,
+        }));
 
-      let corrigidos = 0;
+      let removidos = 0;
+      let orfaosRemovidos = 0;
       const erros = [];
       if (!dry_run) {
+        // Inválidos: sempre remove.
         for (const r of invalidos) {
           try {
             await ent.delete(r.id);
-            corrigidos++;
+            removidos++;
           } catch (e) {
             erros.push({ id: r.id, error: e.message });
+          }
+        }
+        // Órfãos: só remove se explicitamente solicitado.
+        if (remover_orfaos) {
+          for (const r of orfaos) {
+            try {
+              await ent.delete(r.id);
+              orfaosRemovidos++;
+            } catch (e) {
+              erros.push({ id: r.id, error: e.message });
+            }
           }
         }
       }
 
       resultados[entName] = {
-        total_registros: records.length,
+        total_registros: allRecords.length,
         total_invalidos: invalidos.length,
-        amostra,
-        corrigidos,
+        total_orfaos: orfaos.length,
+        amostra_invalidos: amostra(invalidos),
+        amostra_orfaos: amostra(orfaos),
+        invalidos_removidos: !dry_run ? invalidos.length : 0,
+        orfaos_removidos: !dry_run ? orfaosRemovidos : 0,
         erros: erros.slice(0, 10),
       };
     }
 
     return Response.json({
       dry_run,
+      remover_orfaos,
       resultados,
       message: dry_run
-        ? 'DRY RUN — nada alterado. Rode com { "dry_run": false } para aplicar.'
-        : 'Backfill concluído. workshop_id com formato inválido setados para null.',
+        ? 'DRY RUN — nada alterado. Revise as amostras e rode com { "dry_run": false } para remover inválidos.'
+        : 'Saneamento concluído. Registros com workshop_id inválido removidos.' +
+          (remover_orfaos
+            ? ' Órfãos (workshop inexistente) também removidos.'
+            : ' Órfãos apenas relatados (use remover_orfaos: true para removê-los).'),
     });
   } catch (error) {
     return Response.json({ error: error.message, stack: error.stack }, { status: 500 });
