@@ -117,7 +117,6 @@ export default function PainelAtendimentosTab({ state }) {
     try {
       const storageKey = `draft_atendimento_${atendimentoId}`;
       const draftData = localStorage.getItem(storageKey);
-      console.log('Verificando rascunho:', storageKey, draftData ? 'Encontrado' : 'Não encontrado');
       return draftData ? JSON.parse(draftData) : null;
     } catch (err) {
       console.error('Erro ao verificar rascunho:', err);
