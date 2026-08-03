@@ -2,19 +2,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import FollowUpsTab from '@/components/aceleracao/FollowUpsTab';
-import CockpitPanel from '@/components/aceleracao/CockpitPanel';
+import SidePanel from '@/components/aceleracao/followups/SidePanel';
 import NewFollowUpFAB from '@/components/aceleracao/NewFollowUpFAB';
 import IniciarAtendimentoModal from '@/components/aceleracao/IniciarAtendimentoModal';
 import { useAuth } from '@/lib/AuthContext';
-import { Users } from 'lucide-react';
+import useEmployeeResolver from '@/hooks/useEmployeeResolver';
 import { getInitials } from '@/lib/avatarUtils';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 export default function CentralFollowUp() {
   useEffect(() => {
@@ -38,57 +31,85 @@ export default function CentralFollowUp() {
   const [cockpit, setCockpit] = useState({ reminder: null, seqNum: null, stats: null });
   const [showAtendimento, setShowAtendimento] = useState(false);
   const [atendimentoReminder, setAtendimentoReminder] = useState(null);
+  const [atendimentoFila, setAtendimentoFila] = useState([]);
+
+  // Central Operacional state
+  const [prioridadeData, setPrioridadeData] = useState(null);
+  const [activePill, setActivePill] = useState("todos");
+  const [crmFilterPill, setCrmFilterPill] = useState("todos");
+
+  const PILL_MAP = {
+    sp_sem_followup: "por_empresa",
+    sp_sem_contato_7d: "atrasados",
+    sp_nao_respondeu: "concluidos",
+    sp_pedidos_abertos: "concluidos",
+    sp_vencidos: "atrasados",
+    sp_sem_contato_registrado: "por_empresa",
+    concluidos: "concluidos",
+    atrasados: "atrasados",
+  };
+
+  // Declarado ANTES dos callbacks que o referenciam — evita TDZ (temporal dead zone).
+  const consultorEfetivo = consultorSelecionado === 'todos' ? null : consultorSelecionado;
 
   const handleSelectForCockpit = useCallback((reminder, seqNum, stats) => {
     setCockpit({ reminder, seqNum, stats });
   }, []);
 
+  const handlePrioridadeClick = useCallback((spId) => {
+    setActivePill(spId);
+    setCrmFilterPill(PILL_MAP[spId] || "todos");
+  }, []);
+
+  const handleCrmFilterPillChange = useCallback((pillId) => {
+    setCrmFilterPill(pillId);
+    setActivePill(pillId);
+  }, []);
+
+  const handleSelectReminder = useCallback((r) => {
+    handleSelectForCockpit(r, null, null);
+  }, [handleSelectForCockpit]);
+
   const handleIniciarAtendimento = useCallback((reminder) => {
+    // Ler a fila atual do cache (mesma query key do FollowUpsTab) — sem disparar nova leitura.
+    // Sem a fila, as setas ◀ ▶ do modal ficam desabilitadas e o follow-up atual não é encontrado.
+    const fila = queryClient.getQueryData(["follow-up-reminders-tab", consultorEfetivo]) || [];
+    setAtendimentoFila(Array.isArray(fila) ? fila : []);
     setAtendimentoReminder(reminder);
     setShowAtendimento(true);
-  }, []);
+  }, [queryClient, consultorEfetivo]);
 
   const handleClearCockpit = useCallback(() => {
     setCockpit({ reminder: null, seqNum: null, stats: null });
   }, []);
 
   useEffect(() => {
-    if (user?.id && !consultorSelecionado) {
-      setConsultorSelecionado(user.id);
+    if (!consultorSelecionado) {
+      setConsultorSelecionado("todos");
     }
-  }, [user?.id]);
+  }, [consultorSelecionado]);
 
-  const { data: userData } = useQuery({
-    queryKey: ['user', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      return await base44.entities.User.get(user.id);
-    },
-    enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const consultingFirmId = userData?.data?.consulting_firm_id || user?.consulting_firm_id;
+  // Resolve nome real + foto via Employee (User.full_name pode vir como "Aceleradora...")
+  const { getName, getPhoto } = useEmployeeResolver();
 
   const { data: consultores = [] } = useQuery({
-    queryKey: ['consultores-firma', consultingFirmId],
+    queryKey: ['consultores-internos'],
     queryFn: async () => {
-      if (!consultingFirmId) return [];
-      const users = await base44.entities.User.filter({
-        'data.consulting_firm_id': consultingFirmId,
-      });
-      return users.filter(u => u.id !== user?.id).sort((a, b) =>
-        (a.full_name || '').localeCompare(b.full_name || '')
-      );
+      // Fonte canônica: Employee.user_type === 'internal'.
+      const employees = await base44.entities.Employee.filter({
+        user_type: 'internal',
+        user_status: 'ativo',
+      }, 'full_name', 200);
+      return employees
+        .filter(e => e.user_id && e.user_id !== user?.id)
+        .map(e => ({ id: e.user_id, full_name: e.full_name, email: e.email }))
+        .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
     },
-    enabled: !!consultingFirmId,
     staleTime: 10 * 60 * 1000,
   });
 
-  const consultorEfetivo = consultorSelecionado === 'todos' ? null : consultorSelecionado;
-
-  const fullName = userData?.full_name || user?.full_name || user?.email || '';
-  const profilePicture = userData?.profile_picture_url || user?.profile_picture_url;
+  const fullName = getName(user?.id, user?.full_name || user?.email || '');
+  const profilePicture = getPhoto(user?.id) || user?.profile_picture_url;
   const firstName = fullName.split(' ')[0];
 
   return (
@@ -105,23 +126,6 @@ export default function CentralFollowUp() {
 
         {/* Separator */}
         <div className="w-px h-5 bg-gray-700 flex-shrink-0" />
-
-        {/* Consultant selector */}
-        <Select value={consultorSelecionado || ''} onValueChange={setConsultorSelecionado}>
-          <SelectTrigger className="w-[200px] bg-gray-800/80 border-gray-700 text-white text-xs h-7 flex-shrink-0">
-            <Users className="w-3 h-3 mr-1.5 text-gray-400 flex-shrink-0" />
-            <SelectValue placeholder="Selecionar consultor" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={user?.id || 'me'}>Meus Follow-ups</SelectItem>
-            <SelectItem value="todos">Todos os Consultores</SelectItem>
-            {consultores.map(c => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.full_name || c.email}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
 
         {/* Spacer */}
         <div className="flex-1" />
@@ -155,16 +159,26 @@ export default function CentralFollowUp() {
             onSelectForCockpit={handleSelectForCockpit}
             selectedReminderId={cockpit.reminder?.id}
             onIniciarAtendimento={handleIniciarAtendimento}
+            consultorSelecionado={consultorSelecionado}
+            onConsultorChange={setConsultorSelecionado}
+            consultores={consultores}
+            crmFilterPill={crmFilterPill}
+            onCrmFilterPillChange={handleCrmFilterPillChange}
+            onPrioridadeData={setPrioridadeData}
           />
         </div>
         <div className="hidden lg:block sticky top-20">
-          <CockpitPanel
+          <SidePanel
             reminder={cockpit.reminder}
             seqNum={cockpit.seqNum}
             stats={cockpit.stats}
             today={today}
             onIniciarAtendimento={handleIniciarAtendimento}
             onClear={handleClearCockpit}
+            prioridadeData={prioridadeData}
+            activePill={activePill}
+            onPrioridadeClick={handlePrioridadeClick}
+            onSelectReminder={handleSelectReminder}
           />
         </div>
       </div>
@@ -186,6 +200,7 @@ export default function CentralFollowUp() {
         <IniciarAtendimentoModal
           followUp={atendimentoReminder}
           cliente={null}
+          filaReminders={atendimentoFila}
           onClose={() => setShowAtendimento(false)}
           onSaved={() => {
             setShowAtendimento(false);
