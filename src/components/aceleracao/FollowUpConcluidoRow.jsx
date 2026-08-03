@@ -93,8 +93,8 @@ export default function FollowUpConcluidoRow({
   const clienteName = reminder?.workshop_name || completed?.workshop_name || "—";
   const dataContato = completed?.dataContato || reminder?.reminder_date;
   const dataConc = completed?.completedAt || reminder?.completed_at;
-  const consultorResponsavel = reminder?.consultor_nome || completed?.consultor_nome || "—";
-  const quemRealizou = completed?.consultor_nome || completed?.created_by || "—";
+  const consultorResponsavel = reminder?.consultor_principal_nome || completed?.consultor_principal_nome || reminder?.consultor_nome || completed?.consultor_nome || "—";
+  const quemRealizou = completed?.consultor_executor_nome || completed?.consultor_nome || completed?.created_by || "—";
   const humor = completed?.humor || null;
   const canal = completed?.canal?.toLowerCase();
 
