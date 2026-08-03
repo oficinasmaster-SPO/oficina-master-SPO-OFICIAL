@@ -1,5 +1,11 @@
 import React, { memo } from "react";
 import { PlayCircle } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import WorkshopAvatar from "./ds/WorkshopAvatar";
 import StatusBadge from "./ds/StatusBadge";
 import OriginBadge from "./ds/OriginBadge";
@@ -64,15 +70,37 @@ const FollowUpPendenteRow = memo(({
     >
       {/* ── CLIENTE ── flex-1 */}
       <div className="flex-1 min-w-[240px] px-4 py-2.5 flex items-center gap-2.5 min-w-0">
-        <div className="flex-shrink-0 relative">
-          <WorkshopAvatar name={reminder.workshop_name} size="md" logo_url={logo_url} />
-          {dotColor && (
-            <span
-              className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${dotColor}`}
-              title={`Reuniões: ${risco.nivel}`}
-            />
-          )}
-        </div>
+        <TooltipProvider delayDuration={300}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex-shrink-0 relative cursor-help">
+                <WorkshopAvatar name={reminder.workshop_name} size="md" logo_url={logo_url} />
+                {dotColor && (
+                  <span
+                    className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${dotColor}`}
+                  />
+                )}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="max-w-[260px] text-xs leading-relaxed z-[99999]">
+              <div className="space-y-1.5 py-0.5">
+                <p className="font-bold text-gray-900 text-[11px] uppercase tracking-wide">Indicadores do cliente</p>
+                <div className="space-y-0.5">
+                  <p className="font-semibold text-gray-700">Bolinha de risco de reuniões:</p>
+                  <p className="flex items-center gap-1.5"><span className="inline-block w-2 h-2 rounded-full bg-red-500" /> Crítico — sem reuniões ou atrasadas</p>
+                  <p className="flex items-center gap-1.5"><span className="inline-block w-2 h-2 rounded-full bg-amber-400" /> Atenção — última reunião há muitos dias</p>
+                  <p className="flex items-center gap-1.5"><span className="inline-block w-2 h-2 rounded-full bg-emerald-400" /> OK — reuniões em dia</p>
+                  <p className="text-gray-400">Sem bolinha — sem dados suficientes</p>
+                </div>
+                {isOtherConsultor && (
+                  <p className="text-blue-600 font-medium pt-0.5 border-t border-gray-100">
+                    Azul = follow-up de outro consultor ({consultor})
+                  </p>
+                )}
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <div className="min-w-0">
           <p className="text-sm font-bold text-gray-900 truncate leading-tight">
             {reminder.workshop_name || "Sem cliente"}
