@@ -149,9 +149,24 @@ function ContatoCard({ contato, isFirst, workshopName }) {
                   <span className={ENGAJAMENTO_COLORS[contato.engajamento] || "text-gray-600"}>{contato.engajamento}</span>
                 </div>
               )}
-              {contato.consultor_nome && (
-                <div className="flex items-center gap-1 text-gray-500">
-                  <span className="truncate">{contato.consultor_nome}</span>
+              {/* Principal e executor — mostra ambos quando diferem */}
+              {(contato.consultor_principal_nome || contato.consultor_nome) && (
+                <div className="flex items-center gap-1 text-gray-500 col-span-2 flex-wrap">
+                  <User className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                  <span className="text-[10px] text-gray-400 flex-shrink-0">Responsável:</span>
+                  <span className="truncate text-[11px]">
+                    {contato.consultor_principal_nome || contato.consultor_nome}
+                  </span>
+                  {contato.consultor_executor_nome &&
+                    contato.consultor_executor_nome !== (contato.consultor_principal_nome || contato.consultor_nome) && (
+                    <>
+                      <span className="text-gray-300 mx-0.5">·</span>
+                      <span className="text-[10px] text-gray-400 flex-shrink-0">Atendeu:</span>
+                      <span className="text-[11px] text-blue-600 font-medium truncate">
+                        {contato.consultor_executor_nome}
+                      </span>
+                    </>
+                  )}
                 </div>
               )}
             </div>

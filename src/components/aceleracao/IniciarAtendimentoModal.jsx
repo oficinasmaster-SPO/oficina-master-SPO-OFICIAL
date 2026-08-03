@@ -189,7 +189,13 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   const [clienteAtual, setClienteAtual] = useState(cliente);
   const [showRegistrarAtendimento, setShowRegistrarAtendimento] = useState(false);
   const [showCheckpointModal, setShowCheckpointModal] = useState(false);
-  
+
+  // ── Concurrent attendance lock guard ──
+  const [lockBloqueado, setLockBloqueado] = useState(null); // { nome } when another user holds the lock
+  const lockSetByMeRef = useRef(false);
+  const followUpRef = useRef(followUp);
+  useEffect(() => { followUpRef.current = followUp; }, [followUp]);
+
   // Toasts & Demands
   const { addToast } = useToasts();
   const { demands, demandsCritical } = useClientDemands(followUp?.workshop_id);
@@ -271,6 +277,17 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
 
   // ── Função central de troca de follow-up (sem fechar o modal) ──
    const trocarFollowUp = useCallback((novoFU) => {
+     // Release lock on current FU before switching
+     const fuAtual = followUpRef.current;
+     if (lockSetByMeRef.current && fuAtual?.id && !fuAtual?._isSuporteLocal) {
+       base44.entities.FollowUpReminder.update(fuAtual.id, {
+         sendo_atendido_por_id: null,
+         sendo_atendido_por_nome: null,
+         sendo_atendido_desde: null,
+       }).catch(() => {});
+       lockSetByMeRef.current = false;
+     }
+     setLockBloqueado(null);
      // Limpar rascunho do anterior
      localStorage.removeItem(`draft_atendimento_${followUp?.id}`);
      // Atualizar FU interno
@@ -390,6 +407,49 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
       } catch { /* rascunho corrompido — ignorar */ }
     }
   }, [followUp?.id]);
+
+  // ── Check/set concurrent lock when followUp changes ──
+  useEffect(() => {
+    if (!followUp?.id || followUp?._isSuporteLocal) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const fu = await base44.entities.FollowUpReminder.get(followUp.id);
+        if (cancelled) return;
+        const lockId = fu?.sendo_atendido_por_id;
+        const lockSince = fu?.sendo_atendido_desde;
+        const isActiveLock = lockId && lockSince &&
+          (Date.now() - new Date(lockSince).getTime()) < 15 * 60 * 1000;
+        if (isActiveLock && lockId !== user?.id) {
+          setLockBloqueado({ nome: fu.sendo_atendido_por_nome || lockId });
+          lockSetByMeRef.current = false;
+        } else {
+          setLockBloqueado(null);
+          lockSetByMeRef.current = true;
+          await base44.entities.FollowUpReminder.update(followUp.id, {
+            sendo_atendido_por_id: user?.id,
+            sendo_atendido_por_nome: user?.full_name || user?.email,
+            sendo_atendido_desde: new Date().toISOString(),
+          });
+        }
+      } catch { /* ignore — don't block user */ }
+    })();
+    return () => { cancelled = true; };
+  }, [followUp?.id]);
+
+  // ── Release lock on unmount ──
+  useEffect(() => {
+    return () => {
+      const fu = followUpRef.current;
+      if (lockSetByMeRef.current && fu?.id && !fu?._isSuporteLocal) {
+        base44.entities.FollowUpReminder.update(fu.id, {
+          sendo_atendido_por_id: null,
+          sendo_atendido_por_nome: null,
+          sendo_atendido_desde: null,
+        }).catch(() => {});
+      }
+    };
+  }, []);
 
   // Intervalo unificado — um único setInterval para timer e duração
   useEffect(() => {
@@ -643,6 +703,19 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
     if (file) handleFileSelect(file);
   };
 
+  const handleClose = useCallback(() => {
+    const fu = followUpRef.current;
+    if (lockSetByMeRef.current && fu?.id && !fu?._isSuporteLocal) {
+      base44.entities.FollowUpReminder.update(fu.id, {
+        sendo_atendido_por_id: null,
+        sendo_atendido_por_nome: null,
+        sendo_atendido_desde: null,
+      }).catch(() => {});
+      lockSetByMeRef.current = false;
+    }
+    onClose();
+  }, [onClose]);
+
   const handleSaveDraft = async () => {
     setSaving(true);
     try {
@@ -687,7 +760,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
       
       toast.success("Rascunho salvo com sucesso!");
       // Não limpar o localStorage aqui — para que o rascunho permaneça disponível
-      onClose();
+      handleClose();
       } catch (err) {
       console.error('Erro ao salvar rascunho:', err);
       toast.error("Erro ao salvar rascunho: " + err.message);
@@ -742,8 +815,12 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
       await base44.entities.FollowUpConcluido.create({
         followup_id: followUpId,
         workshop_id: followUp.workshop_id,
-        consultor_id: followUp.consultor_id,
-        consultor_nome: followUp.consultor_nome,
+        consultor_id: followUp.consultor_principal_id || followUp.consultor_id,
+        consultor_nome: followUp.consultor_principal_nome || followUp.consultor_nome,
+        consultor_principal_id: followUp.consultor_principal_id || followUp.consultor_id || null,
+        consultor_principal_nome: followUp.consultor_principal_nome || followUp.consultor_nome || null,
+        consultor_executor_id: user?.id || null,
+        consultor_executor_nome: user?.full_name || user?.email || null,
         canal: canais.join(', '),
         resultado,
         dataContato,
@@ -809,8 +886,12 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
             base44.entities.FollowUpConcluido.create({
               followup_id: fu.id,
               workshop_id: fu.workshop_id,
-              consultor_id: fu.consultor_id,
-              consultor_nome: fu.consultor_nome,
+              consultor_id: fu.consultor_principal_id || fu.consultor_id,
+              consultor_nome: fu.consultor_principal_nome || fu.consultor_nome,
+              consultor_principal_id: fu.consultor_principal_id || fu.consultor_id || null,
+              consultor_principal_nome: fu.consultor_principal_nome || fu.consultor_nome || null,
+              consultor_executor_id: user?.id || null,
+              consultor_executor_nome: user?.full_name || user?.email || null,
               canal: canais.join(', '),
               resultado,
               dataContato,
@@ -992,7 +1073,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
             )}
 
             <div className="flex gap-3 w-full">
-              <Button variant="outline" className="flex-1" onClick={onClose}>
+              <Button variant="outline" className="flex-1" onClick={handleClose}>
                 Voltar à lista
               </Button>
               {proximoFU && (
@@ -1033,6 +1114,40 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* ── LOCK GUARD: outro consultor já está atendendo ── */}
+        {lockBloqueado && (
+          <div className="absolute inset-0 bg-black/60 z-[10001] flex items-center justify-center">
+            <div className="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Follow-up em atendimento</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    <span className="font-semibold text-amber-700">{lockBloqueado.nome}</span>{' '}
+                    já está tratando este follow-up.
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {fuProximo ? 'Deseja pular para o próximo na fila?' : 'Não há próximo follow-up na fila.'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={handleClose}>Fechar</Button>
+                {fuProximo && (
+                  <Button
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                    onClick={() => { setLockBloqueado(null); trocarFollowUp(fuProximo); }}
+                  >
+                    Pular para próximo
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -1961,7 +2076,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
         {/* FOOTER - FIXO */}
          <div className="bg-white border-t border-gray-200 px-6 py-4 flex gap-3 justify-between flex-shrink-0">
            <div className="flex gap-2">
-             <Button variant="outline" onClick={() => { localStorage.removeItem(`draft_atendimento_${followUp?.id}`); onClose(); }} disabled={saving}>
+             <Button variant="outline" onClick={() => { localStorage.removeItem(`draft_atendimento_${followUp?.id}`); handleClose(); }} disabled={saving}>
                Fechar
              </Button>
              <Button variant="ghost" onClick={() => setShowClientSelector(true)} className="text-amber-600 hover:bg-amber-50 border border-amber-200">
