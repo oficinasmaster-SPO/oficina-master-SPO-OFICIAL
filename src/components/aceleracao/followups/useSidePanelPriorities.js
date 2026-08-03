@@ -24,13 +24,11 @@ export function useSidePanelPriorities({ reminders = [], remindersConcluidos = [
   const concluidos = useFollowupIndex().data ?? [];
 
   const { data: pedidosAbertos = [] } = useQuery({
-    queryKey: ["pedidos-internos-abertos-sidepanel"],
+    queryKey: ["pedidos-internos-abertos-sidepanel", userId || null],
     queryFn: async () => {
-      return await base44.entities.PedidoInterno.filter(
-        { status: { $in: ["pendente", "em_analise"] } },
-        "-created_date",
-        100
-      );
+      const filter = { status: { $in: ["pendente", "em_analise"] } };
+      if (userId) filter.assignee_id = userId;
+      return await base44.entities.PedidoInterno.filter(filter, "-created_date", 100);
     },
     staleTime: 3 * 60 * 1000,
   });
@@ -121,11 +119,11 @@ export function useSidePanelPriorities({ reminders = [], remindersConcluidos = [
       });
       const naoRespondeu = Object.keys(naoRespondeuMap);
 
-      const pedidosCount = pedidosAbertos.length;
       const pedidosByWorkshop = {};
       pedidosAbertos.forEach(p => {
         if (p.workshop_id) pedidosByWorkshop[p.workshop_id] = (pedidosByWorkshop[p.workshop_id] || 0) + 1;
       });
+      const pedidosCount = Object.keys(pedidosByWorkshop).length;
 
       const semContatoRegistrado = [];
       universe.forEach(wid => {
@@ -276,7 +274,7 @@ export function useSidePanelPriorities({ reminders = [], remindersConcluidos = [
       : `Nesta semana foram realizados ${realizados} follow-ups. ${coverage}% da carteira já recebeu atendimento. Ainda existem ${pendencias} pendências.`;
 
     const insight = { metricId: "realizados", text: insightText };
-    const allClear = false;
+    const allClear = realizados > 0 && pendencias === 0 && naoRespondeuCount === 0;
 
     const actions = [];
     if (naoRespondeuCount > 0) {
@@ -306,7 +304,7 @@ export function useSidePanelPriorities({ reminders = [], remindersConcluidos = [
       production: { followups: realizados, clients: atendidos },
       trend: headlineTrend ? { variation: headlineTrend.delta, direction: headlineTrend.direction } : null,
     };
-  }, [reminders, remindersConcluidos, concluidos, pedidosAbertos, today, userId, period]);
+  }, [reminders, remindersConcluidos, concluidos, pedidosAbertos, today, period]);
 }
 
 function buildInsightText(id, count, pct, periodLabel, pendencias = 0, naoRespondeu = 0) {
