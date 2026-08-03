@@ -82,18 +82,15 @@ const FollowUpPendenteRow = memo(({
                 )}
               </div>
             </TooltipTrigger>
-            <TooltipContent side="right" className="max-w-[260px] text-xs leading-relaxed z-[99999]">
-              <div className="space-y-1.5 py-0.5">
-                <p className="font-bold text-gray-900 text-[11px] uppercase tracking-wide">Indicadores do cliente</p>
-                <div className="space-y-0.5">
-                  <p className="font-semibold text-gray-700">Bolinha de risco de reuniões:</p>
-                  <p className="flex items-center gap-1.5"><span className="inline-block w-2 h-2 rounded-full bg-red-500" /> Crítico — sem reuniões ou atrasadas</p>
-                  <p className="flex items-center gap-1.5"><span className="inline-block w-2 h-2 rounded-full bg-amber-400" /> Atenção — última reunião há muitos dias</p>
-                  <p className="flex items-center gap-1.5"><span className="inline-block w-2 h-2 rounded-full bg-emerald-400" /> OK — reuniões em dia</p>
-                  <p className="text-gray-400">Sem bolinha — sem dados suficientes</p>
-                </div>
+            <TooltipContent side="right" className="max-w-[260px] bg-white border border-black rounded-lg px-3 py-2 text-xs text-gray-900 shadow-md z-[99999]">
+              <div className="space-y-1">
+                <p className="font-semibold text-gray-900">Bolinha de risco de reuniões:</p>
+                <p className="flex items-center gap-1.5"><span className="inline-block w-2 h-2 rounded-full bg-red-500" /> Crítico — sem reuniões ou atrasadas</p>
+                <p className="flex items-center gap-1.5"><span className="inline-block w-2 h-2 rounded-full bg-amber-400" /> Atenção — última reunião há muitos dias</p>
+                <p className="flex items-center gap-1.5"><span className="inline-block w-2 h-2 rounded-full bg-emerald-400" /> OK — reuniões em dia</p>
+                <p className="text-gray-400">Sem bolinha — sem dados suficientes</p>
                 {isOtherConsultor && (
-                  <p className="text-blue-600 font-medium pt-0.5 border-t border-gray-100">
+                  <p className="text-blue-600 font-medium pt-1 border-t border-gray-200">
                     Azul = follow-up de outro consultor ({consultor})
                   </p>
                 )}
