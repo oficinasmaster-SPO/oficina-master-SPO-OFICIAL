@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { Phone, MessageCircle, Mail, Video, MapPin, ChevronDown, ChevronUp, X, Clock, User, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import FollowUpConcluidoCard from "./FollowUpConcluidoCard";
 import { agruparFUsPorBatch } from "./FollowUpBatchClosureHelper";
-import InfoTooltip from "./ds/InfoTooltip";
 
 const CANAL_ICONS = {
   ligacao: Phone,
@@ -77,16 +76,10 @@ function ContatoCard({ contato, isFirst, workshopName }) {
     ? format(new Date(contato.dataContato + "T00:00:00"), "dd/MM/yyyy")
     : "—";
 
-  // Detecta se é um suporte pelo campo observacoes ou pelo origin_type
   const isSuporte = (contato.observacoes?.match(/\[SUPORTE\s+SUP-/i)) || false;
   const suporteId = isSuporte
     ? contato.observacoes.match(/\[SUPORTE\s+(SUP-[^\]]+)\]/i)?.[1]
     : null;
-
-  // Fechamento completo (observações limpas da tag de suporte) para o tooltip
-  const fechamentoFull = contato.observacoes
-    ? contato.observacoes.replace(/^\[SUPORTE\s+SUP-[^\]]+\]\s*/i, '')
-    : "Sem fechamento registrado.";
 
   return (
     <>
@@ -96,48 +89,37 @@ function ContatoCard({ contato, isFirst, workshopName }) {
           ? (isFirst ? "border-amber-300 bg-amber-50" : "border-amber-200 bg-white")
           : (isFirst ? "border-red-200 bg-red-50" : "border-gray-200 bg-white")
       }`}>
-        {/* Header do card — tooltip com o fechamento completo ao pousar o mouse */}
-        <InfoTooltip content={fechamentoFull} side="right" maxW={360}>
-          <button
-            onClick={() => setExpanded(v => !v)}
-            className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-black/5 transition-colors text-left"
-          >
-            <div className="flex items-center gap-2 flex-wrap min-w-0">
-              {isFirst && <span className={`text-[9px] rounded px-1.5 py-0.5 font-bold flex-shrink-0 ${isSuporte ? "bg-amber-500 text-white" : "bg-red-600 text-white"}`}>ÚLTIMO</span>}
-              {/* Badge suporte */}
-              {isSuporte ? (
-                <span className="text-[9px] bg-amber-100 text-amber-700 border border-amber-300 rounded px-1.5 py-0.5 font-bold flex-shrink-0">
-                  🛟 SUPORTE
-                </span>
-              ) : (
-                /* Canais */
-                <div className="flex items-center gap-1">
-                  {canais.slice(0, 2).map(c => {
-                    const Icon = CANAL_ICONS[c] || MessageCircle;
-                    return <Icon key={c} className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />;
-                  })}
-                </div>
-              )}
-              {/* ID do suporte */}
-              {suporteId && (
-                <span className="text-[9px] text-amber-600 font-mono flex-shrink-0">{suporteId}</span>
-              )}
-              {/* Resultado */}
-              <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium flex-shrink-0 ${RESULTADO_COLORS[contato.resultado] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
-                {RESULTADO_LABELS[contato.resultado] || contato.resultado || "—"}
+        <button
+          onClick={() => setExpanded(v => !v)}
+          className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-black/5 transition-colors text-left"
+        >
+          <div className="flex items-center gap-2 flex-wrap min-w-0">
+            {isFirst && <span className={`text-[9px] rounded px-1.5 py-0.5 font-bold flex-shrink-0 ${isSuporte ? "bg-amber-500 text-white" : "bg-red-600 text-white"}`}>ÚLTIMO</span>}
+            {isSuporte ? (
+              <span className="text-[9px] bg-amber-100 text-amber-700 border border-amber-300 rounded px-1.5 py-0.5 font-bold flex-shrink-0">
+                🛟 SUPORTE
               </span>
-              {/* Data */}
-              <span className="text-[10px] text-gray-400 flex-shrink-0">{dataFormatada}</span>
-            </div>
-            {expanded ? <ChevronUp className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />}
-          </button>
-        </InfoTooltip>
+            ) : (
+              <div className="flex items-center gap-1">
+                {canais.slice(0, 2).map(c => {
+                  const Icon = CANAL_ICONS[c] || MessageCircle;
+                  return <Icon key={c} className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />;
+                })}
+              </div>
+            )}
+            {suporteId && (
+              <span className="text-[9px] text-amber-600 font-mono flex-shrink-0">{suporteId}</span>
+            )}
+            <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium flex-shrink-0 ${RESULTADO_COLORS[contato.resultado] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
+              {RESULTADO_LABELS[contato.resultado] || contato.resultado || "—"}
+            </span>
+            <span className="text-[10px] text-gray-400 flex-shrink-0">{dataFormatada}</span>
+          </div>
+          {expanded ? <ChevronUp className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />}
+        </button>
 
-        {/* Corpo expandido */}
         {expanded && (
           <div className="px-3 pb-3 pt-1 space-y-2.5 border-t border-gray-100">
-
-            {/* Linha de metadados */}
             <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11px]">
               {contato.duracao && (
                 <div className="flex items-center gap-1 text-gray-600">
@@ -179,7 +161,6 @@ function ContatoCard({ contato, isFirst, workshopName }) {
               )}
             </div>
 
-            {/* Observações — remove tag [SUPORTE xxx] do display */}
             {contato.observacoes && (
               <div>
                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">Observações</p>
@@ -189,7 +170,6 @@ function ContatoCard({ contato, isFirst, workshopName }) {
               </div>
             )}
 
-            {/* Compromissos */}
             {contato.compromissos && (
               <div>
                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">Compromissos do cliente</p>
@@ -197,7 +177,6 @@ function ContatoCard({ contato, isFirst, workshopName }) {
               </div>
             )}
 
-            {/* Próximo passo */}
             {contato.proximoPasso && (
               <div className="flex items-center gap-2">
                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide">Próximo passo:</p>
@@ -217,7 +196,6 @@ function ContatoCard({ contato, isFirst, workshopName }) {
               </div>
             )}
 
-            {/* Imagens/Screenshots */}
             {contato.pastedImages?.length > 0 && (
               <div>
                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">
@@ -247,8 +225,7 @@ function ContatoCard({ contato, isFirst, workshopName }) {
 }
 
 export default function HistoricoContatosPanel({ workshopId, workshopName }) {
-  const queryClient = useQueryClient();
-  const { data: historico = [], isLoading, isError } = useQuery({
+  const { data: historico = [], isLoading } = useQuery({
     queryKey: ["historico-contatos", workshopId],
     queryFn: () => base44.entities.FollowUpConcluido.filter(
       { workshop_id: workshopId },
@@ -257,9 +234,6 @@ export default function HistoricoContatosPanel({ workshopId, workshopName }) {
     ),
     enabled: !!workshopId,
     staleTime: 2 * 60 * 1000,
-    // 429 agregado: preserva o histórico anterior durante refetchs transientes
-    // (rate-limit) em vez de zerar a lista e exibir a falsa mensagem "nenhum contato".
-    placeholderData: keepPreviousData,
   });
 
   if (isLoading) {
@@ -267,25 +241,6 @@ export default function HistoricoContatosPanel({ workshopId, workshopName }) {
       <div className="px-3 py-6 flex flex-col items-center gap-2">
         <div className="w-5 h-5 border-2 border-gray-200 border-t-red-500 rounded-full animate-spin" />
         <p className="text-xs text-gray-400">Carregando histórico...</p>
-      </div>
-    );
-  }
-
-  // Estado de erro (típico 429 agregado): mostra "Tentar novamente" em vez do
-  // empty-state enganoso. Se ainda há dados anteriores (placeholderData), o
-  // fluxo continua para renderizá-los abaixo.
-  if (isError && (!historico || historico.length === 0)) {
-    return (
-      <div className="px-3 py-8 flex flex-col items-center gap-2 text-center">
-        <MessageSquare className="w-8 h-8 text-amber-300" />
-        <p className="text-xs text-amber-600 font-medium">Não foi possível carregar o histórico</p>
-        <p className="text-[10px] text-gray-400">Limite de leitura atingido. Tente novamente em instantes.</p>
-        <button
-          onClick={() => queryClient.invalidateQueries({ queryKey: ["historico-contatos", workshopId] })}
-          className="text-[10px] font-semibold text-blue-600 hover:underline mt-1"
-        >
-          Tentar novamente
-        </button>
       </div>
     );
   }
@@ -300,11 +255,9 @@ export default function HistoricoContatosPanel({ workshopId, workshopName }) {
     );
   }
 
-  // Agrupar conclusões em massa
   const batchesAgrupadas = agruparFUsPorBatch(historico);
   const contatosIndividuais = historico.filter(c => !c.is_batch_close || !c.batch_group_id);
 
-  // Resumo para IA (texto simplificado dos últimos 5 contatos)
   const resumoIA = historico.slice(0, 5).map((c, i) => {
     const pp = c.proximoPasso;
     const ppStr = typeof pp === 'string' ? (PROXIMO_PASSO_LABELS[pp] || pp) : (pp?.descricao || String(pp || '?'));
@@ -313,7 +266,6 @@ export default function HistoricoContatosPanel({ workshopId, workshopName }) {
 
   return (
     <div className="px-3 py-3 space-y-2">
-      {/* Cabeçalho com contador */}
       <div className="flex items-center justify-between mb-1">
         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">
           {historico.length} contato{historico.length !== 1 ? "s" : ""} registrado{historico.length !== 1 ? "s" : ""}
@@ -323,10 +275,8 @@ export default function HistoricoContatosPanel({ workshopId, workshopName }) {
         </Badge>
       </div>
 
-      {/* Resumo para IA — oculto visualmente, mas disponível como data-attr para referência */}
       <div data-ia-context={resumoIA} className="hidden" aria-hidden="true" />
 
-      {/* Conclusões em Massa (Batches) */}
       {batchesAgrupadas.map(batch => (
         <FollowUpConcluidoCard
           key={batch.batch_group_id}
@@ -335,7 +285,6 @@ export default function HistoricoContatosPanel({ workshopId, workshopName }) {
         />
       ))}
 
-      {/* Cards de contato individual */}
       {contatosIndividuais.map((contato, idx) => (
         <ContatoCard
           key={contato.id}
@@ -348,7 +297,6 @@ export default function HistoricoContatosPanel({ workshopId, workshopName }) {
   );
 }
 
-// Exporta o resumoIA como utilitário para a IA usar no buildSystemPrompt
 export function buildHistoricoResumoIA(historico = []) {
   if (!historico.length) return "Nenhum contato registrado.";
   return historico.slice(0, 5).map((c, i) => {
