@@ -88,7 +88,7 @@ function renderHumor(humor) {
 
 export default function FollowUpConcluidoRow({
   completed, reminder, ata, totalFollowUps, totalDoCliente,
-  proximoFuPendente, risco, empresaInfo, onSelect,
+  proximoFuPendente, risco, empresaInfo, onSelect, logo_url,
 }) {
   const clienteName = reminder?.workshop_name || completed?.workshop_name || "—";
   const dataContato = completed?.dataContato || reminder?.reminder_date;
@@ -131,7 +131,7 @@ export default function FollowUpConcluidoRow({
 
         {/* Cliente */}
         <div className="w-36 flex-shrink-0 flex items-center gap-1.5 min-w-0">
-          <WorkshopAvatar name={clienteName} size="sm" />
+          <WorkshopAvatar name={clienteName} size="sm" logo_url={logo_url} />
           <span className="text-gray-800 font-semibold truncate">{clienteName}</span>
         </div>
 

@@ -10,6 +10,7 @@ import { base44 } from "@/api/base44Client";
 import { sanitizeWorkshopIdArray } from "@/lib/workshopIdGuard";
 import Combobox from "@/components/ui/combobox";
 import { useFollowupIndex } from "./useFollowupIndex";
+import { useWorkshopLogos } from "@/hooks/useWorkshopLogos";
 
 function calcRiscoReuniao(workshopId, contractAttendances, consultoriaAtendimentos) {
   const hoje = new Date();
@@ -255,6 +256,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
   const reunioesIndex = useReunioesIndex(workshopIdsTodos);
 
   const planosByWorkshop = useWorkshopsPlanIndex(workshopIdsTodos);
+  const logosByWorkshop = useWorkshopLogos(workshopIdsTodos);
 
   const fusPorEmpresa = React.useMemo(() => {
     const mapa = {};
@@ -377,7 +379,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
             const clientStats = statsByWorkshopId[r.workshop_id] ?? null;
             const risco = reunioesIndex[r.workshop_id] ?? null;
             const empresaInfo = filterPill === "por_empresa" ? fusPorEmpresa[r.workshop_id] : null;
-            return <FollowUpConcluidoRow key={r.id} completed={concluido} reminder={r} ata={ata} totalFollowUps={seqFU} totalDoCliente={clientStats?.total ?? null} proximoFuPendente={proximoFuPorWorkshop[r.workshop_id]} risco={risco} empresaInfo={empresaInfo} onSelect={() => setSelectedCompleted(r)} />;
+            return <FollowUpConcluidoRow key={r.id} completed={concluido} reminder={r} ata={ata} totalFollowUps={seqFU} totalDoCliente={clientStats?.total ?? null} proximoFuPendente={proximoFuPorWorkshop[r.workshop_id]} risco={risco} empresaInfo={empresaInfo} logo_url={logosByWorkshop[r.workshop_id]} onSelect={() => setSelectedCompleted(r)} />;
           })}
         </div>
       ) : (
@@ -398,6 +400,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
               stats={statsByWorkshopId[r.workshop_id] ?? null} isSelected={r.id === selectedReminderId} risco={reunioesIndex[r.workshop_id] ?? null}
               onIniciarAtendimento={onIniciarAtendimento}
               plano={planosByWorkshop[r.workshop_id] ?? null}
+              logo_url={logosByWorkshop[r.workshop_id]}
             />
           ))}
         </div>

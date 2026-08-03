@@ -21,7 +21,7 @@ function riscoToDotColor(risco) {
 }
 
 const FollowUpPendenteRow = memo(({
-  reminder, today, seqFU, score, onSelect, isLast, meuId, stats, isSelected, risco, onIniciarAtendimento, plano,
+  reminder, today, seqFU, score, onSelect, isLast, meuId, stats, isSelected, risco, onIniciarAtendimento, plano, logo_url,
 }) => {
   const consultor = reminder.consultor_principal_nome || reminder.consultor_nome || null;
   const isOtherConsultor =
@@ -65,7 +65,7 @@ const FollowUpPendenteRow = memo(({
       {/* ── CLIENTE ── flex-1 */}
       <div className="flex-1 min-w-[240px] px-4 py-2.5 flex items-center gap-2.5 min-w-0">
         <div className="flex-shrink-0 relative">
-          <WorkshopAvatar name={reminder.workshop_name} size="md" />
+          <WorkshopAvatar name={reminder.workshop_name} size="md" logo_url={logo_url} />
           {dotColor && (
             <span
               className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${dotColor}`}
