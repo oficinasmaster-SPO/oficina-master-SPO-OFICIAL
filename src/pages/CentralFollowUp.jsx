@@ -45,6 +45,8 @@ export default function CentralFollowUp() {
     sp_pedidos_abertos: "concluidos",
     sp_vencidos: "atrasados",
     sp_sem_contato_registrado: "por_empresa",
+    concluidos: "concluidos",
+    atrasados: "atrasados",
   };
 
   // Declarado ANTES dos callbacks que o referenciam — evita TDZ (temporal dead zone).
