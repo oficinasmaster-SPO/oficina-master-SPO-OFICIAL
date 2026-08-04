@@ -244,7 +244,6 @@ export default function BacklogDetailDrawer({ tarefa, user, onClose, onEdit, hid
         <div className="flex shrink-0 border-b border-gray-100 px-3">
           <Tab label="Detalhes"  active={activeTab === "detalhes"}  onClick={() => setActiveTab("detalhes")} />
           <Tab label="Checklist" active={activeTab === "checklist"} onClick={() => setActiveTab("checklist")} />
-          <Tab label="Atividade" active={activeTab === "atividade"} onClick={() => setActiveTab("atividade")} />
         </div>
 
         {/* ── Conteúdo das abas ── */}
@@ -302,6 +301,21 @@ export default function BacklogDetailDrawer({ tarefa, user, onClose, onEdit, hid
                 )}
               </div>
 
+              {/* ── Divisor com fade ── */}
+              <div className="px-5 py-2">
+                <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+              </div>
+
+              {/* ── Atividade (inline) ── */}
+              <div className="px-5 py-4">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 mb-2">Atividade</p>
+                <ActivityFeed
+                  entityType="tarefa_backlog"
+                  entityId={tarefa.id}
+                  workshopId={tarefa.workshop_id}
+                />
+              </div>
+
               {/* Motivo bloqueio */}
               {tarefa.motivo_bloqueio && (
                 <div className="mx-5 my-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
@@ -329,18 +343,6 @@ export default function BacklogDetailDrawer({ tarefa, user, onClose, onEdit, hid
                 tarefaId={tarefa.id}
                 workshopId={tarefa.workshop_id}
                 user={user}
-              />
-            </div>
-          )}
-
-          {/* ATIVIDADE */}
-          {activeTab === "atividade" && (
-            <div className="px-5 py-4">
-              <ActivityFeed
-                entityType="tarefa_backlog"
-                entityId={tarefa.id}
-                workshopId={tarefa.workshop_id}
-                maxHeight="100%"
               />
             </div>
           )}
