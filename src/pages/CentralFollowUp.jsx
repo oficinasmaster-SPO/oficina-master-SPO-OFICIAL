@@ -46,7 +46,7 @@ export default function CentralFollowUp() {
     sp_vencidos: "atrasados",
     sp_sem_contato_registrado: "por_empresa",
     concluidos: "concluidos",
-    atrasados: "atrasados",
+    atrasados: "atrasados"
   };
 
   // Declarado ANTES dos callbacks que o referenciam — evita TDZ (temporal dead zone).
@@ -98,14 +98,14 @@ export default function CentralFollowUp() {
       // Fonte canônica: Employee.user_type === 'internal'.
       const employees = await base44.entities.Employee.filter({
         user_type: 'internal',
-        user_status: 'ativo',
+        user_status: 'ativo'
       }, 'full_name', 200);
-      return employees
-        .filter(e => e.user_id && e.user_id !== user?.id)
-        .map(e => ({ id: e.user_id, full_name: e.full_name, email: e.email }))
-        .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
+      return employees.
+      filter((e) => e.user_id && e.user_id !== user?.id).
+      map((e) => ({ id: e.user_id, full_name: e.full_name, email: e.email })).
+      sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
     },
-    staleTime: 10 * 60 * 1000,
+    staleTime: 10 * 60 * 1000
   });
 
   const fullName = getName(user?.id, user?.full_name || user?.email || '');
@@ -132,21 +132,21 @@ export default function CentralFollowUp() {
 
         {/* User greeting + avatar */}
         <div className="flex items-center gap-2.5 flex-shrink-0">
-          <span className="text-xs text-gray-400 hidden sm:block">
+          <span className="text-xs hidden sm:block text-[hsl(var(--accent-foreground))]">
             {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}
           </span>
-          {profilePicture ? (
-            <img
-              src={profilePicture}
-              alt={firstName}
-              className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-1 ring-red-500/40"
-            />
-          ) : (
-            <div className="w-7 h-7 rounded-full bg-red-600 flex items-center justify-center font-bold text-white text-[11px] flex-shrink-0 ring-1 ring-red-500/40">
+          {profilePicture ?
+          <img
+            src={profilePicture}
+            alt={firstName}
+            className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-1 ring-red-500/40" /> :
+
+
+          <div className="w-7 h-7 rounded-full bg-red-600 flex items-center justify-center font-bold text-white text-[11px] flex-shrink-0 ring-1 ring-red-500/40">
               {getInitials(fullName)}
             </div>
-          )}
-          <span className="text-xs font-semibold text-white hidden sm:block">{firstName}</span>
+          }
+          <span className="text-xs font-semibold hidden sm:block text-[hsl(var(--foreground))]">{firstName}</span>
         </div>
       </div>
 
@@ -164,8 +164,8 @@ export default function CentralFollowUp() {
             consultores={consultores}
             crmFilterPill={crmFilterPill}
             onCrmFilterPillChange={handleCrmFilterPillChange}
-            onPrioridadeData={setPrioridadeData}
-          />
+            onPrioridadeData={setPrioridadeData} />
+          
         </div>
         <div className="hidden lg:block sticky top-20">
           <SidePanel
@@ -178,37 +178,37 @@ export default function CentralFollowUp() {
             prioridadeData={prioridadeData}
             activePill={activePill}
             onPrioridadeClick={handlePrioridadeClick}
-            onSelectReminder={handleSelectReminder}
-          />
+            onSelectReminder={handleSelectReminder} />
+          
         </div>
       </div>
 
       {/* FAB */}
       <NewFollowUpFAB onClick={() => setShowNovoFollowUp(true)} />
 
-      {showNovoFollowUp && (
-        <IniciarAtendimentoModal
-          followUp={null}
-          cliente={null}
-          openClientSelectorOnMount={true}
-          onClose={() => setShowNovoFollowUp(false)}
-          onSaved={() => setShowNovoFollowUp(false)}
-        />
-      )}
+      {showNovoFollowUp &&
+      <IniciarAtendimentoModal
+        followUp={null}
+        cliente={null}
+        openClientSelectorOnMount={true}
+        onClose={() => setShowNovoFollowUp(false)}
+        onSaved={() => setShowNovoFollowUp(false)} />
 
-      {showAtendimento && atendimentoReminder && (
-        <IniciarAtendimentoModal
-          followUp={atendimentoReminder}
-          cliente={null}
-          filaReminders={atendimentoFila}
-          onClose={() => setShowAtendimento(false)}
-          onSaved={() => {
-            setShowAtendimento(false);
-            queryClient.invalidateQueries({ queryKey: ["follow-up-reminders-tab"] });
-            queryClient.invalidateQueries({ queryKey: ["follow-up-reminders-concluidos-tab"] });
-          }}
-        />
-      )}
-    </div>
-  );
+      }
+
+      {showAtendimento && atendimentoReminder &&
+      <IniciarAtendimentoModal
+        followUp={atendimentoReminder}
+        cliente={null}
+        filaReminders={atendimentoFila}
+        onClose={() => setShowAtendimento(false)}
+        onSaved={() => {
+          setShowAtendimento(false);
+          queryClient.invalidateQueries({ queryKey: ["follow-up-reminders-tab"] });
+          queryClient.invalidateQueries({ queryKey: ["follow-up-reminders-concluidos-tab"] });
+        }} />
+
+      }
+    </div>);
+
 }
