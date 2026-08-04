@@ -124,7 +124,51 @@ import WorkshopAvatar from "@/components/aceleracao/followups/ds/WorkshopAvatar"
 
 ---
 
-## 3. Outras convenções (resumo)
+## 3. Colar imagens / prints do clipboard (REGRA OBRIGATÓRIA)
+
+> **Sempre** que um formulário aceitar anexar imagens coladas (Ctrl+V / ⌘V),
+> use o componente canônico `PastePrintField`. Não reimplemente captura de
+> clipboard manualmente.
+
+### Componente
+**Arquivo:** `src/components/shared/PastePrintField.jsx`
+
+```jsx
+import PastePrintField from "@/components/shared/PastePrintField";
+
+<PastePrintField
+  images={midias.filter(m => m.type === "imagem")}
+  onAdd={(mediaItem) => setMidias(prev => [...prev, mediaItem])}
+  onRemove={(index) => setMidias(prev => prev.filter((_, i) => i !== index))}
+/>
+```
+
+### Props
+- `images` — array de itens `midias_anexas` (`{ type, url, nome, uploaded_at }`) **com `type === "imagem"`** (exibidos como thumbnails).
+- `onAdd(mediaItem)` — chamado para cada imagem colada, já após upload. Recebe o item pronto para inserir em `midias_anexas`.
+- `onRemove(index)` — índice dentro do array `images` passado (não da lista completa de mídias).
+
+### Como funciona (não reimplementar)
+- Área focável (`tabIndex={0}`, `role="textbox"`) com `onPaste`.
+- Captura `clipboardData.items` do tipo `image/*`, faz upload via `base44.integrations.Core.UploadFile` e devolve o item `{ type: "imagem", url, nome, uploaded_at }`.
+- Mostra thumbnails com botão de remover no hover.
+- Estado `busy` (spinner) durante o upload; `toast` de sucesso/erro.
+
+### Persistência
+As mídias coladas seguem o schema **`midias_anexas`** (array de objetos) presente em
+`TarefaBacklog`, `PedidoInterno` e `ConsultoriaAtendimento`. Sempre persistir o array
+completo no campo `midias_anexas` da entidade ao salvar.
+
+### Regras operacionais
+- **Proibido** escrever handler `onPaste` próprio em formulários que anexam imagens —
+  usar `PastePrintField`.
+- **Proibido** armazenar base64 de print em campo de entidade — sempre fazer upload
+  (`Core.UploadFile`) e guardar a `url` (regra geral de não-armazenar blobs em campos).
+- O filtro de exibição (`type === "imagem"`) é responsabilidade de quem passa `images`.
+
+---
+
+## 4. Outras convenções (resumo)
 - Ícones: somente `lucide-react`, apenas ícones existentes.
 - Imports: usar alias `@/` (nunca caminhos relativos para `src/`).
 - Estilo: classes Tailwind literais; design tokens em `src/index.css`.
