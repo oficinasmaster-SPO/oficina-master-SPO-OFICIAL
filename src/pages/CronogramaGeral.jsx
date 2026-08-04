@@ -9,11 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Calendar, Search, Download, AlertCircle, Check, Clock, ChevronRight } from "lucide-react";
 import ClientDetailPanel from "@/components/aceleracao/ClientDetailPanel";
 import AvaliacaoProcessoModal from "@/components/aceleracao/AvaliacaoProcessoModal";
+import Combobox from "@/components/ui/combobox";
 
 export default function CronogramaGeral({ isTab = false }) {
   const queryClient = useQueryClient();
   const [selectedPlan, setSelectedPlan] = useState("TODOS");
   const [filterStatus, setFilterStatus] = useState("todos");
+  const [workshopStatusFilter, setWorkshopStatusFilter] = useState("ativos");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState(null);
   const [selectedProcess, setSelectedProcess] = useState(null);
@@ -47,14 +49,16 @@ export default function CronogramaGeral({ isTab = false }) {
 
   // Carregar workshops com planos ativos
   const { data: workshops = [], isLoading } = useQuery({
-    queryKey: ['workshops-cronograma'],
+    queryKey: ['workshops-cronograma', workshopStatusFilter],
     queryFn: async () => {
       const all = await base44.entities.Workshop.list();
-      // Apenas clientes ativos
-      const ativos = all.filter(w => w.status === 'ativo');
-      if (selectedPlan === 'TODOS') return ativos;
-      if (selectedPlan === 'FREE') return ativos.filter(w => w.planoAtual === 'FREE');
-      return ativos.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
+      // Filtra por status de cadastro (ativo/inativo/todos) antes do plano
+      const porStatus = workshopStatusFilter === 'todos'
+        ? all
+        : all.filter(w => w.status === (workshopStatusFilter === 'ativos' ? 'ativo' : 'inativo'));
+      if (selectedPlan === 'TODOS') return porStatus;
+      if (selectedPlan === 'FREE') return porStatus.filter(w => w.planoAtual === 'FREE');
+      return porStatus.filter(w => w.planoAtual && w.planoAtual !== 'FREE');
     },
     enabled: !!selectedPlan
   });
@@ -328,6 +332,13 @@ export default function CronogramaGeral({ isTab = false }) {
       cliente.name.toLowerCase().includes(searchTerm.toLowerCase());
 
     return matchSearch;
+  });
+
+  // Ordenar do mais antigo ao mais recente por data de cadastro
+  const clientesOrdenados = [...clientesFiltrados].sort((a, b) => {
+    const da = a.created_date ? new Date(a.created_date).getTime() : 0;
+    const db = b.created_date ? new Date(b.created_date).getTime() : 0;
+    return da - db;
   });
 
   const getClientesPorStatus = (tipo) => {
@@ -642,6 +653,17 @@ export default function CronogramaGeral({ isTab = false }) {
             )}
           </div>
           <div className="flex gap-2 mb-3 bg-white rounded-xl shadow-md border border-gray-100 p-2.5">
+            <Combobox
+              options={[
+                { value: 'todos', label: 'Todos' },
+                { value: 'ativos', label: 'Ativo' },
+                { value: 'inativo', label: 'Inativo' },
+              ]}
+              value={workshopStatusFilter}
+              onChange={setWorkshopStatusFilter}
+              placeholder="Status cadastro"
+              className="w-[150px]"
+            />
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-[130px] h-9 text-sm bg-white border-gray-200">
                 <SelectValue />
@@ -664,14 +686,14 @@ export default function CronogramaGeral({ isTab = false }) {
             </div>
           </div>
           <div className="flex-1 overflow-y-auto">
-            {clientesFiltrados.length === 0 ? (
+            {clientesOrdenados.length === 0 ? (
               <div className="text-center py-10 text-gray-500">
                 <AlertCircle className="w-10 h-10 mx-auto mb-2 text-gray-300" />
                 <p className="text-sm">Nenhum cliente encontrado.</p>
               </div>
             ) : (
               <div className="space-y-2">
-                {clientesFiltrados.map((cliente) => (
+                {clientesOrdenados.map((cliente) => (
                   <div
                     key={cliente.id}
                     onClick={() => {
@@ -698,6 +720,9 @@ export default function CronogramaGeral({ isTab = false }) {
                         <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                           <span>Plano: <span className="font-medium text-gray-700">{cliente.planoAtual}</span></span>
                           {cliente.city && <span>Cidade: {cliente.city}/{cliente.state}</span>}
+                          {cliente.created_date && (
+                            <span>Cadastro: {new Date(cliente.created_date).toLocaleDateString('pt-BR')}</span>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 mt-2">
                           <div className="flex-1 bg-gray-100 rounded-full h-1.5">
