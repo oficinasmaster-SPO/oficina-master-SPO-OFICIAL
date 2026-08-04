@@ -59,7 +59,72 @@ Props-chave:
 
 ---
 
-## 2. Outras convenções (resumo)
+## 2. Resolução de nomes, avatares e fotos (REGRA OBRIGATÓRIA)
+
+> **Nunca** escrever lógica nova para resolver nome de usuário, foto de perfil do
+> usuário ou logo/avatar do workshop. Sempre reutilizar as funções/hooks/componentes
+> canônicos abaixo, exatamente como fazemos com o `Combobox`.
+
+### 2.1 Nome de exibição do usuário
+**Hook:** `useDisplayName` — `src/hooks/useDisplayName.js`
+
+```jsx
+import useDisplayName from "@/hooks/useDisplayName";
+
+const { displayName, employee, isLoading } = useDisplayName(user);
+// displayName = Employee.full_name || User.full_name || User.email
+```
+- Resolve o nome canônico (contas Google podem ter `full_name` errado em `User`).
+- Faz 1 query leve por `user_id` no `Employee` (evita `User.list` em massa / 429).
+- Usar **sempre** que precisar mostrar o nome de um usuário logado ou referenciado.
+
+### 2.2 Foto de perfil do usuário (avatar de pessoa)
+**Componente:** `UserAvatar` — `src/components/shared/UserAvatar.jsx`
+
+```jsx
+import UserAvatar from "@/components/shared/UserAvatar";
+
+<UserAvatar user={user} size="md" />
+```
+- Renderiza a `profile_picture_url` do usuário com fallback automático.
+- Para gerar iniciais/cor de fallback, importar de `@/lib/avatarUtils`:
+
+```jsx
+import { getInitials, getAvatarColor } from "@/lib/avatarUtils";
+```
+
+### 2.3 Logo / avatar do workshop (cliente)
+**Hook (cache de logos):** `useWorkshopLogos` — `src/hooks/useWorkshopLogos.js`
+
+```jsx
+import { useWorkshopLogos } from "@/hooks/useWorkshopLogos";
+
+const logosByWorkshop = useWorkshopLogos(workshopIds);
+// logosByWorkshop[workshop_id] => logo_url | null
+```
+- Retorna mapa `{ workshop_id → logo_url }`, cache compartilhado (zero queries extras).
+
+**Componente (renderização):** `WorkshopAvatar` — `src/components/aceleracao/followups/ds/WorkshopAvatar.jsx`
+
+```jsx
+import WorkshopAvatar from "@/components/aceleracao/followups/ds/WorkshopAvatar";
+
+<WorkshopAvatar name={cliente} logo_url={logosByWorkshop[wid]} size="md" />
+```
+- Renderiza a logo quando disponível; senão, iniciais coloridas (`getInitials`/`getAvatarColor`).
+
+### 2.4 Regras operacionais
+- **Proibido** instanciar `<img>` direto para avatar de usuário ou logo de workshop
+  sem fallback — sempre passar pelo `UserAvatar` / `WorkshopAvatar`.
+- **Proibido** buscar `User.list()` para resolver nomes — usar `useDisplayName`.
+- **Proibido** buscar `Workshop.filter({ id: { $in: [...] } })` manualmente para logos —
+  usar `useWorkshopLogos` (já lida com batching 100 e cache).
+- Ao tocar em tela que mostra avatar de cliente/pessoa, **substituir** qualquer
+  `<img>`/iniciais customizadas pelo componente canônico.
+
+---
+
+## 3. Outras convenções (resumo)
 - Ícones: somente `lucide-react`, apenas ícones existentes.
 - Imports: usar alias `@/` (nunca caminhos relativos para `src/`).
 - Estilo: classes Tailwind literais; design tokens em `src/index.css`.
