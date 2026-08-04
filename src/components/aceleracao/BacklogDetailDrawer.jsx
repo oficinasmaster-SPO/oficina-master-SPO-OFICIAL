@@ -66,11 +66,37 @@ export default function BacklogDetailDrawer({ tarefa, user, onClose, onEdit, hid
     return () => document.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
+  const STATUS_LABELS = {
+    aberta: "Aberta", em_execucao: "Em Execução",
+    aguardando_cliente: "Aguardando Cliente", bloqueada: "Bloqueada", concluida: "Concluída",
+  };
+
   const updateMutation = useMutation({
     mutationFn: async (data) =>
       base44.entities.TarefaBacklog.update(tarefa.id, data),
-    onSuccess: () => {
+    onSuccess: async (_updated, variables) => {
       queryClient.invalidateQueries({ queryKey: ["tarefas-backlog"] });
+      queryClient.invalidateQueries({ queryKey: ["activityLogs", "tarefa_backlog", tarefa.id] });
+      // Registra a mudança de status na aba Atividade
+      if (variables?.status && variables.status !== tarefa.status) {
+        try {
+          await base44.entities.ActivityLog.create({
+            entity_type: "tarefa_backlog",
+            entity_id: tarefa.id,
+            workshop_id: tarefa.workshop_id,
+            event_type: "status_changed",
+            actor_id: user?.id,
+            actor_name: user?.full_name || user?.email,
+            field_changed: "status",
+            old_value: STATUS_LABELS[tarefa.status] || tarefa.status,
+            new_value: STATUS_LABELS[variables.status] || variables.status,
+            summary: `Status alterado de ${STATUS_LABELS[tarefa.status] || tarefa.status} para ${STATUS_LABELS[variables.status] || variables.status}`,
+            timestamp: new Date().toISOString(),
+          });
+        } catch (e) {
+          console.error("Erro ao registrar atividade de status", e);
+        }
+      }
       toast.success("Tarefa atualizada");
     },
     onError: () => toast.error("Erro ao atualizar"),

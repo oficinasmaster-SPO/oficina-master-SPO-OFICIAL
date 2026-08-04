@@ -9,15 +9,10 @@ import {
   Clock, Play, CheckCircle2, Lock, LayoutList,
   SlidersHorizontal, X,
 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import Combobox from "@/components/ui/combobox";
 import BacklogIssueRow from "./BacklogIssueRow";
 import BacklogDetailDrawer from "./BacklogDetailDrawer";
+import NovoTarefaModal from "./NovoTarefaModal";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import TarefaBacklogForm from "./TarefaBacklogForm";
@@ -112,6 +107,7 @@ export default function BacklogBoard({ workshopId, user }) {
   const [panelMode, setPanelMode] = useState(null);
   const [selectedTarefa, setSelectedTarefa] = useState(null);
   const [editingTarefa, setEditingTarefa] = useState(null);
+  const [showNovoTarefaModal, setShowNovoTarefaModal] = useState(false);
 
   // Filtros inline
   const [search, setSearch]             = useState("");
@@ -226,6 +222,9 @@ export default function BacklogBoard({ workshopId, user }) {
     setFilterPrioridade("all"); setFilterOrigem("all");
   };
 
+  // Linha cheia (colunas Cliente/Consultor/Abertura) só em desktop sem painel aberto
+  const fullRow = !isMobile && panelMode === null;
+
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleView = useCallback((tarefa) => {
     setSelectedTarefa(tarefa);
@@ -233,7 +232,7 @@ export default function BacklogBoard({ workshopId, user }) {
   }, []);
   const handleNew = useCallback(() => {
     setEditingTarefa(null);
-    setPanelMode("form");
+    setShowNovoTarefaModal(true);
   }, []);
   const handleEdit = useCallback((tarefa) => {
     setEditingTarefa(tarefa);
@@ -338,45 +337,50 @@ export default function BacklogBoard({ workshopId, user }) {
         {/* Linha 2: filtros expandidos */}
         {showFilters && (
           <div className="flex flex-wrap gap-2">
-            <Select value={filterConsultor} onValueChange={setFilterConsultor}>
-              <SelectTrigger className="h-7 w-[160px] text-xs"><SelectValue placeholder="Consultor" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="text-xs">Todos consultores</SelectItem>
-                {consultoresUnicos.map((c) => (
-                  <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filterCliente} onValueChange={setFilterCliente}>
-              <SelectTrigger className="h-7 w-[160px] text-xs"><SelectValue placeholder="Cliente" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="text-xs">Todos clientes</SelectItem>
-                {clientesUnicos.map((c) => (
-                  <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filterPrioridade} onValueChange={setFilterPrioridade}>
-              <SelectTrigger className="h-7 w-[140px] text-xs"><SelectValue placeholder="Prioridade" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="text-xs">Toda prioridade</SelectItem>
-                {PRIORIDADE_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filterOrigem} onValueChange={setFilterOrigem}>
-              <SelectTrigger className="h-7 w-[150px] text-xs"><SelectValue placeholder="Origem" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="text-xs">Toda origem</SelectItem>
-                {ORIGIN_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="w-[170px]">
+              <Combobox
+                value={filterConsultor}
+                onChange={setFilterConsultor}
+                options={[{ value: "all", label: "Todos consultores" }, ...consultoresUnicos.map((c) => ({ value: c, label: c }))]}
+                clearValue="all"
+                placeholder="Consultor"
+                searchPlaceholder="Pesquisar consultor..."
+                emptyText="Nenhum consultor."
+              />
+            </div>
+            <div className="w-[170px]">
+              <Combobox
+                value={filterCliente}
+                onChange={setFilterCliente}
+                options={[{ value: "all", label: "Todos clientes" }, ...clientesUnicos.map((c) => ({ value: c, label: c }))]}
+                clearValue="all"
+                placeholder="Cliente"
+                searchPlaceholder="Pesquisar cliente..."
+                emptyText="Nenhum cliente."
+              />
+            </div>
+            <div className="w-[150px]">
+              <Combobox
+                value={filterPrioridade}
+                onChange={setFilterPrioridade}
+                options={[{ value: "all", label: "Toda prioridade" }, ...PRIORIDADE_OPTIONS]}
+                clearValue="all"
+                placeholder="Prioridade"
+                searchPlaceholder="Pesquisar prioridade..."
+                emptyText="Nenhuma prioridade."
+              />
+            </div>
+            <div className="w-[160px]">
+              <Combobox
+                value={filterOrigem}
+                onChange={setFilterOrigem}
+                options={[{ value: "all", label: "Toda origem" }, ...ORIGIN_OPTIONS]}
+                clearValue="all"
+                placeholder="Origem"
+                searchPlaceholder="Pesquisar origem..."
+                emptyText="Nenhuma origem."
+              />
+            </div>
           </div>
         )}
 
@@ -399,12 +403,14 @@ export default function BacklogBoard({ workshopId, user }) {
       <div className="shrink-0 border-b border-gray-200 bg-gray-50">
         <div className="flex items-center gap-3 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
           <span className="w-6 shrink-0" />
-          <span className="w-[70px] shrink-0">Código</span>
-          <span className="flex-1">Título</span>
+          <span className="w-[64px] shrink-0">Código</span>
+          <span className="flex-1 min-w-0">Chamado</span>
+          {fullRow && <span className="w-[150px] shrink-0">Cliente</span>}
+          {fullRow && <span className="w-[150px] shrink-0">Consultor</span>}
+          {fullRow && <span className="w-[80px] shrink-0">Abertura</span>}
           <span className="w-5 shrink-0 text-center">P</span>
           <span className="w-[72px] shrink-0 text-right">Prazo</span>
-          <span className="w-8 shrink-0 text-center">Resp.</span>
-          <span className="w-[130px] shrink-0 text-right">Status</span>
+          <span className="w-[120px] shrink-0 text-right">Status</span>
         </div>
       </div>
 
@@ -452,6 +458,7 @@ export default function BacklogBoard({ workshopId, user }) {
                           logoUrl={logosByWorkshop[tarefa.workshop_id]}
                           onView={handleView}
                           isSelected={panelMode === "detail" && selectedTarefa?.id === tarefa.id}
+                          fullRow={fullRow}
                         />
                       ))
                     )}
@@ -524,6 +531,15 @@ export default function BacklogBoard({ workshopId, user }) {
           ) : null}
         </SheetContent>
       </Sheet>
+
+      {showNovoTarefaModal && (
+        <NovoTarefaModal
+          user={user}
+          workshopId={workshopId}
+          workshops={workshops}
+          onClose={() => setShowNovoTarefaModal(false)}
+        />
+      )}
     </div>
   );
 }

@@ -19,6 +19,8 @@ import {
   Calendar,
 } from "lucide-react";
 import { ORIGIN_LABELS, TAREFA_STATUS_CONFIG, PRIORIDADE_CONFIG } from "@/components/shared/backlogConstants";
+import UserAvatar from "@/components/shared/UserAvatar";
+import WorkshopAvatar from "@/components/aceleracao/followups/ds/WorkshopAvatar";
 
 // ── Ícone de origem ──────────────────────────────────────────────────────────
 const ORIGIN_ICONS = {
@@ -30,7 +32,7 @@ const ORIGIN_ICONS = {
   consultoria: { icon: Star,          color: "text-amber-500",  bg: "bg-amber-50" },
   diagnostico: { icon: Zap,           color: "text-orange-500", bg: "bg-orange-50" },
   contrato:    { icon: FileText,      color: "text-teal-500",   bg: "bg-teal-50" },
-  automacao:   { icon: Zap,           color: "text-pink-500",   bg: "bg-pink-50" },
+  automacao:   { icon: Zap,            color: "text-pink-500",   bg: "bg-pink-50" },
   projeto:     { icon: GitBranch,     color: "text-violet-500", bg: "bg-violet-50" },
 };
 
@@ -71,9 +73,14 @@ function StatusChip({ status }) {
   );
 }
 
-// ── Avatar (componente reutilizável) ─────────────────────────────────────────
-import Avatar from "@/components/ui/Avatar";
-import WorkshopAvatar from "@/components/aceleracao/followups/ds/WorkshopAvatar";
+// ── Data de abertura (criação) ────────────────────────────────────────────────
+function AberturaCell({ tarefa }) {
+  const raw = tarefa.data_criacao || tarefa.created_date;
+  if (!raw) return <span className="text-xs text-gray-300">—</span>;
+  const d = new Date(raw);
+  const label = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  return <span className="text-xs tabular-nums text-gray-500">{label}</span>;
+}
 
 // ── Prazo formatado ──────────────────────────────────────────────────────────
 function PrazoCell({ prazo, status }) {
@@ -117,10 +124,10 @@ function IssueCode({ id }) {
 }
 
 // ── Componente principal ─────────────────────────────────────────────────────
-function BacklogIssueRow({ tarefa, consultorName, consultorPhoto, logoUrl, onView, isSelected = false }) {
+function BacklogIssueRow({ tarefa, consultorName, consultorPhoto, logoUrl, onView, isSelected = false, fullRow = false }) {
   const originCfg = ORIGIN_ICONS[tarefa.origin_type] || ORIGIN_ICONS.manual;
   const OriginIcon = originCfg.icon;
-  const responsavel = consultorName || tarefa.assignee_name || "—";
+  const responsavel = consultorName || tarefa.assignee_name;
 
   return (
     <div
@@ -132,17 +139,17 @@ function BacklogIssueRow({ tarefa, consultorName, consultorPhoto, logoUrl, onVie
         ${isSelected ? "bg-blue-50 border-l-2 border-l-blue-500" : "border-l-2 border-l-transparent"}
       `}
     >
-      {/* Col 1 — Ícone origem (fixo 28px) */}
+      {/* Col 1 — Ícone origem (w-6) */}
       <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded ${originCfg.bg}`} title={ORIGIN_LABELS[tarefa.origin_type] || "—"}>
         <OriginIcon className={`h-3.5 w-3.5 ${originCfg.color}`} />
       </span>
 
-      {/* Col 2 — Código (fixo 70px) */}
-      <span className="w-[70px] shrink-0">
+      {/* Col 2 — Código (w-[64px]) */}
+      <span className="w-[64px] shrink-0">
         <IssueCode id={tarefa.id} />
       </span>
 
-      {/* Col 3 — Título + workshop + checklist (flex-1) */}
+      {/* Col 3 — Chamado (flex-1): título + badge crítica + checklist */}
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="flex items-center gap-2">
           <span className={`truncate text-sm font-medium leading-tight ${tarefa.status === "concluida" ? "text-gray-400 line-through" : "text-gray-900"}`}>
@@ -154,37 +161,48 @@ function BacklogIssueRow({ tarefa, consultorName, consultorPhoto, logoUrl, onVie
             </span>
           )}
         </span>
-        <span className="flex items-center gap-1.5 text-[11px] text-gray-400">
-          {tarefa.workshop_nome && (
-            <span className="flex items-center gap-1 truncate max-w-[180px]">
-              <WorkshopAvatar name={tarefa.workshop_nome} logo_url={logoUrl} size="sm" className="!w-4 !h-4 !text-[7px]" />
-              <span className="text-[10px] text-gray-600 font-medium truncate">{tarefa.workshop_nome}</span>
-            </span>
-          )}
-          <ChecklistProgress total={tarefa.checklist_total} done={tarefa.checklist_concluidos || 0} />
-        </span>
+        <ChecklistProgress total={tarefa.checklist_total} done={tarefa.checklist_concluidos || 0} />
       </span>
 
-      {/* Col 4 — Prioridade (fixo 24px) */}
+      {/* Col 4–6 — Cliente · Consultor · Abertura (somente em linha cheia: desktop sem painel) */}
+      {fullRow && (
+        <>
+          <span className="w-[150px] shrink-0 flex items-center gap-1.5 min-w-0">
+            <WorkshopAvatar name={tarefa.workshop_nome || "—"} logo_url={logoUrl} size="sm" className="!w-5 !h-5 !text-[8px] shrink-0" />
+            <span className="truncate text-xs text-gray-700" title={tarefa.workshop_nome}>
+              {tarefa.workshop_nome || "—"}
+            </span>
+          </span>
+
+          <span className="w-[150px] shrink-0 flex items-center gap-1.5 min-w-0" title={responsavel || "—"}>
+            {responsavel ? (
+              <>
+                <UserAvatar src={consultorPhoto} name={responsavel} size="xs" className="!w-5 !h-5 shrink-0" />
+                <span className="truncate text-xs text-gray-700">{responsavel}</span>
+              </>
+            ) : (
+              <span className="h-5 w-5 rounded-full border border-dashed border-gray-300 shrink-0" />
+            )}
+          </span>
+
+          <span className="w-[80px] shrink-0">
+            <AberturaCell tarefa={tarefa} />
+          </span>
+        </>
+      )}
+
+      {/* Col 7 — Prioridade (w-5) */}
       <span className="w-5 shrink-0 flex justify-center">
         <PriorityIcon prioridade={tarefa.prioridade} />
       </span>
 
-      {/* Col 5 — Prazo (fixo 72px) */}
+      {/* Col 8 — Prazo (w-[72px]) */}
       <span className="w-[72px] shrink-0 text-right">
         <PrazoCell prazo={tarefa.prazo} status={tarefa.status} />
       </span>
 
-      {/* Col 6 — Avatar assignee (fixo 32px) */}
-      <span className="w-8 shrink-0 flex justify-center" title={responsavel}>
-        {responsavel && responsavel !== "—"
-          ? <Avatar src={consultorPhoto} name={responsavel} size="xs" />
-          : <span className="h-6 w-6 rounded-full border border-dashed border-gray-300" />
-        }
-      </span>
-
-      {/* Col 7 — Status badge (fixo 130px) */}
-      <span className="w-[130px] shrink-0 flex justify-end">
+      {/* Col 9 — Status badge (w-[120px]) */}
+      <span className="w-[120px] shrink-0 flex justify-end">
         <StatusChip status={tarefa.status} />
       </span>
     </div>
