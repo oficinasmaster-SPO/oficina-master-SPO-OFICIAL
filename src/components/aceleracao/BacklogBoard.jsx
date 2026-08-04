@@ -3,12 +3,13 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronDown, ChevronRight,
-  Clock, Play, CheckCircle2, Lock, LayoutList,
+  Clock, Play, CheckCircle2, Lock, LayoutList, Plus,
 } from "lucide-react";
 import BacklogIssueRow from "./BacklogIssueRow";
 import BacklogDetailDrawer from "./BacklogDetailDrawer";
 import NovoTarefaModal from "./NovoTarefaModal";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import TarefaBacklogForm from "./TarefaBacklogForm";
 import useEmployeeResolver from "@/hooks/useEmployeeResolver";
@@ -79,9 +80,30 @@ function GroupHeader({ group, count, collapsed, onToggle }) {
 }
 
 // ── Componente principal ────────────────────────────────────────────────────
-export default function BacklogBoard({ workshopId, user, tarefas = [], isLoading, hasFilters, onClearFilters, showNovoTarefaModal, setShowNovoTarefaModal }) {
+export default function BacklogBoard({ workshopId, user, tarefas: tarefasProp, isLoading: isLoadingProp, hasFilters, onClearFilters, showNovoTarefaModal: extShow, setShowNovoTarefaModal: extSetShow }) {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+
+  // Modo dual: controlado (container pai passa tarefas/filtros) ou autônomo
+  // (PedidosInternosTab monta direto). Quando autônomo, busca as próprias
+  // tarefas e gerencia seu próprio modal "Nova tarefa" — caso contrário o
+  // board renderizaria vazio, pois nenhum pai passa `tarefas`.
+  const controlled = tarefasProp !== undefined;
+  const { data: internalTarefas = [], isLoading: internalLoading } = useQuery({
+    queryKey: ["tarefas-backlog", workshopId],
+    queryFn: async () => {
+      const all = workshopId
+        ? await base44.entities.TarefaBacklog.filter({ workshop_id: workshopId }, "-prazo", 300)
+        : await base44.entities.TarefaBacklog.list("-prazo", 300);
+      return all || [];
+    },
+    enabled: !controlled,
+  });
+  const tarefas = controlled ? tarefasProp : internalTarefas;
+  const isLoading = controlled ? !!isLoadingProp : internalLoading;
+  const [intShow, intSetShow] = useState(false);
+  const showNovoTarefaModal = controlled ? extShow : intShow;
+  const setShowNovoTarefaModal = controlled ? extSetShow : intSetShow;
 
   // Painel: null | 'detail' | 'form'
   const [panelMode, setPanelMode] = useState(null);
@@ -199,6 +221,15 @@ export default function BacklogBoard({ workshopId, user, tarefas = [], isLoading
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
+
+      {/* ── Toolbar "Nova tarefa" (somente modo autônomo) ── */}
+      {!controlled && (
+        <div className="shrink-0 flex items-center justify-end gap-2 px-3 py-2 border-b border-gray-200 bg-gray-50">
+          <Button size="sm" onClick={() => setShowNovoTarefaModal(true)} className="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-xs font-bold">
+            <Plus className="mr-1.5 h-3.5 w-3.5" /> Nova tarefa
+          </Button>
+        </div>
+      )}
 
       {/* ── Cabeçalho das colunas ── */}
       <div className="shrink-0 border-b border-gray-200 bg-gray-50">
