@@ -88,7 +88,7 @@ export default function BacklogDetailDrawer({ tarefa, user, onClose, onEdit, hid
     mutationFn: async (data) =>
       base44.entities.TarefaBacklog.update(tarefa.id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["tarefas-backlog"]);
+      queryClient.invalidateQueries({ queryKey: ["tarefas-backlog"] });
       toast.success("Tarefa atualizada");
     },
     onError: () => toast.error("Erro ao atualizar"),

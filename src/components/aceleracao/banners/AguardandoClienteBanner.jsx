@@ -41,8 +41,8 @@ export default function AguardandoClienteBanner({ tarefa, podeEditar, user, comp
       toast.success("Tarefa marcada como aguardando cliente.");
       setShowForm(false);
       setMotivo("");
-      queryClient.invalidateQueries(['tarefas-backlog']);
-      queryClient.invalidateQueries(['tarefa', tarefa.id]);
+      queryClient.invalidateQueries({ queryKey: ['tarefas-backlog'] });
+      queryClient.invalidateQueries({ queryKey: ['tarefa', tarefa.id] });
     },
     onError: () => toast.error("Erro ao marcar tarefa."),
   });
@@ -59,8 +59,8 @@ export default function AguardandoClienteBanner({ tarefa, podeEditar, user, comp
     },
     onSuccess: () => {
       toast.success("Tarefa não está mais aguardando cliente.");
-      queryClient.invalidateQueries(['tarefas-backlog']);
-      queryClient.invalidateQueries(['tarefa', tarefa.id]);
+      queryClient.invalidateQueries({ queryKey: ['tarefas-backlog'] });
+      queryClient.invalidateQueries({ queryKey: ['tarefa', tarefa.id] });
     },
     onError: () => toast.error("Erro ao desmarcar tarefa."),
   });

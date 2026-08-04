@@ -51,7 +51,7 @@ export default function BacklogDashboard({ workshopId, user }) {
       return await base44.entities.TarefaBacklog.update(id, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['tarefas-backlog']);
+      queryClient.invalidateQueries({ queryKey: ['tarefas-backlog'] });
     }
   });
 
@@ -158,7 +158,7 @@ export default function BacklogDashboard({ workshopId, user }) {
             onSuccess={() => {
               setShowForm(false);
               setEditingTarefa(null);
-              queryClient.invalidateQueries(['tarefas-backlog']);
+              queryClient.invalidateQueries({ queryKey: ['tarefas-backlog'] });
             }}
           />
         ) : null}

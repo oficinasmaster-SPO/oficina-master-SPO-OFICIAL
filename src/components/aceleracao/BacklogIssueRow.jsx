@@ -73,6 +73,7 @@ function StatusChip({ status }) {
 
 // ── Avatar (componente reutilizável) ─────────────────────────────────────────
 import Avatar from "@/components/ui/Avatar";
+import WorkshopAvatar from "@/components/aceleracao/followups/ds/WorkshopAvatar";
 
 // ── Prazo formatado ──────────────────────────────────────────────────────────
 function PrazoCell({ prazo, status }) {
@@ -116,9 +117,10 @@ function IssueCode({ id }) {
 }
 
 // ── Componente principal ─────────────────────────────────────────────────────
-function BacklogIssueRow({ tarefa, onView, isSelected = false }) {
+function BacklogIssueRow({ tarefa, consultorName, consultorPhoto, logoUrl, onView, isSelected = false }) {
   const originCfg = ORIGIN_ICONS[tarefa.origin_type] || ORIGIN_ICONS.manual;
   const OriginIcon = originCfg.icon;
+  const responsavel = consultorName || tarefa.assignee_name || "—";
 
   return (
     <div
@@ -152,10 +154,11 @@ function BacklogIssueRow({ tarefa, onView, isSelected = false }) {
             </span>
           )}
         </span>
-        <span className="flex items-center gap-2 text-[11px] text-gray-400">
+        <span className="flex items-center gap-1.5 text-[11px] text-gray-400">
           {tarefa.workshop_nome && (
-            <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-600 font-medium truncate max-w-[140px]">
-              {tarefa.workshop_nome}
+            <span className="flex items-center gap-1 truncate max-w-[180px]">
+              <WorkshopAvatar name={tarefa.workshop_nome} logo_url={logoUrl} size="sm" className="!w-4 !h-4 !text-[7px]" />
+              <span className="text-[10px] text-gray-600 font-medium truncate">{tarefa.workshop_nome}</span>
             </span>
           )}
           <ChecklistProgress total={tarefa.checklist_total} done={tarefa.checklist_concluidos || 0} />
@@ -173,9 +176,9 @@ function BacklogIssueRow({ tarefa, onView, isSelected = false }) {
       </span>
 
       {/* Col 6 — Avatar assignee (fixo 32px) */}
-      <span className="w-8 shrink-0 flex justify-center">
-        {tarefa.assignee_name
-          ? <Avatar name={tarefa.assignee_name} size="xs" />
+      <span className="w-8 shrink-0 flex justify-center" title={responsavel}>
+        {responsavel && responsavel !== "—"
+          ? <Avatar src={consultorPhoto} name={responsavel} size="xs" />
           : <span className="h-6 w-6 rounded-full border border-dashed border-gray-300" />
         }
       </span>

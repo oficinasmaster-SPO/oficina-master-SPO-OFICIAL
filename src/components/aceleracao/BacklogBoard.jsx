@@ -21,6 +21,8 @@ import BacklogDetailDrawer from "./BacklogDetailDrawer";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import TarefaBacklogForm from "./TarefaBacklogForm";
+import useEmployeeResolver from "@/hooks/useEmployeeResolver";
+import { useWorkshopLogos } from "@/hooks/useWorkshopLogos";
 import {
   TAREFA_STATUS_CONFIG,
   PRIORIDADE_OPTIONS,
@@ -144,13 +146,21 @@ export default function BacklogBoard({ workshopId, user }) {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.TarefaBacklog.update(id, data),
-    onSuccess: () => queryClient.invalidateQueries(["tarefas-backlog"]),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tarefas-backlog"] }),
   });
+
+  // ── Resolvers canônicos (nomes/fotos/logos) ──────────────────────────────
+  const { getName, getPhoto } = useEmployeeResolver();
+  const workshopIds = useMemo(
+    () => [...new Set(tarefas.map((t) => t.workshop_id).filter(Boolean))],
+    [tarefas]
+  );
+  const logosByWorkshop = useWorkshopLogos(workshopIds);
 
   // ── Listas derivadas ──────────────────────────────────────────────────────
   const consultoresUnicos = useMemo(
-    () => [...new Set(tarefas.map((t) => t.assignee_name).filter(Boolean))].sort(),
-    [tarefas]
+    () => [...new Set(tarefas.map((t) => getName(t.assignee_id, t.assignee_name)).filter(Boolean))].sort(),
+    [tarefas, getName]
   );
   const clientesUnicos = useMemo(
     () => [...new Set(tarefas.map((t) => t.workshop_nome).filter(Boolean))].sort(),
@@ -165,19 +175,21 @@ export default function BacklogBoard({ workshopId, user }) {
 
   const filteredAll = useMemo(() => {
     return tarefas.filter((t) => {
+      const resolvedName = getName(t.assignee_id, t.assignee_name);
       const q = search.toLowerCase();
       const matchSearch =
         !q ||
         t.titulo?.toLowerCase().includes(q) ||
         t.workshop_nome?.toLowerCase().includes(q) ||
+        resolvedName?.toLowerCase().includes(q) ||
         t.assignee_name?.toLowerCase().includes(q);
-      const matchConsultor  = filterConsultor  === "all" || t.assignee_name  === filterConsultor;
+      const matchConsultor  = filterConsultor  === "all" || resolvedName === filterConsultor;
       const matchCliente    = filterCliente    === "all" || t.workshop_nome   === filterCliente;
       const matchPrioridade = filterPrioridade === "all" || t.prioridade      === filterPrioridade;
       const matchOrigem     = filterOrigem     === "all" || t.origin_type     === filterOrigem;
       return matchSearch && matchConsultor && matchCliente && matchPrioridade && matchOrigem;
     });
-  }, [tarefas, search, filterConsultor, filterCliente, filterPrioridade, filterOrigem]);
+  }, [tarefas, search, filterConsultor, filterCliente, filterPrioridade, filterOrigem, getName]);
 
   // Agrupar por status
   const grouped = useMemo(() => {
@@ -242,7 +254,7 @@ export default function BacklogBoard({ workshopId, user }) {
     }
   }, [editingTarefa]);
   const handleFormSuccess = useCallback(() => {
-    queryClient.invalidateQueries(["tarefas-backlog"]);
+    queryClient.invalidateQueries({ queryKey: ["tarefas-backlog"] });
     if (editingTarefa) {
       setSelectedTarefa(editingTarefa);
       setPanelMode("detail");
@@ -435,6 +447,9 @@ export default function BacklogBoard({ workshopId, user }) {
                         <BacklogIssueRow
                           key={tarefa.id}
                           tarefa={tarefa}
+                          consultorName={getName(tarefa.assignee_id, tarefa.assignee_name)}
+                          consultorPhoto={getPhoto(tarefa.assignee_id)}
+                          logoUrl={logosByWorkshop[tarefa.workshop_id]}
                           onView={handleView}
                           isSelected={panelMode === "detail" && selectedTarefa?.id === tarefa.id}
                         />
@@ -460,18 +475,17 @@ export default function BacklogBoard({ workshopId, user }) {
       </div>
         </div>
         {panelMode && (
-          <div className="hidden md:flex w-[45%] flex-col min-h-0">
+          <div className="hidden md:flex w-[45%] border-l border-gray-200 flex-col min-h-0 overflow-hidden">
             {panelMode === "form" ? (
-              <div className="flex h-full flex-col overflow-y-auto bg-white border-l border-gray-100">
-                <TarefaBacklogForm
-                  tarefa={editingTarefa}
-                  user={user}
-                  workshops={workshops}
-                  workshopId={workshopId}
-                  onCancel={handleFormCancel}
-                  onSuccess={handleFormSuccess}
-                />
-              </div>
+              <TarefaBacklogForm
+                inline
+                tarefa={editingTarefa}
+                user={user}
+                workshops={workshops}
+                workshopId={workshopId}
+                onCancel={handleFormCancel}
+                onSuccess={handleFormSuccess}
+              />
             ) : freshSelected ? (
               <BacklogDetailDrawer
                 tarefa={freshSelected}
@@ -488,8 +502,9 @@ export default function BacklogBoard({ workshopId, user }) {
       <Sheet open={panelMode !== null && isMobile} onOpenChange={(open) => { if (!open) handlePanelClose(); }}>
         <SheetContent side="bottom" className="h-[85dvh] p-0">
           {panelMode === "form" ? (
-            <div className="h-full overflow-y-auto">
+            <div className="h-full">
               <TarefaBacklogForm
+                inline
                 tarefa={editingTarefa}
                 user={user}
                 workshops={workshops}

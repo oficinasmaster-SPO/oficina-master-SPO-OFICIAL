@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsProp, workshopId, isFromAttendance = true, origemId, origemData, origemTitulo, onCancel, onSuccess }) {
+export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsProp, workshopId, isFromAttendance = true, origemId, origemData, origemTitulo, onCancel, onSuccess, inline = false }) {
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
 
   // Busca workshops internamente se não recebeu como prop
@@ -137,31 +137,33 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
     toast.success('Template aplicado com sucesso!');
   };
 
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={onCancel}>
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-            <CardTitle>{tarefa ? 'Editar Tarefa' : 'Nova Tarefa no Backlog'}</CardTitle>
-          </div>
-          {!tarefa && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowTemplateSelector(true)}
-              className="gap-2"
-            >
-              <Zap className="w-4 h-4" />
-              Usar Template
-            </Button>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+  // ── Header (compartilhado entre modal e inline) ──
+  const header = (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="sm" onClick={onCancel} className="h-7 px-2">
+          <ArrowLeft className="w-4 h-4" />
+        </Button>
+        <span className="text-sm font-semibold text-gray-900">
+          {tarefa ? 'Editar Tarefa' : 'Nova Tarefa no Backlog'}
+        </span>
+      </div>
+      {!tarefa && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowTemplateSelector(true)}
+          className="h-7 gap-1.5 text-xs"
+        >
+          <Zap className="w-3.5 h-3.5" />
+          Usar Template
+        </Button>
+      )}
+    </div>
+  );
+
+  const formFields = (
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <Label>Título da Tarefa *</Label>
             <Input
@@ -312,7 +314,7 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
             />
           </div>
 
-          <div className="flex gap-3 justify-end pt-4 border-t">
+          <div className="flex gap-3 justify-end pt-4 border-t border-gray-100">
             <Button type="button" variant="outline" onClick={onCancel}>
               Cancelar
             </Button>
@@ -321,14 +323,42 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
             </Button>
           </div>
         </form>
-      </CardContent>
+  );
 
-      <TemplateBacklogSelector
-        isOpen={showTemplateSelector}
-        onClose={() => setShowTemplateSelector(false)}
-        onSelect={handleTemplateSelect}
-        workshopId={formData.workshop_id}
-      />
+  const templateSelector = (
+    <TemplateBacklogSelector
+      isOpen={showTemplateSelector}
+      onClose={() => setShowTemplateSelector(false)}
+      onSelect={handleTemplateSelect}
+      workshopId={formData.workshop_id}
+    />
+  );
+
+  // ── Modo inline (painel split) — scroll interno, sem Card ──
+  if (inline) {
+    return (
+      <div className="flex h-full flex-col min-h-0 bg-white">
+        <div className="shrink-0 border-b border-gray-100 px-5 py-3 bg-white">
+          {header}
+        </div>
+        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
+          {formFields}
+        </div>
+        {templateSelector}
+      </div>
+    );
+  }
+
+  // ── Modo modal (legado) — Card wrapper ──
+  return (
+    <Card>
+      <CardHeader>
+        {header}
+      </CardHeader>
+      <CardContent>
+        {formFields}
+      </CardContent>
+      {templateSelector}
     </Card>
   );
 }
