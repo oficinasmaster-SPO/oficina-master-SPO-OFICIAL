@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -248,7 +249,7 @@ export default function BacklogBoard({ workshopId, user, tarefas: tarefasProp, i
 
       {/* ── Split container ── */}
       <div className="flex min-h-0 flex-1">
-        <div className={`flex flex-col min-h-0 transition-all duration-200 ${panelMode && !isMobile ? 'w-[55%]' : 'w-full'}`}>
+        <div className="flex flex-col min-h-0 w-full">
       {/* ── Lista agrupada ── */}
       <div className="min-h-0 flex-1 overflow-y-auto bg-white">
         {isLoading ? (
@@ -313,8 +314,16 @@ export default function BacklogBoard({ workshopId, user, tarefas: tarefasProp, i
         )}
       </div>
         </div>
-        {panelMode && (
-          <div className="hidden md:flex w-[45%] border-l border-gray-200 flex-col min-h-0 overflow-hidden">
+      </div>
+
+      {/* ── Drawer overlay (portal em document.body — não empurra a lista) ── */}
+      {panelMode && !isMobile && createPortal(
+        <div className="fixed inset-0 z-[100] flex justify-end">
+          <div
+            className="absolute inset-0 bg-black/30 animate-in fade-in duration-150"
+            onClick={handlePanelClose}
+          />
+          <div className="relative h-full w-[44%] min-w-[420px] max-w-[640px] shadow-2xl">
             {panelMode === "form" ? (
               <TarefaBacklogForm
                 inline
@@ -334,8 +343,9 @@ export default function BacklogBoard({ workshopId, user, tarefas: tarefasProp, i
               />
             ) : null}
           </div>
-        )}
-      </div>
+        </div>,
+        document.body
+      )}
 
       {/* Mobile sheet */}
       <Sheet open={panelMode !== null && isMobile} onOpenChange={(open) => { if (!open) handlePanelClose(); }}>
