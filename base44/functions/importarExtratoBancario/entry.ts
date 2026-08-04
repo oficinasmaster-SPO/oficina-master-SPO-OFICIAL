@@ -245,8 +245,8 @@ async function conciliarAutomatico(base44, workshop_id, banco) {
     conciliado: false
   });
 
-  const conciliadas = 0;
-  const divergentes = 0;
+  let conciliadas = 0;
+  let divergentes = 0;
 
   for (const transacao of transacoesPendentes) {
     // Tenta encontrar match

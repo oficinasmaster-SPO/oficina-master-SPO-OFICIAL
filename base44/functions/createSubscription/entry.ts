@@ -1,20 +1,20 @@
 /**
  * Cria ou atualiza assinatura de plano
- * 
+ *
  * IMPORTANTE: Esta função requer Backend Functions habilitado
  * Habilite em: Dashboard → Settings → Backend Functions
  */
 
-import { base44 } from '@/api/base44Client';
-import processPayment from './processPayment';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-export default async function createSubscription({ 
-  workshopId, 
-  planId,
-  paymentData,
-  userId 
-}) {
+export default async function(req) {
   try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { workshopId, planId, paymentData, userId } = await req.json();
+
     // Buscar workshop e plano
     const workshop = await base44.entities.Workshop.filter({ id: workshopId });
     const plan = await base44.entities.Plan.filter({ id: planId });
@@ -39,19 +39,20 @@ export default async function createSubscription({
         }
       });
 
-      return {
+      return Response.json({
         success: true,
         message: 'Plano gratuito ativado com sucesso',
         workshop: workshopData
-      };
+      });
     }
 
-    // Processar pagamento via gateway
-    const paymentResult = await processPayment({
+    // Processar pagamento via gateway (invoca a função processPayment)
+    const invokeRes = await base44.functions.invoke('processPayment', {
       paymentData,
       plan: planData,
       workshop: workshopData
     });
+    const paymentResult = invokeRes?.data ?? invokeRes;
 
     if (!paymentResult.success) {
       throw new Error(paymentResult.error || 'Erro ao processar pagamento');
@@ -85,30 +86,26 @@ export default async function createSubscription({
     });
 
     // Enviar email de confirmação
-    await sendConfirmationEmail({
+    await sendConfirmationEmail(base44, {
       email: workshopData.owner_email,
       planName: planData.nome,
       amount: planData.preco
     });
 
-    return {
+    return Response.json({
       success: true,
       message: 'Assinatura criada com sucesso',
       transactionId: paymentResult.transactionId,
       workshop: workshopData
-    };
+    });
 
   } catch (error) {
     console.error('Erro ao criar assinatura:', error);
-    
-    return {
-      success: false,
-      error: error.message
-    };
+    return Response.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
-async function sendConfirmationEmail({ email, planName, amount }) {
+async function sendConfirmationEmail(base44, { email, planName, amount }) {
   try {
     await base44.integrations.Core.SendEmail({
       to: email,

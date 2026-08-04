@@ -5,6 +5,8 @@
  * Habilite em: Dashboard → Settings → Backend Functions
  */
 
+import Stripe from 'npm:stripe';
+
 export default async function processPayment({ paymentData, plan, workshop }) {
   const { gateway, paymentMethod, cardData } = paymentData;
 
@@ -50,7 +52,7 @@ async function processStripePayment(paymentData, plan) {
     throw new Error('STRIPE_SECRET_KEY não configurada');
   }
 
-  const stripe = require('stripe')(STRIPE_SECRET_KEY);
+  const stripe = new Stripe(STRIPE_SECRET_KEY);
   
   const { cardData, customerEmail, customerName } = paymentData;
 

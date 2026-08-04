@@ -2,7 +2,20 @@
 // Apply to: bffDashboard, calculateRankings, generateReports
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
-import { getOrSet, invalidateCache } from '../lib/backendCache.js';
+
+// In-memory cache inline (functions não podem importar arquivos fora do próprio diretório)
+const _cache = new Map();
+async function getOrSet(key, fn, ttl = 1000 * 60 * 5) {
+  if (_cache.has(key)) return _cache.get(key);
+  const result = await fn();
+  _cache.set(key, result);
+  setTimeout(() => _cache.delete(key), ttl);
+  return result;
+}
+function invalidateCache(keyPattern) {
+  if (typeof keyPattern === 'string') _cache.delete(keyPattern);
+  else if (keyPattern instanceof RegExp) for (const k of _cache.keys()) if (keyPattern.test(k)) _cache.delete(k);
+}
 
 Deno.serve(async (req) => {
   try {
