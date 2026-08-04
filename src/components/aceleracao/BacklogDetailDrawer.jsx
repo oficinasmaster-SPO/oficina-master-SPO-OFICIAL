@@ -72,7 +72,7 @@ function StatusSelect({ tarefa, onStatusChange, disabled }) {
 }
 
 // ── Componente principal ─────────────────────────────────────────────────────
-export default function BacklogDetailDrawer({ tarefa, user, onClose, onEdit }) {
+export default function BacklogDetailDrawer({ tarefa, user, onClose, onEdit, hideCloseButton = false }) {
   const [activeTab, setActiveTab] = React.useState("detalhes");
   const drawerRef = useRef(null);
   const queryClient = useQueryClient();
@@ -129,23 +129,14 @@ export default function BacklogDetailDrawer({ tarefa, user, onClose, onEdit }) {
       : 0;
 
   return (
-    <>
-      {/* Overlay semitransparente (clica fora fecha) */}
-      <div
-        className="fixed inset-0 z-30 bg-black/20 backdrop-blur-[1px] transition-opacity"
-        onClick={onClose}
-        aria-hidden
-      />
-
-      {/* Drawer */}
-      <aside
-        ref={drawerRef}
-        className="fixed right-0 top-0 z-40 flex h-full w-full max-w-[680px] flex-col bg-white shadow-2xl ring-1 ring-black/5 animate-in slide-in-from-right duration-200"
-      >
+    <aside
+      ref={drawerRef}
+      className="flex h-full flex-col bg-white border-l border-gray-100 animate-in slide-in-from-right duration-200 overflow-hidden"
+    >
         {/* ── Header ── */}
         <div className="flex shrink-0 flex-col border-b border-gray-100">
           {/* Linha 1: breadcrumb + ações */}
-          <div className="flex items-center justify-between gap-3 px-5 pt-4 pb-2">
+          <div className="flex items-center justify-between gap-3 px-5 pt-3 pb-2">
             <div className="flex items-center gap-2 min-w-0">
               <span className="font-mono text-xs text-gray-400">
                 #{tarefa.id?.slice(-6).toUpperCase()}
@@ -171,12 +162,14 @@ export default function BacklogDetailDrawer({ tarefa, user, onClose, onEdit }) {
                   Editar
                 </Button>
               )}
-              <button
-                onClick={onClose}
-                className="flex h-7 w-7 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              {!hideCloseButton && (
+                <button
+                  onClick={onClose}
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
           </div>
 
@@ -370,7 +363,6 @@ export default function BacklogDetailDrawer({ tarefa, user, onClose, onEdit }) {
             </div>
           )}
         </div>
-      </aside>
-    </>
+    </aside>
   );
 }

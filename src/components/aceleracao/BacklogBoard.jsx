@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/select";
 import BacklogIssueRow from "./BacklogIssueRow";
 import BacklogDetailDrawer from "./BacklogDetailDrawer";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 import TarefaBacklogForm from "./TarefaBacklogForm";
 import TarefaBacklogModal from "./TarefaBacklogModal";
 import {
@@ -103,6 +105,7 @@ function KpiChip({ label, value, className = "" }) {
 // ── Componente principal ────────────────────────────────────────────────────
 export default function BacklogBoard({ workshopId, user }) {
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   // Form / detalhe
   const [showForm, setShowForm]         = useState(false);
@@ -372,7 +375,7 @@ export default function BacklogBoard({ workshopId, user }) {
 
       {/* ── Split container ── */}
       <div className="flex min-h-0 flex-1">
-        <div className={`flex flex-col min-h-0 transition-all duration-200 ${freshSelected ? 'w-[55%]' : 'w-full'}`}>
+        <div className={`flex flex-col min-h-0 transition-all duration-200 ${freshSelected && !isMobile ? 'w-[55%]' : 'w-full'}`}>
       {/* ── Lista agrupada ── */}
       <div className="min-h-0 flex-1 overflow-y-auto bg-white">
         {isLoading ? (
@@ -434,7 +437,7 @@ export default function BacklogBoard({ workshopId, user }) {
       </div>
         </div>
         {freshSelected && (
-          <div className="w-[45%] border-l border-gray-200 flex flex-col min-h-0 [&>div:first-child]:hidden [&>aside]:!static [&>aside]:!inset-auto [&>aside]:!z-auto [&>aside]:!w-full [&>aside]:!max-w-none [&>aside]:!h-full [&>aside]:!shadow-none [&>aside]:!ring-0 [&>aside]:!animate-none">
+          <div className="hidden md:flex w-[45%] flex-col min-h-0">
             <BacklogDetailDrawer
               tarefa={freshSelected}
               user={user}
@@ -444,6 +447,21 @@ export default function BacklogBoard({ workshopId, user }) {
           </div>
         )}
       </div>
+
+      {/* Mobile sheet */}
+      <Sheet open={!!freshSelected && isMobile} onOpenChange={(open) => { if (!open) setSelectedTarefa(null); }}>
+        <SheetContent side="bottom" className="h-[85dvh] p-0">
+          {freshSelected && (
+            <BacklogDetailDrawer
+              tarefa={freshSelected}
+              user={user}
+              onClose={() => setSelectedTarefa(null)}
+              onEdit={handleEdit}
+              hideCloseButton
+            />
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
