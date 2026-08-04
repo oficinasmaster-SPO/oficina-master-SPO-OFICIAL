@@ -11,11 +11,6 @@ import StatusBadge from "./ds/StatusBadge";
 import OriginBadge from "./ds/OriginBadge";
 import { getDaysOverdue, formatDate, formatDateTime } from "./ds/dateUtils";
 
-function cleanNotesPreview(notes) {
-  if (!notes) return null;
-  return notes.replace(/^Follow-up automático da sprint:\s*/i, "").trim() || null;
-}
-
 // Returns Tailwind bg color class for the meeting-risk dot overlay on the avatar
 function riscoToDotColor(risco) {
   if (!risco || risco.nivel === "sem_dados") return null;
@@ -27,14 +22,12 @@ function riscoToDotColor(risco) {
 }
 
 const FollowUpPendenteRow = memo(({
-  reminder, today, seqFU, score, onSelect, isLast, meuId, stats, isSelected, risco, onIniciarAtendimento, plano, logo_url,
+  reminder, today, seqFU, score, onSelect, isLast, stats, isSelected, risco, onIniciarAtendimento, plano, logo_url,
 }) => {
-  const consultor = reminder.consultor_principal_nome || reminder.consultor_nome || null;
-  const isOtherConsultor =
-    meuId &&
-    reminder.consultor_principal_id &&
-    reminder.consultor_principal_id !== meuId &&
-    reminder.consultor_id !== meuId;
+  // Consultor principal = ponto focal do cliente (dúvidas). Sempre exibido no subtítulo.
+  const consultorPrincipal = reminder.consultor_principal_nome || reminder.consultor_nome || null;
+  // Consultor executor = último que realizou o atendimento. Qualquer consultor pode atender.
+  const consultorExecutor = reminder.consultor_executor_nome || consultorPrincipal;
 
   const isOverdue = reminder.reminder_date < today;
   const isToday   = reminder.reminder_date === today;
@@ -46,8 +39,6 @@ const FollowUpPendenteRow = memo(({
     : isToday
     ? "border-l-amber-400"
     : "border-l-gray-200";
-
-  const notesPreview = cleanNotesPreview(reminder.notes);
 
   const pct = stats && stats.total > 0
     ? Math.round((stats.concluidos / stats.total) * 100)
@@ -89,11 +80,7 @@ const FollowUpPendenteRow = memo(({
                 <p className="flex items-center gap-1.5"><span className="inline-block w-2 h-2 rounded-full bg-amber-400" /> Atenção — última reunião há muitos dias</p>
                 <p className="flex items-center gap-1.5"><span className="inline-block w-2 h-2 rounded-full bg-emerald-400" /> OK — reuniões em dia</p>
                 <p className="text-gray-400">Sem bolinha — sem dados suficientes</p>
-                {isOtherConsultor && (
-                  <p className="text-blue-600 font-medium pt-1 border-t border-gray-200">
-                    Azul = follow-up de outro consultor ({consultor})
-                  </p>
-                )}
+
               </div>
             </TooltipContent>
           </Tooltip>
@@ -102,26 +89,27 @@ const FollowUpPendenteRow = memo(({
           <p className="text-sm font-bold text-gray-900 truncate leading-tight">
             {reminder.workshop_name || "Sem cliente"}
           </p>
-          {(plano || notesPreview || isOtherConsultor) && (
+          {(plano || consultorPrincipal) && (
             <p className="text-[11px] text-gray-400 truncate mt-0.5 leading-tight">
               {plano && (
-                <span className="text-gray-500 font-medium mr-1">{plano}</span>
+                <span className="text-gray-500 font-medium">{plano}</span>
               )}
-              {plano && (notesPreview || isOtherConsultor) && <span className="text-gray-300 mr-1">·</span>}
-              {isOtherConsultor && consultor && (
-                <span className="text-blue-500 font-medium mr-1">{consultor} ·</span>
+              {plano && consultorPrincipal && (
+                <span className="text-gray-300 mx-1">|</span>
               )}
-              {notesPreview}
+              {consultorPrincipal && (
+                <span className="text-gray-500 truncate">{consultorPrincipal}</span>
+              )}
             </p>
           )}
         </div>
       </div>
 
-      {/* ── CONSULTOR ── 140px */}
+      {/* ── CONSULTOR (último que atendeu) ── 140px */}
       <div className="w-[140px] flex-shrink-0 px-2 py-2.5 overflow-hidden">
-        {consultor ? (
-          <span className={`block w-full text-sm font-bold truncate leading-tight ${isOtherConsultor ? "text-blue-600" : "text-gray-900"}`} title={consultor}>
-            {consultor}
+        {consultorExecutor ? (
+          <span className="block w-full text-sm font-bold truncate leading-tight text-gray-900" title={consultorExecutor}>
+            {consultorExecutor}
           </span>
         ) : (
           <span className="text-gray-300 text-sm">—</span>

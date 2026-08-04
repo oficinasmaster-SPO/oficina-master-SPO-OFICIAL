@@ -8,6 +8,12 @@ import {
   ChevronDown, ChevronUp, Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import WorkshopAvatar from "./followups/ds/WorkshopAvatar";
 import OverviewCockpit from "./followups/OverviewCockpit";
 import { calcHealthScore } from "./followups/ds/HealthScore";
@@ -95,9 +101,18 @@ function ClientTimeline({ concluidos }) {
                     </div>
                     <p className="text-[10px] text-gray-400 mt-0.5">{relTime}</p>
                     {obsClean && (
-                      <p className="text-[11px] text-gray-600 mt-0.5 leading-snug line-clamp-2">
-                        {obsClean}
-                      </p>
+                      <TooltipProvider delayDuration={300}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <p className="text-[11px] text-gray-600 mt-0.5 leading-snug line-clamp-2 cursor-help">
+                              {obsClean}
+                            </p>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[360px] bg-white border border-black rounded-lg px-3 py-2 text-[11px] text-gray-700 shadow-md z-[99999] whitespace-pre-wrap leading-relaxed">
+                            {obsClean}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
                   </div>
                 </div>
