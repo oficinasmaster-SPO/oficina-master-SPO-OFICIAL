@@ -115,7 +115,7 @@ export default function CentralFollowUp() {
   return (
     <div className="space-y-3">
       {/* Compact header bar ~60px */}
-      <div className="relative rounded-xl overflow-hidden bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 px-5 py-3 flex items-center gap-4 shadow-md">
+      <div className="relative rounded-xl overflow-hidden bg-[linear-gradient(to_right,#314d67,#c27277)] px-5 py-3 flex items-center gap-4 shadow-md">
         {/* Title + pulse */}
         <div className="flex items-center gap-2 flex-shrink-0">
           <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
