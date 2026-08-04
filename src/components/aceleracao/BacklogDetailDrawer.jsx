@@ -1,8 +1,8 @@
 import React, { useRef, useEffect, useState, useMemo } from "react";
 import {
-  X, Edit2, Clock, Lock, MoreHorizontal, Copy, Archive,
+  X, Clock, Lock,
   FileText, ListChecks, Activity as ActivityIcon, StickyNote,
-  CheckCircle2, Command
+  CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -94,83 +94,21 @@ function ProgressBar({ done, total }) {
 }
 
 /* ─────────────────────────────────────────────────────────────
- * KebabMenu — dropdown de ações do header
- * ────────────────────────────────────────────────────────── */
-function KebabMenu({ onEdit, onDuplicate, onArchive, canEdit }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handle = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener("mousedown", handle);
-    return () => document.removeEventListener("mousedown", handle);
-  }, [open]);
-
-  if (!canEdit) return null;
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex h-7 w-7 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-        aria-label="Ações"
-      >
-        <MoreHorizontal className="h-4 w-4" />
-      </button>
-      {open && (
-        <div
-          className="absolute right-0 top-8 z-20 w-44 overflow-hidden rounded-lg border border-gray-100 bg-white shadow-lg animate-in fade-in-0 zoom-in-95 duration-150"
-          style={{ transformOrigin: "top right" }}
-        >
-          {onEdit && (
-            <button
-              onClick={() => { setOpen(false); onEdit(); }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-            >
-              <Edit2 className="h-3.5 w-3.5 text-gray-400" /> Editar
-            </button>
-          )}
-          {onDuplicate && (
-            <button
-              onClick={() => { setOpen(false); onDuplicate(); }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-            >
-              <Copy className="h-3.5 w-3.5 text-gray-400" /> Duplicar
-            </button>
-          )}
-          {onArchive && (
-            <>
-              <div className="h-px bg-gray-100" />
-              <button
-                onClick={() => { setOpen(false); onArchive(); }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
-              >
-                <Archive className="h-3.5 w-3.5 text-gray-400" /> Arquivar
-              </button>
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
- * EscChip — botão "Esc" elegante substituindo o X
+ * EscChip — botão de fechar com feedback tátil
+ * Único botão do header. Combina atalho visível + ícone.
  * ────────────────────────────────────────────────────────── */
 function EscChip({ onClose }) {
   return (
     <button
       onClick={onClose}
-      className="group flex h-7 items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2 text-[11px] font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800 transition-all"
+      className="group flex h-7 items-center gap-1.5 rounded-lg border border-gray-200/80 bg-white/60 px-2 pl-1.5 text-[11px] font-medium text-gray-500 shadow-sm backdrop-blur-sm transition-all duration-150 hover:-translate-y-[0.5px] hover:border-gray-300 hover:bg-white hover:text-gray-900 hover:shadow-md active:translate-y-0 active:shadow-sm"
       aria-label="Fechar (Esc)"
       title="Fechar (Esc)"
     >
-      <span className="rounded bg-gray-100 px-1 py-[1px] font-mono text-[10px] text-gray-500 group-hover:bg-white group-hover:text-gray-700 transition-colors">
+      <kbd className="rounded-md bg-gray-100/80 px-1.5 py-[1px] font-mono text-[10px] font-semibold text-gray-500 transition-colors group-hover:bg-gray-900 group-hover:text-white">
         Esc
-      </span>
-      <X className="h-3 w-3" />
+      </kbd>
+      <X className="h-3.5 w-3.5" strokeWidth={2.25} />
     </button>
   );
 }
@@ -182,32 +120,40 @@ export default function BacklogDetailDrawer({
   tarefa,
   user,
   onClose,
-  onEdit,
-  onDuplicate,
-  onArchive,
   hideCloseButton = false,
 }) {
   const drawerRef = useRef(null);
   const scrollRef = useRef(null);
   const [scrolled, setScrolled] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [phase, setPhase] = useState("entering"); // entering | open | leaving
   const queryClient = useQueryClient();
 
   const { getName, getPhoto } = useEmployeeResolver();
   const logosByWorkshop = useWorkshopLogos(tarefa?.workshop_id ? [tarefa.workshop_id] : []);
 
-  /* Animação de entrada montada */
+  /* Animação de entrada (2 frames = evita flash) */
   useEffect(() => {
-    const t = requestAnimationFrame(() => setMounted(true));
-    return () => cancelAnimationFrame(t);
+    const r1 = requestAnimationFrame(() => {
+      const r2 = requestAnimationFrame(() => setPhase("open"));
+      return () => cancelAnimationFrame(r2);
+    });
+    return () => cancelAnimationFrame(r1);
   }, []);
 
-  /* Escape fecha */
+  /* Handler de fechar com animação de saída */
+  const requestClose = React.useCallback(() => {
+    if (phase === "leaving") return;
+    setPhase("leaving");
+    // Duração alinhada com a transição de saída (280ms)
+    setTimeout(() => onClose?.(), 280);
+  }, [phase, onClose]);
+
+  /* Escape fecha (com animação) */
   useEffect(() => {
-    const handleKey = (e) => { if (e.key === "Escape") onClose(); };
+    const handleKey = (e) => { if (e.key === "Escape") requestClose(); };
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
-  }, [onClose]);
+  }, [requestClose]);
 
   /* Detecta scroll para sticky comprimido */
   useEffect(() => {
@@ -266,15 +212,6 @@ export default function BacklogDetailDrawer({
     updateMutation.mutate({ status: newStatus, ...extra });
   };
 
-  const isInternal = user?.user_type === "internal" || user?.data?.user_type === "internal";
-  const canEdit =
-    !user ||
-    user.role === "admin" ||
-    isInternal ||
-    user.id === tarefa.created_by_id ||
-    user.id === tarefa.assignee_id ||
-    user.id === tarefa.assigned_to_id;
-
   const prazoFmt = tarefa.prazo
     ? format(new Date(tarefa.prazo), "dd/MM/yyyy", { locale: ptBR })
     : "—";
@@ -290,19 +227,37 @@ export default function BacklogDetailDrawer({
   const responsavelNome = getName(tarefa.assignee_id, tarefa.assignee_name);
   const responsavelFoto = getPhoto(tarefa.assignee_id);
 
-  /* Estilo animado de entrada (spring translate + fade + micro scale) */
-  const enterStyle = useMemo(() => ({
-    transform: mounted ? "translateX(0) scale(1)" : "translateX(24px) scale(0.995)",
-    opacity: mounted ? 1 : 0,
-    transition: `transform 320ms ${EASE_OUT}, opacity 260ms ${EASE_OUT}`,
-    willChange: "transform, opacity",
-  }), [mounted]);
+  /* Estilo animado unificado (entrada spring + saída suave) */
+  const drawerStyle = useMemo(() => {
+    if (phase === "entering") {
+      return {
+        transform: "translateX(32px) scale(0.985)",
+        opacity: 0,
+        filter: "blur(2px)",
+      };
+    }
+    if (phase === "leaving") {
+      return {
+        transform: "translateX(24px) scale(0.99)",
+        opacity: 0,
+        filter: "blur(1px)",
+        transition: `transform 280ms ${EASE_IN}, opacity 220ms ${EASE_IN}, filter 220ms ${EASE_IN}`,
+      };
+    }
+    // open
+    return {
+      transform: "translateX(0) scale(1)",
+      opacity: 1,
+      filter: "blur(0)",
+      transition: `transform 380ms ${EASE_OUT}, opacity 300ms ${EASE_OUT}, filter 300ms ${EASE_OUT}`,
+    };
+  }, [phase]);
 
   return (
     <aside
       ref={drawerRef}
-      style={enterStyle}
-      className="flex h-full flex-col bg-white border-l border-gray-100 overflow-hidden shadow-[-8px_0_24px_-16px_rgba(15,23,42,0.12)]"
+      style={{ willChange: "transform, opacity, filter", ...drawerStyle }}
+      className="flex h-full flex-col overflow-hidden border-l border-gray-100 bg-white shadow-[-12px_0_32px_-20px_rgba(15,23,42,0.18)]"
     >
       {/* ─────────── Header sticky (compressível) ─────────── */}
       <div
@@ -336,13 +291,7 @@ export default function BacklogDetailDrawer({
                 )}
               </div>
               <div className="flex shrink-0 items-center gap-1">
-                <KebabMenu
-                  canEdit={canEdit}
-                  onEdit={onEdit ? () => onEdit(tarefa) : undefined}
-                  onDuplicate={onDuplicate ? () => onDuplicate(tarefa) : undefined}
-                  onArchive={onArchive ? () => onArchive(tarefa) : undefined}
-                />
-                {!hideCloseButton && <EscChip onClose={onClose} />}
+                {!hideCloseButton && <EscChip onClose={requestClose} />}
               </div>
             </div>
           </div>
