@@ -364,21 +364,17 @@ export default function CronogramaGeral({ isTab = false }) {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">CRONOGRAMA GERAL</h1>
           <div className="flex gap-3">
-            <Select value={selectedPlan} onValueChange={setSelectedPlan}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="TODOS" className="font-bold">TODOS OS CLIENTES</SelectItem>
-                <SelectItem value="FREE" className="font-bold">FREE</SelectItem>
-                <SelectItem value="START" className="font-bold">START</SelectItem>
-                <SelectItem value="BRONZE" className="font-bold">BRONZE</SelectItem>
-                <SelectItem value="PRATA" className="font-bold">PRATA</SelectItem>
-                <SelectItem value="GOLD" className="font-bold">GOLD</SelectItem>
-                <SelectItem value="IOM" className="font-bold">IOM</SelectItem>
-                <SelectItem value="MILLIONS" className="font-bold">MILLIONS</SelectItem>
-              </SelectContent>
-            </Select>
+            <Combobox
+              options={[
+                { value: 'todos', label: 'Todos os Clientes' },
+                { value: 'ativos', label: 'Ativos' },
+                { value: 'inativo', label: 'Inativos' },
+              ]}
+              value={workshopStatusFilter}
+              onChange={setWorkshopStatusFilter}
+              placeholder="TODOS OS CLIENTES"
+              className="w-48"
+            />
             <Button variant="outline" onClick={handleExport}>
               <Download className="w-4 h-4 mr-2" />
               Exportar
@@ -491,21 +487,17 @@ export default function CronogramaGeral({ isTab = false }) {
         <div className="px-5 py-3 bg-white border-b border-gray-200 rounded-t-lg">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <Select value={selectedPlan} onValueChange={setSelectedPlan}>
-                <SelectTrigger className="w-[200px] h-9 text-sm font-medium bg-white border-gray-300">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="TODOS">TODOS OS CLIENTES</SelectItem>
-                  <SelectItem value="FREE">FREE</SelectItem>
-                  <SelectItem value="START">START</SelectItem>
-                  <SelectItem value="BRONZE">BRONZE</SelectItem>
-                  <SelectItem value="PRATA">PRATA</SelectItem>
-                  <SelectItem value="GOLD">GOLD</SelectItem>
-                  <SelectItem value="IOM">IOM</SelectItem>
-                  <SelectItem value="MILLIONS">MILLIONS</SelectItem>
-                </SelectContent>
-              </Select>
+              <Combobox
+                options={[
+                  { value: 'todos', label: 'Todos os Clientes' },
+                  { value: 'ativos', label: 'Ativos' },
+                  { value: 'inativo', label: 'Inativos' },
+                ]}
+                value={workshopStatusFilter}
+                onChange={setWorkshopStatusFilter}
+                placeholder="TODOS OS CLIENTES"
+                className="w-[200px]"
+              />
               <Button variant="outline" size="sm" onClick={handleExport} className="h-9 text-sm">
                 <Download className="w-3.5 h-3.5 mr-1.5" />
                 Exportar
