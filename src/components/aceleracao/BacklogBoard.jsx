@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,6 @@ import BacklogDetailDrawer from "./BacklogDetailDrawer";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import TarefaBacklogForm from "./TarefaBacklogForm";
-import TarefaBacklogModal from "./TarefaBacklogModal";
 import {
   TAREFA_STATUS_CONFIG,
   PRIORIDADE_OPTIONS,
@@ -107,10 +106,10 @@ export default function BacklogBoard({ workshopId, user }) {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
 
-  // Form / detalhe
-  const [showForm, setShowForm]         = useState(false);
-  const [editingTarefa, setEditingTarefa] = useState(null);
+  // Painel: null | 'detail' | 'form'
+  const [panelMode, setPanelMode] = useState(null);
   const [selectedTarefa, setSelectedTarefa] = useState(null);
+  const [editingTarefa, setEditingTarefa] = useState(null);
 
   // Filtros inline
   const [search, setSearch]             = useState("");
@@ -216,17 +215,43 @@ export default function BacklogBoard({ workshopId, user }) {
   };
 
   // ── Handlers ──────────────────────────────────────────────────────────────
-  const handleView = useCallback((tarefa) => setSelectedTarefa(tarefa), []);
-  const handleEdit = useCallback((tarefa) => {
-    setSelectedTarefa(null);
-    setEditingTarefa(tarefa);
-    setShowForm(true);
+  const handleView = useCallback((tarefa) => {
+    setSelectedTarefa(tarefa);
+    setPanelMode("detail");
   }, []);
-  const handleFormClose = useCallback(() => {
-    setShowForm(false);
+  const handleNew = useCallback(() => {
     setEditingTarefa(null);
+    setPanelMode("form");
+  }, []);
+  const handleEdit = useCallback((tarefa) => {
+    setEditingTarefa(tarefa);
+    setPanelMode("form");
+  }, []);
+  const handlePanelClose = useCallback(() => {
+    setSelectedTarefa(null);
+    setEditingTarefa(null);
+    setPanelMode(null);
+  }, []);
+  const handleFormCancel = useCallback(() => {
+    if (editingTarefa) {
+      setSelectedTarefa(editingTarefa);
+      setPanelMode("detail");
+    } else {
+      setPanelMode(null);
+      setSelectedTarefa(null);
+    }
+  }, [editingTarefa]);
+  const handleFormSuccess = useCallback(() => {
     queryClient.invalidateQueries(["tarefas-backlog"]);
-  }, [queryClient]);
+    if (editingTarefa) {
+      setSelectedTarefa(editingTarefa);
+      setPanelMode("detail");
+    } else {
+      setPanelMode(null);
+      setSelectedTarefa(null);
+    }
+    setEditingTarefa(null);
+  }, [queryClient, editingTarefa]);
 
   // Sincroniza o selectedTarefa com dados frescos após mutação
   const freshSelected = useMemo(() => {
@@ -234,23 +259,21 @@ export default function BacklogBoard({ workshopId, user }) {
     return tarefas.find((t) => t.id === selectedTarefa.id) || selectedTarefa;
   }, [selectedTarefa, tarefas]);
 
+  // ── Navegação por teclado ─────────────────────────────────────────────────
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === "Escape") { handlePanelClose(); return; }
+      if (panelMode !== "detail" || !selectedTarefa) return;
+      const idx = filteredAll.findIndex((t) => t.id === selectedTarefa.id);
+      if (e.key === "ArrowDown" && idx < filteredAll.length - 1) handleView(filteredAll[idx + 1]);
+      if (e.key === "ArrowUp" && idx > 0) handleView(filteredAll[idx - 1]);
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [selectedTarefa, filteredAll, panelMode, handleView, handlePanelClose]);
+
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
-
-      {/* ── Modal de criação/edição ── */}
-      <TarefaBacklogModal
-        open={showForm}
-        onClose={() => { setShowForm(false); setEditingTarefa(null); }}
-      >
-        <TarefaBacklogForm
-          tarefa={editingTarefa}
-          user={user}
-          workshops={workshops}
-          workshopId={workshopId}
-          onCancel={() => { setShowForm(false); setEditingTarefa(null); }}
-          onSuccess={handleFormClose}
-        />
-      </TarefaBacklogModal>
 
       {/* ── Toolbar ── */}
       <div className="shrink-0 border-b border-gray-200 bg-white px-4 py-3 space-y-2">
@@ -291,7 +314,7 @@ export default function BacklogBoard({ workshopId, user }) {
             <span className="text-xs text-gray-400">{filteredAll.length} tarefas</span>
             <Button
               size="sm"
-              onClick={() => setShowForm(true)}
+              onClick={handleNew}
               className="h-8 gap-1.5 bg-blue-600 hover:bg-blue-700 text-xs"
             >
               <Plus className="h-3.5 w-3.5" />
@@ -375,7 +398,7 @@ export default function BacklogBoard({ workshopId, user }) {
 
       {/* ── Split container ── */}
       <div className="flex min-h-0 flex-1">
-        <div className={`flex flex-col min-h-0 transition-all duration-200 ${freshSelected && !isMobile ? 'w-[55%]' : 'w-full'}`}>
+        <div className={`flex flex-col min-h-0 transition-all duration-200 ${panelMode && !isMobile ? 'w-[55%]' : 'w-full'}`}>
       {/* ── Lista agrupada ── */}
       <div className="min-h-0 flex-1 overflow-y-auto bg-white">
         {isLoading ? (
@@ -413,7 +436,7 @@ export default function BacklogBoard({ workshopId, user }) {
                           key={tarefa.id}
                           tarefa={tarefa}
                           onView={handleView}
-                          isSelected={selectedTarefa?.id === tarefa.id}
+                          isSelected={panelMode === "detail" && selectedTarefa?.id === tarefa.id}
                         />
                       ))
                     )}
@@ -436,30 +459,54 @@ export default function BacklogBoard({ workshopId, user }) {
         )}
       </div>
         </div>
-        {freshSelected && (
+        {panelMode && (
           <div className="hidden md:flex w-[45%] flex-col min-h-0">
-            <BacklogDetailDrawer
-              tarefa={freshSelected}
-              user={user}
-              onClose={() => setSelectedTarefa(null)}
-              onEdit={handleEdit}
-            />
+            {panelMode === "form" ? (
+              <div className="flex h-full flex-col overflow-y-auto bg-white border-l border-gray-100">
+                <TarefaBacklogForm
+                  tarefa={editingTarefa}
+                  user={user}
+                  workshops={workshops}
+                  workshopId={workshopId}
+                  onCancel={handleFormCancel}
+                  onSuccess={handleFormSuccess}
+                />
+              </div>
+            ) : freshSelected ? (
+              <BacklogDetailDrawer
+                tarefa={freshSelected}
+                user={user}
+                onClose={handlePanelClose}
+                onEdit={handleEdit}
+              />
+            ) : null}
           </div>
         )}
       </div>
 
       {/* Mobile sheet */}
-      <Sheet open={!!freshSelected && isMobile} onOpenChange={(open) => { if (!open) setSelectedTarefa(null); }}>
+      <Sheet open={panelMode !== null && isMobile} onOpenChange={(open) => { if (!open) handlePanelClose(); }}>
         <SheetContent side="bottom" className="h-[85dvh] p-0">
-          {freshSelected && (
+          {panelMode === "form" ? (
+            <div className="h-full overflow-y-auto">
+              <TarefaBacklogForm
+                tarefa={editingTarefa}
+                user={user}
+                workshops={workshops}
+                workshopId={workshopId}
+                onCancel={handleFormCancel}
+                onSuccess={handleFormSuccess}
+              />
+            </div>
+          ) : freshSelected ? (
             <BacklogDetailDrawer
               tarefa={freshSelected}
               user={user}
-              onClose={() => setSelectedTarefa(null)}
+              onClose={handlePanelClose}
               onEdit={handleEdit}
               hideCloseButton
             />
-          )}
+          ) : null}
         </SheetContent>
       </Sheet>
     </div>

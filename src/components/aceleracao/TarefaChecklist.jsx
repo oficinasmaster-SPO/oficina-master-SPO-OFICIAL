@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -28,12 +28,16 @@ export default function TarefaChecklist({ tarefaId, workshopId, user }) {
     queryClient.invalidateQueries({ queryKey: ["backlog-checklist", tarefaId] });
   };
 
-  // Sync denormalized counts to parent task
+  // Sync denormalized counts to parent task (BUG-07: evitar writes redundantes)
+  const prevCountRef = useRef(null);
   useEffect(() => {
     if (!tarefaId) return;
     const concluidos = itens.filter((i) => i.concluido).length;
+    const total = itens.length;
+    if (prevCountRef.current?.total === total && prevCountRef.current?.concluidos === concluidos) return;
+    prevCountRef.current = { total, concluidos };
     base44.entities.TarefaBacklog.update(tarefaId, {
-      checklist_total: itens.length,
+      checklist_total: total,
       checklist_concluidos: concluidos,
     }).catch(() => {});
   }, [itens, tarefaId]);
