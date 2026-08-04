@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from "react";
-import { X, ExternalLink, Edit2, CheckCircle, Play, Clock, Lock, ArrowRight } from "lucide-react";
+import { X, Edit2, Clock, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -7,8 +7,13 @@ import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import ActivityFeed from "./ActivityFeed";
 import TarefaChecklist from "./TarefaChecklist";
+import StatusActionBar from "./StatusActionBar";
 import OrigemPedidoBanner from "./banners/OrigemPedidoBanner";
 import AguardandoClienteBanner from "./banners/AguardandoClienteBanner";
+import UserAvatar from "@/components/shared/UserAvatar";
+import WorkshopAvatar from "@/components/aceleracao/followups/ds/WorkshopAvatar";
+import useEmployeeResolver from "@/hooks/useEmployeeResolver";
+import { useWorkshopLogos } from "@/hooks/useWorkshopLogos";
 import {
   TAREFA_STATUS_CONFIG,
   PRIORIDADE_CONFIG,
@@ -17,13 +22,6 @@ import {
 } from "@/components/shared/backlogConstants";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 // ── Aba ativa ────────────────────────────────────────────────────────────────
 function Tab({ label, active, onClick }) {
@@ -51,31 +49,15 @@ function Field({ label, children }) {
   );
 }
 
-// ── Select de status inline ───────────────────────────────────────────────────
-const STATUS_ORDER = ["aberta", "em_execucao", "aguardando_cliente", "bloqueada", "concluida"];
-
-function StatusSelect({ tarefa, onStatusChange, disabled }) {
-  return (
-    <Select value={tarefa.status} onValueChange={onStatusChange} disabled={disabled}>
-      <SelectTrigger className="h-7 w-auto gap-1.5 rounded-full border px-2.5 text-xs font-semibold focus:ring-0">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {STATUS_ORDER.map((s) => (
-          <SelectItem key={s} value={s} className="text-xs">
-            {TAREFA_STATUS_CONFIG[s]?.label || s}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
-
 // ── Componente principal ─────────────────────────────────────────────────────
 export default function BacklogDetailDrawer({ tarefa, user, onClose, onEdit, hideCloseButton = false }) {
   const [activeTab, setActiveTab] = React.useState("detalhes");
   const drawerRef = useRef(null);
   const queryClient = useQueryClient();
+
+  // Resolvers canônicos de nomes/fotos (Employee + logos de workshop)
+  const { getName, getPhoto } = useEmployeeResolver();
+  const logosByWorkshop = useWorkshopLogos(tarefa?.workshop_id ? [tarefa.workshop_id] : []);
 
   // Fechar com Escape
   useEffect(() => {
@@ -127,6 +109,9 @@ export default function BacklogDetailDrawer({ tarefa, user, onClose, onEdit, hid
     tarefa.checklist_total > 0
       ? Math.round(((tarefa.checklist_concluidos || 0) / tarefa.checklist_total) * 100)
       : 0;
+
+  const responsavelNome = getName(tarefa.assignee_id, tarefa.assignee_name);
+  const responsavelFoto = getPhoto(tarefa.assignee_id);
 
   return (
     <aside
@@ -184,13 +169,8 @@ export default function BacklogDetailDrawer({ tarefa, user, onClose, onEdit, hid
             </h2>
           </div>
 
-          {/* Linha 3: meta-row (status inline, prioridade, prazo, cliente) */}
+          {/* Linha 3: meta-row (prioridade · prazo · cliente com logo · checklist) */}
           <div className="flex flex-wrap items-center gap-2 px-5 pb-3">
-            <StatusSelect
-              tarefa={tarefa}
-              onStatusChange={handleStatusChange}
-              disabled={updateMutation.isPending}
-            />
             <Badge
               variant="outline"
               className={`text-[10px] ${PRIORIDADE_CONFIG[tarefa.prioridade]?.className || ""}`}
@@ -203,8 +183,14 @@ export default function BacklogDetailDrawer({ tarefa, user, onClose, onEdit, hid
               </span>
             )}
             {tarefa.workshop_nome && (
-              <span className="rounded bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
-                {tarefa.workshop_nome}
+              <span className="flex items-center gap-1.5 rounded bg-gray-100 px-2 py-0.5">
+                <WorkshopAvatar
+                  name={tarefa.workshop_nome}
+                  logo_url={logosByWorkshop[tarefa.workshop_id]}
+                  size="sm"
+                  className="!w-4 !h-4 !text-[7px]"
+                />
+                <span className="text-[11px] font-medium text-gray-700">{tarefa.workshop_nome}</span>
               </span>
             )}
             {tarefa.checklist_total > 0 && (
@@ -219,19 +205,20 @@ export default function BacklogDetailDrawer({ tarefa, user, onClose, onEdit, hid
               </span>
             )}
           </div>
+        </div>
 
-          {/* Banners */}
-          <div className="px-5 pb-2 space-y-1.5">
-            <OrigemPedidoBanner tarefa={tarefa} compact />
-            <AguardandoClienteBanner tarefa={tarefa} compact />
-          </div>
+        {/* ── Barra de ação contextual (substitui o dropdown de status) ── */}
+        <StatusActionBar
+          tarefa={tarefa}
+          onStatusChange={handleStatusChange}
+          isPending={updateMutation.isPending}
+        />
 
-          {/* Abas */}
-          <div className="flex border-t border-gray-100 px-3">
-            <Tab label="Detalhes"    active={activeTab === "detalhes"}    onClick={() => setActiveTab("detalhes")} />
-            <Tab label="Checklist"   active={activeTab === "checklist"}   onClick={() => setActiveTab("checklist")} />
-            <Tab label="Atividade"   active={activeTab === "atividade"}   onClick={() => setActiveTab("atividade")} />
-          </div>
+        {/* ── Abas ── */}
+        <div className="flex shrink-0 border-b border-gray-100 px-3">
+          <Tab label="Detalhes"  active={activeTab === "detalhes"}  onClick={() => setActiveTab("detalhes")} />
+          <Tab label="Checklist" active={activeTab === "checklist"} onClick={() => setActiveTab("checklist")} />
+          <Tab label="Atividade" active={activeTab === "atividade"} onClick={() => setActiveTab("atividade")} />
         </div>
 
         {/* ── Conteúdo das abas ── */}
@@ -240,6 +227,12 @@ export default function BacklogDetailDrawer({ tarefa, user, onClose, onEdit, hid
           {/* DETALHES */}
           {activeTab === "detalhes" && (
             <div className="divide-y divide-gray-50">
+              {/* Banners contextuais */}
+              <div className="px-5 py-3 space-y-1.5">
+                <OrigemPedidoBanner tarefa={tarefa} compact />
+                <AguardandoClienteBanner tarefa={tarefa} compact />
+              </div>
+
               {/* Descrição */}
               {tarefa.descricao && (
                 <div className="px-5 py-4">
@@ -251,11 +244,19 @@ export default function BacklogDetailDrawer({ tarefa, user, onClose, onEdit, hid
               {/* Grid de campos */}
               <div className="grid grid-cols-2 gap-x-6 gap-y-4 px-5 py-4">
                 <Field label="Responsável">
-                  <div className="flex items-center gap-1.5">
-                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[9px] font-bold text-white">
-                      {(tarefa.assignee_name || "?")[0].toUpperCase()}
-                    </span>
-                    {tarefa.assignee_name || "—"}
+                  <div className="flex items-center gap-2">
+                    <UserAvatar src={responsavelFoto} name={responsavelNome} size="sm" />
+                    <span>{responsavelNome}</span>
+                  </div>
+                </Field>
+                <Field label="Cliente">
+                  <div className="flex items-center gap-2">
+                    <WorkshopAvatar
+                      name={tarefa.workshop_nome || "—"}
+                      logo_url={logosByWorkshop[tarefa.workshop_id]}
+                      size="sm"
+                    />
+                    <span>{tarefa.workshop_nome || "—"}</span>
                   </div>
                 </Field>
                 <Field label="Criado em">{criadoFmt}</Field>
@@ -290,51 +291,6 @@ export default function BacklogDetailDrawer({ tarefa, user, onClose, onEdit, hid
                 <div className="px-5 py-4">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 mb-1.5">Notas</p>
                   <p className="text-sm text-gray-700 whitespace-pre-wrap">{tarefa.notas}</p>
-                </div>
-              )}
-
-              {/* Ações rápidas de status */}
-              {tarefa.status !== "concluida" && canEdit && (
-                <div className="flex flex-wrap gap-2 px-5 py-4">
-                  {tarefa.status === "aberta" && (
-                    <Button
-                      size="sm"
-                      className="gap-1.5 bg-blue-600 hover:bg-blue-700"
-                      onClick={() => handleStatusChange("em_execucao")}
-                      disabled={updateMutation.isPending}
-                    >
-                      <Play className="h-3.5 w-3.5" /> Iniciar
-                    </Button>
-                  )}
-                  {tarefa.status === "em_execucao" && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1.5 border-amber-300 text-amber-700 hover:bg-amber-50"
-                      onClick={() => handleStatusChange("aguardando_cliente")}
-                      disabled={updateMutation.isPending}
-                    >
-                      <Clock className="h-3.5 w-3.5" /> Aguardar Cliente
-                    </Button>
-                  )}
-                  {tarefa.status === "aguardando_cliente" && (
-                    <Button
-                      size="sm"
-                      className="gap-1.5 bg-blue-600 hover:bg-blue-700"
-                      onClick={() => handleStatusChange("em_execucao")}
-                      disabled={updateMutation.isPending}
-                    >
-                      <Play className="h-3.5 w-3.5" /> Retomar
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    className="gap-1.5 bg-green-600 hover:bg-green-700 ml-auto"
-                    onClick={() => handleStatusChange("concluida")}
-                    disabled={updateMutation.isPending}
-                  >
-                    <CheckCircle className="h-3.5 w-3.5" /> Concluir
-                  </Button>
                 </div>
               )}
             </div>

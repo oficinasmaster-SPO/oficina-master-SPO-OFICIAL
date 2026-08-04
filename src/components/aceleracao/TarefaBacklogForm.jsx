@@ -11,13 +11,6 @@ import { toast } from "sonner";
 import TemplateBacklogSelector from "./TemplateBacklogSelector";
 import { ORIGIN_OPTIONS, PRIORIDADE_OPTIONS, TAREFA_STATUS_OPTIONS, IMPACTO_OPTIONS } from "@/components/shared/backlogConstants";
 import Combobox from "@/components/ui/combobox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsProp, workshopId, isFromAttendance = true, origemId, origemData, origemTitulo, onCancel, onSuccess, inline = false }) {
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
@@ -184,21 +177,17 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
             />
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className={`grid ${inline ? 'grid-cols-1' : 'md:grid-cols-2'} gap-6`}>
             <div>
               <Label>Cliente *</Label>
-              <Select value={formData.workshop_id} onValueChange={handleClienteChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {workshops.map(w => (
-                    <SelectItem key={w.id} value={w.id}>
-                      {w.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={formData.workshop_id}
+                onChange={handleClienteChange}
+                options={workshops.map(w => ({ value: w.id, label: w.name }))}
+                placeholder="Selecione o cliente"
+                searchPlaceholder="Pesquisar cliente..."
+                emptyText="Nenhum cliente encontrado."
+              />
             </div>
 
             <div>
@@ -217,57 +206,49 @@ export default function TarefaBacklogForm({ tarefa, user, workshops: workshopsPr
             </div>
           </div>
 
-          <div className="grid md:grid-cols-4 gap-6">
+          <div className={`grid ${inline ? 'grid-cols-1' : 'md:grid-cols-4'} gap-6`}>
             <div>
               <Label>Origem *</Label>
-              <Select value={formData.origin_type} onValueChange={(value) => setFormData({...formData, origin_type: value})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ORIGIN_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={formData.origin_type}
+                onChange={(v) => setFormData({...formData, origin_type: v})}
+                options={ORIGIN_OPTIONS}
+                placeholder="Selecione a origem"
+              />
             </div>
 
             <div>
               <Label>Prioridade *</Label>
-              <Select value={formData.prioridade} onValueChange={(value) => setFormData({...formData, prioridade: value})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRIORIDADE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={formData.prioridade}
+                onChange={(v) => setFormData({...formData, prioridade: v})}
+                options={PRIORIDADE_OPTIONS}
+                placeholder="Selecione a prioridade"
+              />
             </div>
 
             <div>
               <Label>Status *</Label>
-              <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TAREFA_STATUS_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={formData.status}
+                onChange={(v) => setFormData({...formData, status: v})}
+                options={TAREFA_STATUS_OPTIONS}
+                placeholder="Selecione o status"
+              />
             </div>
 
             <div>
               <Label>Impacto</Label>
-              <Select value={formData.impacto} onValueChange={(value) => setFormData({...formData, impacto: value})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {IMPACTO_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={formData.impacto}
+                onChange={(v) => setFormData({...formData, impacto: v})}
+                options={IMPACTO_OPTIONS}
+                placeholder="Selecione o impacto"
+              />
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className={`grid ${inline ? 'grid-cols-1' : 'md:grid-cols-2'} gap-6`}>
             <div>
               <Label>Prazo *</Label>
               <Input
