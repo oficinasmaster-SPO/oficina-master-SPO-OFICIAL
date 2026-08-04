@@ -14,15 +14,30 @@ import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { useAceleracaoObservability } from "@/components/hooks/useAceleracaoObservability";
 
-// Lazy tabs
-const VisaoGeralTab = lazy(() => import("@/components/aceleracao/VisaoGeralTab"));
-const PainelAtendimentosTab = lazy(() => import("@/components/aceleracao/PainelAtendimentosTab"));
-const AgendaVisualTab = lazy(() => import("@/components/aceleracao/AgendaVisualTab"));
-const CronogramaGeral = lazy(() => import("@/pages/CronogramaGeral"));
-const PedidosInternosTab = lazy(() => import("@/components/aceleracao/PedidosInternosTab"));
-const DashboardOperacionalTabRedesigned = lazy(() => import("@/components/aceleracao/DashboardOperacionalTabRedesigned"));
-const ConsultoriaGlobalTab = lazy(() => import("@/components/aceleracao/ConsultoriaGlobalTab"));
-const CentralProximosPassos = lazy(() => import("@/pages/CentralProximosPassos"));
+// Lazy tabs — com retry/reload para sobreviver a chunks stale após rebuild
+function lazyRetry(importFn) {
+  return lazy(() =>
+    importFn().catch((err) => {
+      if (err && /Failed to fetch|Importing a module script failed|error loading dynamically imported module/i.test(err.message || "")) {
+        if (!sessionStorage.getItem("__lazy_reload")) {
+          sessionStorage.setItem("__lazy_reload", "1");
+          window.location.reload();
+          return new Promise(() => {}); // pendente até o reload
+        }
+        sessionStorage.removeItem("__lazy_reload");
+      }
+      throw err;
+    })
+  );
+}
+const VisaoGeralTab = lazyRetry(() => import("@/components/aceleracao/VisaoGeralTab"));
+const PainelAtendimentosTab = lazyRetry(() => import("@/components/aceleracao/PainelAtendimentosTab"));
+const AgendaVisualTab = lazyRetry(() => import("@/components/aceleracao/AgendaVisualTab"));
+const CronogramaGeral = lazyRetry(() => import("@/pages/CronogramaGeral"));
+const PedidosInternosTab = lazyRetry(() => import("@/components/aceleracao/PedidosInternosTab"));
+const DashboardOperacionalTabRedesigned = lazyRetry(() => import("@/components/aceleracao/DashboardOperacionalTabRedesigned"));
+const ConsultoriaGlobalTab = lazyRetry(() => import("@/components/aceleracao/ConsultoriaGlobalTab"));
+const CentralProximosPassos = lazyRetry(() => import("@/pages/CentralProximosPassos"));
 
 
 const TAB_BASE = "flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200";
