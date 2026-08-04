@@ -87,7 +87,7 @@ export default function AguardandoClienteBanner({ tarefa, podeEditar, user, comp
         <Clock className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isLongWait ? 'text-orange-600' : 'text-amber-600'}`} />
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-semibold ${isLongWait ? 'text-orange-900' : 'text-amber-900'}`}>
-            ⏳ Aguardando Cliente {isLongWait && "· demorando"}
+            Aguardando Cliente {isLongWait && "· demorando"}
           </p>
           {tarefa.aguardando_cliente_motivo && (
             <p className={`text-xs mt-0.5 ${isLongWait ? 'text-orange-700' : 'text-amber-700'}`}>

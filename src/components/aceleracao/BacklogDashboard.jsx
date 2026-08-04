@@ -63,7 +63,7 @@ export default function BacklogDashboard({ workshopId, user }) {
   
   // Backlog crítico = tarefas vencidas e não concluídas
   const backlogCritico = tarefas.filter(t => 
-    t.status !== 'concluida' && new Date(t.prazo) < hoje
+    t.status !== 'concluida' && t.prazo && new Date(t.prazo) < hoje
   );
 
   // Backlog por consultor
@@ -78,7 +78,7 @@ export default function BacklogDashboard({ workshopId, user }) {
       };
     }
     backlogPorConsultor[consultor].total++;
-    if (new Date(tarefa.prazo) < hoje) {
+    if (tarefa.prazo && new Date(tarefa.prazo) < hoje) {
       backlogPorConsultor[consultor].vencidas++;
     }
     if (tarefa.prioridade === 'critica') {
@@ -98,7 +98,7 @@ export default function BacklogDashboard({ workshopId, user }) {
       };
     }
     backlogPorCliente[cliente].total++;
-    if (new Date(tarefa.prazo) < hoje) {
+    if (tarefa.prazo && new Date(tarefa.prazo) < hoje) {
       backlogPorCliente[cliente].vencidas++;
     }
     if (tarefa.prioridade === 'critica') {

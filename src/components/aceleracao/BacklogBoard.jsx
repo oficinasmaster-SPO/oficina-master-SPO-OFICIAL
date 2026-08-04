@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Plus, Search, ChevronDown, ChevronRight,
-  AlertCircle, Clock, Play, CheckCircle2, Lock, LayoutList,
+  Clock, Play, CheckCircle2, Lock, LayoutList,
   SlidersHorizontal, X,
 } from "lucide-react";
 import {
@@ -249,22 +249,6 @@ export default function BacklogBoard({ workshopId, user }) {
         />
       </TarefaBacklogModal>
 
-      {/* ── Drawer de detalhe ── */}
-      {freshSelected && (
-        <BacklogDetailDrawer
-          tarefa={freshSelected}
-          user={user}
-          onClose={() => setSelectedTarefa(null)}
-          onEdit={handleEdit}
-        />
-      )}
-
-      {/* ── Aviso de manutenção ── */}
-      <div className="shrink-0 flex items-center gap-2 bg-amber-50 border-b border-amber-200 px-4 py-2 text-amber-800">
-        <AlertCircle className="h-4 w-4 shrink-0" />
-        <span className="text-xs font-medium">Aviso: página em manutenção</span>
-      </div>
-
       {/* ── Toolbar ── */}
       <div className="shrink-0 border-b border-gray-200 bg-white px-4 py-3 space-y-2">
         {/* Linha 1: busca + filtros + botão */}
@@ -386,6 +370,9 @@ export default function BacklogBoard({ workshopId, user }) {
         </div>
       </div>
 
+      {/* ── Split container ── */}
+      <div className="flex min-h-0 flex-1">
+        <div className={`flex flex-col min-h-0 transition-all duration-200 ${freshSelected ? 'w-[55%]' : 'w-full'}`}>
       {/* ── Lista agrupada ── */}
       <div className="min-h-0 flex-1 overflow-y-auto bg-white">
         {isLoading ? (
@@ -434,7 +421,7 @@ export default function BacklogBoard({ workshopId, user }) {
           })
         )}
 
-        {!isLoading && filteredAll.length === 0 && !isLoading && (
+        {!isLoading && filteredAll.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <p className="text-sm text-gray-400">Nenhuma tarefa encontrada</p>
             {hasFilters && (
@@ -442,6 +429,18 @@ export default function BacklogBoard({ workshopId, user }) {
                 Limpar filtros
               </button>
             )}
+          </div>
+        )}
+      </div>
+        </div>
+        {freshSelected && (
+          <div className="w-[45%] border-l border-gray-200 flex flex-col min-h-0 [&>div:first-child]:hidden [&>aside]:!static [&>aside]:!inset-auto [&>aside]:!z-auto [&>aside]:!w-full [&>aside]:!max-w-none [&>aside]:!h-full [&>aside]:!shadow-none [&>aside]:!ring-0 [&>aside]:!animate-none">
+            <BacklogDetailDrawer
+              tarefa={freshSelected}
+              user={user}
+              onClose={() => setSelectedTarefa(null)}
+              onEdit={handleEdit}
+            />
           </div>
         )}
       </div>
