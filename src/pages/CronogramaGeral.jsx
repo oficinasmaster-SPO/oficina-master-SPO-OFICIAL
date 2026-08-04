@@ -664,17 +664,6 @@ export default function CronogramaGeral({ isTab = false }) {
               placeholder="Status cadastro"
               className="w-[150px]"
             />
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[130px] h-9 text-sm bg-white border-gray-200">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="ativo">Ativo</SelectItem>
-                <SelectItem value="concluido">Concluído</SelectItem>
-                <SelectItem value="a_fazer">A Fazer</SelectItem>
-              </SelectContent>
-            </Select>
             <div className="flex-1 relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
               <Input
