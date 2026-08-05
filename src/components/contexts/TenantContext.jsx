@@ -27,11 +27,11 @@ export function TenantProvider({ children }) {
   
   // Consulting Firm State
   const [consultingFirm, setConsultingFirm] = useState(null);
-  const [selectedFirmId, setSelectedFirmId] = useState(() => {
-    // Migração: tenta chave por userId primeiro (não disponível no init, userId ainda não carregado)
-    // Na primeira carga, usa a chave global legada como fallback
-    return localStorage.getItem('selected_firm_id') || null;
-  });
+  // Inicia null: o e-mail do usuário ainda não é conhecido no mount, e ler a
+  // chave global legada aqui venenava o seletor quando outro usuário havia
+  // gravado uma firma diferente no mesmo navegador. loadTenantData resolve
+  // pelo e-mail (namespaced) ou pelo consulting_firm_id do próprio usuário.
+  const [selectedFirmId, setSelectedFirmId] = useState(null);
   
   // Company State
   const [company, setCompany] = useState(null);
@@ -66,20 +66,31 @@ export function TenantProvider({ children }) {
         setUser(currentUser);
           
           let firmIdToLoad = selectedFirmId;
-          
-          // Se não tem firm selecionado no localStorage, usa o do usuário default
+
+          // Resolve a firma de seleção por e-mail (namespaced) ou pelo
+          // consulting_firm_id do próprio usuário. NUNCA adota a chave global
+          // legada para usuários vinculados a uma consultoria — ela pode ter
+          // sido gravada por outro usuário no mesmo navegador, fazendo o
+          // TenantSelector filtrar oficinas por uma firma que não pertence ao
+          // usuário atual (sintoma: "Nenhuma oficina encontrada").
           if (!firmIdToLoad) {
-            // Tentar migrar da chave global para a chave por email
-            const legacyFirmId = localStorage.getItem('selected_firm_id');
-            if (legacyFirmId) {
-              firmIdToLoad = legacyFirmId;
-              localStorage.removeItem('selected_firm_id'); // limpar chave global
-              localStorage.setItem(firmKey(currentUser.email), firmIdToLoad);
+            const emailFirmId = localStorage.getItem(firmKey(currentUser.email));
+            if (emailFirmId) {
+              firmIdToLoad = emailFirmId;
               setSelectedFirmId(firmIdToLoad);
             } else if (currentUser.data?.consulting_firm_id) {
               firmIdToLoad = currentUser.data.consulting_firm_id;
               setSelectedFirmId(firmIdToLoad);
               localStorage.setItem(firmKey(currentUser.email), firmIdToLoad);
+            } else {
+              // Super-admin sem consultoria própria: último fallback à global legada
+              const legacyFirmId = localStorage.getItem('selected_firm_id');
+              if (legacyFirmId) {
+                firmIdToLoad = legacyFirmId;
+                localStorage.removeItem('selected_firm_id');
+                localStorage.setItem(firmKey(currentUser.email), firmIdToLoad);
+                setSelectedFirmId(firmIdToLoad);
+              }
             }
           }
           
