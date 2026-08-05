@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import NovoTarefaModal from "./NovoTarefaModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
@@ -111,6 +112,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
   }, [queryClient]);
 
   const clearFilters = () => {setSearch("");setStatusFilter("all");};
+  const [showNovoTarefaModal, setShowNovoTarefaModal] = useState(false);
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white rounded-lg border border-[hsl(var(--border-subtle))] shadow-[0_1px_2px_rgba(16,24,40,.04)]">
@@ -158,19 +160,28 @@ export default function PedidosInternosTab({ workshopId, user }) {
       <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500"></span> {metrics.aprovados} aprovados</span>
     </div>
 
-    {/* Botão: Também controlado por opacidade para manter o espaço reservado e evitar solavancos */}
-    <div className={cn(
-      "flex items-center h-full transition-opacity duration-150",
-      activeList === "pedidos" ? "opacity-100" : "opacity-0 pointer-events-none"
-    )}>
-      <Button
-        onClick={() => { setEditingPedido(null); setShowNewForm(true); }}
-        size="sm"
-        className="h-8 bg-blue-600 hover:bg-blue-600/90 text-[12px] font-medium text-white rounded-md shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-blue-700/50 transition-all px-3 flex items-center justify-center"
-      >
-        <Plus className="mr-1.5 h-3 w-3 stroke-[2.5]" />
-        Novo Pedido
-      </Button>
+    {/* Botão contextual por aba */}
+    <div className="flex items-center h-full">
+      {activeList === "pedidos" && (
+        <Button
+          onClick={() => { setEditingPedido(null); setShowNewForm(true); }}
+          size="sm"
+          className="h-8 bg-blue-600 hover:bg-blue-600/90 text-[12px] font-medium text-white rounded-md shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-blue-700/50 transition-all px-3 flex items-center justify-center"
+        >
+          <Plus className="mr-1.5 h-3 w-3 stroke-[2.5]" />
+          Novo Pedido
+        </Button>
+      )}
+      {activeList === "backlog" && (
+        <Button
+          onClick={() => setShowNovoTarefaModal(true)}
+          size="sm"
+          className="h-8 bg-blue-600 hover:bg-blue-600/90 text-[12px] font-medium text-white rounded-md shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-blue-700/50 transition-all px-3 flex items-center justify-center"
+        >
+          <Plus className="mr-1.5 h-3 w-3 stroke-[2.5]" />
+          Nova tarefa
+        </Button>
+      )}
     </div>
   </div>
 </div>
@@ -213,6 +224,14 @@ export default function PedidosInternosTab({ workshopId, user }) {
         <TabsContent value="backlog" forceMount className={`mt-0 flex min-h-0 flex-1 flex-col overflow-hidden ${activeList !== "backlog" ? "hidden" : ""}`}>
           <BacklogBoard workshopId={workshopId} user={user} />
         </TabsContent>
+
+      {showNovoTarefaModal && (
+        <NovoTarefaModal
+          user={user}
+          workshopId={workshopId}
+          onClose={() => setShowNovoTarefaModal(false)}
+        />
+      )}
       </Tabs>
     </div>);
 
