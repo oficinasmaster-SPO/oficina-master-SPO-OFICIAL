@@ -223,14 +223,7 @@ export default function BacklogBoard({ workshopId, user, tarefas: tarefasProp, i
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
 
-      {/* ── Toolbar "Nova tarefa" (somente modo autônomo) ── */}
-      {!controlled &&
-      <div className="shrink-0 flex items-center justify-end gap-2 px-3 py-2 border-b border-gray-200 bg-gray-50">
-          <Button size="sm" onClick={() => setShowNovoTarefaModal(true)} className="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-xs font-bold rounded-[10px]">
-            <Plus className="mr-1.5 h-3.5 w-3.5" /> Nova tarefa
-          </Button>
-        </div>
-      }
+
 
       {/* ── Cabeçalho das colunas ── */}
       <div className="shrink-0 border-b border-gray-200 bg-gray-50">
