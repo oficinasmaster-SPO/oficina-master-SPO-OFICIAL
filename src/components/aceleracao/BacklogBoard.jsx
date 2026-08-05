@@ -4,8 +4,8 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronDown, ChevronRight,
-  Clock, Play, CheckCircle2, Lock, LayoutList, Plus,
-} from "lucide-react";
+  Clock, Play, CheckCircle2, Lock, LayoutList, Plus } from
+"lucide-react";
 import BacklogIssueRow from "./BacklogIssueRow";
 import BacklogDetailDrawer from "./BacklogDetailDrawer";
 import NovoTarefaModal from "./NovoTarefaModal";
@@ -18,47 +18,47 @@ import { useWorkshopLogos } from "@/hooks/useWorkshopLogos";
 
 // ── Grupos de status (ordem do board) ─────────────────────────────────────
 const STATUS_GROUPS = [
-  {
-    key: "em_execucao",
-    label: "Em Execução",
-    icon: Play,
-    iconClass: "text-blue-500",
-    headerClass: "bg-blue-50 border-blue-200",
-    badgeClass: "bg-blue-500",
-  },
-  {
-    key: "aberta",
-    label: "To Do",
-    icon: LayoutList,
-    iconClass: "text-gray-500",
-    headerClass: "bg-gray-50 border-gray-200",
-    badgeClass: "bg-gray-500",
-  },
-  {
-    key: "aguardando_cliente",
-    label: "Aguardando Cliente",
-    icon: Clock,
-    iconClass: "text-amber-500",
-    headerClass: "bg-amber-50 border-amber-200",
-    badgeClass: "bg-amber-500",
-  },
-  {
-    key: "bloqueada",
-    label: "Bloqueada",
-    icon: Lock,
-    iconClass: "text-red-500",
-    headerClass: "bg-red-50 border-red-200",
-    badgeClass: "bg-red-500",
-  },
-  {
-    key: "concluida",
-    label: "Concluída",
-    icon: CheckCircle2,
-    iconClass: "text-green-500",
-    headerClass: "bg-green-50 border-green-200",
-    badgeClass: "bg-green-500",
-  },
-];
+{
+  key: "em_execucao",
+  label: "Em Execução",
+  icon: Play,
+  iconClass: "text-blue-500",
+  headerClass: "bg-blue-50 border-blue-200",
+  badgeClass: "bg-blue-500"
+},
+{
+  key: "aberta",
+  label: "To Do",
+  icon: LayoutList,
+  iconClass: "text-gray-500",
+  headerClass: "bg-gray-50 border-gray-200",
+  badgeClass: "bg-gray-500"
+},
+{
+  key: "aguardando_cliente",
+  label: "Aguardando Cliente",
+  icon: Clock,
+  iconClass: "text-amber-500",
+  headerClass: "bg-amber-50 border-amber-200",
+  badgeClass: "bg-amber-500"
+},
+{
+  key: "bloqueada",
+  label: "Bloqueada",
+  icon: Lock,
+  iconClass: "text-red-500",
+  headerClass: "bg-red-50 border-red-200",
+  badgeClass: "bg-red-500"
+},
+{
+  key: "concluida",
+  label: "Concluída",
+  icon: CheckCircle2,
+  iconClass: "text-green-500",
+  headerClass: "bg-green-50 border-green-200",
+  badgeClass: "bg-green-500"
+}];
+
 
 // ── Cabeçalho de grupo colapsável ───────────────────────────────────────────
 function GroupHeader({ group, count, collapsed, onToggle }) {
@@ -66,18 +66,18 @@ function GroupHeader({ group, count, collapsed, onToggle }) {
   return (
     <button
       onClick={onToggle}
-      className={`flex w-full items-center gap-2 border-y px-3 py-2 text-left transition-colors hover:brightness-95 ${group.headerClass}`}
-    >
-      {collapsed
-        ? <ChevronRight className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-        : <ChevronDown  className="h-3.5 w-3.5 text-gray-400 shrink-0" />}
+      className={`flex w-full items-center gap-2 border-y px-3 py-2 text-left transition-colors hover:brightness-95 ${group.headerClass}`}>
+      
+      {collapsed ?
+      <ChevronRight className="h-3.5 w-3.5 text-gray-400 shrink-0" /> :
+      <ChevronDown className="h-3.5 w-3.5 text-gray-400 shrink-0" />}
       <Icon className={`h-3.5 w-3.5 shrink-0 ${group.iconClass}`} />
       <span className="text-xs font-semibold text-gray-700">{group.label}</span>
       <span className={`ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white ${group.badgeClass}`}>
         {count}
       </span>
-    </button>
-  );
+    </button>);
+
 }
 
 // ── Componente principal ────────────────────────────────────────────────────
@@ -93,12 +93,12 @@ export default function BacklogBoard({ workshopId, user, tarefas: tarefasProp, i
   const { data: internalTarefas = [], isLoading: internalLoading } = useQuery({
     queryKey: ["tarefas-backlog", workshopId],
     queryFn: async () => {
-      const all = workshopId
-        ? await base44.entities.TarefaBacklog.filter({ workshop_id: workshopId }, "-prazo", 300)
-        : await base44.entities.TarefaBacklog.list("-prazo", 300);
+      const all = workshopId ?
+      await base44.entities.TarefaBacklog.filter({ workshop_id: workshopId }, "-prazo", 300) :
+      await base44.entities.TarefaBacklog.list("-prazo", 300);
       return all || [];
     },
-    enabled: !controlled,
+    enabled: !controlled
   });
   const tarefas = controlled ? tarefasProp : internalTarefas;
   const isLoading = controlled ? !!isLoadingProp : internalLoading;
@@ -120,12 +120,12 @@ export default function BacklogBoard({ workshopId, user, tarefas: tarefasProp, i
   // ── Data (workshops p/ formulários) ───────────────────────────────────────
   const { data: workshops = [] } = useQuery({
     queryKey: ["workshops-backlog"],
-    queryFn: async () => (await base44.entities.Workshop.list("name", 200)) || [],
+    queryFn: async () => (await base44.entities.Workshop.list("name", 200)) || []
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.TarefaBacklog.update(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tarefas-backlog"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tarefas-backlog"] })
   });
 
   // ── Resolvers canônicos (nomes/fotos/logos) ──────────────────────────────
@@ -137,7 +137,7 @@ export default function BacklogBoard({ workshopId, user, tarefas: tarefasProp, i
   const logosByWorkshop = useWorkshopLogos(workshopIds);
 
   const hoje = useMemo(() => {
-    const d = new Date(); d.setHours(0, 0, 0, 0); return d;
+    const d = new Date();d.setHours(0, 0, 0, 0);return d;
   }, []);
 
   // Lista já filtrada pelo container (PedidosContainer)
@@ -146,7 +146,7 @@ export default function BacklogBoard({ workshopId, user, tarefas: tarefasProp, i
   // Agrupar por status
   const grouped = useMemo(() => {
     const map = {};
-    STATUS_GROUPS.forEach((g) => { map[g.key] = []; });
+    STATUS_GROUPS.forEach((g) => {map[g.key] = [];});
     filteredAll.forEach((t) => {
       if (map[t.status]) map[t.status].push(t);
     });
@@ -210,7 +210,7 @@ export default function BacklogBoard({ workshopId, user, tarefas: tarefasProp, i
   // ── Navegação por teclado ─────────────────────────────────────────────────
   useEffect(() => {
     const handleKey = (e) => {
-      if (e.key === "Escape") { handlePanelClose(); return; }
+      if (e.key === "Escape") {handlePanelClose();return;}
       if (panelMode !== "detail" || !selectedTarefa) return;
       const idx = filteredAll.findIndex((t) => t.id === selectedTarefa.id);
       if (e.key === "ArrowDown" && idx < filteredAll.length - 1) handleView(filteredAll[idx + 1]);
@@ -224,13 +224,13 @@ export default function BacklogBoard({ workshopId, user, tarefas: tarefasProp, i
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
 
       {/* ── Toolbar "Nova tarefa" (somente modo autônomo) ── */}
-      {!controlled && (
-        <div className="shrink-0 flex items-center justify-end gap-2 px-3 py-2 border-b border-gray-200 bg-gray-50">
-          <Button size="sm" onClick={() => setShowNovoTarefaModal(true)} className="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-xs font-bold">
+      {!controlled &&
+      <div className="shrink-0 flex items-center justify-end gap-2 px-3 py-2 border-b border-gray-200 bg-gray-50">
+          <Button size="sm" onClick={() => setShowNovoTarefaModal(true)} className="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-xs font-bold rounded-[10px]">
             <Plus className="mr-1.5 h-3.5 w-3.5" /> Nova tarefa
           </Button>
         </div>
-      )}
+      }
 
       {/* ── Cabeçalho das colunas ── */}
       <div className="shrink-0 border-b border-gray-200 bg-gray-50">
@@ -252,66 +252,66 @@ export default function BacklogBoard({ workshopId, user, tarefas: tarefasProp, i
         <div className="flex flex-col min-h-0 w-full">
       {/* ── Lista agrupada ── */}
       <div className="min-h-0 flex-1 overflow-y-auto bg-white">
-        {isLoading ? (
-          <div className="space-y-0">
-            {[...Array(8)].map((_, i) => (
+        {isLoading ?
+            <div className="space-y-0">
+            {[...Array(8)].map((_, i) =>
               <div key={i} className="flex items-center gap-3 border-b border-gray-100 px-3 py-3 animate-pulse">
                 <div className="h-5 w-5 rounded bg-gray-200" />
                 <div className="h-3 w-16 rounded bg-gray-200" />
                 <div className="h-3 flex-1 rounded bg-gray-100" />
                 <div className="h-5 w-16 rounded-full bg-gray-100" />
               </div>
-            ))}
-          </div>
-        ) : (
-          STATUS_GROUPS.map((group) => {
-            const items = grouped[group.key] || [];
-            if (items.length === 0 && group.key !== "aberta") return null;
-            return (
-              <div key={group.key}>
-                <GroupHeader
-                  group={group}
-                  count={items.length}
-                  collapsed={!!collapsed[group.key]}
-                  onToggle={() => toggleGroup(group.key)}
-                />
-                {!collapsed[group.key] && (
-                  <>
-                    {items.length === 0 ? (
-                      <div className="px-4 py-3 text-xs text-gray-400 italic">
-                        Nenhuma tarefa
-                      </div>
-                    ) : (
-                      items.map((tarefa) => (
-                        <BacklogIssueRow
-                          key={tarefa.id}
-                          tarefa={tarefa}
-                          consultorName={getName(tarefa.assignee_id, tarefa.assignee_name)}
-                          consultorPhoto={getPhoto(tarefa.assignee_id)}
-                          logoUrl={logosByWorkshop[tarefa.workshop_id]}
-                          onView={handleView}
-                          isSelected={panelMode === "detail" && selectedTarefa?.id === tarefa.id}
-                          fullRow={fullRow}
-                        />
-                      ))
-                    )}
-                  </>
-                )}
-              </div>
-            );
-          })
-        )}
+              )}
+          </div> :
 
-        {!isLoading && filteredAll.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
+            STATUS_GROUPS.map((group) => {
+              const items = grouped[group.key] || [];
+              if (items.length === 0 && group.key !== "aberta") return null;
+              return (
+                <div key={group.key}>
+                <GroupHeader
+                    group={group}
+                    count={items.length}
+                    collapsed={!!collapsed[group.key]}
+                    onToggle={() => toggleGroup(group.key)} />
+                  
+                {!collapsed[group.key] &&
+                  <>
+                    {items.length === 0 ?
+                    <div className="px-4 py-3 text-xs text-gray-400 italic">
+                        Nenhuma tarefa
+                      </div> :
+
+                    items.map((tarefa) =>
+                    <BacklogIssueRow
+                      key={tarefa.id}
+                      tarefa={tarefa}
+                      consultorName={getName(tarefa.assignee_id, tarefa.assignee_name)}
+                      consultorPhoto={getPhoto(tarefa.assignee_id)}
+                      logoUrl={logosByWorkshop[tarefa.workshop_id]}
+                      onView={handleView}
+                      isSelected={panelMode === "detail" && selectedTarefa?.id === tarefa.id}
+                      fullRow={fullRow} />
+
+                    )
+                    }
+                  </>
+                  }
+              </div>);
+
+            })
+            }
+
+        {!isLoading && filteredAll.length === 0 &&
+            <div className="flex flex-col items-center justify-center py-16 text-center">
             <p className="text-sm text-gray-400">Nenhuma tarefa encontrada</p>
-            {hasFilters && (
+            {hasFilters &&
               <button onClick={onClearFilters} className="mt-1 text-xs text-blue-500 hover:underline">
                 Limpar filtros
               </button>
-            )}
+              }
           </div>
-        )}
+            }
       </div>
         </div>
       </div>
@@ -321,67 +321,67 @@ export default function BacklogBoard({ workshopId, user, tarefas: tarefasProp, i
         <div className="fixed inset-0 z-[100] flex justify-end">
           <div
             className="absolute inset-0 bg-black/30 animate-in fade-in duration-150"
-            onClick={handlePanelClose}
-          />
+            onClick={handlePanelClose} />
+          
           <div className="relative h-full w-[44%] min-w-[420px] max-w-[640px] shadow-2xl">
-            {panelMode === "form" ? (
-              <TarefaBacklogForm
-                inline
-                tarefa={editingTarefa}
-                user={user}
-                workshops={workshops}
-                workshopId={workshopId}
-                onCancel={handleFormCancel}
-                onSuccess={handleFormSuccess}
-              />
-            ) : freshSelected ? (
-              <BacklogDetailDrawer
-                tarefa={freshSelected}
-                user={user}
-                onClose={handlePanelClose}
-                onEdit={handleEdit}
-              />
-            ) : null}
+            {panelMode === "form" ?
+            <TarefaBacklogForm
+              inline
+              tarefa={editingTarefa}
+              user={user}
+              workshops={workshops}
+              workshopId={workshopId}
+              onCancel={handleFormCancel}
+              onSuccess={handleFormSuccess} /> :
+
+            freshSelected ?
+            <BacklogDetailDrawer
+              tarefa={freshSelected}
+              user={user}
+              onClose={handlePanelClose}
+              onEdit={handleEdit} /> :
+
+            null}
           </div>
         </div>,
         document.body
       )}
 
       {/* Mobile sheet */}
-      <Sheet open={panelMode !== null && isMobile} onOpenChange={(open) => { if (!open) handlePanelClose(); }}>
+      <Sheet open={panelMode !== null && isMobile} onOpenChange={(open) => {if (!open) handlePanelClose();}}>
         <SheetContent side="bottom" className="h-[85dvh] p-0">
-          {panelMode === "form" ? (
-            <div className="h-full">
+          {panelMode === "form" ?
+          <div className="h-full">
               <TarefaBacklogForm
-                inline
-                tarefa={editingTarefa}
-                user={user}
-                workshops={workshops}
-                workshopId={workshopId}
-                onCancel={handleFormCancel}
-                onSuccess={handleFormSuccess}
-              />
-            </div>
-          ) : freshSelected ? (
-            <BacklogDetailDrawer
-              tarefa={freshSelected}
+              inline
+              tarefa={editingTarefa}
               user={user}
-              onClose={handlePanelClose}
-              onEdit={handleEdit}
-              hideCloseButton
-            />
-          ) : null}
+              workshops={workshops}
+              workshopId={workshopId}
+              onCancel={handleFormCancel}
+              onSuccess={handleFormSuccess} />
+            
+            </div> :
+          freshSelected ?
+          <BacklogDetailDrawer
+            tarefa={freshSelected}
+            user={user}
+            onClose={handlePanelClose}
+            onEdit={handleEdit}
+            hideCloseButton /> :
+
+          null}
         </SheetContent>
       </Sheet>
 
-      {showNovoTarefaModal && (
-        <NovoTarefaModal
-          user={user}
-          workshopId={workshopId}
-          workshops={workshops}
-          onClose={() => setShowNovoTarefaModal(false)}
-        />
-      )}
-    </div>
-  );
+      {showNovoTarefaModal &&
+      <NovoTarefaModal
+        user={user}
+        workshopId={workshopId}
+        workshops={workshops}
+        onClose={() => setShowNovoTarefaModal(false)} />
+
+      }
+    </div>);
+
 }
