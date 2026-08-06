@@ -30,20 +30,21 @@ export default function DiagnosticoEmpresario() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       
-      const workshops = await base44.entities.Workshop.list();
-      let loadedWorkshop = workshops.find(w => w.owner_id === currentUser.id);
-      
+      // RLS-safe: buscar apenas a oficina do usuário logado
+      const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+      let loadedWorkshop = ownedWorkshops?.[0] || null;
+
       if (!loadedWorkshop) {
-        // Fallback for employees
-        const employees = await base44.entities.Employee.filter({ email: currentUser.email });
-        if (employees.length > 0 && employees[0].workshop_id) {
-            loadedWorkshop = workshops.find(w => w.id === employees[0].workshop_id);
+        // Fallback para colaborador: buscar pelo email
+        const empMatch = await base44.entities.Employee.filter({ email: currentUser.email });
+        if (empMatch.length > 0 && empMatch[0].workshop_id) {
+          const ws = await base44.entities.Workshop.filter({ id: empMatch[0].workshop_id });
+          loadedWorkshop = ws?.[0] || null;
         }
       }
       setWorkshop(loadedWorkshop);
     } catch (error) {
       // toast.error("Você precisa estar logado"); // Removido toast duplicado se falhar auth
-      base44.auth.redirectToLogin(createPageUrl("DiagnosticoEmpresario"));
       base44.auth.redirectToLogin(createPageUrl("DiagnosticoEmpresario"));
     } finally {
       setLoading(false);
@@ -54,10 +55,7 @@ export default function DiagnosticoEmpresario() {
   const question = entrepreneurQuestions[currentQuestion];
 
   const handleAnswer = (profile) => {
-    setAnswers({ 
-      ...answers, 
-      [question.id]: profile
-    });
+    setAnswers(prev => ({ ...prev, [question.id]: profile }));
   };
 
   const handleNext = () => {
