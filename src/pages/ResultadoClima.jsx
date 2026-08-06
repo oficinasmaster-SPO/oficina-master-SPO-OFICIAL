@@ -19,14 +19,18 @@ export default function ResultadoClima() {
 
   const loadData = async () => {
     try {
+      // RLS-safe: buscar oficina do usuário por filter, não list
       const user = await base44.auth.me();
-      const workshops = await base44.entities.Workshop.list();
-      const userWorkshop = workshops.find(w => w.owner_id === user.id);
+      const workshops = await base44.entities.Workshop.filter({ owner_id: user.id });
+      const userWorkshop = workshops?.[0] || null;
 
-      const climates = await base44.entities.CompanyClimate.list();
-      const latestClimate = climates.find(c => c.workshop_id === userWorkshop?.id);
-      
-      setClimateData(latestClimate);
+      if (userWorkshop) {
+        // RLS-safe: buscar clima apenas da oficina do usuário
+        const climates = await base44.entities.CompanyClimate.filter({ workshop_id: userWorkshop.id });
+        // Pegar o mais recente
+        const latestClimate = climates?.sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0] || null;
+        setClimateData(latestClimate);
+      }
     } catch (error) {
       toast.error("Erro ao carregar dados");
     } finally {
