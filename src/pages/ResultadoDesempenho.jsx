@@ -13,6 +13,7 @@ import ActionPlanCard from "../components/diagnostics/ActionPlanCard";
 import ActionPlanDetails from "../components/diagnostics/ActionPlanDetails";
 import ActionPlanFeedbackModal from "../components/diagnostics/ActionPlanFeedbackModal";
 import { useEvaluationPermissions } from "@/components/hooks/useEvaluationPermissions";
+// isAdmin e isInternal adicionados para corrigir bloqueio indevido de admins/internos
 
 export default function ResultadoDesempenho() {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ export default function ResultadoDesempenho() {
   const [showActionPlanDetails, setShowActionPlanDetails] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const queryClient = useQueryClient();
-  const { isLeader, currentUserEmployee, loading: permissionsLoading } = useEvaluationPermissions();
+  const { isAdmin, isInternal, isLeader, currentUserEmployee, loading: permissionsLoading } = useEvaluationPermissions();
 
   useEffect(() => {
     loadData();
@@ -123,9 +124,39 @@ export default function ResultadoDesempenho() {
     );
   }
 
-  if (!diagnostic || !employee) return null;
+  if (!diagnostic) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-yellow-200 bg-yellow-50">
+          <CardContent className="pt-6 flex flex-col items-center text-center">
+            <AlertCircle className="w-12 h-12 text-yellow-500 mb-4" />
+            <h2 className="text-xl font-bold text-yellow-900 mb-2">Diagnóstico não encontrado</h2>
+            <p className="text-yellow-700 mb-4">O diagnóstico solicitado não existe ou você não tem acesso.</p>
+            <Button onClick={() => navigate(createPageUrl("Home"))}>Voltar ao Início</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-  if (!isLeader && currentUserEmployee?.id !== diagnostic.employee_id) {
+  if (!employee) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-yellow-200 bg-yellow-50">
+          <CardContent className="pt-6 flex flex-col items-center text-center">
+            <AlertCircle className="w-12 h-12 text-yellow-500 mb-4" />
+            <h2 className="text-xl font-bold text-yellow-900 mb-2">Colaborador não encontrado</h2>
+            <p className="text-yellow-700 mb-4">O colaborador associado a este diagnóstico não foi localizado.</p>
+            <Button onClick={() => navigate(createPageUrl("Home"))}>Voltar ao Início</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Admins e internos têm acesso irrestrito; líderes veem todos da oficina;
+  // colaboradores veem apenas o próprio resultado.
+  if (!isAdmin && !isInternal && !isLeader && currentUserEmployee?.id !== diagnostic.employee_id) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center p-4">
         <Card className="max-w-md w-full border-red-200 bg-red-50">
