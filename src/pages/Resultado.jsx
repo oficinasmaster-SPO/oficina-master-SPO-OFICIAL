@@ -144,9 +144,10 @@ export default function Resultado() {
         return;
       }
 
-      const diagnostics = await base44.entities.Diagnostic.list();
-      const diag = diagnostics.find(d => d.id === id);
-      
+      // RLS-safe: buscar por ID direto
+      const diagList = await base44.entities.Diagnostic.filter({ id });
+      const diag = diagList?.[0] || null;
+
       if (!diag) {
         navigate(createPageUrl("Home"));
         return;
@@ -156,16 +157,15 @@ export default function Resultado() {
 
       // Carregar workshop se existir
       if (diag.workshop_id) {
-        const workshops = await base44.entities.Workshop.list();
-        const ws = workshops.find(w => w.id === diag.workshop_id);
+        const wsList = await base44.entities.Workshop.filter({ id: diag.workshop_id });
+        const ws = wsList?.[0] || null;
         setWorkshop(ws);
 
-        // Carregar dados do sócio/proprietário
+        // Carregar dados do sócio/proprietário via Employee (evita User.list() que gera 403)
         if (ws?.owner_id) {
           try {
-            const users = await base44.entities.User.list();
-            const ownerUser = users.find(u => u.id === ws.owner_id);
-            setOwner(ownerUser);
+            const ownerEmp = await base44.entities.Employee.filter({ user_id: ws.owner_id });
+            setOwner(ownerEmp?.[0] || null);
           } catch (error) {
             console.error("Erro ao carregar proprietário:", error);
           }
@@ -226,7 +226,17 @@ export default function Resultado() {
   }
 
   if (!diagnostic || !phaseDistribution) {
-    return null;
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-yellow-200 bg-yellow-50">
+          <CardContent className="pt-6 flex flex-col items-center text-center">
+            <h2 className="text-xl font-bold text-yellow-900 mb-2">Diagnóstico não encontrado</h2>
+            <p className="text-yellow-700 mb-4">O diagnóstico solicitado não existe ou você não tem acesso.</p>
+            <Button onClick={() => navigate(createPageUrl("Home"))}>Voltar ao Início</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   const dominantPhase = phaseDistribution.reduce((prev, current) => 
