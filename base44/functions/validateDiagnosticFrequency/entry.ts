@@ -33,10 +33,14 @@ Deno.serve(async (req) => {
     });
 
     if (frequencies.length === 0) {
-      return Response.json(
-        { allowed: false, reason: 'Diagnostic not available for this plan' },
-        { status: 403 }
-      );
+      // Sem regra cadastrada = sem restrição de frequência para este plano/tipo.
+      // Retorna allowed:true em vez de 403 (que era semanticamente incorreto
+      // e fazia o frontend exibir "Erro ao validar disponibilidade").
+      return Response.json({
+        allowed: true,
+        nextAvailableDate: null,
+        message: 'No frequency rule for this plan — unrestricted'
+      });
     }
 
     const frequency = frequencies[0];
