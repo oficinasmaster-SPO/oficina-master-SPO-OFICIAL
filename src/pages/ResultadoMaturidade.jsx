@@ -100,9 +100,10 @@ export default function ResultadoMaturidade() {
         return;
       }
 
-      const diagnostics = await base44.entities.CollaboratorMaturityDiagnostic.list();
-      const diag = diagnostics.find(d => d.id === id);
-      
+      // RLS-safe: buscar diagnóstico por ID direto
+      const diagList = await base44.entities.CollaboratorMaturityDiagnostic.filter({ id });
+      const diag = diagList?.[0] || null;
+
       if (!diag) {
         navigate(createPageUrl("Home"));
         return;
@@ -110,14 +111,14 @@ export default function ResultadoMaturidade() {
 
       setDiagnostic(diag);
 
-      const employees = await base44.entities.Employee.list();
-      const emp = employees.find(e => e.id === diag.employee_id);
+      // RLS-safe: buscar employee por ID direto
+      const empList = await base44.entities.Employee.filter({ id: diag.employee_id });
+      const emp = empList?.[0] || null;
       setEmployee(emp);
 
       if (diag.workshop_id) {
-        const workshops = await base44.entities.Workshop.list();
-        const ws = workshops.find(w => w.id === diag.workshop_id);
-        setWorkshop(ws);
+        const wsList = await base44.entities.Workshop.filter({ id: diag.workshop_id });
+        setWorkshop(wsList?.[0] || null);
       }
     } catch (error) {
       console.error(error);
@@ -134,7 +135,33 @@ export default function ResultadoMaturidade() {
     );
   }
 
-  if (!diagnostic || !employee) return null;
+  if (!diagnostic) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-yellow-200 bg-yellow-50">
+          <CardContent className="pt-6 flex flex-col items-center text-center">
+            <h2 className="text-xl font-bold text-yellow-900 mb-2">Diagnóstico não encontrado</h2>
+            <p className="text-yellow-700 mb-4">O diagnóstico solicitado não existe ou você não tem acesso.</p>
+            <Button onClick={() => navigate(createPageUrl("Home"))}>Voltar ao Início</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!employee) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-yellow-200 bg-yellow-50">
+          <CardContent className="pt-6 flex flex-col items-center text-center">
+            <h2 className="text-xl font-bold text-yellow-900 mb-2">Colaborador não encontrado</h2>
+            <p className="text-yellow-700 mb-4">O colaborador associado a este diagnóstico não foi localizado.</p>
+            <Button onClick={() => navigate(createPageUrl("Home"))}>Voltar ao Início</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!isAdmin && !isInternal && !isLeader && currentUserEmployee?.id !== diagnostic.employee_id) {
     return (
