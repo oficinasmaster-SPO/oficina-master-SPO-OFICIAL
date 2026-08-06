@@ -109,8 +109,9 @@ export default function ResultadoAutoavaliacao() {
         return;
       }
 
-      const assessments = await base44.entities.ProcessAssessment.list();
-      const current = assessments.find(a => a.id === assessmentId);
+      // RLS-safe: buscar por ID direto
+      const assessmentList = await base44.entities.ProcessAssessment.filter({ id: assessmentId });
+      const current = assessmentList?.[0] || null;
 
       if (!current) {
         toast.error("Avaliação não encontrada");
@@ -188,7 +189,19 @@ export default function ResultadoAutoavaliacao() {
     );
   }
 
-  if (!assessment) return null;
+  if (!assessment) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-yellow-200 bg-yellow-50">
+          <CardContent className="pt-6 flex flex-col items-center text-center">
+            <h2 className="text-xl font-bold text-yellow-900 mb-2">Avaliação não encontrada</h2>
+            <p className="text-yellow-700 mb-4">A avaliação solicitada não existe ou você não tem acesso.</p>
+            <Button onClick={() => navigate(createPageUrl("Autoavaliacoes"))}>Voltar às Autoavaliações</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const criteriaConfig = assessmentCriteria[assessment.assessment_type];
   
