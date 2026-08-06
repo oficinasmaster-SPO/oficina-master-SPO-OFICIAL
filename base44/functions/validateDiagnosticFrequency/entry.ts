@@ -12,9 +12,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 1. Buscar workshop e seu plano
-    const workshop = await base44.entities.Workshop.list();
-    const currentWorkshop = workshop.find(w => w.id === workshop_id);
+    // 1. Buscar workshop e seu plano — RLS-safe: filtrar por ID diretamente
+    const workshopList = await base44.entities.Workshop.filter({ id: workshop_id });
+    const currentWorkshop = workshopList[0] ?? null;
 
     if (!currentWorkshop) {
       return Response.json(
