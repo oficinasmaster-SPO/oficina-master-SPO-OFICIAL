@@ -31,6 +31,8 @@ export default function DiagnosticoMaturidade() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [generatingInvite, setGeneratingInvite] = useState(false);
   const [candidateName, setCandidateName] = useState("");
+  const [inviteEmployee, setInviteEmployee] = useState("");
+  const [inviteType, setInviteType] = useState("employee");
   
   const { canEvaluate, isLeader, currentUserEmployee } = useEvaluationPermissions();
 
@@ -39,40 +41,43 @@ export default function DiagnosticoMaturidade() {
   }, []);
 
   const loadData = async () => {
+    let cancelled = false;
     try {
       const currentUser = await base44.auth.me();
+      if (cancelled) return;
       setUser(currentUser);
       
       const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+      if (cancelled) return;
       const userWorkshop = ownedWorkshops && ownedWorkshops.length > 0 ? ownedWorkshops[0] : null;
       setWorkshop(userWorkshop);
 
-      let activeEmployees = [];
-      if (userWorkshop) {
-        activeEmployees = await base44.entities.Employee.filter({ 
-          workshop_id: userWorkshop.id, 
-          status: "ativo" 
-        });
-      } else {
-         // Fallback se não tiver oficina, tenta pegar todos (comportamento antigo, mas filtrado por status)
-         // Idealmente deveria redirecionar, mas vamos manter a lógica defensiva
-         const all = await base44.entities.Employee.list();
-         activeEmployees = all.filter(e => e.status === "ativo");
+      if (!userWorkshop) {
+        // Sem oficina: não faz sentido carregar colaboradores, encerra sem dados
+        setEmployees([]);
+        return;
       }
+
+      const activeEmployees = await base44.entities.Employee.filter({ 
+        workshop_id: userWorkshop.id, 
+        status: "ativo" 
+      });
+      if (cancelled) return;
       setEmployees(activeEmployees);
     } catch (error) {
       toast.error("Você precisa estar logado");
       base44.auth.redirectToLogin(createPageUrl("DiagnosticoMaturidade"));
     } finally {
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     }
+    return () => { cancelled = true; };
   };
 
   const progress = ((currentQuestion + 1) / maturityQuestions.length) * 100;
   const question = maturityQuestions[currentQuestion];
 
   const handleAnswer = (letter) => {
-    setAnswers({ ...answers, [question.id]: letter });
+    setAnswers(prev => ({ ...prev, [question.id]: letter }));
   };
 
   const handleNext = () => {
@@ -100,12 +105,25 @@ export default function DiagnosticoMaturidade() {
   };
 
   const handleGenerateInvite = async () => {
+    if (!workshop) {
+      toast.error("Nenhuma oficina encontrada. Não é possível gerar o link.");
+      return;
+    }
+    const trimmedCandidateName = candidateName.trim();
+    if (inviteType === "candidate" && !trimmedCandidateName) {
+      toast.error("Informe o nome do candidato.");
+      return;
+    }
+    if (inviteType === "employee" && !inviteEmployee) {
+      toast.error("Selecione um colaborador.");
+      return;
+    }
     setGeneratingInvite(true);
     try {
       const response = await base44.functions.invoke('generateDiagnosticInvite', {
         workshop_id: workshop.id,
-        employee_id: selectedEmployee || null,
-        candidate_name: candidateName || null,
+        employee_id: inviteType === "employee" ? inviteEmployee : null,
+        candidate_name: inviteType === "candidate" ? trimmedCandidateName : null,
         diagnostic_type: 'MATURITY'
       });
 
@@ -124,9 +142,13 @@ export default function DiagnosticoMaturidade() {
     }
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(inviteLink);
-    toast.success("Link copiado!");
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      toast.success("Link copiado!");
+    } catch (error) {
+      toast.error("Não foi possível copiar o link. Copie manualmente.");
+    }
   };
 
   const handleSubmit = async () => {
@@ -148,9 +170,10 @@ export default function DiagnosticoMaturidade() {
         };
       });
       
-      const dominantLevel = Object.keys(scores).reduce((a, b) => 
-        scores[a] > scores[b] ? a : b
-      );
+      // Desempate explícito: em caso de empate, prioriza nível mais maduro
+      const maturityOrder = ["adulto", "adolescente", "crianca", "bebe"];
+      const maxScore = Math.max(...Object.values(scores));
+      const dominantLevel = maturityOrder.find(level => scores[level] === maxScore) || "bebe";
       
       const diagnostic = await base44.entities.CollaboratorMaturityDiagnostic.create({
         employee_id: selectedEmployee,
@@ -237,15 +260,15 @@ export default function DiagnosticoMaturidade() {
                     <Label>Para quem é este link?</Label>
                     <div className="flex gap-2 mt-2">
                       <Button 
-                        variant={selectedEmployee ? "default" : "outline"} 
-                        onClick={() => setCandidateName("")}
+                        variant={inviteType === "employee" ? "default" : "outline"} 
+                        onClick={() => { setInviteType("employee"); setCandidateName(""); }}
                         className="flex-1"
                       >
                         Colaborador Existente
                       </Button>
                       <Button 
-                        variant={!selectedEmployee ? "default" : "outline"} 
-                        onClick={() => setSelectedEmployee("")}
+                        variant={inviteType === "candidate" ? "default" : "outline"} 
+                        onClick={() => { setInviteType("candidate"); setInviteEmployee(""); }}
                         className="flex-1"
                       >
                         Candidato / Externo
@@ -253,7 +276,7 @@ export default function DiagnosticoMaturidade() {
                     </div>
                   </div>
 
-                  {selectedEmployee === "" && (
+                  {inviteType === "candidate" && (
                     <div>
                       <Label>Nome do Candidato</Label>
                       <Input 
@@ -264,10 +287,10 @@ export default function DiagnosticoMaturidade() {
                     </div>
                   )}
 
-                  {selectedEmployee !== "" && (
+                  {inviteType === "employee" && (
                     <div>
                       <Label>Selecione o Colaborador</Label>
-                      <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                      <Select value={inviteEmployee} onValueChange={setInviteEmployee}>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
@@ -284,7 +307,7 @@ export default function DiagnosticoMaturidade() {
 
                   <Button 
                     onClick={handleGenerateInvite} 
-                    disabled={generatingInvite || (!selectedEmployee && !candidateName)}
+                    disabled={generatingInvite || (inviteType === "employee" && !inviteEmployee) || (inviteType === "candidate" && !candidateName.trim())}
                     className="w-full"
                   >
                     {generatingInvite ? <Loader2 className="animate-spin mr-2" /> : "Gerar Link"}
@@ -303,7 +326,7 @@ export default function DiagnosticoMaturidade() {
                   </div>
                   <Button 
                     variant="ghost" 
-                    onClick={() => { setInviteLink(""); setIsInviteModalOpen(false); }} 
+                    onClick={() => { setInviteLink(""); setInviteEmployee(""); setCandidateName(""); setInviteType("employee"); setIsInviteModalOpen(false); }} 
                     className="w-full"
                   >
                     Fechar
