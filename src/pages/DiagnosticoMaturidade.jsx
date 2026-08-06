@@ -5,8 +5,8 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import Combobox from "@/components/ui/combobox";
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, User, Link as LinkIcon, History, Copy, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -290,18 +290,15 @@ export default function DiagnosticoMaturidade() {
                   {inviteType === "employee" && (
                     <div>
                       <Label>Selecione o Colaborador</Label>
-                      <Select value={inviteEmployee} onValueChange={setInviteEmployee}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {employees.map((emp) => (
-                            <SelectItem key={emp.id} value={emp.id}>
-                              {emp.full_name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Combobox
+                        options={employees}
+                        value={inviteEmployee}
+                        onChange={setInviteEmployee}
+                        getOptionValue={(emp) => emp.id}
+                        getOptionLabel={(emp) => `${emp.full_name} - ${emp.position || ''}`}
+                        placeholder="Buscar colaborador..."
+                        emptyText="Nenhum colaborador encontrado."
+                      />
                     </div>
                   )}
 
