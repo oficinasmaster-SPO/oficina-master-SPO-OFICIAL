@@ -137,9 +137,10 @@ export default function DiagnosticoEmpresario() {
         };
       });
       
-      const dominantProfile = Object.keys(scores).reduce((a, b) => 
-        scores[a] > scores[b] ? a : b
-      );
+      // Desempate explícito: em empate, prioriza o perfil mais avançado
+      const profileOrder = ["gestor", "empreendedor", "aventureiro"];
+      const maxScore = Math.max(...Object.values(scores));
+      const dominantProfile = profileOrder.find(p => scores[p] === maxScore) || "aventureiro";
       
       const response = await base44.functions.invoke('submitAppForms', {
         form_type: 'entrepreneur_diagnostic',
