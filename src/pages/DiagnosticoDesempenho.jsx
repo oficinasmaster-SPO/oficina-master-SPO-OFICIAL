@@ -42,22 +42,24 @@ export default function DiagnosticoDesempenho() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       
-      const workshops = await base44.entities.Workshop.list();
-      let userWorkshop = workshops.find(w => w.owner_id === currentUser.id);
-      
+      // RLS-safe: buscar apenas a oficina do usuário logado
+      const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+      let userWorkshop = ownedWorkshops?.[0] || null;
+
       if (!userWorkshop) {
-        // Fallback for employees
-        const employees = await base44.entities.Employee.filter({ email: currentUser.email });
-        if (employees.length > 0 && employees[0].workshop_id) {
-            userWorkshop = workshops.find(w => w.id === employees[0].workshop_id);
+        // Fallback para colaborador: buscar pelo email
+        const empMatch = await base44.entities.Employee.filter({ email: currentUser.email });
+        if (empMatch.length > 0 && empMatch[0].workshop_id) {
+          const ws = await base44.entities.Workshop.filter({ id: empMatch[0].workshop_id });
+          userWorkshop = ws?.[0] || null;
         }
       }
       setWorkshop(userWorkshop);
 
-      const allEmployees = await base44.entities.Employee.list();
-      const activeEmployees = allEmployees.filter(e => 
-        e.status === "ativo" && (!userWorkshop || e.workshop_id === userWorkshop.id)
-      );
+      // RLS-safe: buscar employees apenas da oficina encontrada
+      const activeEmployees = userWorkshop
+        ? await base44.entities.Employee.filter({ workshop_id: userWorkshop.id, status: "ativo" })
+        : [];
       setEmployees(activeEmployees);
     } catch (error) {
       toast.error("Você precisa estar logado");
