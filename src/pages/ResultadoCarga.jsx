@@ -39,8 +39,9 @@ export default function ResultadoCarga() {
         return;
       }
 
-      const diagnostics = await base44.entities.WorkloadDiagnostic.list();
-      const foundDiagnostic = diagnostics.find(d => d.id === diagnosticId);
+      // RLS-safe: buscar por ID direto
+      const diagList = await base44.entities.WorkloadDiagnostic.filter({ id: diagnosticId });
+      const foundDiagnostic = diagList?.[0] || null;
 
       if (!foundDiagnostic) {
         toast.error("Diagnóstico não encontrado");
@@ -50,8 +51,11 @@ export default function ResultadoCarga() {
 
       setDiagnostic(foundDiagnostic);
 
-      const allEmployees = await base44.entities.Employee.list();
-      setEmployees(allEmployees);
+      // RLS-safe: buscar apenas employees da oficina do diagnóstico
+      if (foundDiagnostic.workshop_id) {
+        const empList = await base44.entities.Employee.filter({ workshop_id: foundDiagnostic.workshop_id });
+        setEmployees(empList || []);
+      }
     } catch (error) {
       console.error(error);
       toast.error("Erro ao carregar resultado");
@@ -129,7 +133,19 @@ export default function ResultadoCarga() {
     );
   }
 
-  if (!diagnostic) return null;
+  if (!diagnostic) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-yellow-200 bg-yellow-50">
+          <CardContent className="pt-6 flex flex-col items-center text-center">
+            <h2 className="text-xl font-bold text-yellow-900 mb-2">Diagnóstico não encontrado</h2>
+            <p className="text-yellow-700 mb-4">O diagnóstico solicitado não existe ou você não tem acesso.</p>
+            <Button onClick={() => navigate(createPageUrl("Home"))}>Voltar ao Início</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const healthConfig = {
     excelente: {
