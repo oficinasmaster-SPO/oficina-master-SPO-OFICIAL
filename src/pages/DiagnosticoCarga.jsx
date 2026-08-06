@@ -30,12 +30,14 @@ export default function DiagnosticoCarga() {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
-      const workshops = await base44.entities.Workshop.list();
-      let loadedWorkshop = workshops.find(w => w.owner_id === currentUser.id);
+      // RLS-safe: buscar apenas a oficina do usuário logado
+      const ownedWorkshops = await base44.entities.Workshop.filter({ owner_id: currentUser.id });
+      let loadedWorkshop = ownedWorkshops?.[0] || null;
       if (!loadedWorkshop) {
         const empList = await base44.entities.Employee.filter({ email: currentUser.email });
         if (empList.length > 0 && empList[0].workshop_id) {
-            loadedWorkshop = workshops.find(w => w.id === empList[0].workshop_id);
+          const ws = await base44.entities.Workshop.filter({ id: empList[0].workshop_id });
+          loadedWorkshop = ws?.[0] || null;
         }
       }
       if (!loadedWorkshop) {
