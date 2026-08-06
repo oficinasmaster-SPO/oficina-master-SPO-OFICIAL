@@ -88,10 +88,11 @@ export default function ResultadoDISCModal({ open, onOpenChange, diagnosticId })
 
   const loadTeamComparison = async (teamName, currentDiag) => {
     try {
-      const allDiagnostics = await base44.entities.DISCDiagnostic.list();
-      const teamDiagnostics = allDiagnostics.filter(d => 
-        d.team_name === teamName && d.completed && d.id !== currentDiag.id
-      );
+      // RLS-safe: filtrar por team_name direto
+      const teamDiagnostics = await base44.entities.DISCDiagnostic.filter({
+        team_name: teamName,
+        completed: true
+      }).then(res => res.filter(d => d.id !== currentDiag.id)).catch(() => []);
 
       if (teamDiagnostics.length > 0) {
         const avgScores = { executor_d: 0, comunicador_i: 0, planejador_s: 0, analista_c: 0 };
