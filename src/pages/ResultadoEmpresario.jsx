@@ -104,9 +104,10 @@ export default function ResultadoEmpresario() {
         return;
       }
 
-      const diagnostics = await base44.entities.EntrepreneurDiagnostic.list();
-      const diag = diagnostics.find(d => d.id === id);
-      
+      // RLS-safe: buscar por ID direto em vez de list() global
+      const diagList = await base44.entities.EntrepreneurDiagnostic.filter({ id });
+      const diag = diagList?.[0] || null;
+
       if (!diag) {
         navigate(createPageUrl("Home"));
         return;
@@ -114,12 +115,11 @@ export default function ResultadoEmpresario() {
 
       setDiagnostic(diag);
 
-       if (diag.workshop_id) {
-         const workshops = await base44.entities.Workshop.list();
-         const ws = workshops.find(w => w.id === diag.workshop_id);
-         setWorkshop(ws);
-         await checkIAEligibility(diag.workshop_id);
-       }
+      if (diag.workshop_id) {
+        const wsList = await base44.entities.Workshop.filter({ id: diag.workshop_id });
+        setWorkshop(wsList?.[0] || null);
+        await checkIAEligibility(diag.workshop_id);
+      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -135,7 +135,19 @@ export default function ResultadoEmpresario() {
     );
   }
 
-  if (!diagnostic) return null;
+  if (!diagnostic) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-yellow-200 bg-yellow-50">
+          <CardContent className="pt-6 flex flex-col items-center text-center">
+            <h2 className="text-xl font-bold text-yellow-900 mb-2">Diagnóstico não encontrado</h2>
+            <p className="text-yellow-700 mb-4">O diagnóstico solicitado não existe ou você não tem acesso.</p>
+            <Button onClick={() => navigate(createPageUrl("Home"))}>Voltar ao Início</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const profileInfo = profilesInfo[diagnostic.dominant_profile];
   const chartData = [
