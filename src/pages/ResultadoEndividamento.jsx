@@ -36,8 +36,9 @@ export default function ResultadoEndividamento() {
         return;
       }
 
-      const analyses = await base44.entities.DebtAnalysis.list();
-      const current = analyses.find(a => a.id === analysisId);
+      // RLS-safe: buscar por ID direto
+      const analysisList = await base44.entities.DebtAnalysis.filter({ id: analysisId });
+      const current = analysisList?.[0] || null;
 
       if (!current) {
         toast.error("Análise não encontrada");
@@ -113,7 +114,19 @@ export default function ResultadoEndividamento() {
     );
   }
 
-  if (!analysis) return null;
+  if (!analysis) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-yellow-200 bg-yellow-50">
+          <CardContent className="pt-6 flex flex-col items-center text-center">
+            <h2 className="text-xl font-bold text-yellow-900 mb-2">Análise não encontrada</h2>
+            <p className="text-yellow-700 mb-4">A análise solicitada não existe ou você não tem acesso.</p>
+            <Button onClick={() => navigate(createPageUrl("Home"))}>Voltar ao Início</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Dados para gráficos
   const curvaEndividamentoData = analysis.meses.map(m => ({
