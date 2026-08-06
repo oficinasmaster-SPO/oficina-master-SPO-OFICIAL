@@ -87,9 +87,10 @@ export default function ResultadoProducao() {
         return;
       }
 
-      const diagnostics = await base44.entities.ProductivityDiagnostic.list();
-      const diag = diagnostics.find(d => d.id === id);
-      
+      // RLS-safe: buscar por ID direto
+      const diagList = await base44.entities.ProductivityDiagnostic.filter({ id });
+      const diag = diagList?.[0] || null;
+
       if (!diag) {
         navigate(createPageUrl("Home"));
         return;
@@ -97,9 +98,11 @@ export default function ResultadoProducao() {
 
       setDiagnostic(diag);
 
-      const employees = await base44.entities.Employee.list();
-      const emp = employees.find(e => e.id === diag.employee_id);
-      setEmployee(emp);
+      // RLS-safe: buscar employee por ID direto
+      if (diag.employee_id) {
+        const empList = await base44.entities.Employee.filter({ id: diag.employee_id });
+        setEmployee(empList?.[0] || null);
+      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -115,7 +118,33 @@ export default function ResultadoProducao() {
     );
   }
 
-  if (!diagnostic || !employee) return null;
+  if (!diagnostic) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-yellow-200 bg-yellow-50">
+          <CardContent className="pt-6 flex flex-col items-center text-center">
+            <h2 className="text-xl font-bold text-yellow-900 mb-2">Diagnóstico não encontrado</h2>
+            <p className="text-yellow-700 mb-4">O diagnóstico solicitado não existe ou você não tem acesso.</p>
+            <Button onClick={() => navigate(createPageUrl("Home"))}>Voltar ao Início</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!employee) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-yellow-200 bg-yellow-50">
+          <CardContent className="pt-6 flex flex-col items-center text-center">
+            <h2 className="text-xl font-bold text-yellow-900 mb-2">Colaborador não encontrado</h2>
+            <p className="text-yellow-700 mb-4">O colaborador associado a este diagnóstico não foi localizado.</p>
+            <Button onClick={() => navigate(createPageUrl("Home"))}>Voltar ao Início</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const getClassificationInfo = () => {
     const configs = {
