@@ -124,7 +124,7 @@ export default function BacklogDetailDrawer({
 }) {
   const drawerRef = useRef(null);
   const scrollRef = useRef(null);
-  const [scrolled, setScrolled] = useState(false);
+  const headerRef = useRef(null);
   const [phase, setPhase] = useState("entering"); // entering | open | leaving
   const queryClient = useQueryClient();
 
@@ -155,13 +155,20 @@ export default function BacklogDetailDrawer({
     return () => document.removeEventListener("keydown", handleKey);
   }, [requestClose]);
 
-  /* Detecta scroll para sticky comprimido */
+  /* Sticky header — manipulação direta no DOM (sem setState = zero re-render = zero tremida) */
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const onScroll = () => setScrolled(el.scrollTop > 40);
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
+    const scroller = scrollRef.current;
+    const header = headerRef.current;
+    if (!scroller || !header) return;
+    const onScroll = () => {
+      if (scroller.scrollTop > 40) {
+        header.setAttribute("data-scrolled", "true");
+      } else {
+        header.removeAttribute("data-scrolled");
+      }
+    };
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    return () => scroller.removeEventListener("scroll", onScroll);
   }, []);
 
   const STATUS_LABELS = {
@@ -261,19 +268,14 @@ export default function BacklogDetailDrawer({
     >
       {/* ─────────── Header sticky (compressível) ─────────── */}
       <div
-        className={`shrink-0 border-b bg-white transition-all ${
-          scrolled ? "border-gray-200 shadow-[0_2px_8px_-4px_rgba(15,23,42,0.08)]" : "border-gray-100"
-        }`}
-        style={{ transitionDuration: "240ms", transitionTimingFunction: EASE_OUT }}
+        ref={headerRef}
+        className="shrink-0 border-b border-gray-100 bg-white [&[data-scrolled]]:border-gray-200 [&[data-scrolled]]:shadow-[0_2px_8px_-4px_rgba(15,23,42,0.08)]"
+        style={{ transition: `border-color 240ms ${EASE_OUT}, box-shadow 240ms ${EASE_OUT}` }}
       >
-        {/* Linha 1: breadcrumb + ações — some no scroll */}
+        {/* Linha 1: breadcrumb + ações — some no scroll via CSS puro */}
         <div
-          className="grid overflow-hidden transition-all"
-          style={{
-            gridTemplateRows: scrolled ? "0fr" : "1fr",
-            transitionDuration: "240ms",
-            transitionTimingFunction: EASE_OUT,
-          }}
+          className="grid overflow-hidden [grid-template-rows:1fr] [[data-scrolled]_&]:[grid-template-rows:0fr]"
+          style={{ transition: `grid-template-rows 240ms ${EASE_OUT}` }}
         >
           <div className="min-h-0">
             <div className="flex items-center justify-between gap-3 px-5 pt-3 pb-1.5">
@@ -300,23 +302,19 @@ export default function BacklogDetailDrawer({
         {/* Título — sempre visível, encolhe no scroll */}
         <div className="px-5 pb-2">
           <h2
-            className={`font-bold leading-tight text-gray-950 transition-[font-size] ${
+            className={`font-bold leading-tight text-gray-950 pt-1 text-lg [[data-scrolled]_&]:text-[15px] [[data-scrolled]_&]:pt-2 ${
               tarefa.status === "concluida" ? "text-gray-400 line-through" : ""
-            } ${scrolled ? "text-[15px] pt-2" : "text-lg pt-1"}`}
-            style={{ transitionDuration: "220ms", transitionTimingFunction: EASE_OUT }}
+            }`}
+            style={{ transition: `font-size 220ms ${EASE_OUT}, padding-top 220ms ${EASE_OUT}` }}
           >
             {tarefa.titulo}
           </h2>
         </div>
 
-        {/* Meta-row — some no scroll */}
+        {/* Meta-row — some no scroll via CSS puro */}
         <div
-          className="grid overflow-hidden transition-all"
-          style={{
-            gridTemplateRows: scrolled ? "0fr" : "1fr",
-            transitionDuration: "240ms",
-            transitionTimingFunction: EASE_OUT,
-          }}
+          className="grid overflow-hidden [grid-template-rows:1fr] [[data-scrolled]_&]:[grid-template-rows:0fr]"
+          style={{ transition: `grid-template-rows 240ms ${EASE_OUT}` }}
         >
           <div className="min-h-0">
             <div className="flex flex-wrap items-center gap-2 px-5 pb-3">
