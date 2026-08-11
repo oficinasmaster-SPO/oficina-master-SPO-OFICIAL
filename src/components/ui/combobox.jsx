@@ -34,6 +34,10 @@ export default function Combobox({
   const inputRef = useRef(null);
   const rafRef = useRef(null);
   const isComposing = useRef(false);
+  // Timestamp do último closeDropdown. Impede que o cmdk refoque o input
+  // logo após uma seleção e reabra o dropdown no mesmo tick — causa-raiz
+  // do bug "seleciona uma opção mas o drop não fecha".
+  const justClosedRef = useRef(0);
 
   useEffect(() => {
     return () => {
@@ -89,6 +93,9 @@ export default function Combobox({
 
   const openDropdown = useCallback(() => {
     if (open) return;
+    // Bloqueia reabertura induzida pelo refoco do cmdk pós-seleção
+    // (janela curta — um clique humano legítimo ocorre depois dela).
+    if (Date.now() - justClosedRef.current < 150) return;
     setOpen(true);
     setSearch(selected ? String(getOptionLabel(selected)) : "");
 
@@ -101,6 +108,7 @@ export default function Combobox({
   }, [open, selected, getOptionLabel]);
 
   const closeDropdown = useCallback(() => {
+    justClosedRef.current = Date.now();
     setOpen(false);
     setSearch("");
   }, []);
