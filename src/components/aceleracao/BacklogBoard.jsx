@@ -81,7 +81,7 @@ function GroupHeader({ group, count, collapsed, onToggle }) {
 }
 
 // ── Componente principal ────────────────────────────────────────────────────
-export default function BacklogBoard({ workshopId, user, tarefas: tarefasProp, isLoading: isLoadingProp, hasFilters, onClearFilters, showNovoTarefaModal: extShow, setShowNovoTarefaModal: extSetShow }) {
+export default function BacklogBoard({ workshopId, user, tarefas: tarefasProp, isLoading: isLoadingProp, hasFilters, onClearFilters, showNovoTarefaModal: extShow, setShowNovoTarefaModal: extSetShow, scope = "todos" }) {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
 
@@ -140,8 +140,13 @@ export default function BacklogBoard({ workshopId, user, tarefas: tarefasProp, i
     const d = new Date();d.setHours(0, 0, 0, 0);return d;
   }, []);
 
-  // Lista já filtrada pelo container (PedidosContainer)
-  const filteredAll = tarefas;
+  // Lista já filtrada pelo container (PedidosContainer); em modo autônomo,
+  // aplica o filtro de escopo (Todas/Minhas tarefas) recebido do pai.
+  const filteredAll = useMemo(() => {
+    if (scope === "todos" || !user?.id) return tarefas;
+    const uid = user.id;
+    return tarefas.filter((t) => t.assignee_id === uid || t.requester_id === uid || t.created_by_id === uid);
+  }, [tarefas, scope, user?.id]);
 
   // Agrupar por status
   const grouped = useMemo(() => {

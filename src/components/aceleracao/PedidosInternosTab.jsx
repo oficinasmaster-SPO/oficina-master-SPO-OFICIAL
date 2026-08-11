@@ -14,6 +14,7 @@ import PedidoInternoModal from "./PedidoInternoModal";
 import PedidoInternoList from "./PedidoInternoList";
 import PedidoInternoDetail from "./PedidoInternoDetail";
 import OrderFilterBar from "./OrderFilterBar";
+import BacklogScopeSelector from "./BacklogScopeSelector";
 
 export default function PedidosInternosTab({ workshopId, user }) {
   const [selectedPedido, setSelectedPedido] = useState(null);
@@ -22,6 +23,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
   const [activeList, setActiveList] = useState("pedidos");
   const [statusFilter, setStatusFilter] = useState("all");
   const [scope, setScope] = useState("todos");
+  const [blScope, setBlScope] = useState("todos");
 
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
@@ -213,6 +215,14 @@ export default function PedidosInternosTab({ workshopId, user }) {
           </div>
         }
 
+        {/* Toolbar de Filtros do Backlog — mesma posição/estilo do OrderFilterBar
+            (abaixo das abas) para manter o padrão da UI e evitar layout shift. */}
+        {activeList === "backlog" &&
+        <div className="flex items-center gap-3 px-6 py-1.5 bg-gray-50/50 border-t border-[hsl(var(--border-subtle))] shrink-0">
+          <BacklogScopeSelector value={blScope} onChange={setBlScope} />
+        </div>
+        }
+
         {/* Conteúdo da Lista de Pedidos */}
         <TabsContent value="pedidos" forceMount className={`mt-0 flex min-h-0 flex-1 flex-col bg-white ${activeList !== "pedidos" ? "hidden" : ""}`}>
           <div className="min-h-0 flex-1 overflow-y-auto">
@@ -222,7 +232,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
 
         {/* Conteúdo do Backlog */}
         <TabsContent value="backlog" forceMount className={`mt-0 flex min-h-0 flex-1 flex-col overflow-hidden ${activeList !== "backlog" ? "hidden" : ""}`}>
-          <BacklogBoard workshopId={workshopId} user={user} />
+          <BacklogBoard workshopId={workshopId} user={user} scope={blScope} />
         </TabsContent>
 
       {showNovoTarefaModal && (
