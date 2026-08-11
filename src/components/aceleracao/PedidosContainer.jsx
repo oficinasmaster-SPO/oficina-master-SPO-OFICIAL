@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import Combobox from '@/components/ui/combobox';
 import OrderFilterBar from './OrderFilterBar';
+import BacklogScopeSelector from './BacklogScopeSelector';
 import PedidoInternoModal from './PedidoInternoModal';
 import PedidoInternoDetail from './PedidoInternoDetail';
 import NovoPedidoModal from './NovoPedidoModal';
@@ -43,6 +44,7 @@ export default function PedidosContainer({
 }) {
   // ── Estado e dados do Backlog de Tarefas ──────────────────────────────────
   const [blSearch, setBlSearch] = useState("");
+  const [blScope, setBlScope] = useState("todos");
   const [blConsultor, setBlConsultor] = useState("all");
   const [blCliente, setBlCliente] = useState("all");
   const [blPrioridade, setBlPrioridade] = useState("all");
@@ -76,12 +78,14 @@ export default function PedidosContainer({
     const resolvedName = getName(t.assignee_id, t.assignee_name);
     const q = blSearch.toLowerCase();
     const matchSearch = !q || t.titulo?.toLowerCase().includes(q) || t.workshop_nome?.toLowerCase().includes(q) || resolvedName?.toLowerCase().includes(q) || t.assignee_name?.toLowerCase().includes(q);
+    const isMine = t.assignee_id === user?.id || t.requester_id === user?.id || t.created_by_id === user?.id;
     return matchSearch
+      && (blScope === "todos" || isMine)
       && (blConsultor === "all" || resolvedName === blConsultor)
       && (blCliente === "all" || t.workshop_nome === blCliente)
       && (blPrioridade === "all" || t.prioridade === blPrioridade)
       && (blOrigem === "all" || t.origin_type === blOrigem);
-  }), [tarefas, blSearch, blConsultor, blCliente, blPrioridade, blOrigem, getName]);
+  }), [tarefas, blSearch, blScope, blConsultor, blCliente, blPrioridade, blOrigem, user, getName]);
 
   const ativos = useMemo(() => tarefas.filter((t) => t.status !== "concluida"), [tarefas]);
   const blKpis = useMemo(() => ({
@@ -183,6 +187,7 @@ export default function PedidosContainer({
 
         {activeList === "backlog" && (
           <div className="flex items-center gap-2 px-6 py-1.5 bg-gray-50/50 border-t border-[hsl(var(--border-subtle))] shrink-0">
+            <BacklogScopeSelector value={blScope} onChange={setBlScope} />
             <div className="relative w-[300px]">
               <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
               <input
