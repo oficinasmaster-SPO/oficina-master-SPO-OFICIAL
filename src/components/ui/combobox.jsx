@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronsUpDown, Search, X } from "lucide-react";
+import { Check, ChevronsUpDown, Search } from "lucide-react";
 import { Command as CommandPrimitive } from "cmdk";
 
 import { cn } from "@/lib/utils";
@@ -123,16 +123,11 @@ export default function Combobox({
 
   function handleSelect(option) {
     const optionValue = getOptionValue(option);
+    // Fecha PRIMEIRO — se o onChange do importador lançar erro, o dropdown
+    // ainda assim fecha (antes o closeDropdown nunca rodava e ficava aberto).
+    closeDropdown();
+    inputRef.current?.blur();
     onChange?.(optionValue === value ? clearValue : optionValue);
-    closeDropdown();
-    inputRef.current?.blur();
-  }
-
-  function handleClear(e) {
-    e.stopPropagation();
-    onChange?.(clearValue);
-    closeDropdown();
-    inputRef.current?.blur();
   }
 
   function handleKeyDown(e) {
@@ -221,20 +216,10 @@ export default function Combobox({
           onCompositionStart={() => (isComposing.current = true)}
           onCompositionEnd={() => (isComposing.current = false)}
           placeholder={searchPlaceholder || placeholder}
-          className="w-full h-full bg-transparent pl-9 pr-16 text-sm placeholder:text-muted-foreground focus:outline-none"
+          className="w-full h-full bg-transparent pl-9 pr-10 text-sm placeholder:text-muted-foreground focus:outline-none"
         />
 
         <div className="absolute right-2 flex items-center gap-0.5">
-          {selected && (
-            <button
-              type="button"
-              tabIndex={-1}
-              onClick={handleClear}
-              className="rounded p-1 hover:bg-muted transition-colors"
-            >
-              <X className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
-          )}
           <button
             type="button"
             tabIndex={-1}
