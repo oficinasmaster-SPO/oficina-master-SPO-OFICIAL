@@ -69,6 +69,35 @@ async function generateForWorkshop(base44, workshop, log) {
   const planId = rawPlanId.toUpperCase().trim();
   log('plan_id_normalized', `planId normalizado: "${rawPlanId}" → "${planId}"`, { workshop_id: workshop.id });
 
+  // ── Step 1.5: Arquivar pendentes de planos antigos (troca de plano) ─────────
+  // Cancela pendentes cujo plan_id difere do novo plano. NÃO toca em
+  // agendado/realizado (preserva trabalho já feito). Determinístico — funciona
+  // tanto na chamada inline (adminUpdateWorkshopPlan) quanto via automação,
+  // pois inspeciona o estado atual sem depender de old_data/changed_fields.
+  const legacyPending = await base44.asServiceRole.entities.ContractAttendance.filter({
+    workshop_id: workshop.id,
+    status: 'pendente',
+    plan_id: { $ne: planId }
+  });
+
+  if (legacyPending && legacyPending.length > 0) {
+    const archRes = await base44.asServiceRole.entities.ContractAttendance.updateMany(
+      { workshop_id: workshop.id, status: 'pendente', plan_id: { $ne: planId } },
+      { $set: { status: 'cancelado' } }
+    );
+    log('legacy_pending_archived', `Arquivados ${legacyPending.length} pendentes de planos antigos`, {
+      workshop_id: workshop.id,
+      new_plan_id: planId,
+      archived: legacyPending.length,
+      update_result: archRes
+    });
+  } else {
+    log('legacy_pending_none', 'Nenhum pendente de plano antigo para arquivar', {
+      workshop_id: workshop.id,
+      new_plan_id: planId
+    });
+  }
+
   // ── Step 2: Buscar regras do plano (sempre com planId normalizado) ─────────
   log('attendance_generation_started', 'Iniciando geração de bucket', { workshop_id: workshop.id, plan_id: planId });
 
