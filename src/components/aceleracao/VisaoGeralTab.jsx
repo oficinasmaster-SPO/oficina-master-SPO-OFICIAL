@@ -34,7 +34,7 @@ function getMouseEnterSide(e) {
 }
 
 export default function VisaoGeralTab({ state, mode = "contextual" }) {
-  const { user, workshops, workshopMap, atendimentos, atendimentosPeriodo, setActiveTab, setPendingSubTab, followUpReminders } = state;
+  const { user, workshops, workshopMap, atendimentos, atendimentosPeriodo, filtros, setActiveTab, setPendingSubTab, followUpReminders } = state;
   const [modalClientes, setModalClientes] = useState({ isOpen: false, tipo: null, clientes: [] });
   const [modalReunioes, setModalReunioes] = useState({ isOpen: false, tipo: null, reunioes: [] });
   const [hoverSides, setHoverSides] = useState({});
@@ -50,12 +50,15 @@ export default function VisaoGeralTab({ state, mode = "contextual" }) {
   }, [atendimentosPeriodo]);
 
   const tarefasPendentes = useMemo(() => {
+    const { dataInicio, dataFim } = filtros || {};
     return atendimentosPeriodo.filter(a => {
       if (STATUS_FINALIZADOS.includes(a.status)) return false;
       const d = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+      // re-aplica o limite do mês vigente (filterAtendimentosPeriodo libera atrasados de qualquer data)
+      if (dataInicio && dataFim && (d < dataInicio || d > dataFim)) return false;
       return d < hoje;
     });
-  }, [atendimentosPeriodo, hoje]);
+  }, [atendimentosPeriodo, filtros, hoje]);
 
   const futurasList = useMemo(() => atendimentos.filter(a => {
     if (!['agendado', 'confirmado'].includes(a.status)) return false;
