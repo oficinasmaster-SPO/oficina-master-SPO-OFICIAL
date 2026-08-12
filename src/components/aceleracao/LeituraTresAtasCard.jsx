@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Loader2, ChevronDown, BookOpen, X, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
@@ -73,8 +73,35 @@ export default function LeituraTresAtasCard({ workshop_id, atendimento_id_atual,
 
   const atas = useMemo(() => data?.atas || [], [data]);
 
+  const scrollCaptureRef = useRef(null);
+
+  // Captura a posição de scroll do container scrollável mais próximo ANTES do clique,
+  // para evitar o pulo de tela (focus-scroll do navegador e/ou scroll-anchoring) ao
+  // expandir/recolher o acordeão. Não impede o clique nem fecha modais.
+  const captureScroll = (e) => {
+    let el = e.currentTarget?.parentElement;
+    let scrollEl = null;
+    while (el && el !== document.body) {
+      const style = getComputedStyle(el);
+      if (/auto|scroll|overlay/.test(style.overflowY) && el.scrollHeight > el.clientHeight) {
+        scrollEl = el;
+        break;
+      }
+      el = el.parentElement;
+    }
+    if (!scrollEl) scrollEl = document.scrollingElement || document.documentElement;
+    scrollCaptureRef.current = { el: scrollEl, top: scrollEl.scrollTop };
+    // Previne o focus-scroll automático do navegador (não bloqueia o clique)
+    if (e.button === 0) e.preventDefault();
+  };
+
   const handleToggle = (ata_id) => {
     setExpandedId(prev => (prev === ata_id ? null : ata_id));
+    // Restaura a posição de scroll após o reflow do acordeão
+    requestAnimationFrame(() => {
+      const cap = scrollCaptureRef.current;
+      if (cap?.el) cap.el.scrollTop = cap.top;
+    });
   };
 
   // Loading inicial
@@ -159,10 +186,7 @@ export default function LeituraTresAtasCard({ workshop_id, atendimento_id_atual,
               {/* Cabeçalho do bloco (clicável) */}
               <button
                 onClick={() => handleToggle(ata.ata_id)}
-                onMouseDown={(e) => {
-                  // Evita o scroll-into-view automático do foco ao clicar (bug "rola para cima")
-                  if (e.button === 0) e.preventDefault();
-                }}
+                onMouseDown={captureScroll}
                 className="w-full text-left px-3 py-3 hover:bg-purple-50/60 transition-colors"
               >
                 <div className="flex items-center justify-between gap-2 mb-1.5">

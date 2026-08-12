@@ -189,6 +189,7 @@ export default function AdvancedOptionsSection({ formData, setFormData, workshop
             type="button"
             variant="outline"
             className="w-full justify-start border-purple-300 text-purple-700 hover:bg-purple-50"
+            onMouseDown={(e) => { if (e.button === 0) e.preventDefault(); }}
             onClick={() => {
               if (!formData.workshop_id) {
                 toast.error("Selecione uma oficina primeiro");
