@@ -159,6 +159,10 @@ export default function LeituraTresAtasCard({ workshop_id, atendimento_id_atual,
               {/* Cabeçalho do bloco (clicável) */}
               <button
                 onClick={() => handleToggle(ata.ata_id)}
+                onMouseDown={(e) => {
+                  // Evita o scroll-into-view automático do foco ao clicar (bug "rola para cima")
+                  if (e.button === 0) e.preventDefault();
+                }}
                 className="w-full text-left px-3 py-3 hover:bg-purple-50/60 transition-colors"
               >
                 <div className="flex items-center justify-between gap-2 mb-1.5">
