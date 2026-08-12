@@ -8,6 +8,7 @@ import { BarChart3, Calendar, CalendarRange, FileText, Users, Activity, Plus, Lo
 import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtendimentoMassaModal";
 import IniciarAtendimentoModal from "@/components/aceleracao/IniciarAtendimentoModal";
 import ActiveFiltersBar from "@/components/aceleracao/ActiveFiltersBar";
+import FiltrosBarGlobal from "@/components/aceleracao/FiltrosBarGlobal";
 import TabSkeleton from "@/components/aceleracao/TabSkeleton";
 import TabErrorBoundary from "@/components/aceleracao/TabErrorBoundary";
 import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
@@ -141,7 +142,8 @@ export default function ControleAceleracaoView({ state }) {
   // Check if any filter is active (non-default)
   const hasActiveFilters =
     (filtros.consultorId && filtros.consultorId !== "todos") ||
-    (filtros.preset && filtros.preset !== "mes_atual");
+    (filtros.preset && filtros.preset !== "mes_atual") ||
+    !!filtros.soHabilitados;
 
   const handleClearFilter = useCallback((filterKey) => {
     const hoje = new Date();
@@ -154,6 +156,8 @@ export default function ControleAceleracaoView({ state }) {
         dataInicio: format(startOfMonth(hoje), "yyyy-MM-dd"),
         dataFim: format(endOfMonth(hoje), "yyyy-MM-dd"),
       });
+    } else if (filterKey === "soHabilitados") {
+      setFiltros({ ...filtros, soHabilitados: false });
     }
   }, [filtros, setFiltros]);
 
@@ -363,6 +367,13 @@ export default function ControleAceleracaoView({ state }) {
           onSaved={() => setShowSuporteRapido(false)}
         />
       )}
+
+      {/* Barra de filtros global — visível em todas as abas */}
+      <FiltrosBarGlobal
+        filtros={filtros}
+        onFiltrosChange={handleFiltrosChange}
+        consultores={consultores}
+      />
 
       {/* Active Filters Bar — sempre visível quando há filtros */}
       {hasActiveFilters && (

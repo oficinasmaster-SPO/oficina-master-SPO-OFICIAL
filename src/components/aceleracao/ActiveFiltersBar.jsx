@@ -39,6 +39,16 @@ export default function ActiveFiltersBar({ filtros, consultores, onClearFilter, 
     });
   }
 
+  // Só habilitados
+  if (filtros.soHabilitados) {
+    chips.push({
+      key: "habilitados",
+      icon: <Filter className="w-3 h-3" />,
+      label: "Só habilitados",
+      onClear: () => onClearFilter("soHabilitados"),
+    });
+  }
+
   if (chips.length === 0) return null;
 
   return (

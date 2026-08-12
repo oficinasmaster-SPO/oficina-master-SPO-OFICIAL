@@ -45,6 +45,7 @@ export default function useControleAceleracaoURLState() {
   const filtros = useMemo(() => {
     const preset = VALID_PRESETS.includes(searchParams.get("preset")) ? searchParams.get("preset") : "all";
     const consultorId = searchParams.get("consultor") || "todos";
+    const soHabilitados = searchParams.get("hab") === "1";
 
     if (preset === "custom") {
       const de = searchParams.get("de");
@@ -52,6 +53,7 @@ export default function useControleAceleracaoURLState() {
       const defaultDates = computeDatesForPreset("mes_atual");
       return {
         consultorId,
+        soHabilitados,
         preset: "custom",
         dataInicio: (de && isValidDate(de)) ? de : defaultDates.dataInicio,
         dataFim: (ate && isValidDate(ate)) ? ate : defaultDates.dataFim
@@ -59,7 +61,7 @@ export default function useControleAceleracaoURLState() {
     }
 
     const { dataInicio, dataFim } = computeDatesForPreset(preset);
-    return { consultorId, preset, dataInicio, dataFim };
+    return { consultorId, soHabilitados, preset, dataInicio, dataFim };
   }, [searchParams]);
 
   // ── Helpers para atualizar a URL ──
@@ -86,10 +88,11 @@ export default function useControleAceleracaoURLState() {
   }, [updateParams]);
 
   const setFiltros = useCallback((newFiltros) => {
-    const { consultorId, preset, dataInicio, dataFim } = newFiltros;
+    const { consultorId, preset, dataInicio, dataFim, soHabilitados } = newFiltros;
     const updates = {
       consultor: consultorId === "todos" ? null : consultorId,
-      preset: preset === "all" ? null : preset
+      preset: preset === "all" ? null : preset,
+      hab: soHabilitados ? "1" : null
     };
     if (preset === "custom") {
       updates.de = dataInicio || null;

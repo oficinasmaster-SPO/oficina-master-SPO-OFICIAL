@@ -58,10 +58,20 @@ export default function useControleAceleracaoState() {
   });
 
   // ── 6. Atendimentos filtrados por período (função pura, sem hook) ──
-  const atendimentosPeriodo = useMemo(
-    () => filterAtendimentosPeriodo(atendimentos || [], filtros),
-    [atendimentos, filtros.dataInicio, filtros.dataFim]
-  );
+  // Aplica também o filtro "só habilitados" quando ativo e nenhum consultor
+  // específico está selecionado (caso "todos" — restringe aos consultores com
+  // ConsultorCapacity.ativo = true). Quando um consultor específico está
+  // selecionado, o filtro server-side já restringe os dados.
+  const atendimentosPeriodo = useMemo(() => {
+    const result = filterAtendimentosPeriodo(atendimentos || [], filtros);
+    if (filtros.soHabilitados && !consultorEfetivo) {
+      const habSet = new Set(
+        (consultores || []).filter((c) => c.ativo !== false).map((c) => c.id)
+      );
+      return result.filter((a) => !a.consultor_id || habSet.has(a.consultor_id));
+    }
+    return result;
+  }, [atendimentos, filtros.dataInicio, filtros.dataFim, filtros.soHabilitados, consultorEfetivo, consultores]);
 
   // ── 7. Meeting minutes — limitado aos últimos 90 dias ──
   const { data: atas } = useQuery({
