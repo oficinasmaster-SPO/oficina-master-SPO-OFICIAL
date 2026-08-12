@@ -4,7 +4,7 @@
   "properties": {
     "code": {
       "type": "string",
-      "description": "Código da ATA (IT.XXXX)"
+      "description": "C\u00f3digo da ATA (IT.XXXX)"
     },
     "workshop_id": {
       "type": "string",
@@ -16,20 +16,20 @@
     },
     "plano_aceleracao_id": {
       "type": "string",
-      "description": "ID do plano de aceleração vinculado"
+      "description": "ID do plano de acelera\u00e7\u00e3o vinculado"
     },
     "meeting_date": {
       "type": "string",
       "format": "date",
-      "description": "Data da reunião"
+      "description": "Data da reuni\u00e3o"
     },
     "meeting_time": {
       "type": "string",
-      "description": "Hora da reunião (HH:MM)"
+      "description": "Hora da reuni\u00e3o (HH:MM)"
     },
     "tipo_aceleracao": {
       "type": "string",
-      "description": "Tipo de aceleração/atendimento (aceita valores customizados)"
+      "description": "Tipo de acelera\u00e7\u00e3o/atendimento (aceita valores customizados)"
     },
     "consultor_name": {
       "type": "string",
@@ -52,7 +52,7 @@
           }
         }
       },
-      "description": "Lista de participantes da reunião"
+      "description": "Lista de participantes da reuni\u00e3o"
     },
     "responsavel": {
       "type": "object",
@@ -64,11 +64,11 @@
           "type": "string"
         }
       },
-      "description": "Responsável principal do cliente"
+      "description": "Respons\u00e1vel principal do cliente"
     },
     "plano_nome": {
       "type": "string",
-      "description": "Nome do plano de aceleração"
+      "description": "Nome do plano de acelera\u00e7\u00e3o"
     },
     "pautas": {
       "type": "string",
@@ -105,11 +105,11 @@
     },
     "objetivos_consultor": {
       "type": "string",
-      "description": "Direcionamento estratégico do acelerador"
+      "description": "Direcionamento estrat\u00e9gico do acelerador"
     },
     "proximos_passos": {
       "type": "string",
-      "description": "Texto descritivo dos próximos passos"
+      "description": "Texto descritivo dos pr\u00f3ximos passos"
     },
     "proximos_passos_list": {
       "type": "array",
@@ -128,11 +128,11 @@
           }
         }
       },
-      "description": "Lista estruturada de próximos passos"
+      "description": "Lista estruturada de pr\u00f3ximos passos"
     },
     "visao_geral_projeto": {
       "type": "string",
-      "description": "Visão geral do projeto de aceleração"
+      "description": "Vis\u00e3o geral do projeto de acelera\u00e7\u00e3o"
     },
     "processos_vinculados": {
       "type": "array",
@@ -150,7 +150,7 @@
           }
         }
       },
-      "description": "Processos (MAPs) discutidos na reunião"
+      "description": "Processos (MAPs) discutidos na reuni\u00e3o"
     },
     "videoaulas_vinculadas": {
       "type": "array",
@@ -198,7 +198,7 @@
           }
         }
       },
-      "description": "Mídias e documentos anexados"
+      "description": "M\u00eddias e documentos anexados"
     },
     "decisoes_tomadas": {
       "type": "array",
@@ -217,7 +217,7 @@
           }
         }
       },
-      "description": "Decisões e encaminhamentos tomados na reunião"
+      "description": "Decis\u00f5es e encaminhamentos tomados na reuni\u00e3o"
     },
     "acoes_geradas": {
       "type": "array",
@@ -239,7 +239,7 @@
           }
         }
       },
-      "description": "Ações geradas para acompanhamento"
+      "description": "A\u00e7\u00f5es geradas para acompanhamento"
     },
     "client_intelligence": {
       "type": "array",
@@ -266,7 +266,7 @@
           }
         }
       },
-      "description": "Inteligência do cliente capturada (Dores/Oportunidades)"
+      "description": "Intelig\u00eancia do cliente capturada (Dores/Oportunidades)"
     },
     "checklist_respostas": {
       "type": "array",
@@ -314,7 +314,7 @@
           }
         }
       },
-      "description": "Respostas dos checklists de diagnóstico vinculados ao atendimento"
+      "description": "Respostas dos checklists de diagn\u00f3stico vinculados ao atendimento"
     },
     "ai_summary": {
       "type": "object",
@@ -344,7 +344,81 @@
           }
         }
       },
-      "description": "Resumo e análise gerados por IA com contexto histórico"
+      "description": "Resumo e an\u00e1lise gerados por IA com contexto hist\u00f3rico"
+    },
+    "overview_contexto": {
+      "type": "object",
+      "description": "Overview estruturado gerado por IA com base nas 3 \u00faltimas reuni\u00f5es e pr\u00f3ximos passos em andamento. Populado por gerarOverviewCliente na gera\u00e7\u00e3o da ATA. Exibido na tela (drawer/follow-up) e N\u00c3O impresso no PDF.",
+      "properties": {
+        "ultima_reuniao": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "data": {
+              "type": "string"
+            },
+            "tipo": {
+              "type": "string"
+            },
+            "pautas": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "decisoes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "proximos_passos": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "resumo_3_reunioes": {
+          "type": "string"
+        },
+        "passos_andamento": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "titulo": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "percentual": {
+                "type": "integer"
+              },
+              "responsavel": {
+                "type": "string"
+              },
+              "prazo": {
+                "type": "string"
+              },
+              "origem_ata_data": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "overview": {
+          "type": "string"
+        },
+        "gerado_em": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
     },
     "ata_ia": {
       "type": "string",
@@ -352,7 +426,7 @@
     },
     "observacoes_consultor": {
       "type": "string",
-      "description": "Observações manuais do consultor"
+      "description": "Observa\u00e7\u00f5es manuais do consultor"
     },
     "status": {
       "type": "string",

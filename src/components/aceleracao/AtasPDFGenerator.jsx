@@ -5,9 +5,12 @@ import { ptBR } from "date-fns/locale";
 import { parseMarkdownToPdf, safeText } from "@/utils/markdownPdfParser";
 import { sanitizeAtaData, formatPrazoSafe } from "@/utils/ataSanitizer";
 
-export const generateAtaPDF = async (rawAta, workshop) => {
+export const generateAtaPDF = async (rawAta, workshop, opts = {}) => {
   // Sanitizar todos os dados antes de gerar o PDF
   const ata = sanitizeAtaData(rawAta) || {};
+  // Por padrão, blocos gerados por IA (resumo executivo da IA) NÃO são impressos no PDF.
+  // Passar { includeAI: true } para incluir (ex.: versão interna do documento).
+  const includeAI = opts.includeAI === true;
   
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -339,7 +342,10 @@ export const generateAtaPDF = async (rawAta, workshop) => {
   }
 
   // 5. RESUMO DA REUNIAO (COM PARSER MARKDOWN)
-  if (ata.ata_ia) {
+  // Bloco gerado por IA — omitido do PDF por padrão (includeAI=false).
+  // O conteúdo segue salvo no banco (MeetingMinutes.ata_ia / overview_contexto)
+  // para exibição na tela e nos drawers/follow-up.
+  if (includeAI && ata.ata_ia) {
     checkPageBreak(30);
     
     // Titulo da secao

@@ -106,11 +106,31 @@ Deno.serve(async (req) => {
     // Buscar próximos passos operacionais desta ATA (contexto para IA)
     let proximosPassosPendentes = [];
     try {
-      proximosPassosPendentes = await base44.entities.ConsultoriaProximoPasso.filter({
-        consultoria_atendimento_id: atendimento_id
-      }, '-created_date', 50);
+        proximosPassosPendentes = await base44.entities.ConsultoriaProximoPasso.filter({
+            consultoria_atendimento_id: atendimento_id
+        }, '-created_date', 50);
     } catch (e) {
-      console.warn("Aviso: não foi possível buscar ConsultoriaProximoPasso:", e.message);
+        console.warn("Aviso: não foi possível buscar ConsultoriaProximoPasso:", e.message);
+    }
+
+    // 🔗 OVERVIEW DE CONTEXTO (Opção C): chama gerarOverviewCliente para obter
+    // um bloco estruturado das 3 últimas ATAs + próximos passos em andamento.
+    // O resultado é injetado no prompt como HISTÓRICO DE CONTEXTO e salvo em
+    // MeetingMinutes.overview_contexto. Falha aqui NÃO bloqueia a geração da ATA.
+    let overviewContexto = null;
+    try {
+        const overviewRes = await base44.functions.invoke('gerarOverviewCliente', {
+            workshop_id: atendimento.workshop_id,
+            atendimento_id_atual: atendimento_id
+        });
+        if (overviewRes?.data?.success && overviewRes.data?.overview) {
+            overviewContexto = { ...overviewRes.data.overview, gerado_em: new Date().toISOString() };
+            console.log("✅ Overview de contexto gerado.");
+        } else if (overviewRes?.data?.overview) {
+            overviewContexto = { ...overviewRes.data.overview, gerado_em: new Date().toISOString() };
+        }
+    } catch (e) {
+        console.warn("⚠️ Erro ao gerar overview de contexto (não bloqueia):", e.message);
     }
 
     // Mapear tom para instrução
@@ -175,6 +195,28 @@ Deno.serve(async (req) => {
       ? `\n\n10. **SUGESTÕES DE PRÓXIMOS PASSOS ADICIONAIS:** Com base em TODO o conteúdo da reunião, sugira de 3 a 5 próximos passos concretos e acionáveis que não foram explicitamente mencionados mas que seriam valiosos para o cliente. Formato: lista com descrição, responsável sugerido e prazo sugerido.`
       : '';
 
+    // Montar bloco de HISTÓRICO DE CONTEXTO a partir do overview estruturado
+    let historicoContextoBloco = '';
+    if (overviewContexto) {
+      const partes = [];
+      if (overviewContexto.ultima_reuniao) {
+        const ur = overviewContexto.ultima_reuniao;
+        partes.push(`**ÚLTIMA REUNIÃO (${ur.data || 'N/A'} | ${ur.tipo || 'N/A'}):**\nPautas: ${(ur.pautas || []).join('; ') || 'N/A'}\nDecisões: ${(ur.decisoes || []).join('; ') || 'N/A'}\nPróximos passos acordados: ${(ur.proximos_passos || []).join('; ') || 'N/A'}`);
+      }
+      if (overviewContexto.resumo_3_reunioes) {
+        partes.push(`**SÍNTESE DAS 3 ÚLTIMAS REUNIÕES:**\n${overviewContexto.resumo_3_reunioes}`);
+      }
+      if (overviewContexto.passos_andamento && overviewContexto.passos_andamento.length > 0) {
+        partes.push(`**PRÓXIMOS PASSOS EM ANDAMENTO (status real):**\n${overviewContexto.passos_andamento.map(p => `- ${p.titulo} | ${p.status} | ${p.percentual || 0}% | Resp: ${p.responsavel || 'N/A'} | Prazo: ${p.prazo || 'N/A'}`).join('\n')}`);
+      }
+      if (overviewContexto.overview) {
+        partes.push(`**OVERVIEW DO CLIENTE:**\n${overviewContexto.overview}`);
+      }
+      if (partes.length > 0) {
+        historicoContextoBloco = `\n**HISTÓRICO DE CONTEXTO (gerado por IA com base nas últimas reuniões):**\n${partes.join('\n\n')}\n\nUse este contexto para: (1) abrir a ata com um resumo do que vem acontecendo, (2) referenciar andamento dos passos acordados anteriormente, (3) destacar o que foi cumprido ou não desde a última reunião. NÃO repita literalmente — integre de forma natural.\n`;
+      }
+    }
+
     // Preparar prompt para IA
     const prompt = `
 Você é um consultor especializado em gestão de oficinas automotivas. Gere uma ata de reunião.
@@ -194,6 +236,8 @@ Você é um consultor especializado em gestão de oficinas automotivas. Gere uma
 ${atendimento.participantes?.map(p => `- ${p.nome} (${p.cargo})`).join('\n') || 'Não especificado'}
 
 ${sectionBlocks.join('\n\n')}
+
+${historicoContextoBloco}
 
 ${dados_reuniao ? `\n**DADOS ADICIONAIS DA REUNIÃO:**\n${JSON.stringify(dados_reuniao, null, 2)}` : ''}
 
@@ -274,6 +318,7 @@ Formate em Markdown para fácil leitura. ${toneText} NÃO adicione saudações f
         videoaulas_vinculadas: atendimento.videoaulas_vinculadas || [],
         midias_anexas: atendimento.midias_anexas || [],
         ata_ia: ataGerada,
+        overview_contexto: overviewContexto,
         status: 'rascunho'
     };
 
