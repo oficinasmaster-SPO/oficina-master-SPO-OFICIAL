@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { TrendingUp, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import IndicadoresMonthGrid from "@/components/clientIndicators/IndicadoresMonthGrid";
 
 const FIELDS = [
   { key: "faturamento_mes", label: "Faturamento do mês", type: "currency" },
@@ -64,12 +65,25 @@ export default function ClientIndicatorsSection({ workshopId, atendimentoId, fol
   const [values, setValues] = useState({});
   const [mesReferencia, setMesReferencia] = useState(new Date().toISOString().slice(0, 7));
 
-  const { data: existing, isLoading: loadingExisting } = useQuery({
+  const { data: indicatorsData, isLoading: loadingExisting } = useQuery({
     queryKey: ["client-indicators", workshopId, mesReferencia],
     queryFn: () => base44.entities.ClientIndicator.filter({ workshop_id: workshopId }, "data_registro", 200),
     enabled: !!workshopId,
-    select: (records) => records.find((r) => r.mes_referencia === mesReferencia),
+    select: (records) => ({
+      current: records.find((r) => r.mes_referencia === mesReferencia),
+      records,
+    }),
   });
+  const existing = indicatorsData?.current;
+  const allRecords = indicatorsData?.records ?? [];
+  const capturedMonths = useMemo(
+    () => new Set(allRecords.map((r) => r.mes_referencia).filter(Boolean)),
+    [allRecords]
+  );
+  const inicioMes = useMemo(() => {
+    const months = [...capturedMonths].sort();
+    return months.length ? months[0] : null;
+  }, [capturedMonths]);
 
   useEffect(() => {
     if (existing) {
@@ -159,6 +173,14 @@ export default function ClientIndicatorsSection({ workshopId, atendimentoId, fol
             )}
           </div>
         </div>
+
+        <IndicadoresMonthGrid
+          capturedMonths={capturedMonths}
+          inicioMes={inicioMes}
+          mesReferencia={mesReferencia}
+          onSelectMonth={setMesReferencia}
+          loading={loadingExisting}
+        />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {FIELDS.map((f) => (
