@@ -50,12 +50,12 @@ export default function VisaoGeralTab({ state, mode = "contextual" }) {
   }, [atendimentosPeriodo]);
 
   const tarefasPendentes = useMemo(() => {
-    return atendimentos.filter(a => {
+    return atendimentosPeriodo.filter(a => {
       if (STATUS_FINALIZADOS.includes(a.status)) return false;
       const d = new Date(a.data_agendada).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
       return d < hoje;
     });
-  }, [atendimentos, hoje]);
+  }, [atendimentosPeriodo, hoje]);
 
   const futurasList = useMemo(() => atendimentos.filter(a => {
     if (!['agendado', 'confirmado'].includes(a.status)) return false;
