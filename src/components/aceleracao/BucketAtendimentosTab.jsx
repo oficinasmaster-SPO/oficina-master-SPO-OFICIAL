@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { formatDateTimeBR } from "@/utils/timezone";
 import { useOperationalSync } from "@/hooks/useOperationalSync";
+import BucketPendingSummary from "./BucketPendingSummary";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -202,6 +203,8 @@ export default function BucketAtendimentosTab({ state }) {
           {bucketItems.length} pendente{bucketItems.length !== 1 ? 's' : ''}
         </Badge>
       </div>
+
+      <BucketPendingSummary items={bucketItems} workshopMap={workshopMap} />
 
       {selectedItems.size > 0 && (
         <div className="flex items-center justify-between bg-indigo-50 border border-indigo-200 rounded-lg p-3">

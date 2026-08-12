@@ -3,13 +3,11 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    const user = await base44.auth.me().catch(() => null);
+    const isScheduledRun = !user;
 
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (user.role !== 'admin') {
+    // Scheduled automations run as service role (platform-privileged) — skip admin gate.
+    if (user && user.role !== 'admin') {
       return Response.json({ error: 'Admin access required' }, { status: 403 });
     }
 
@@ -61,6 +59,27 @@ Deno.serve(async (req) => {
       plansWithoutAttendances: auditReport.filter(p => !p.hasAttendances).length,
       details: auditReport
     };
+
+    if (isScheduledRun) {
+      try {
+        await base44.entities.SystemEventLog.create({
+          event_type: 'PLAN_ATTENDANCES_HEALTH_CHECK',
+          entity_type: 'PlanAttendanceRule',
+          triggered_by: 'automation',
+          status: summary.plansWithoutAttendances > 0 ? 'warning' : 'success',
+          timestamp: new Date().toISOString(),
+          details: {
+            totalPlans: summary.totalPlans,
+            plansWithAttendances: summary.plansWithAttendances,
+            plansWithoutAttendances: summary.plansWithoutAttendances,
+            workshopsByPlan,
+            run_context: 'scheduled'
+          }
+        });
+      } catch (logErr) {
+        console.error('Falha ao logar health-check de planos:', logErr?.message || logErr);
+      }
+    }
 
     return Response.json({
       success: true,
