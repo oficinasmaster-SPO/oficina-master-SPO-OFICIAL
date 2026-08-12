@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 import NotificationSchedulerModal from "@/components/aceleracao/NotificationSchedulerModal";
@@ -11,6 +11,7 @@ import ClientDetailPanel from "@/components/aceleracao/ClientDetailPanel";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import TarefaBacklogForm from "@/components/aceleracao/TarefaBacklogForm";
 import PedidoInternoForm from "@/components/aceleracao/PedidoInternoForm";
+import LeituraTresAtasCard from "@/components/aceleracao/LeituraTresAtasCard";
 
 export default function AdvancedOptionsSection({ formData, setFormData, workshops }) {
   const [showNotificationModal, setShowNotificationModal] = useState(false);
@@ -20,6 +21,8 @@ export default function AdvancedOptionsSection({ formData, setFormData, workshop
   const [showPedidoDrawer, setShowPedidoDrawer] = useState(false);
   const [tarefasVinculadas, setTarefasVinculadas] = useState([]);
   const [pedidosVinculados, setPedidosVinculados] = useState([]);
+  const [showLeituraAtas, setShowLeituraAtas] = useState(false);
+  const [leituraMounted, setLeituraMounted] = useState(false);
 
   // Portais renderizados diretamente no document.body para escapar de qualquer stacking context
   const modals = (
@@ -181,6 +184,34 @@ export default function AdvancedOptionsSection({ formData, setFormData, workshop
           >
             ✅ + Nova Tarefa
           </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full justify-start border-purple-300 text-purple-700 hover:bg-purple-50"
+            onClick={() => {
+              if (!formData.workshop_id) {
+                toast.error("Selecione uma oficina primeiro");
+                return;
+              }
+              setShowLeituraAtas(prev => !prev);
+              setLeituraMounted(true);
+            }}
+          >
+            <BookOpen className="w-4 h-4 mr-2" />
+            Leitura das últimas 3 atas
+          </Button>
+
+          {leituraMounted && formData.workshop_id && (
+            <div className={showLeituraAtas ? "" : "hidden"}>
+              <LeituraTresAtasCard
+                key={formData.workshop_id}
+                workshop_id={formData.workshop_id}
+                atendimento_id_atual={formData.id}
+                autoLoad={showLeituraAtas}
+              />
+            </div>
+          )}
 
           {formData.workshop_id && (
             <Button

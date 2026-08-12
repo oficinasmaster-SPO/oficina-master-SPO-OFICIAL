@@ -35,6 +35,7 @@ import ParallelDemandsPanel from "@/components/aceleracao/ParallelDemandsPanel";
 import CheckpointModal from "@/components/aceleracao/CheckpointModal";
 import DocumentFormDialog from "@/components/documents/DocumentFormDialog";
 import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
+import LeituraTresAtasCard from "@/components/aceleracao/LeituraTresAtasCard";
 import { criarProximoSuporteFU } from "@/components/aceleracao/suporte/SuporteFollowUpHelper";
 import { useToasts } from "@/components/aceleracao/ToastContainer";
 import { useClientDemands } from "@/components/aceleracao/hooks/useClientDemands";
@@ -1590,6 +1591,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
               { id: 'backlog',      emoji: '📝', label: 'Backlog',        group: 2 },
               { id: 'bucket',       emoji: '📥', label: 'Bucket',         group: 2 },
               { id: 'historico',    emoji: '🕐', label: 'Histórico',      group: 3 },
+              { id: 'leitura3atas', emoji: '📖', label: 'Leitura das 3 atas', group: 3 },
       { id: 'ia',           emoji: '🤖', label: 'IA',             group: 3 },
       { id: 'demandas',     emoji: '🔔', label: 'Demandas Paralelas', group: 3 },
       ];
@@ -1696,6 +1698,17 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
                               </button>
                             );
                           })}
+                        </div>
+                      )}
+
+                      {/* LEITURA 3 ATAS */}
+                      {activePanel === 'leitura3atas' && (
+                        <div className="px-3 py-4">
+                          <LeituraTresAtasCard
+                            key={followUp?.workshop_id}
+                            workshop_id={followUp?.workshop_id}
+                            autoLoad
+                          />
                         </div>
                       )}
 
