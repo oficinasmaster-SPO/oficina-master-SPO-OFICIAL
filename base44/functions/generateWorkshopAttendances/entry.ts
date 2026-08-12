@@ -81,16 +81,46 @@ async function generateForWorkshop(base44, workshop, log) {
   });
 
   if (legacyPending && legacyPending.length > 0) {
+    // ── Guard de preservação: snapshot de agendado/realizado ANTES ────────────
+    // O filtro status='pendente' já garante que agendado/realizado do plano
+    // antigo (trabalho já convertido em reunião real pelo consultor) NÃO são
+    // tocados. Este guard torna a preservação observável e falha alto se a
+    // invariante for violada (debug de regressões futuras).
+    const preservedBefore = await base44.asServiceRole.entities.ContractAttendance.filter({
+      workshop_id: workshop.id,
+      status: { $in: ['agendado', 'realizado'] }
+    }, undefined, 500);
+    const preservedCountBefore = (preservedBefore || []).length;
+
     const archRes = await base44.asServiceRole.entities.ContractAttendance.updateMany(
       { workshop_id: workshop.id, status: 'pendente', plan_id: { $ne: planId } },
       { $set: { status: 'cancelado' } }
     );
-    log('legacy_pending_archived', `Arquivados ${legacyPending.length} pendentes de planos antigos`, {
+
+    // ── Guard de preservação: snapshot DEPOIS — deve ser idêntico ─────────────
+    const preservedAfter = await base44.asServiceRole.entities.ContractAttendance.filter({
+      workshop_id: workshop.id,
+      status: { $in: ['agendado', 'realizado'] }
+    }, undefined, 500);
+    const preservedCountAfter = (preservedAfter || []).length;
+
+    const guardOk = preservedCountBefore === preservedCountAfter;
+    log(guardOk ? 'legacy_pending_archived' : 'PRESERVATION_GUARD_BREACH', `Arquivados ${legacyPending.length} pendentes de planos antigos`, {
       workshop_id: workshop.id,
       new_plan_id: planId,
       archived: legacyPending.length,
+      agendado_realizado_antes: preservedCountBefore,
+      agendado_realizado_depois: preservedCountAfter,
+      guard_preservacao_ok: guardOk,
       update_result: archRes
     });
+    if (!guardOk) {
+      console.error('[generateWorkshopAttendances] PRESERVATION GUARD BREACH', {
+        workshop_id: workshop.id,
+        before: preservedCountBefore,
+        after: preservedCountAfter
+      });
+    }
   } else {
     log('legacy_pending_none', 'Nenhum pendente de plano antigo para arquivar', {
       workshop_id: workshop.id,
