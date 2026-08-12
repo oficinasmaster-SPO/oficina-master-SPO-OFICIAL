@@ -11,6 +11,12 @@ export const generateAtaPDF = async (rawAta, workshop, opts = {}) => {
   // Por padrão, blocos gerados por IA (resumo executivo da IA) NÃO são impressos no PDF.
   // Passar { includeAI: true } para incluir (ex.: versão interna do documento).
   const includeAI = opts.includeAI === true;
+
+  // Renumbering dinâmico: quando o bloco de IA (seção 5) é omitido, as seções
+  // seguintes (6..14) passam a 5..13 para não deixar "buraco" na numeração.
+  // sn(N) retorna N quando includeAI=true, ou N-1 quando includeAI=false.
+  const numOffset = includeAI ? 0 : 1;
+  const sn = (n) => n - numOffset;
   
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -411,7 +417,7 @@ export const generateAtaPDF = async (rawAta, workshop, opts = {}) => {
     checkPageBreak(25);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('6. DECISOES TOMADAS (Anotacoes do Consultor)', margin, y);
+    doc.text(`${sn(6)}. DECISOES TOMADAS (Anotacoes do Consultor)`, margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
@@ -453,7 +459,7 @@ export const generateAtaPDF = async (rawAta, workshop, opts = {}) => {
     checkPageBreak(25);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('7. ACOES DE ACOMPANHAMENTO (Anotacoes do Consultor)', margin, y);
+    doc.text(`${sn(7)}. ACOES DE ACOMPANHAMENTO (Anotacoes do Consultor)`, margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
@@ -495,7 +501,7 @@ export const generateAtaPDF = async (rawAta, workshop, opts = {}) => {
     checkPageBreak(30);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('8. PROCESSOS (MAPs) COMPARTILHADOS', margin, y);
+    doc.text(`${sn(8)}. PROCESSOS (MAPs) COMPARTILHADOS`, margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
@@ -574,7 +580,7 @@ export const generateAtaPDF = async (rawAta, workshop, opts = {}) => {
     checkPageBreak(30);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('9. VIDEOAULAS RECOMENDADAS', margin, y);
+    doc.text(`${sn(9)}. VIDEOAULAS RECOMENDADAS`, margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
@@ -635,7 +641,7 @@ export const generateAtaPDF = async (rawAta, workshop, opts = {}) => {
     checkPageBreak(25);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('10. MIDIAS E ANEXOS', margin, y);
+    doc.text(`${sn(10)}. MIDIAS E ANEXOS`, margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
@@ -705,7 +711,7 @@ export const generateAtaPDF = async (rawAta, workshop, opts = {}) => {
 
   // 11. VISAO GERAL DO PROJETO
   if (ata.visao_geral_projeto) {
-    addSection('11', 'VISAO GERAL DO PROJETO DE ACELERACAO', safeText(ata.visao_geral_projeto));
+    addSection(String(sn(11)), 'VISAO GERAL DO PROJETO DE ACELERACAO', safeText(ata.visao_geral_projeto));
   }
 
   // 12. CHECKLIST DE DIAGNÓSTICO
@@ -713,7 +719,7 @@ export const generateAtaPDF = async (rawAta, workshop, opts = {}) => {
     checkPageBreak(30);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('12. CHECKLIST DE DIAGNOSTICO', margin, y);
+    doc.text(`${sn(12)}. CHECKLIST DE DIAGNOSTICO`, margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
@@ -762,7 +768,7 @@ export const generateAtaPDF = async (rawAta, workshop, opts = {}) => {
     checkPageBreak(30);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('13. INTELIGENCIA DO CLIENTE (DORES E OPORTUNIDADES)', margin, y);
+    doc.text(`${sn(13)}. INTELIGENCIA DO CLIENTE (DORES E OPORTUNIDADES)`, margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
@@ -827,7 +833,7 @@ export const generateAtaPDF = async (rawAta, workshop, opts = {}) => {
     checkPageBreak(30);
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.text('14. INDICADORES DO CLIENTE (EVOLUCAO)', margin, y);
+    doc.text(`${sn(14)}. INDICADORES DO CLIENTE (EVOLUCAO)`, margin, y);
     y += 2;
     doc.setLineWidth(0.5);
     doc.line(margin, y, pageWidth - margin, y);
