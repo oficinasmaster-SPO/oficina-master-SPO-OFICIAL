@@ -117,12 +117,34 @@ export function TenantSessionProvider({ children }) {
     return full ? { ...session.workshop, ...full } : session.workshop;
   }, [session, fullWorkshops]);
 
-  // Todas as filiais das memberships (seletor do header / dono multi-filial)
+  // Todas as filiais das memberships (seletor do header / dono multi-filial).
+  // Admins e usuários internos (consultoria) têm acesso total: retornam TODOS os
+  // workshops ativos do BFF, não apenas os das memberships. Usuários externos
+  // continuam restritos às suas memberships (comportamento original).
   const availableWorkshops = useMemo(() => {
     if (!session) return [];
+    const isAdmin = session?.isAdmin === true;
+    const isInternal = realUser?.data?.user_type === 'internal' || realUser?.user_type === 'internal';
+    const fullAccess = isAdmin || isInternal;
+
     const byId = new Map(fullWorkshops.map((w) => [w.id, w]));
     const seen = new Set();
     const list = [];
+
+    if (fullAccess && fullWorkshops.length > 0) {
+      // Acesso total: todas as oficinas ativas retornadas pelo BFF, ordenadas com
+      // a atual (workshop efetivo) em primeiro lugar.
+      const preferredId = session.workshop?.id;
+      return fullWorkshops
+        .filter((w) => !w.status || w.status === 'ativo')
+        .sort((a, b) => {
+          if (a.id === preferredId && b.id !== preferredId) return -1;
+          if (b.id === preferredId && a.id !== preferredId) return 1;
+          return (a.name || '').localeCompare(b.name || '', 'pt-BR');
+        });
+    }
+
+    // Comportamento original (usuário externo): apenas oficinas das memberships
     for (const m of session.memberships || []) {
       if (!m.workshop_id || seen.has(m.workshop_id)) continue;
       seen.add(m.workshop_id);
@@ -132,7 +154,7 @@ export function TenantSessionProvider({ children }) {
       list.unshift(workshop);
     }
     return list;
-  }, [session, fullWorkshops, workshop]);
+  }, [session, fullWorkshops, workshop, realUser]);
 
   // Troca de oficina: persiste preferência e REVALIDA via resolveTenant
   const switchWorkshop = useCallback((id) => {
