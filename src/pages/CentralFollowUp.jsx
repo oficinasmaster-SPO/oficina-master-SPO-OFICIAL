@@ -133,6 +133,16 @@ export default function CentralFollowUp() {
         {/* Separator */}
         <div className="w-px h-5 bg-gray-700 flex-shrink-0" />
 
+        {/* S6: Botão Relatório Semanal */}
+        <button
+          onClick={() => setShowRelatorio(true)}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white/80 hover:text-white hover:bg-white/10 transition-colors flex-shrink-0"
+          title="Relatório Semanal"
+        >
+          <FileBarChart className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Relatório</span>
+        </button>
+
         {/* Spacer */}
         <div className="flex-1" />
 
