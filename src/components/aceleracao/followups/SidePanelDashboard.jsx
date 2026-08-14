@@ -92,22 +92,54 @@ export default function SidePanelDashboard({ metrics, insight, allClear, actions
         </div>
       </div>
 
-      {/* Toggle de período — estilo iPhone */}
-      <div className="flex p-0.5 bg-gray-100 rounded-lg">
-        {PERIOD_OPTIONS.map(opt => (
-          <button
-            key={opt.id}
-            onClick={() => onPeriodChange?.(opt.id)}
-            className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all duration-200 ${
-              period === opt.id
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
+      {/* Toggle de período — estilo iPhone aprimorado */}
+<div className="relative flex items-center p-1 bg-gray-100 rounded-xl overflow-hidden w-full">
+  {/* Slider vermelho */}
+  <div
+    className="absolute top-1 bottom-1 left-1 rounded-lg bg-[#f00000] shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+    style={{
+      width: `calc((100% - 8px) / ${PERIOD_OPTIONS.length})`,
+      transform: `translateX(calc(${PERIOD_OPTIONS.findIndex(
+        opt => opt.id === period
+      )} * 100%))`,
+    }}
+  />
+
+  {/* Opções */}
+  {PERIOD_OPTIONS.map(opt => {
+    const isActive = period === opt.id;
+
+    return (
+      <button
+        key={opt.id}
+        onClick={() => onPeriodChange?.(opt.id)}
+        className={`
+          relative z-10 flex-1
+          py-1.5 px-2
+          text-xs font-bold
+          rounded-lg
+          transition-all duration-200
+          ease-out
+          select-none
+          active:scale-[0.96]
+          ${isActive
+            ? "text-white scale-[1.02]"
+            : "text-gray-500 hover:text-gray-800"}
+        `}
+      >
+        <span
+          className={`
+            inline-block
+            transition-transform duration-200
+            ${isActive ? "scale-[1.03]" : "scale-100"}
+          `}
+        >
+          {opt.label}
+        </span>
+      </button>
+    );
+  })}
+</div>
 
       {/* Insight ou Tudo em dia */}
       {allClear ? (
