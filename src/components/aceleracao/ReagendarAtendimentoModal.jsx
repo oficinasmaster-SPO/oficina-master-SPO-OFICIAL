@@ -226,10 +226,13 @@ export default function ReagendarAtendimentoModal({
       // Persiste info de sobreposição quando usuário ignorou conflito
       if (conflitos.length > 0 && ignorarConflito) {
         const c = conflitos[0]; // registra o primeiro conflito
-        const workshopConflito = c.workshop_id; // nome resolve no front via workshopMap
+        // QA-FIX: conflito_cliente deve ser o nome da oficina/cliente do atendimento
+        // conflitante (workshop_nome), não o consultor_nome que é o consultor daquele atendimento.
+        // todosAtendimentos não carrega workshopMap aqui, então usamos workshop_nome se existir
+        // ou fallback para o workshop_id legível.
         updateData.sobreposicao_info = {
           conflito_atendimento_id:  c.id,
-          conflito_cliente:         c.consultor_nome || workshopConflito || '',
+          conflito_cliente:         c.workshop_nome || c.workshop_id || 'outro cliente',
           conflito_horario_inicio:  c.data_agendada,
           conflito_horario_fim:     new Date(
             new Date(c.data_agendada).getTime() + (c.duracao_minutos || 60) * 60000
