@@ -7,8 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { BarChart3, Calendar, CalendarRange, FileText, Users, Activity, Plus, Loader2, Lightbulb, List, Zap, ClipboardCheck } from "lucide-react";
 import RegistroAtendimentoMassaModal from "@/components/aceleracao/RegistroAtendimentoMassaModal";
 import IniciarAtendimentoModal from "@/components/aceleracao/IniciarAtendimentoModal";
-import ActiveFiltersBar from "@/components/aceleracao/ActiveFiltersBar";
-import FiltrosBarGlobal from "@/components/aceleracao/FiltrosBarGlobal";
 import TabSkeleton from "@/components/aceleracao/TabSkeleton";
 import TabErrorBoundary from "@/components/aceleracao/TabErrorBoundary";
 import RegistrarAtendimento from "@/pages/RegistrarAtendimento";
@@ -368,22 +366,7 @@ export default function ControleAceleracaoView({ state }) {
         />
       )}
 
-      {/* Barra de filtros global — visível em todas as abas */}
-      <FiltrosBarGlobal
-        filtros={filtros}
-        onFiltrosChange={handleFiltrosChange}
-        consultores={consultores}
-      />
-
-      {/* Active Filters Bar — sempre visível quando há filtros */}
-      {hasActiveFilters && (
-        <ActiveFiltersBar
-          filtros={filtros}
-          consultores={consultores}
-          onClearFilter={handleClearFilter}
-          onClearAll={handleClearAllFilters}
-        />
-      )}
+      {/* Barra de filtros global removida — filtros movidos para dentro de cada tab (S3) */}
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className={activeTab === "pedidos" ? "flex min-h-0 flex-1 flex-col gap-5" : "space-y-5"}>
