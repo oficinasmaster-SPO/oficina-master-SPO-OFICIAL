@@ -220,7 +220,7 @@ export default function SidePanelDashboard({ metrics, insight, allClear, actions
             key={m.id}
             metric={m}
             isActive={activePill === m.spId}
-            onClick={() => onCardClick?.(m.spId)}
+            onClick={() => handleCardClick(m)}
           />
         ))}
       </div>
