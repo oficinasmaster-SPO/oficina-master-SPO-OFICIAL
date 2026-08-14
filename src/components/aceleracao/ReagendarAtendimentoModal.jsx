@@ -52,7 +52,8 @@ export default function ReagendarAtendimentoModal({
   workshop,
   onClose,
   onSaved,
-  todosAtendimentos = [], // lista completa — usada para detecção de conflito
+  todosAtendimentos = [], // lista completa — usada para deteção de conflito
+  workshopMap = {},       // QA-FIX: resolve nome do cliente conflitante no banner
 }) {
   const [loading, setLoading] = useState(false);
 
