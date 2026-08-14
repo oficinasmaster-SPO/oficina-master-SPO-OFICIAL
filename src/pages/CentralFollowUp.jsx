@@ -41,6 +41,9 @@ export default function CentralFollowUp() {
   const [activePill, setActivePill] = useState("todos");
   const [crmFilterPill, setCrmFilterPill] = useState("todos");
 
+  // S6: Relatório semanal
+  const [showRelatorio, setShowRelatorio] = useState(false);
+
   const PILL_MAP = {
     sp_sem_followup: "por_empresa",
     sp_sem_contato_7d: "atrasados",
