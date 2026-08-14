@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, AlertTriangle, FilePlus, Play, StopCircle, CalendarClock, FileText, CheckCircle, Trash2, Clock, MoreVertical } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ATENDIMENTO_STATUS, ATENDIMENTO_STATUS_COLORS, ATENDIMENTO_STATUS_LABELS } from "@/components/lib/ataConstants";
 import { formatDateTimeBR } from "@/utils/timezone";
 import { useAttendanceValidation } from "@/hooks/useAttendanceValidation";
@@ -25,8 +26,13 @@ export default function AtendimentoRow({
   const { getName: resolveEmployeeName } = useEmployeeResolver();
 
   const hasValidationIssues = validation.warnings && validation.warnings.length > 0;
+  const temSobreposicao = !!atendimento.sobreposicao_info?.conflito_atendimento_id;
+
+  // Prioridade: erro de validação > sobreposição > amarelo de aviso > neutro
   const rowBgClass = hasValidationIssues
     ? (validation.warnings.some(w => w.severity === 'error') ? 'bg-red-50' : 'bg-yellow-50')
+    : temSobreposicao
+    ? 'bg-orange-50'
     : '';
 
   const handleRowClick = () => {
@@ -105,11 +111,35 @@ export default function AtendimentoRow({
         </div>
       </td>
       <td className="py-3 px-3 text-sm text-gray-600 border-r border-gray-100">
-        <Badge className={`${ATENDIMENTO_STATUS_COLORS[atendimento.status] || 'bg-gray-100 text-gray-800 border-gray-300'} text-[11px] px-2 py-1 inline-flex items-center justify-center min-w-[100px]`}>
-          {atendimento.status === ATENDIMENTO_STATUS.ATRASADO && <AlertTriangle className="w-3 h-3 mr-1" />}
-          {atendimento.status === ATENDIMENTO_STATUS.REALIZADO && <AlertTriangle className="w-3 h-3 mr-1" />}
-          {ATENDIMENTO_STATUS_LABELS[atendimento.status] || atendimento.status || 'Indefinido'}
-        </Badge>
+        {temSobreposicao ? (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge className={`${ATENDIMENTO_STATUS_COLORS[atendimento.status] || 'bg-gray-100 text-gray-800 border-gray-300'} text-[11px] px-2 py-1 inline-flex items-center justify-center min-w-[100px] ring-2 ring-orange-400 ring-offset-1 cursor-help`}>
+                  {atendimento.status === ATENDIMENTO_STATUS.ATRASADO && <AlertTriangle className="w-3 h-3 mr-1" />}
+                  {atendimento.status === ATENDIMENTO_STATUS.REALIZADO && <AlertTriangle className="w-3 h-3 mr-1" />}
+                  {ATENDIMENTO_STATUS_LABELS[atendimento.status] || atendimento.status || 'Indefinido'}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs">
+                <p className="font-semibold text-orange-700 mb-0.5">⚠️ Sobreposição de horário</p>
+                <p>Este reagendamento conflita com o atendimento de <strong>{atendimento.sobreposicao_info.conflito_cliente || 'outro cliente'}</strong>.</p>
+                {atendimento.sobreposicao_info.conflito_horario_inicio && (
+                  <p className="mt-0.5 text-gray-500">
+                    Horário: {new Date(atendimento.sobreposicao_info.conflito_horario_inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} –{' '}
+                    {new Date(atendimento.sobreposicao_info.conflito_horario_fim).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                )}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ) : (
+          <Badge className={`${ATENDIMENTO_STATUS_COLORS[atendimento.status] || 'bg-gray-100 text-gray-800 border-gray-300'} text-[11px] px-2 py-1 inline-flex items-center justify-center min-w-[100px]`}>
+            {atendimento.status === ATENDIMENTO_STATUS.ATRASADO && <AlertTriangle className="w-3 h-3 mr-1" />}
+            {atendimento.status === ATENDIMENTO_STATUS.REALIZADO && <AlertTriangle className="w-3 h-3 mr-1" />}
+            {ATENDIMENTO_STATUS_LABELS[atendimento.status] || atendimento.status || 'Indefinido'}
+          </Badge>
+        )}
       </td>
       <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-center">
