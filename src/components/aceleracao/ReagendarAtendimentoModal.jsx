@@ -233,7 +233,7 @@ export default function ReagendarAtendimentoModal({
         // ou fallback para o workshop_id legível.
         updateData.sobreposicao_info = {
           conflito_atendimento_id:  c.id,
-          conflito_cliente:         c.workshop_nome || c.workshop_id || 'outro cliente',
+          conflito_cliente:         workshopMap[c.workshop_id]?.name || c.workshop_id || 'outro cliente',
           conflito_horario_inicio:  c.data_agendada,
           conflito_horario_fim:     new Date(
             new Date(c.data_agendada).getTime() + (c.duracao_minutos || 60) * 60000
@@ -372,8 +372,8 @@ export default function ReagendarAtendimentoModal({
                   <ul className="mt-1.5 space-y-1">
                     {conflitos.map(c => (
                       <li key={c.id} className="text-xs text-orange-800">
-                        {/* QA-FIX: exibir cliente (workshop) do conflito, não o consultor */}
-                        • <strong>{c.workshop_nome || 'outro cliente'}</strong> —{' '}
+                        {/* QA-FIX: resolve nome do cliente via workshopMap */}
+                        • <strong>{workshopMap[c.workshop_id]?.name || 'outro cliente'}</strong> —{' '}
                         {fmtHora(c.data_agendada)} às {fmtHora(
                           new Date(new Date(c.data_agendada).getTime() + (c.duracao_minutos || 60) * 60000)
                         )}
