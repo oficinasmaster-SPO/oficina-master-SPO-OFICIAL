@@ -206,28 +206,72 @@ export function useSidePanelPriorities({ reminders = [], remindersConcluidos = [
     const concluidosPeriod = concluidos.filter(c => inPeriod(c.completedAt || c.created_date));
     const concluidosPrev = concluidos.filter(c => inPrev(c.completedAt || c.created_date));
 
-    const realizados = concluidosPeriod.length;
-    const realizadosPrev = concluidosPrev.length;
+    // S4 — Métricas orientadas a CLIENTES (distinct workshop_id), não a follow-ups
 
-    const atendeuSet = new Set();
-    concluidosPeriod.forEach(c => { if (c.resultado === "atendeu" && c.workshop_id) atendeuSet.add(c.workshop_id); });
-    const atendidos = atendeuSet.size;
-    const atendeuSetPrev = new Set();
-    concluidosPrev.forEach(c => { if (c.resultado === "atendeu" && c.workshop_id) atendeuSetPrev.add(c.workshop_id); });
-    const atendidosPrev = atendeuSetPrev.size;
+    // 1. Empresas atendidas (distinct workshop com ≥1 concluído no período)
+    const empresasAtendidasSet = new Set();
+    const empresasAtendidasList = [];
+    concluidosPeriod.forEach(c => {
+      if (c.workshop_id && !empresasAtendidasSet.has(c.workshop_id)) {
+        empresasAtendidasSet.add(c.workshop_id);
+        empresasAtendidasList.push({ wid: c.workshop_id, name: nameByWorkshop[c.workshop_id] || c.workshop_id });
+      }
+    });
+    const empresasAtendidas = empresasAtendidasSet.size;
+    const empresasAtendidasPrevSet = new Set();
+    concluidosPrev.forEach(c => { if (c.workshop_id) empresasAtendidasPrevSet.add(c.workshop_id); });
 
-    const naoRespondeuPeriod = concluidosPeriod.filter(c => c.resultado === "nao_atendeu");
-    const naoRespondeuCount = naoRespondeuPeriod.length;
-    const naoRespondeuPrev = concluidosPrev.filter(c => c.resultado === "nao_atendeu").length;
-    const naoRespondeuWorkshops = new Set(naoRespondeuPeriod.map(c => c.workshop_id).filter(Boolean));
+    // 2. Ligações realizadas (total de concluídos com resultado=atendeu — contato efetivo)
+    const ligacoesList = concluidosPeriod.filter(c => c.resultado === "atendeu");
+    const ligacoes = ligacoesList.length;
+    const ligacoesPrev = concluidosPrev.filter(c => c.resultado === "atendeu").length;
 
-    const criados = [...reminders, ...remindersConcluidos].filter(r => inPeriod(r.created_date)).length;
-    const criadosPrev = [...reminders, ...remindersConcluidos].filter(r => inPrev(r.created_date)).length;
+    // 3. Empresas com novos FUs (distinct workshop dos FUs criados no período)
+    const criadosPeriod = [...reminders, ...remindersConcluidos].filter(r => inPeriod(r.created_date));
+    const empresasNovosFuSet = new Set();
+    const empresasNovosFuList = [];
+    criadosPeriod.forEach(r => {
+      if (r.workshop_id && !empresasNovosFuSet.has(r.workshop_id)) {
+        empresasNovosFuSet.add(r.workshop_id);
+        empresasNovosFuList.push({ wid: r.workshop_id, name: nameByWorkshop[r.workshop_id] || r.workshop_name || r.workshop_id });
+      }
+    });
+    const empresasNovosFu = empresasNovosFuSet.size;
+    const empresasNovosFuPrevSet = new Set();
+    [...reminders, ...remindersConcluidos].filter(r => inPrev(r.created_date)).forEach(r => {
+      if (r.workshop_id) empresasNovosFuPrevSet.add(r.workshop_id);
+    });
 
+    // 4. Clientes sem resposta (distinct workshop com nao_atendeu ou aguardando consecutivos)
+    const naoRespondeuPeriod = concluidosPeriod.filter(c => c.resultado === "nao_atendeu" || c.resultado === "aguardando");
+    const naoRespondeuWorkshops = new Set();
+    const naoRespondeuList = [];
+    naoRespondeuPeriod.forEach(c => {
+      if (c.workshop_id && !naoRespondeuWorkshops.has(c.workshop_id)) {
+        naoRespondeuWorkshops.add(c.workshop_id);
+        naoRespondeuList.push({ wid: c.workshop_id, name: nameByWorkshop[c.workshop_id] || c.workshop_id });
+      }
+    });
+    const naoRespondeuCount = naoRespondeuWorkshops.size;
+    const naoRespondeuPrevWorkshops = new Set();
+    concluidosPrev.filter(c => c.resultado === "nao_atendeu" || c.resultado === "aguardando")
+      .forEach(c => { if (c.workshop_id) naoRespondeuPrevWorkshops.add(c.workshop_id); });
+
+    // 5. Pedidos abertos (mantido)
     const pedidosPeriod = pedidosAbertos.filter(p => inPeriod(p.created_date));
-    const pendencias = vencidos.length;
 
-    const coverage = Math.round((atendidos / totalUniverse) * 100);
+    // 6. Clientes com FU atrasado (distinct workshop)
+    const vencidosWorkshopSet = new Set();
+    const vencidosList = [];
+    vencidos.forEach(r => {
+      if (r.workshop_id && !vencidosWorkshopSet.has(r.workshop_id)) {
+        vencidosWorkshopSet.add(r.workshop_id);
+        vencidosList.push({ wid: r.workshop_id, name: r.workshop_name || nameByWorkshop[r.workshop_id] || r.workshop_id });
+      }
+    });
+    const clientesAtrasados = vencidosWorkshopSet.size;
+
+    const coverage = Math.round((empresasAtendidas / totalUniverse) * 100);
     const periodLabel = period === "week" ? "semana" : "mês";
 
     const trendOf = (cur, prev, goodWhenUp) => {
@@ -237,66 +281,76 @@ export function useSidePanelPriorities({ reminders = [], remindersConcluidos = [
     };
 
     const metrics = [
-      { id: "realizados", spId: "sp_realizados", pillId: "concluidos",
-        emoji: "✓", label: "Realizados", count: realizados, color: "green",
-        tooltip: `Follow-ups com contato registrado nesta ${periodLabel}.`,
-        sample: [], pct: 0, trend: trendOf(realizados, realizadosPrev, true) },
-      { id: "atendidos", spId: "sp_atendidos", pillId: "concluidos",
-        emoji: "☎", label: "Atendidos", count: atendidos, color: "blue",
-        tooltip: `Clientes distintos que responderam nesta ${periodLabel}.`,
-        sample: [], pct: coverage, trend: trendOf(atendidos, atendidosPrev, true) },
-      { id: "criados", spId: "sp_criados", pillId: null,
-        emoji: "📅", label: "Criados", count: criados, color: "purple",
-        tooltip: `Novos follow-ups criados nesta ${periodLabel}.`,
-        sample: [], pct: 0, trend: trendOf(criados, criadosPrev, true) },
+      { id: "empresas_atendidas", spId: "sp_realizados", pillId: "concluidos",
+        emoji: "✓", label: "Empresas atendidas", count: empresasAtendidas, color: "green",
+        tooltip: `Clientes distintos com ≥1 follow-up concluído nesta ${periodLabel}.`,
+        sample: empresasAtendidasList.slice(0, 3).map(e => e.name), pct: coverage,
+        trend: trendOf(empresasAtendidas, empresasAtendidasPrevSet.size, true),
+        detailItems: empresasAtendidasList },
+      { id: "ligacoes_realizadas", spId: "sp_atendidos", pillId: "concluidos",
+        emoji: "☎", label: "Ligações realizadas", count: ligacoes, color: "blue",
+        tooltip: `Contatos efetivos (resultado: atendeu) nesta ${periodLabel}.`,
+        sample: [], pct: 0,
+        trend: trendOf(ligacoes, ligacoesPrev, true),
+        detailItems: ligacoesList.map(c => ({ wid: c.workshop_id, name: nameByWorkshop[c.workshop_id] || c.workshop_id })) },
+      { id: "empresas_novos_fu", spId: "sp_criados", pillId: null,
+        emoji: "📅", label: "Novos follow-ups", count: empresasNovosFu, color: "purple",
+        tooltip: `Empresas que receberam novos follow-ups nesta ${periodLabel}.`,
+        sample: empresasNovosFuList.slice(0, 3).map(e => e.name), pct: 0,
+        trend: trendOf(empresasNovosFu, empresasNovosFuPrevSet.size, true),
+        detailItems: empresasNovosFuList },
       { id: "nao_respondeu", spId: "sp_nao_respondeu", pillId: "concluidos",
         emoji: "❌", label: "Não responderam", count: naoRespondeuCount, color: "red",
-        tooltip: `Contatos encerrados sem resposta nesta ${periodLabel}.`,
-        sample: [], pct: pct(naoRespondeuWorkshops.size), trend: trendOf(naoRespondeuCount, naoRespondeuPrev, false) },
+        tooltip: `Clientes com resultado “não atendeu” ou “aguardando” nesta ${periodLabel}.`,
+        sample: naoRespondeuList.slice(0, 3).map(e => e.name), pct: pct(naoRespondeuCount),
+        trend: trendOf(naoRespondeuCount, naoRespondeuPrevWorkshops.size, false),
+        detailItems: naoRespondeuList },
       { id: "pedidos_abertos", spId: "sp_pedidos_abertos", pillId: "concluidos",
         emoji: "📦", label: "Pedidos abertos", count: pedidosPeriod.length, color: "green",
         tooltip: `Pedidos internos abertos nesta ${periodLabel}.`,
-        sample: [], pct: 0, trend: null },
-      { id: "pendencias", spId: "sp_pendencias", pillId: "atrasados",
-        emoji: "⏰", label: "Pendências", count: pendencias, color: "orange",
-        tooltip: "Follow-ups que seguem vencidos (residual atual).",
-        sample: vencidos.slice(0, 3).map(r => r.workshop_name).filter(Boolean),
-        pct: pct(pendencias), trend: null },
+        sample: [], pct: 0, trend: null, detailItems: [] },
+      { id: "clientes_atrasados", spId: "sp_pendencias", pillId: "atrasados",
+        emoji: "⏰", label: "Clientes atrasados", count: clientesAtrasados, color: "orange",
+        tooltip: "Clientes distintos com follow-ups vencidos.",
+        sample: vencidosList.slice(0, 3).map(e => e.name),
+        pct: pct(clientesAtrasados), trend: null,
+        detailItems: vencidosList },
     ];
 
-    // Insight gerencial com cobertura e nome do mês
+    // Insight gerencial orientado a clientes
     const insightText = period === "month"
       ? (() => {
           const monthName = new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(startDate);
           const cap = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-          return `${cap}: ${realizados} contatos realizados. ${coverage}% da carteira atendida. ${pendencias} pendências abertas.`;
+          return `${cap}: ${empresasAtendidas} empresas atendidas (${coverage}% da carteira). ${naoRespondeuCount > 0 ? `${naoRespondeuCount} cliente(s) sem resposta.` : ''} ${clientesAtrasados > 0 ? `${clientesAtrasados} cliente(s) com FU atrasado.` : ''}`;
         })()
-      : `Nesta semana foram realizados ${realizados} follow-ups. ${coverage}% da carteira já recebeu atendimento. Ainda existem ${pendencias} pendências.`;
+      : `Nesta semana foram atendidas ${empresasAtendidas} empresas. ${coverage}% da carteira já recebeu atendimento.${naoRespondeuCount > 0 ? ` Ainda existem ${naoRespondeuCount} cliente(s) sem resposta.` : ''}${clientesAtrasados > 0 ? ` ${clientesAtrasados} pendência(s).` : ''}`;
 
-    const insight = { metricId: "realizados", text: insightText };
-    const allClear = realizados > 0 && pendencias === 0 && naoRespondeuCount === 0;
+    const insight = { metricId: "empresas_atendidas", text: insightText };
+    const allClear = empresasAtendidas > 0 && clientesAtrasados === 0 && naoRespondeuCount === 0;
 
+    // S4: Ações recomendadas orientadas a clientes sem resposta
     const actions = [];
     if (naoRespondeuCount > 0) {
       actions.push({
         id: "wk_nao_respondeu",
-        name: `${naoRespondeuCount} cliente(s) ainda não responderam`,
-        reason: "Clique para abrir a lista",
-        urgency: "Média",
+        name: `${naoRespondeuCount} cliente(s) sem resposta`,
+        reason: "Verifique se já enviaram mensagem. Considere mudar canal ou horário.",
+        urgency: naoRespondeuCount >= 5 ? "Alta" : "Média",
         pillId: "concluidos",
       });
     }
-    if (pendencias > 0) {
+    if (clientesAtrasados > 0) {
       actions.push({
         id: "wk_vencidos",
-        name: `${pendencias} follow-up(s) continuam vencidos`,
-        reason: "Abrir lista de pendências",
+        name: `${clientesAtrasados} cliente(s) com follow-up atrasado`,
+        reason: "Priorize a retomada antes de novos atendimentos.",
         urgency: vencidosOver15.length > 0 ? "Crítica" : "Alta",
         pillId: "atrasados",
       });
     }
 
-    const headlineTrend = trendOf(realizados, realizadosPrev, true);
+    const headlineTrend = trendOf(empresasAtendidas, empresasAtendidasPrevSet.size, true);
 
     return {
       metrics, insight, allClear, actions, vencidosOver15Count: vencidosOver15.length,
