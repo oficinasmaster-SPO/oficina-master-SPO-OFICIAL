@@ -225,6 +225,19 @@ export default function CentralFollowUp() {
         }} />
 
       }
+
+      {/* S6: Modal Relatório Semanal */}
+      <Dialog open={showRelatorio} onOpenChange={setShowRelatorio}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileBarChart className="w-5 h-5" />
+              Relatório Semanal de Follow-ups
+            </DialogTitle>
+          </DialogHeader>
+          <RelatorioSemanalFollowUp />
+        </DialogContent>
+      </Dialog>
     </div>);
 
 }
