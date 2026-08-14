@@ -224,8 +224,9 @@ export default function PainelAtendimentosTab({ state }) {
       // 1. Atrasados sempre no topo (entre si: mais antigo primeiro — cobrar o mais velho)
       // 2. Agendados para hoje em seguida (por horário asc — próximo acontece primeiro)
       // 3. Demais por data asc (próximos primeiro)
+      // QA-FIX: todayBRT já calculado acima no filter — reutiliza via closure,
+      // evitando recriar Intl.DateTimeFormat pra cada par de comparação no sort.
       .sort((a, b) => {
-        const todayBRT = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
         const isAtrasadoA = a.status === 'atrasado';
         const isAtrasadoB = b.status === 'atrasado';
         // Camada 1: atrasados sempre primeiro
