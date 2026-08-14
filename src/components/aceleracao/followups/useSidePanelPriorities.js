@@ -158,7 +158,8 @@ export function useSidePanelPriorities({ reminders = [], remindersConcluidos = [
       ].map(m => ({ ...m, pct: pct(m.count), trend: null }));
 
       let insight = null;
-      const priorityOrder = ["vencidos", "sem_followup", "sem_contato_7d", "nao_respondeu", "pedidos_abertos"];
+      // S5: prioridade de insight — clientes sem resposta sobe na fila
+      const priorityOrder = ["nao_respondeu", "vencidos", "sem_followup", "sem_contato_7d", "pedidos_abertos"];
       for (const id of priorityOrder) {
         const m = metrics.find(x => x.id === id);
         if (m && m.count > 0) {
