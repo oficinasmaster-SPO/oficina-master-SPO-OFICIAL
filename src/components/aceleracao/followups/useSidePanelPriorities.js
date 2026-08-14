@@ -409,7 +409,7 @@ export function useSidePanelPriorities({ reminders = [], remindersConcluidos = [
     return {
       metrics, insight, allClear, actions, vencidosOver15Count: vencidosOver15.length,
       coverage,
-      production: { followups: realizados, clients: atendidos },
+      production: { followups: concluidosPeriod.length, clients: empresasAtendidas },
       trend: headlineTrend ? { variation: headlineTrend.delta, direction: headlineTrend.direction } : null,
     };
   }, [reminders, remindersConcluidos, concluidos, pedidosAbertos, today, period]);
