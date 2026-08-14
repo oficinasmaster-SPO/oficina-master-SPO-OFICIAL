@@ -47,7 +47,9 @@ export default function NotificationDropdown({ notifications = [], userId }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 
-  const unreadCount = notifications.filter(n => !n.is_read).length;
+  // QA-FIX: a query do Layout já filtra is_read:false no backend —
+  // todos os itens do array são não-lidos, filter redundante removido.
+  const unreadCount = notifications.length;
 
   // ── Marcar uma como lida ──
   const marcarLidaMutation = useMutation({
