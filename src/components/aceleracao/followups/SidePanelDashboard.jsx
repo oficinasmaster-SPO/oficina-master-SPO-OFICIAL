@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import InfoTooltip from "./ds/InfoTooltip";
+import MetricDetailModal from "./MetricDetailModal";
 import { ArrowRight, Sparkles, CheckCircle2 } from "lucide-react";
 
 const COLOR_MAP = {
