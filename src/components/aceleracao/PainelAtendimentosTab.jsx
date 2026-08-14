@@ -314,6 +314,7 @@ export default function PainelAtendimentosTab({ state }) {
           workshop={workshops.find(w => w.id === selectedAtendimento.workshop_id)}
           onClose={() => { setShowReagendar(false); setSelectedAtendimento(null); }}
           onSaved={handleAtaSaved}
+          todosAtendimentos={atendimentos}
         />
       )}
 
