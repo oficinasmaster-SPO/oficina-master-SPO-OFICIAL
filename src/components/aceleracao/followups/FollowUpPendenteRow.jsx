@@ -22,12 +22,13 @@ function riscoToDotColor(risco) {
 }
 
 const FollowUpPendenteRow = memo(({
-  reminder, today, seqFU, score, onSelect, isLast, stats, isSelected, risco, onIniciarAtendimento, plano, logo_url,
+  reminder, today, seqFU, score, onSelect, isLast, stats, isSelected, risco, onIniciarAtendimento, plano, logo_url, workshopConsultorPrincipal,
 }) => {
-  // Consultor principal = ponto focal do cliente (dúvidas). Sempre exibido no subtítulo.
-  const consultorPrincipal = reminder.consultor_principal_nome || reminder.consultor_nome || null;
+  // S1: Consultor principal — fonte canônica é o Workshop (Gestão de Tenants).
+  // Fallback: campo no reminder → campo genérico consultor_nome.
+  const consultorPrincipal = workshopConsultorPrincipal || reminder.consultor_principal_nome || reminder.consultor_nome || null;
   // Consultor executor = último que realizou o atendimento. Qualquer consultor pode atender.
-  const consultorExecutor = reminder.consultor_executor_nome || consultorPrincipal;
+  const consultorExecutor = reminder.consultor_executor_nome || null;
 
   const isOverdue = reminder.reminder_date < today;
   const isToday   = reminder.reminder_date === today;
