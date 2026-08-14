@@ -272,8 +272,8 @@ export default function PainelAtendimentosTab({ state }) {
           if (isAtrasadoA && isAtrasadoB) return (a.data_agendada || "").localeCompare(b.data_agendada || "");
           const dateA = (a.data_agendada || "").slice(0, 10);
           const dateB = (b.data_agendada || "").slice(0, 10);
-          const isHojeA = dateA === todayBRT;
-          const isHojeB = dateB === todayBRT;
+          const isHojeA = dateA === todayBRTGrupo;
+          const isHojeB = dateB === todayBRTGrupo;
           if (isHojeA !== isHojeB) return isHojeA ? -1 : 1;
           return (a.data_agendada || "").localeCompare(b.data_agendada || "");
         })
