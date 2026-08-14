@@ -530,20 +530,16 @@ export default function PainelAtendimentosTab({ state }) {
                   {/* Seção: Tipo de atendimento */}
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium text-gray-600">Tipo de atendimento</Label>
-                    <Select
-                      value={localFilters.tipoAtendimento || '__all__'}
-                      onValueChange={(v) => setLocalFilters(prev => ({ ...prev, tipoAtendimento: v === '__all__' ? '' : v }))}
-                    >
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="Todos os tipos" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__all__">Todos os tipos</SelectItem>
-                        {tiposUnicos.map(tipo => (
-                          <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Combobox
+                      options={[
+                        { value: '', label: 'Todos os tipos' },
+                        ...tiposUnicos.map(tipo => ({ value: tipo, label: tipo }))
+                      ]}
+                      value={localFilters.tipoAtendimento}
+                      onChange={(v) => setLocalFilters(prev => ({ ...prev, tipoAtendimento: v }))}
+                      placeholder="Todos os tipos"
+                      className="h-8 text-xs"
+                    />
                   </div>
 
                   {/* Limpar filtros avançados */}
