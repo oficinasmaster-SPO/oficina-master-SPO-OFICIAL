@@ -330,6 +330,49 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
   const countEmpresasCriticas = Object.values(fusPorEmpresa).filter(e => e.critico).length;
   const countEmpresas = new Set(reminders.filter(r => !r.is_completed && (r.reminder_date < today || r.reminder_date === today || getDaysOverdue(r.reminder_date, today) >= 3)).map(r => r.workshop_id)).size;
 
+  // ── S3: Detecção de "dia concluído" + dados do outro consultor ──
+  const pendentesHoje = reminders.filter(r => !r.is_completed && r.reminder_date === today);
+  const diaConcluidoPeloMeu = meuId && pendentesHoje.length === 0 && reminders.length > 0;
+
+  // Conta clientes com resultado "não atendeu" ou "aguardando" nos concluídos recentes
+  const concluidosIndex = useFollowupIndex().data ?? [];
+  const naoRespondidosCount = React.useMemo(() => {
+    if (!meuId) return 0;
+    const porWorkshop = {};
+    concluidosIndex
+      .filter(c => (c.resultado === 'nao_atendeu' || c.resultado === 'aguardando'))
+      .forEach(c => { if (c.workshop_id) porWorkshop[c.workshop_id] = true; });
+    return Object.keys(porWorkshop).length;
+  }, [concluidosIndex, meuId]);
+
+  // Dados do outro consultor — busca follow-ups pendentes de hoje de outros consultores
+  const { data: outroConsultorData } = useQuery({
+    queryKey: ['outro-consultor-pendentes-hoje', today, meuId],
+    queryFn: async () => {
+      if (!meuId) return null;
+      // Busca todos pendentes de hoje que NÃO são do consultor atual
+      const todos = await base44.entities.FollowUpReminder.filter(
+        { is_completed: false, reminder_date: today },
+        'reminder_date',
+        200
+      );
+      // Filtra os que são de outro consultor (via consultor_principal_id)
+      const outros = todos.filter(r =>
+        r.consultor_principal_id && r.consultor_principal_id !== meuId &&
+        r.consultor_id !== meuId
+      );
+      if (outros.length === 0) return null;
+      // Pega o nome do primeiro outro consultor encontrado
+      const primeiroOutro = outros[0];
+      return {
+        nome: primeiroOutro.consultor_principal_nome || 'colega',
+        pendentesHoje: outros.length,
+      };
+    },
+    enabled: !!diaConcluidoPeloMeu,
+    staleTime: 2 * 60 * 1000,
+  });
+
   if (isLoading) return <div className="py-20 text-center text-gray-400 text-sm">Carregando...</div>;
 
   return (
