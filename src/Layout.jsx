@@ -248,14 +248,6 @@ export default function Layout({ children, currentPageName }) {
                 }
 
               <div className="flex items-center gap-4 ml-auto">
-                {/* S1 — Sininho substituído por dropdown inline */}
-                {isAuthenticated && displayUser &&
-                  <NotificationDropdown
-                    notifications={notifications}
-                    userId={displayUser.id}
-                  />
-                }
-
                 <div className="flex items-center gap-3">
                   {isCheckingAuth ?
                     <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" /> :
@@ -292,6 +284,12 @@ export default function Layout({ children, currentPageName }) {
                           </> :
                         null}
                       </div>
+                      {isAuthenticated && displayUser &&
+                        <NotificationDropdown
+                          notifications={notifications}
+                          userId={displayUser.id}
+                        />
+                      }
                       <Button
                         variant="outline"
                         size="sm"
