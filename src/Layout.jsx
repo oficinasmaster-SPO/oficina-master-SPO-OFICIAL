@@ -11,6 +11,7 @@ import Breadcrumbs from "@/components/navigation/Breadcrumbs";
 import { SharedDataProvider } from "@/components/shared/SharedDataProvider";
 import GlobalSearch from "@/components/navigation/GlobalSearch";
 import NotificationListener from "@/components/notifications/NotificationListener";
+import NotificationDropdown from "@/components/notifications/NotificationDropdown";
 import NotificationPermissionBanner from "@/components/notifications/NotificationPermissionBanner";
 // import ActivityTracker from "@/components/tracking/ActivityTracker";
 import AssistanceModeBanner from "@/components/shared/AssistanceModeBanner.jsx";
@@ -248,19 +249,13 @@ export default function Layout({ children, currentPageName }) {
                 }
 
               <div className="flex items-center gap-4 ml-auto">
+                {/* S1 — Sininho substituído por dropdown inline */}
                 {isAuthenticated && displayUser &&
-                  <Link
-                    to={createPageUrl("Notificacoes")}
-                    className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                    
-                    <Bell className="w-5 h-5 text-gray-700" />
-                    {unreadCount > 0 &&
-                    <Badge className="absolute -top-1 -right-1 bg-red-500 text-white h-5 min-w-5 px-1.5">
-                        {unreadCount}
-                      </Badge>
-                    }
-                  </Link>
-                  }
+                  <NotificationDropdown
+                    notifications={notifications}
+                    userId={displayUser.id}
+                  />
+                }
 
                 <div className="flex items-center gap-3">
                   {isCheckingAuth ?
