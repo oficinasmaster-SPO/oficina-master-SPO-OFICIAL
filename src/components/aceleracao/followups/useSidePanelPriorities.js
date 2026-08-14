@@ -168,21 +168,74 @@ export function useSidePanelPriorities({ reminders = [], remindersConcluidos = [
       }
       const allClear = !insight;
 
-      const actions = [...vencidos]
+      // S5: Ações recomendadas — prioriza clientes sem resposta consecutiva
+      // Calcula dias consecutivos sem resposta por workshop
+      const consecutivosPorWorkshop = {};
+      const concluidosPorWs = {};
+      concluidos.forEach(c => {
+        if (!c.workshop_id) return;
+        if (!concluidosPorWs[c.workshop_id]) concluidosPorWs[c.workshop_id] = [];
+        concluidosPorWs[c.workshop_id].push(c);
+      });
+      Object.entries(concluidosPorWs).forEach(([wid, list]) => {
+        // Ordena por data mais recente primeiro
+        const sorted = list.slice().sort((a, b) => {
+          const da = a.completedAt || a.created_date || '';
+          const db = b.completedAt || b.created_date || '';
+          return db.localeCompare(da);
+        });
+        let consecutivos = 0;
+        for (const c of sorted) {
+          if (c.resultado === 'nao_atendeu' || c.resultado === 'aguardando') {
+            consecutivos++;
+          } else {
+            break; // parou de não responder
+          }
+        }
+        if (consecutivos > 0) {
+          consecutivosPorWorkshop[wid] = {
+            dias: consecutivos,
+            nome: nameByWorkshop[wid] || wid,
+          };
+        }
+      });
+
+      // Monta ações: primeiro clientes sem resposta (ordenados por mais dias), depois vencidos
+      const actions = [];
+
+      // Clientes sem resposta consecutiva (top 3)
+      const semRespostaOrdenados = Object.entries(consecutivosPorWorkshop)
+        .sort((a, b) => b[1].dias - a[1].dias)
+        .slice(0, 3);
+
+      semRespostaOrdenados.forEach(([wid, info]) => {
+        let urgency = 'Média';
+        if (info.dias >= 5) urgency = 'Crítica';
+        else if (info.dias >= 3) urgency = 'Alta';
+        actions.push({
+          id: `nr_${wid}`,
+          name: info.nome,
+          reason: `${info.dias} tentativa${info.dias !== 1 ? 's' : ''} consecutiva${info.dias !== 1 ? 's' : ''} sem resposta. Mude horário ou canal.`,
+          urgency,
+          reminder: reminders.find(r => r.workshop_id === wid) || null,
+        });
+      });
+
+      // Vencidos (top 2, se sobrar espaço)
+      const maxVencidos = Math.max(0, 5 - actions.length);
+      [...vencidos]
         .sort((a, b) => calcPriorityScore(b, today) - calcPriorityScore(a, today))
-        .slice(0, 3)
-        .map(r => {
+        .slice(0, maxVencidos)
+        .forEach(r => {
           const days = r.reminder_date
             ? differenceInDays(new Date(today + "T00:00:00"), new Date(r.reminder_date + "T00:00:00"))
             : 0;
-          let reason = "";
-          let urgency = "Média";
-          if (days > 15) { reason = `vencido há ${days} dias`; urgency = "Crítica"; }
-          else if (days > 0) { reason = `vencido há ${days} dia${days !== 1 ? "s" : ""}`; urgency = "Alta"; }
-          else if (r.reminder_date === today) { reason = "vence hoje"; urgency = "Média"; }
-          else { reason = "follow-up futuro"; urgency = "Baixa"; }
-          if (r.origin_type === "guarda_chuva") reason += " · guarda-chuva";
-          return { id: r.id, name: r.workshop_name || "Cliente", reason, urgency, reminder: r };
+          let reason = '';
+          let urgency = 'Média';
+          if (days > 15) { reason = `vencido há ${days} dias`; urgency = 'Crítica'; }
+          else if (days > 0) { reason = `vencido há ${days} dia${days !== 1 ? 's' : ''}`; urgency = 'Alta'; }
+          else { reason = 'vence hoje'; }
+          actions.push({ id: r.id, name: r.workshop_name || 'Cliente', reason, urgency, reminder: r });
         });
 
       return { metrics, insight, allClear, actions, vencidosOver15Count: vencidosOver15.length,
