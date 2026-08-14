@@ -81,10 +81,27 @@ export default function PainelAtendimentosTab({ state }) {
     staleTime: 2 * 60 * 1000
   });
 
-  // ── Filtros LOCAIS da aba (apenas search — datas vêm da URL via filtros) ──
+  // ── Filtros LOCAIS da aba (sessão — datas vêm da URL via filtros) ──
   const [localFilters, setLocalFilters] = useState({
-    searchTerm: ""
+    searchTerm: "",
+    consultorId: "",   // "" = todos
+    workshopId: "",    // "" = todos
+    tipoAtendimento: "", // "" = todos
   });
+
+  // Conta quantos filtros avançados estão ativos (exceto busca textual e data)
+  const filtrosAvancadosAtivos = useMemo(() => [
+    localFilters.consultorId,
+    localFilters.workshopId,
+    localFilters.tipoAtendimento,
+  ].filter(Boolean).length, [localFilters]);
+
+  // Deriva tipos únicos de atendimento da lista atual para popular o select
+  const tiposUnicos = useMemo(() => {
+    const set = new Set();
+    atendimentos.forEach(a => { if (a.tipo_atendimento) set.add(a.tipo_atendimento); });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  }, [atendimentos]);
 
   // Consume pending sub-tab from cross-tab navigation
   useEffect(() => {
