@@ -71,8 +71,13 @@ Deno.serve(async (req) => {
     const hoje = new Date();
     const diaSemana = hoje.getDay(); // 0=dom, 1=seg, ..., 6=sab
 
-    // Calcula a segunda-feira desta semana
-    const offsetParaSegunda = diaSemana === 0 ? 1 : -(diaSemana - 1);
+    // Calcula a segunda-feira da semana CORRENTE (seg-sex).
+    // Se executada no sábado ou domingo, avança pra próxima segunda
+    // pra não redistribuir follow-ups pra dias já passados.
+    let offsetParaSegunda;
+    if (diaSemana === 0) offsetParaSegunda = 1;        // dom → próxima seg
+    else if (diaSemana === 6) offsetParaSegunda = 2;   // sab → próxima seg
+    else offsetParaSegunda = -(diaSemana - 1);         // seg=0, ter=-1, ...
     const segunda = new Date(hoje);
     segunda.setDate(hoje.getDate() + offsetParaSegunda);
     segunda.setHours(0, 0, 0, 0);
