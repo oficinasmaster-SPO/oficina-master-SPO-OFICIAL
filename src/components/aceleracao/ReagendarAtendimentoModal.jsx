@@ -371,7 +371,8 @@ export default function ReagendarAtendimentoModal({
                   <ul className="mt-1.5 space-y-1">
                     {conflitos.map(c => (
                       <li key={c.id} className="text-xs text-orange-800">
-                        • <strong>{c.consultor_nome || 'Atendimento'}</strong> —{' '}
+                        {/* QA-FIX: exibir cliente (workshop) do conflito, não o consultor */}
+                        • <strong>{c.workshop_nome || 'outro cliente'}</strong> —{' '}
                         {fmtHora(c.data_agendada)} às {fmtHora(
                           new Date(new Date(c.data_agendada).getTime() + (c.duracao_minutos || 60) * 60000)
                         )}
