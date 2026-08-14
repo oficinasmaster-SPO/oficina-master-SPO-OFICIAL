@@ -317,6 +317,7 @@ export default function PainelAtendimentosTab({ state }) {
           onClose={() => { setShowReagendar(false); setSelectedAtendimento(null); }}
           onSaved={handleAtaSaved}
           todosAtendimentos={atendimentos}
+          workshopMap={workshopMap}
         />
       )}
 
