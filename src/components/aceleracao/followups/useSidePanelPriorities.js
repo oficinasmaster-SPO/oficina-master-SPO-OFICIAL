@@ -424,7 +424,7 @@ function buildInsightText(id, count, pct, periodLabel, pendencias = 0, naoRespon
     case "sem_contato_7d":
       return `Existem ${count} cliente(s) sem contato há mais de 7 dias (${pct}% da carteira). Priorize estes antes dos follow-ups novos.`;
     case "nao_respondeu":
-      return `Existem ${count} cliente(s) que não responderam ao último contato (${pct}% da carteira). Considere mudar canal ou horário.`;
+      return `${count} cliente(s) sem resposta (${pct}% da carteira). Verifique se já enviaram mensagem — considere ligar em outro horário ou trocar canal (WhatsApp ↔ ligação).`;
     case "pedidos_abertos":
       return `Existem ${count} pedido(s) interno(s) em aberto (${pct}% da carteira) aguardando retorno.`;
     default:
