@@ -168,35 +168,49 @@ export default function PainelAtendimentosTab({ state }) {
 
   // ── Filtragem local (memoized e otimizada) ──
   const atendimentosFiltrados = useMemo(() => {
+    // PERF: calcular todayBRT uma única vez fora do loop
+    const brtFmt = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" });
+    const todayBRT = brtFmt.format(new Date());
+
     // Strings de data "YYYY-MM-DD" — comparação direta em BRT
     const startLimit = filtros.dataInicio || null;
     const endLimit = filtros.dataFim || null;
-
-    // PERF: formatter único (Intl.DateTimeFormat é caro se criado por item)
-    const brtFmt = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" });
 
     // Transforma a busca uma vez só
     const searchLower = debouncedSearch ? debouncedSearch.toLowerCase() : "";
 
     return atendimentos
       .filter(a => {
-        if (activeTab !== "todos" && a.status !== activeTab) return false;
-        
-        // Atrasados sempre passam no filtro de data (já foram incluídos no atendimentosPeriodo)
         const isAtrasado = a.status === 'atrasado';
-        
-        // Verifica as datas usando a data local em BRT (exceto atrasados)
-        if (!isAtrasado && (startLimit || endLimit)) {
-          const itemDate = brtFmt.format(new Date(a.data_agendada));
-          if (startLimit && itemDate < startLimit) return false;
-          if (endLimit && itemDate > endLimit) return false;
+        const itemDate = a.data_agendada ? brtFmt.format(new Date(a.data_agendada)) : "";
+        const isHoje = itemDate === todayBRT;
+
+        // S3 — Regra de visão da aba "todos":
+        // Exibe apenas atrasados (independente de data) + agendados de hoje.
+        // As demais subtabs (agendado, confirmado, etc.) continuam mostrando
+        // todos os itens do período — o usuário já filtrou pelo status.
+        if (activeTab === "todos") {
+          if (!isAtrasado && !isHoje) return false;
+        } else {
+          // Subtabs específicas: filtra por status
+          if (a.status !== activeTab) return false;
+          // Atrasados passam sem filtro de data; demais respeitam o período
+          if (!isAtrasado && (startLimit || endLimit)) {
+            if (startLimit && itemDate < startLimit) return false;
+            if (endLimit && itemDate > endLimit) return false;
+          }
         }
-        
+
+        // Filtros avançados locais — S3
+        if (localFilters.consultorId && a.consultor_id !== localFilters.consultorId) return false;
+        if (localFilters.workshopId && a.workshop_id !== localFilters.workshopId) return false;
+        if (localFilters.tipoAtendimento && a.tipo_atendimento !== localFilters.tipoAtendimento) return false;
+
+        // Busca textual
         if (searchLower) {
           const wsName = workshopMap[a.workshop_id]?.name || "";
           const tipo = a.tipo_atendimento || "";
           const consultor = a.consultor_nome || "";
-          
           if (!wsName.toLowerCase().includes(searchLower) &&
               !tipo.toLowerCase().includes(searchLower) &&
               !consultor.toLowerCase().includes(searchLower)) {
