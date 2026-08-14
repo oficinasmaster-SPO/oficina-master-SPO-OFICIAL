@@ -89,8 +89,13 @@ export default function NotificationListener({ user }) {
       // Nova notificação para este usuário
       if (event.type === 'create' && event.data.user_id === user.id) {
         // Atualização otimista do cache React Query — sincroniza o sino
-        // Atualiza a key canônica do Listener (notifications-unread)
-      queryClient.setQueryData(['notifications-unread', user.id], (oldData = []) => {
+        // S1: sincroniza AMBAS as keys — 'notifications-unread' (Listener)
+        // e 'notifications' (Layout/NotificationDropdown) — para o dropdown
+        // refletir a nova notificação em tempo real sem esperar o staleTime.
+        queryClient.setQueryData(['notifications-unread', user.id], (oldData = []) => {
+          return [event.data, ...oldData];
+        });
+        queryClient.setQueryData(['notifications', user.id], (oldData = []) => {
           return [event.data, ...oldData];
         });
         showNotification(event.data);
@@ -99,6 +104,9 @@ export default function NotificationListener({ user }) {
       // Notificação marcada como lida (outra aba/dropdown) — remove do sino
       if (event.type === 'update' && event.data.user_id === user.id && event.data.is_read) {
         queryClient.setQueryData(['notifications-unread', user.id], (oldData = []) => {
+          return oldData.filter(n => n.id !== event.data.id);
+        });
+        queryClient.setQueryData(['notifications', user.id], (oldData = []) => {
           return oldData.filter(n => n.id !== event.data.id);
         });
       }
