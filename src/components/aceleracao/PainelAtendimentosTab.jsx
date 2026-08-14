@@ -164,7 +164,8 @@ export default function PainelAtendimentosTab({ state }) {
   useEffect(() => {
     setCurrentPage(1);
     setAgruparPorEmpresa(false);
-  }, [activeTab, filtros.dataInicio, filtros.dataFim, debouncedSearch, atendimentos.length]);
+  }, [activeTab, filtros.dataInicio, filtros.dataFim, debouncedSearch, atendimentos.length,
+      localFilters.consultorId, localFilters.workshopId, localFilters.tipoAtendimento]);
 
   // ── Filtragem local (memoized e otimizada) ──
   const atendimentosFiltrados = useMemo(() => {
