@@ -287,9 +287,28 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
       if (filterPill === "urgentes") return !r.is_completed && getDaysOverdue(r.reminder_date, today) >= 3;
       return !r.is_completed;
     }).sort((a, b) => {
+      // S2 — Sort de 3 camadas (mesmo padrão do S0 de Atendimentos):
+      // 1. Atrasados (reminder_date < hoje) — entre si: mais antigo primeiro
+      // 2. Vence hoje — em sequência
+      // 3. Futuros — crescente (próximo primeiro)
+      // calcPriorityScore como tiebreaker dentro de cada camada.
+      const isAtrasadoA = !a.is_completed && a.reminder_date < today;
+      const isAtrasadoB = !b.is_completed && b.reminder_date < today;
+      if (isAtrasadoA !== isAtrasadoB) return isAtrasadoA ? -1 : 1;
+      if (isAtrasadoA && isAtrasadoB) {
+        const cmp = (a.reminder_date || "").localeCompare(b.reminder_date || "");
+        if (cmp !== 0) return cmp; // mais antigo primeiro
+        const sa = calcPriorityScore(a, today), sb = calcPriorityScore(b, today);
+        return sb - sa;
+      }
+      const isHojeA = a.reminder_date === today;
+      const isHojeB = b.reminder_date === today;
+      if (isHojeA !== isHojeB) return isHojeA ? -1 : 1;
+      // Camada 3: por data crescente (próximo primeiro), score como tiebreaker
+      const dateCmp = (a.reminder_date || "").localeCompare(b.reminder_date || "");
+      if (dateCmp !== 0) return dateCmp;
       const sa = calcPriorityScore(a, today), sb = calcPriorityScore(b, today);
-      if (sa !== sb) return sb - sa;
-      return (a.reminder_date || "").localeCompare(b.reminder_date || "");
+      return sb - sa;
     });
     if (filterPill === "por_empresa") {
       const seen = new Set();
