@@ -5,6 +5,7 @@ import { calcPriorityScore } from "./ds/PriorityScore";
 import FollowUpCompletedDetailDrawer from "@/components/aceleracao/FollowUpCompletedDetailDrawer";
 import FollowUpConcluidoRow from "@/components/aceleracao/FollowUpConcluidoRow.jsx";
 import FollowUpPendenteRow from "@/components/aceleracao/followups/FollowUpPendenteRow";
+import DayCompletedHint from "@/components/aceleracao/followups/DayCompletedHint";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { sanitizeWorkshopIdArray } from "@/lib/workshopIdGuard";
