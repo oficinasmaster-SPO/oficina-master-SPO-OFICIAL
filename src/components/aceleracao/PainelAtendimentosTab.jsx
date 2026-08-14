@@ -259,12 +259,13 @@ export default function PainelAtendimentosTab({ state }) {
       }
       mapa[wid].itens.push(item);
     });
+    // QA-FIX: calcular todayBRT uma vez fora do sort, não por par de comparação
+    const todayBRTGrupo = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
     return Object.values(mapa)
       .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
       .map(grupo => ({
         ...grupo,
         itens: [...grupo.itens].sort((a, b) => {
-          const todayBRT = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
           const isAtrasadoA = a.status === 'atrasado';
           const isAtrasadoB = b.status === 'atrasado';
           if (isAtrasadoA !== isAtrasadoB) return isAtrasadoA ? -1 : 1;
