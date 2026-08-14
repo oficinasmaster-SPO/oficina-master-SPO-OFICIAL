@@ -5,9 +5,12 @@ import FollowUpsTab from '@/components/aceleracao/FollowUpsTab';
 import SidePanel from '@/components/aceleracao/followups/SidePanel';
 import NewFollowUpFAB from '@/components/aceleracao/NewFollowUpFAB';
 import IniciarAtendimentoModal from '@/components/aceleracao/IniciarAtendimentoModal';
+import RelatorioSemanalFollowUp from '@/components/aceleracao/followups/RelatorioSemanalFollowUp';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/lib/AuthContext';
 import useEmployeeResolver from '@/hooks/useEmployeeResolver';
 import { getInitials } from '@/lib/avatarUtils';
+import { FileBarChart } from 'lucide-react';
 
 export default function CentralFollowUp() {
   useEffect(() => {
