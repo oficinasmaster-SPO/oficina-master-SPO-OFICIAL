@@ -391,64 +391,169 @@ export default function PainelAtendimentosTab({ state }) {
             ))}
           </div>
           {activeTab !== 'bucket' && activeTab !== 'grade_horarios' && (
-          <div className="relative flex-1 min-w-[180px] max-w-xs">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-            <Input
-              placeholder="Buscar cliente, tipo, consultor..."
-              value={localFilters.searchTerm}
-              onChange={(e) => setLocalFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
-              className="h-9 pl-8 pr-16 text-sm bg-white border-gray-200 shadow-sm"
-            />
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+          <div className="flex items-center gap-2 flex-1">
+            {/* Busca textual */}
+            <div className="relative flex-1 min-w-[180px] max-w-xs">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+              <Input
+                placeholder="Buscar cliente, tipo, consultor..."
+                value={localFilters.searchTerm}
+                onChange={(e) => setLocalFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
+                className="h-9 pl-8 pr-8 text-sm bg-white border-gray-200 shadow-sm"
+              />
               {localFilters.searchTerm && (
-                <button onClick={() => setLocalFilters(prev => ({ ...prev, searchTerm: "" }))} className="text-gray-400 hover:text-gray-600 p-0.5">
+                <button
+                  onClick={() => setLocalFilters(prev => ({ ...prev, searchTerm: "" }))}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
+                >
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="p-0.5 rounded transition-colors text-red-600 hover:text-red-700">
-                    <CalendarDays className="w-4 h-4" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-64 p-3" align="end">
-                  <div className="space-y-3">
-                    <p className="text-xs font-semibold text-gray-700">Filtrar por data</p>
-                    <div className="flex gap-2">
+            </div>
+
+            {/* Botão de filtros avançados */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className={`relative h-9 flex items-center gap-1.5 px-3 rounded-md border text-sm font-medium transition-colors ${
+                  filtrosAvancadosAtivos > 0
+                    ? 'bg-red-600 text-white border-red-600 shadow-sm'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-red-300 hover:text-red-600'
+                }`}>
+                  <Filter className="w-3.5 h-3.5" />
+                  Filtros
+                  {filtrosAvancadosAtivos > 0 && (
+                    <span className="ml-0.5 bg-white text-red-600 rounded-full w-4 h-4 text-[10px] font-bold flex items-center justify-center">
+                      {filtrosAvancadosAtivos}
+                    </span>
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 p-4" align="end">
+                <div className="space-y-4">
+                  <p className="text-xs font-semibold text-gray-800 uppercase tracking-wide">Filtros</p>
+
+                  {/* Seção: Período (mantida intacta) */}
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-gray-600">Período</p>
+                    <div className="flex gap-1.5 flex-wrap">
                       {[{v:'7d',l:'7d'},{v:'15d',l:'15d'},{v:'30d',l:'30d'},{v:'mes_atual',l:'Mês'}].map(p => (
                         <button
                           key={p.v}
                           onClick={() => setFiltros({ ...filtros, preset: p.v })}
                           className={`px-2 py-1 rounded text-xs font-medium border transition-colors ${
-                            filtros.preset === p.v ? 'bg-red-600 text-white border-red-600' : 'bg-white text-gray-600 border-gray-200 hover:border-red-300'
+                            filtros.preset === p.v
+                              ? 'bg-red-600 text-white border-red-600'
+                              : 'bg-white text-gray-600 border-gray-200 hover:border-red-300'
                           }`}
                         >
                           {p.l}
                         </button>
                       ))}
                     </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-gray-500">De</Label>
-                      <Input type="date" value={filtros.dataInicio || ''} onChange={(e) => setFiltros({ ...filtros, preset: 'custom', dataInicio: e.target.value })} className="h-8 text-xs" />
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-xs text-gray-500">De</Label>
+                        <Input
+                          type="date"
+                          value={filtros.dataInicio || ''}
+                          onChange={(e) => setFiltros({ ...filtros, preset: 'custom', dataInicio: e.target.value })}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-gray-500">Até</Label>
+                        <Input
+                          type="date"
+                          value={filtros.dataFim || ''}
+                          onChange={(e) => setFiltros({ ...filtros, preset: 'custom', dataFim: e.target.value })}
+                          className="h-8 text-xs"
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-gray-500">Até</Label>
-                      <Input type="date" value={filtros.dataFim || ''} onChange={(e) => setFiltros({ ...filtros, preset: 'custom', dataFim: e.target.value })} className="h-8 text-xs" />
-                    </div>
-                    <div className="flex flex-col gap-2 pt-2 border-t border-gray-50 mt-1">
-                      <button onClick={() => setFiltros({ ...filtros, preset: 'all', dataInicio: null, dataFim: null })} className="text-xs text-red-600 font-medium hover:underline w-full text-center">
-                        Todo o período existente
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setFiltros({ ...filtros, preset: 'all', dataInicio: null, dataFim: null })}
+                        className="text-xs text-red-600 font-medium hover:underline"
+                      >
+                        Todo o período
                       </button>
                       {filtros.preset !== 'mes_atual' && (
-                        <button onClick={() => setFiltros({ ...filtros, preset: 'mes_atual', dataInicio: null, dataFim: null })} className="text-xs text-gray-500 hover:underline w-full text-center">
-                          Voltar para Mês Atual
+                        <button
+                          onClick={() => setFiltros({ ...filtros, preset: 'mes_atual', dataInicio: null, dataFim: null })}
+                          className="text-xs text-gray-400 hover:underline"
+                        >
+                          Voltar ao mês
                         </button>
                       )}
                     </div>
                   </div>
-                </PopoverContent>
-              </Popover>
-            </div>
+
+                  <div className="border-t border-gray-100" />
+
+                  {/* Seção: Consultor */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-gray-600">Consultor</Label>
+                    <Combobox
+                      options={[
+                        { value: '', label: 'Todos os consultores' },
+                        ...consultores.map(c => ({ value: c.id, label: c.full_name || c.email || c.id }))
+                      ]}
+                      value={localFilters.consultorId}
+                      onChange={(v) => setLocalFilters(prev => ({ ...prev, consultorId: v }))}
+                      placeholder="Selecionar consultor..."
+                      className="h-8 text-xs"
+                    />
+                  </div>
+
+                  {/* Seção: Empresa */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-gray-600">Empresa</Label>
+                    <Combobox
+                      options={[
+                        { value: '', label: 'Todas as empresas' },
+                        ...workshops
+                          .filter(w => atendimentos.some(a => a.workshop_id === w.id))
+                          .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'))
+                          .map(w => ({ value: w.id, label: w.name || w.id }))
+                      ]}
+                      value={localFilters.workshopId}
+                      onChange={(v) => setLocalFilters(prev => ({ ...prev, workshopId: v }))}
+                      placeholder="Selecionar empresa..."
+                      className="h-8 text-xs"
+                    />
+                  </div>
+
+                  {/* Seção: Tipo de atendimento */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-gray-600">Tipo de atendimento</Label>
+                    <Select
+                      value={localFilters.tipoAtendimento || '__all__'}
+                      onValueChange={(v) => setLocalFilters(prev => ({ ...prev, tipoAtendimento: v === '__all__' ? '' : v }))}
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="Todos os tipos" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__all__">Todos os tipos</SelectItem>
+                        {tiposUnicos.map(tipo => (
+                          <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Limpar filtros avançados */}
+                  {filtrosAvancadosAtivos > 0 && (
+                    <button
+                      onClick={() => setLocalFilters(prev => ({ ...prev, consultorId: '', workshopId: '', tipoAtendimento: '' }))}
+                      className="w-full text-xs text-red-600 font-medium hover:underline text-center pt-1"
+                    >
+                      Limpar filtros avançados
+                    </button>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
           )}
           {/* Toggle "Agrupar por empresa" — apenas em todos e atrasados */}
