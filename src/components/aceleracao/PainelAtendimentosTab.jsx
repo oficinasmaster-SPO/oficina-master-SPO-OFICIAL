@@ -240,7 +240,7 @@ export default function PainelAtendimentosTab({ state }) {
         // Camada 3: por data asc (próximos primeiro)
         return (a.data_agendada || "").localeCompare(b.data_agendada || "");
       });
-  }, [atendimentos, activeTab, filtros.dataInicio, filtros.dataFim, debouncedSearch, workshopMap]);
+  }, [atendimentos, activeTab, filtros.dataInicio, filtros.dataFim, debouncedSearch, workshopMap, localFilters]);
 
   // Grupos por empresa (apenas quando toggle ativo) — ordenados por nome da empresa, itens por data_agendada asc
   const gruposPorEmpresa = useMemo(() => {
