@@ -88,6 +88,9 @@ export default function SidePanel({
             inset: 0,
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
+            // S4-FIX: face inativa não deve capturar wheel/pointer events
+            pointerEvents: face === "dashboard" ? "auto" : "none",
+            overflowY: face === "dashboard" ? "auto" : "hidden",
           }}
         >
           <SidePanelDashboard
@@ -118,6 +121,9 @@ export default function SidePanel({
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
+            // S4-FIX: face inativa não deve capturar wheel/pointer events
+            pointerEvents: face === "cockpit" ? "auto" : "none",
+            overflowY: face === "cockpit" ? "auto" : "hidden",
           }}
         >
           <div
