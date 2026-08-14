@@ -74,8 +74,36 @@ const PERIOD_OPTIONS = [
 ];
 
 export default function SidePanelDashboard({ metrics, insight, allClear, actions, activePill, onCardClick, onActionClick, period = "today", onPeriodChange, coverage = null }) {
+  // S4: state do modal de detalhe dos cards
+  const [detailModal, setDetailModal] = useState(null); // { title, emoji, count, items, color }
+
+  const handleCardClick = (metric) => {
+    // Se tem detailItems, abre o modal; senão, dispara o click normal
+    if (metric.detailItems && metric.detailItems.length > 0) {
+      setDetailModal({
+        title: metric.label,
+        emoji: metric.emoji,
+        count: metric.count,
+        items: metric.detailItems,
+        color: metric.color,
+      });
+    }
+    onCardClick?.(metric.spId);
+  };
+
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3.5 h-full overflow-y-auto">
+
+      {/* S4: Modal de detalhe */}
+      <MetricDetailModal
+        open={!!detailModal}
+        onClose={() => setDetailModal(null)}
+        title={detailModal?.title || ''}
+        emoji={detailModal?.emoji || ''}
+        count={detailModal?.count || 0}
+        items={detailModal?.items || []}
+        color={detailModal?.color || 'blue'}
+      />
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-extrabold text-gray-900 tracking-tight">Central Operacional</h2>
