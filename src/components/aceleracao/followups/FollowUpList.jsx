@@ -414,6 +414,21 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
 
       </div>
 
+      {/* S3: Hint de dia concluído */}
+      {diaConcluidoPeloMeu && filterPill === "todos" && (
+        <DayCompletedHint
+          naoRespondidos={naoRespondidosCount}
+          outroConsultor={outroConsultorData || null}
+          onVerNaoRespondidos={() => onFilterPill("concluidos")}
+          onAjudarColega={() => {
+            // Troca pra visualização "todos" sem filtro de consultor —
+            // o parent (FollowUpsTab) trata a troca de consultorSelecionado.
+            // Aqui apenas sinaliza a intenção via pill.
+            onFilterPill("hoje");
+          }}
+        />
+      )}
+
       {filtered.length === 0 ? (
         <div className="py-16 flex flex-col items-center justify-center gap-3 text-center">
           <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center"><StickyNote className="w-8 h-8 text-gray-300" /></div>
