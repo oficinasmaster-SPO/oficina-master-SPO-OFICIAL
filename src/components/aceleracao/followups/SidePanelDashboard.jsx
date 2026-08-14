@@ -78,7 +78,9 @@ export default function SidePanelDashboard({ metrics, insight, allClear, actions
   const [detailModal, setDetailModal] = useState(null); // { title, emoji, count, items, color }
 
   const handleCardClick = (metric) => {
-    // Se tem detailItems, abre o modal; senão, dispara o click normal
+    // QA-FIX: se o card tem detailItems (modo semana/mês), abre o modal.
+    // Se não tem (modo today), filtra a lista via onCardClick.
+    // Não faz ambos ao mesmo tempo pra não confundir o usuário.
     if (metric.detailItems && metric.detailItems.length > 0) {
       setDetailModal({
         title: metric.label,
@@ -87,8 +89,9 @@ export default function SidePanelDashboard({ metrics, insight, allClear, actions
         items: metric.detailItems,
         color: metric.color,
       });
+    } else {
+      onCardClick?.(metric.spId);
     }
-    onCardClick?.(metric.spId);
   };
 
   return (
