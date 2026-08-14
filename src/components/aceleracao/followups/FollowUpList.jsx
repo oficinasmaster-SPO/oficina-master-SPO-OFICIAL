@@ -183,7 +183,13 @@ function useWorkshopsPlanIndex(workshopIds = []) {
     gcTime: 10 * 60 * 1000,
   });
   const byId = {};
-  data.forEach(w => { if (w.id) byId[w.id] = w.planoAtual || null; });
+  // S1: retorna plano + consultor_principal_nome do Workshop (fonte canônica da Gestão de Tenants)
+  data.forEach(w => {
+    if (w.id) byId[w.id] = {
+      plano: w.planoAtual || null,
+      consultorPrincipalNome: w.consultor_principal_nome || null,
+    };
+  });
   return byId;
 }
 
