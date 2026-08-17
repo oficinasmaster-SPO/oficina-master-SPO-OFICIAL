@@ -517,6 +517,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
               plano={planosByWorkshop[r.workshop_id]?.plano ?? null}
               workshopConsultorPrincipal={planosByWorkshop[r.workshop_id]?.consultorPrincipalNome ?? null}
               logo_url={logosByWorkshop[r.workshop_id]}
+              atasAbertas={atasAbertasIndex[r.workshop_id] || 0}
             />
           ))}
         </div>
