@@ -150,9 +150,36 @@ const FollowUpPendenteRow = memo(({
         )}
       </div>
 
+      {/* ── QTD FOLLOW ── 80px (S3-03a) */}
+      {qtdFollow !== null && (
+        <div className="w-[80px] flex-shrink-0 px-2 py-2.5 flex items-center justify-center">
+          <span className="inline-flex items-center justify-center bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-[11px] font-bold px-2 py-0.5 min-w-[28px]">
+            {qtdFollow}
+          </span>
+        </div>
+      )}
+
       {/* ── ORIGEM ── 200px */}
       <div className="w-[200px] flex-shrink-0 px-2 py-2.5 flex flex-wrap gap-1">
-        <OriginBadge originType={reminder.origin_type} />
+        {historicoTooltip.length > 0 ? (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="cursor-help">
+                  <OriginBadge originType={origemMaisAntiga || reminder.origin_type} />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs max-w-[240px] space-y-0.5">
+                <p className="font-semibold text-gray-700 mb-1">Todos os follows:</p>
+                {historicoTooltip.map((h, i) => (
+                  <p key={i} className="text-gray-500">{h}</p>
+                ))}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ) : (
+          <OriginBadge originType={reminder.origin_type} />
+        )}
       </div>
 
       {/* ── FOLLOW-UPS ── 148px */}
