@@ -90,10 +90,11 @@ export default function CentralFollowUp() {
   }, []);
 
   useEffect(() => {
-    if (!consultorSelecionado) {
-      setConsultorSelecionado("todos");
+    // S3-01: default = user logado (não "todos")
+    if (!consultorSelecionado && user?.id) {
+      setConsultorSelecionado(user.id);
     }
-  }, [consultorSelecionado]);
+  }, [consultorSelecionado, user?.id]);
 
   // Resolve nome real + foto via Employee (User.full_name pode vir como "Aceleradora...")
   const { getName, getPhoto } = useEmployeeResolver();
