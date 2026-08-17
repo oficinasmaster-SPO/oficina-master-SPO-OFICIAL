@@ -398,6 +398,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
             clearValue="todos"
             className="h-8"
             autoSelectOnOpen={false}
+            maxHeight={320}
           />
         </div>
 
