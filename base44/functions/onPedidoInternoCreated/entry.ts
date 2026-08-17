@@ -10,7 +10,6 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
  *
  * S1-05: Adicionado guard de workshop inativo (antes só checava existência).
  */
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
