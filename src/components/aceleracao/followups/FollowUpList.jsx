@@ -217,6 +217,35 @@ function useAtasIndex(ataIds = []) {
   return byId;
 }
 
+// S2-03a: hook que retorna { workshop_id: count } de atas em aberto por workshop
+function useAtasAbertasIndex(workshopIds = []) {
+  const ids = [...new Set(workshopIds.filter(Boolean))];
+  const { data = [] } = useQuery({
+    queryKey: ['atas-abertas-index', ids.sort().join(',')],
+    queryFn: async () => {
+      if (ids.length === 0) return [];
+      const BATCH = 100;
+      const results = [];
+      for (let i = 0; i < ids.length; i += BATCH) {
+        const batch = ids.slice(i, i + BATCH);
+        const items = await base44.entities.MeetingMinutes.filter(
+          { workshop_id: { $in: batch }, status: { $ne: 'finalizada' } },
+          '-meeting_date', 500
+        );
+        results.push(...items);
+      }
+      return results;
+    },
+    enabled: ids.length > 0,
+    staleTime: 3 * 60 * 1000,
+  });
+  const byWorkshop = {};
+  data.forEach(a => {
+    if (a.workshop_id) byWorkshop[a.workshop_id] = (byWorkshop[a.workshop_id] || 0) + 1;
+  });
+  return byWorkshop;
+}
+
 export default function FollowUpList({ reminders, remindersConcluidos = [], today, isLoading, onSelect, filterPill, onFilterPill, seqByReminderId = {}, statsByWorkshopId = {}, onSuporteRapido, meuId, selectedReminderId, onIniciarAtendimento }) {
   const [selectedCompleted, setSelectedCompleted] = useState(null);
   const [search, setSearch] = useState("");
