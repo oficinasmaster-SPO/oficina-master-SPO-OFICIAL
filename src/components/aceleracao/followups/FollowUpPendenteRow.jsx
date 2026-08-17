@@ -1,6 +1,5 @@
 import React, { memo } from "react";
 import { PlayCircle, FileWarning } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Tooltip,
   TooltipContent,
