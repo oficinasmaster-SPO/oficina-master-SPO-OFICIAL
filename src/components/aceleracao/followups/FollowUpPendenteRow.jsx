@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { PlayCircle, FileWarning } from "lucide-react";
+import { PlayCircle, FileWarning, ChevronUp, ChevronDown } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
