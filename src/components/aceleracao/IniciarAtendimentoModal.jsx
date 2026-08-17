@@ -137,6 +137,15 @@ function renderMarkdown(text) {
     });
 }
 
+// S2-02: shiftToBusinessDay — recua sáb(6)/dom(0) para sexta anterior
+function shiftToBusinessDay(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00.000Z');
+  const dow = d.getUTCDay();
+  if (dow === 6) d.setUTCDate(d.getUTCDate() - 1);
+  if (dow === 0) d.setUTCDate(d.getUTCDate() - 2);
+  return d.toISOString().split('T')[0];
+}
+
 export default function IniciarAtendimentoModal({ followUp: followUpInicial, cliente, onClose, onSaved, fusConcatenados = [], proximoFU = null, onProximoFollowUp, filaReminders = [], onNavegar, openClientSelectorOnMount = false }) {
   // Validar filaReminders — pode vir undefined
   const validFilaReminders = Array.isArray(filaReminders) ? filaReminders : [];
