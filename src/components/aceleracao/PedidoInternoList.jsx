@@ -19,11 +19,12 @@ export const COL = {
   prioridade:  "w-[90px] shrink-0",
   status:      "w-[112px] shrink-0",
   sla:         "w-[84px] shrink-0",
+  criado:      "w-[118px] shrink-0",
   gap:         "gap-3",
   px:          "px-4",
 };
 
-const MIN_TABLE = "min-w-[1040px]";
+const MIN_TABLE = "min-w-[1160px]";
 
 /* ── Dividers — header forte, rows quase invisível, desaparecem no hover ── */
 const HD = "border-r border-r-slate-900/5";
@@ -65,6 +66,14 @@ function timeSince(d) {
   if (hours > 0) return `${hours}h`;
   const mins = Math.floor(ms / 60000);
   return `${mins}min`;
+}
+
+// Formata data de criação em dd/MM/yy HH:mm (timezone local do browser).
+function formatCreatedAt(d) {
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return null;
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${pad(dt.getDate())}/${pad(dt.getMonth() + 1)}/${String(dt.getFullYear()).slice(-2)} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
 }
 
 function isOverdue(p) {
@@ -142,7 +151,8 @@ export function ColumnHeaders() {
       <span className={`${COL.responsavel} ${HD}`}>Responsável</span>
       <span className={`${COL.prioridade} text-center ${HD}`}>Prioridade</span>
       <span className={`${COL.status} text-center ${HD}`}>Status</span>
-      <span className={`${COL.sla} text-right`}>Tempo</span>
+      <span className={`${COL.sla} text-right ${HD}`}>Tempo</span>
+      <span className={`${COL.criado} text-right`}>Criado em</span>
     </div>
   );
 }
@@ -253,7 +263,7 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
       </div>
 
       {/* Tempo Aberto — SLA badge alinhado à direita */}
-      <div className={`${COL.sla} flex justify-end`}>
+      <div className={`${COL.sla} ${RD} flex justify-end`}>
         {level ? (
           <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold tabular-nums ${SLA_STYLES[level]}`}>
             <Clock className="h-3 w-3" />
@@ -264,6 +274,16 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
         )}
       </div>
 
+      {/* Criado em — data/hora de criação (timezone local) */}
+      <div className={`${COL.criado} flex justify-end`}>
+        {criado ? (
+          <span className="text-[11px] text-gray-400 tabular-nums">
+            {formatCreatedAt(criado)}
+          </span>
+        ) : (
+          <span className="text-[11px] text-gray-300">{"—"}</span>
+        )}
+      </div>
 
     </div>
   );
@@ -306,6 +326,7 @@ function SkeletonRows() {
               <div className={`${COL.prioridade} flex justify-center`}><div className="h-4 w-14 rounded bg-gray-100" /></div>
               <div className={`${COL.status} flex justify-center`}><div className="h-5 w-20 rounded-full bg-gray-100" /></div>
               <div className={`${COL.sla} flex justify-end`}><div className="h-5 w-16 rounded-md bg-gray-100" /></div>
+              <div className={`${COL.criado} flex justify-end`}><div className="h-4 w-20 rounded bg-gray-100" /></div>
             </div>
           ))}
         </React.Fragment>
