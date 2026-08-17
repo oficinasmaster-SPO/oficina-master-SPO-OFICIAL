@@ -403,8 +403,8 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
           qtdFollow: grupo.fus.length,
         };
       })
-      // S3-03a: empresa aparece apenas se tem FU com reminder_date === hoje
-      .filter(g => g.fusHoje.length > 0)
+      // S3-03a: empresa aparece se tem FU com reminder_date <= hoje (atrasado + hoje)
+      .filter(g => g.fus.some(f => f.reminder_date <= today))
       // Sort de 3 camadas por maisUrgente
       .sort((a, b) => {
         const ma = a.maisUrgente, mb = b.maisUrgente;
