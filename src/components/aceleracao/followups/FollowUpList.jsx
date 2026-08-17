@@ -567,14 +567,125 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
         <div className="rounded-xl border border-gray-200 shadow-sm overflow-x-auto bg-white">
           <div className="flex items-center border-b border-gray-200 bg-gray-50 text-[10px] font-bold uppercase tracking-widest text-gray-400 border-l-[3px] border-l-transparent">
             <div className="flex-1 min-w-[240px] px-4 py-2 pl-7">Cliente</div>
+            <div className="w-[80px] flex-shrink-0 px-2 py-2 text-center">Qtd Follow</div>
             <div className="w-[140px] flex-shrink-0 px-2 py-2">Consultor</div>
             <div className="w-[72px] flex-shrink-0 px-2 py-2">Seq.</div>
             <div className="w-[200px] flex-shrink-0 px-2 py-2">Origem</div>
             <div className="w-[148px] flex-shrink-0 px-2 py-2">Follow-ups</div>
             <div className="w-[176px] flex-shrink-0 px-2 py-2">Datas</div>
             <div className="w-[112px] flex-shrink-0 px-3 py-2 text-right">Status</div>
+            <div className="w-[36px] flex-shrink-0" />
           </div>
-          {paginated.map((r, i) => (
+
+          {/* S3-03a/b: render agrupado por empresa */}
+          {empresasAgrupadas ? empresasAgrupadas.map((grupo) => {
+            const r = grupo.maisUrgente;
+            if (!r) return null;
+            const isExpanded = expandedWorkshops.has(grupo.workshop_id);
+            return (
+              <React.Fragment key={grupo.workshop_id}>
+                {/* Linha da empresa */}
+                <div className="relative">
+                  <FollowUpPendenteRow
+                    reminder={r}
+                    today={today}
+                    seqFU={seqByReminderId[r.id] ?? null}
+                    score={calcPriorityScore(r, today)}
+                    onSelect={onSelect}
+                    isLast={false}
+                    meuId={meuId}
+                    stats={statsByWorkshopId[r.workshop_id] ?? null}
+                    isSelected={r.id === selectedReminderId}
+                    risco={reunioesIndex[r.workshop_id] ?? null}
+                    onIniciarAtendimento={onIniciarAtendimento}
+                    plano={planosByWorkshop[r.workshop_id]?.plano ?? null}
+                    workshopConsultorPrincipal={planosByWorkshop[r.workshop_id]?.consultorPrincipalNome ?? null}
+                    logo_url={logosByWorkshop[r.workshop_id]}
+                    atasAbertas={atasAbertasIndex[r.workshop_id] || 0}
+                    qtdFollow={grupo.qtdFollow}
+                    origemMaisAntiga={grupo.origemMaisAntiga}
+                    historicoTooltip={grupo.historicoTooltip}
+                    isExpanded={isExpanded}
+                    onToggleExpand={() => toggleExpanded(grupo.workshop_id)}
+                  />
+                </div>
+
+                {/* S3-03b: Painel expandido */}
+                {isExpanded && (
+                  <div className="bg-gray-50 border-b border-gray-200 px-6 py-3">
+                    <div className="flex gap-6">
+                      {/* Lista de FUs abertos */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">Follows em aberto</p>
+                        <div className="space-y-1.5">
+                          {grupo.fus.map((fu, idx) => {
+                            const isAtrasado = fu.reminder_date < today;
+                            const isHoje = fu.reminder_date === today;
+                            return (
+                              <div key={fu.id} className="flex items-center gap-2 text-xs">
+                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
+                                  isAtrasado ? 'bg-red-100 text-red-700' : isHoje ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'
+                                }`}>#{idx + 1}</span>
+                                <span className="text-gray-500">{fu.origin_type || 'manual'}</span>
+                                <span className="text-gray-400">·</span>
+                                <span className={isAtrasado ? 'text-red-600 font-medium' : isHoje ? 'text-amber-700 font-medium' : 'text-gray-500'}>
+                                  {fu.reminder_date || '?'}
+                                  {isAtrasado && ' ― atrasado'}
+                                  {isHoje && ' ― hoje'}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Gráfico de histórico */}
+                      <div className="w-56 flex-shrink-0">
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">Histórico (28 dias)</p>
+                        {(() => {
+                          const idx = concluidosIndex || [];
+                          const cutoff = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                          const hist = idx.filter(c => c.workshop_id === grupo.workshop_id && (c.completedAt || c.created_date || '') >= cutoff);
+                          const atendeu = hist.filter(c => c.resultado === 'atendeu').length;
+                          const naoAtendeu = hist.filter(c => c.resultado === 'nao_atendeu').length;
+                          const aguardando = hist.filter(c => c.resultado === 'aguardando').length;
+                          const total = hist.length || 1;
+                          const lastAtendeu = hist.filter(c => c.resultado === 'atendeu').sort((a,b) => (b.completedAt||'').localeCompare(a.completedAt||''))[0];
+                          const lastDate = lastAtendeu?.completedAt?.split('T')[0] || null;
+                          if (hist.length === 0) return <p className="text-[11px] text-gray-400">Sem histórico nos últimos 28 dias</p>;
+                          return (
+                            <div className="space-y-1.5">
+                              {atendeu > 0 && (
+                                <div className="flex items-center gap-2">
+                                  <div className="h-2 rounded-full bg-emerald-400" style={{ width: `${Math.round(atendeu/total*100)}%`, minWidth: 8, maxWidth: 80 }} />
+                                  <span className="text-[11px] text-gray-600">Atendeu <strong>{atendeu}x</strong></span>
+                                </div>
+                              )}
+                              {naoAtendeu > 0 && (
+                                <div className="flex items-center gap-2">
+                                  <div className="h-2 rounded-full bg-red-400" style={{ width: `${Math.round(naoAtendeu/total*100)}%`, minWidth: 8, maxWidth: 80 }} />
+                                  <span className="text-[11px] text-gray-600">Não atendeu <strong>{naoAtendeu}x</strong></span>
+                                </div>
+                              )}
+                              {aguardando > 0 && (
+                                <div className="flex items-center gap-2">
+                                  <div className="h-2 rounded-full bg-amber-400" style={{ width: `${Math.round(aguardando/total*100)}%`, minWidth: 8, maxWidth: 80 }} />
+                                  <span className="text-[11px] text-gray-600">Aguardando <strong>{aguardando}x</strong></span>
+                                </div>
+                              )}
+                              {lastDate && (
+                                <p className="text-[10px] text-gray-400 mt-1">Último contato efetivo: {lastDate}</p>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </React.Fragment>
+            );
+          }) : paginated.map((r, i) => (
             <FollowUpPendenteRow
               key={r.id} reminder={r} today={today} seqFU={seqByReminderId[r.id] ?? null} score={calcPriorityScore(r, today)}
               onSelect={onSelect} isLast={i === paginated.length - 1} meuId={meuId}
