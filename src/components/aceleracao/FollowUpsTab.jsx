@@ -181,29 +181,26 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId,
   const { data: reminders = [], isLoading } = useQuery({
     queryKey: ["follow-up-reminders-tab", consultorEfetivo],
     queryFn: async () => {
-      // Busca TODOS os follow-ups pendentes do tenant (incluindo guarda-chuva)
-      // Se tiver consultor efetivo, filtra por ele OU traz follow-ups do sistema (guarda-chuva)
       const query = { is_completed: false };
-      
+
+      // S3-01: filtrar por consultor_principal_id (campo canônico pós-refatoração)
+      // "todos" (consultorEfetivo=null) → sem filtro de consultor
       if (consultorEfetivo) {
-        // Inclui follow-ups do consultor E follow-ups do sistema (guarda-chuva)
-        query.$or = [
-          { consultor_id: consultorEfetivo },
-          { origin_type: "guarda_chuva" }
-        ];
+        query.consultor_principal_id = consultorEfetivo;
       }
-      // Ordena por reminder_date para trazer os mais recentes primeiro
+
       return base44.entities.FollowUpReminder.filter(query, "-reminder_date", 500);
     },
     staleTime: 2 * 60 * 1000,
   });
 
-  // Query separada para reminders CONCLUÍDOS (usada nas abas Concluídos e pill CRM)
+  // Query separada para reminders CONCLUÍDOS
   const { data: remindersConcluidos = [], isLoading: isLoadingConcluidos } = useQuery({
     queryKey: ["follow-up-reminders-concluidos-tab", consultorEfetivo],
     queryFn: async () => {
       const query = { is_completed: true };
-      if (consultorEfetivo) query.consultor_id = consultorEfetivo;
+      // S3-01: filtrar por consultor_principal_id
+      if (consultorEfetivo) query.consultor_principal_id = consultorEfetivo;
       return base44.entities.FollowUpReminder.filter(query, "-completed_at", 500);
     },
     staleTime: 2 * 60 * 1000,
