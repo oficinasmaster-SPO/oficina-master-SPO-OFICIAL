@@ -87,9 +87,28 @@ const FollowUpPendenteRow = memo(({
           </Tooltip>
         </TooltipProvider>
         <div className="min-w-0">
-          <p className="text-sm font-bold text-gray-900 truncate leading-tight">
-            {reminder.workshop_name || "Sem cliente"}
-          </p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-bold text-gray-900 truncate leading-tight">
+              {reminder.workshop_name || "Sem cliente"}
+            </p>
+            {/* S2-03a: Badge âmbar de atas em aberto */}
+            {atasAbertas > 0 && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="flex items-center gap-0.5 bg-amber-100 text-amber-700 border border-amber-300 rounded px-1 py-0.5 text-[10px] font-semibold shrink-0 cursor-help">
+                      <FileWarning className="w-2.5 h-2.5" />
+                      {atasAbertas} ata{atasAbertas !== 1 ? 's' : ''}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs max-w-[200px]">
+                    <p className="font-semibold text-amber-700">{atasAbertas} ata{atasAbertas !== 1 ? 's' : ''} em aberto</p>
+                    <p className="text-gray-500 mt-0.5">Oriente o cliente a fechar antes do próximo atendimento.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
           {(plano || consultorPrincipal) && (
             <p className="text-[11px] text-gray-400 truncate mt-0.5 leading-tight">
               {plano && (
