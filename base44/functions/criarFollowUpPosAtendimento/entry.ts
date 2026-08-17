@@ -158,7 +158,7 @@ Deno.serve(async (req) => {
       consultor_nome: atendimento.consultor_nome || '',
       atendimento_id: atendimento.id,
       ata_id: null,
-      reminder_date: hoje.toISOString().split('T')[0],
+      reminder_date: shiftToBusinessDay(hoje.toISOString().split('T')[0]), // S1-07: nunca cai em sáb/dom
       sequence_number: sequenceNumber,
       days_since_meeting: 7,
       message: 'Follow-up semanal automático - Cliente sem contato há 7+ dias',
