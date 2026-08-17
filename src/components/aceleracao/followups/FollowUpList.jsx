@@ -293,6 +293,7 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
 
   const planosByWorkshop = useWorkshopsPlanIndex(workshopIdsTodos);
   const logosByWorkshop = useWorkshopLogos(workshopIdsTodos);
+  const atasAbertasIndex = useAtasAbertasIndex(workshopIdsTodos); // S2-03a
 
   const fusPorEmpresa = React.useMemo(() => {
     const mapa = {};
