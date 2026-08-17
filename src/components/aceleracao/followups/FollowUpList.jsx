@@ -350,6 +350,72 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
 
   React.useEffect(() => { setPage(1); }, [searchTerm, filterPill, sourceList.length]);
 
+  // S3-03a: Agrupa FUs pendentes por empresa para a visibilidade default (1 linha por empresa)
+  // Uma empresa aparece na lista quando tem pelo menos 1 FU com reminder_date === hoje
+  const [expandedWorkshops, setExpandedWorkshops] = React.useState(new Set());
+  const toggleExpanded = React.useCallback((wid) => {
+    setExpandedWorkshops(prev => {
+      const next = new Set(prev);
+      next.has(wid) ? next.delete(wid) : next.add(wid);
+      return next;
+    });
+  }, []);
+
+  const empresasAgrupadas = React.useMemo(() => {
+    if (filterPill === 'concluidos') return null; // concluídos não agrupam
+    // Todos FUs pendentes do source (sem filtro de data — usados pra Qtd Follow)
+    const todosPendentes = sourceList.filter(r => !r.is_completed);
+
+    // Agrupa por workshop_id
+    const mapa = {};
+    todosPendentes.forEach(r => {
+      if (!r.workshop_id) return;
+      if (!mapa[r.workshop_id]) {
+        mapa[r.workshop_id] = {
+          workshop_id: r.workshop_id,
+          workshop_name: r.workshop_name || '',
+          fus: [],
+        };
+      }
+      mapa[r.workshop_id].fus.push(r);
+    });
+
+    return Object.values(mapa)
+      .map(grupo => {
+        const fusOrdenados = [...grupo.fus].sort((a, b) =>
+          (a.reminder_date || '').localeCompare(b.reminder_date || '')
+        );
+        const fusHoje = fusOrdenados.filter(f => f.reminder_date === today);
+        const maisUrgente = fusOrdenados[0];
+        // Origem: origin_type do FU com menor created_date (mais antigo)
+        const maisAntigo = [...grupo.fus].sort((a, b) =>
+          (a.created_date || '').localeCompare(b.created_date || '')
+        )[0];
+        return {
+          ...grupo,
+          fus: fusOrdenados,           // todos os FUs ordenados por data
+          fusHoje,                      // FUs com reminder_date = hoje (visibilidade)
+          maisUrgente,                  // FU mais próximo (define posição no sort)
+          origemMaisAntiga: maisAntigo?.origin_type || '',
+          historicoTooltip: fusOrdenados.map((f, i) =>
+            `#${i + 1} · ${f.origin_type || 'manual'} · ${f.reminder_date || '?'}`
+          ),
+          qtdFollow: grupo.fus.length,
+        };
+      })
+      // S3-03a: empresa aparece apenas se tem FU com reminder_date === hoje
+      .filter(g => g.fusHoje.length > 0)
+      // Sort de 3 camadas por maisUrgente
+      .sort((a, b) => {
+        const ma = a.maisUrgente, mb = b.maisUrgente;
+        if (!ma) return 1; if (!mb) return -1;
+        const atA = ma.reminder_date < today;
+        const atB = mb.reminder_date < today;
+        if (atA !== atB) return atA ? -1 : 1;
+        return (ma.reminder_date || '').localeCompare(mb.reminder_date || '');
+      });
+  }, [sourceList, today, filterPill]);
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
