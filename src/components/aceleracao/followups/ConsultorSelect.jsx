@@ -16,14 +16,15 @@ import Combobox from "@/components/ui/combobox";
 export default function ConsultorSelect({ value, onChange, consultores = [], user }) {
   const options = useMemo(() => {
     const opts = [
-      { value: user?.id || "me", label: "Meus Follow-ups" },
+      // S3-01: "Todos" no topo, user logado como segunda opção
       { value: "todos", label: "Todos os Consultores" },
+      { value: user?.id || "me", label: `Meus Follow-ups (${user?.full_name?.split(' ')[0] || 'eu'})` },
     ];
-    consultores.forEach((c) =>
-      opts.push({ value: c.id, label: c.full_name || c.email || "Consultor" })
-    );
+    consultores
+      .filter(c => c.id !== user?.id) // evita duplicar o user logado
+      .forEach((c) => opts.push({ value: c.id, label: c.full_name || c.email || "Consultor" }));
     return opts;
-  }, [user?.id, consultores]);
+  }, [user?.id, user?.full_name, consultores]);
 
   return (
     <div className="w-[220px] flex-shrink-0">
