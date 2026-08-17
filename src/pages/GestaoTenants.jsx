@@ -35,6 +35,11 @@ export default function GestaoTenants() {
   const [userDeleteWorkshopAlert, setUserDeleteWorkshopAlert] = useState(null);
   const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false);
 
+  // States for Inactivation Dialog
+  const [isInactivateDialogOpen, setIsInactivateDialogOpen] = useState(false);
+  const [companyToInactivate, setCompanyToInactivate] = useState(null);
+  const [inactivateMotivo, setInactivateMotivo] = useState('');
+
   // States for Consulting Firm Form
   const [firmFormData, setFirmFormData] = useState({
     name: '',
@@ -470,10 +475,15 @@ export default function GestaoTenants() {
                               <Switch
                                 checked={company.status !== 'inativo'}
                                 onCheckedChange={async (checked) => {
-                                  const newStatus = checked ? 'ativo' : 'inativo';
-                                  await base44.entities.Workshop.update(company.id, { status: newStatus });
-                                  queryClient.invalidateQueries({ queryKey: ['admin-companies'] });
-                                  toast.success(`Oficina ${checked ? 'ativada' : 'inativada'} com sucesso!`);
+                                  if (!checked) {
+                                    setCompanyToInactivate(company);
+                                    setInactivateMotivo('');
+                                    setIsInactivateDialogOpen(true);
+                                  } else {
+                                    await base44.entities.Workshop.update(company.id, { status: 'ativo' });
+                                    queryClient.invalidateQueries({ queryKey: ['admin-companies'] });
+                                    toast.success('Oficina reativada com sucesso!');
+                                  }
                                 }}
                               />
                             </TableCell>
@@ -898,6 +908,63 @@ export default function GestaoTenants() {
             >
               {deleteUserMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
               Sim, Excluir Usuário e Oficina
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Inativação de Oficina */}
+      <Dialog open={isInactivateDialogOpen} onOpenChange={(open) => {
+        setIsInactivateDialogOpen(open);
+        if (!open) {
+          setCompanyToInactivate(null);
+          setInactivateMotivo('');
+        }
+      }}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Inativar cliente</DialogTitle>
+            <DialogDescription className="pt-2">
+              Você está prestes a inativar este cliente. O histórico será preservado, mas ele deixará de aparecer nas operações ativas.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Motivo:</label>
+              <Select value={inactivateMotivo} onValueChange={setInactivateMotivo}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o motivo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cliente_cancelou">Cliente cancelou</SelectItem>
+                  <SelectItem value="contrato_encerrado">Contrato encerrado</SelectItem>
+                  <SelectItem value="inadimplencia">Inadimplência</SelectItem>
+                  <SelectItem value="cliente_duplicado">Cliente duplicado</SelectItem>
+                  <SelectItem value="cliente_transferido">Cliente transferido</SelectItem>
+                  <SelectItem value="sem_interesse">Sem interesse</SelectItem>
+                  <SelectItem value="outro">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsInactivateDialogOpen(false)}>Cancelar</Button>
+            <Button
+              variant="destructive"
+              disabled={!inactivateMotivo}
+              onClick={async () => {
+                await base44.entities.Workshop.update(companyToInactivate.id, {
+                  status: 'inativo',
+                  motivo_inativacao: inactivateMotivo
+                });
+                queryClient.invalidateQueries({ queryKey: ['admin-companies'] });
+                setIsInactivateDialogOpen(false);
+                setCompanyToInactivate(null);
+                setInactivateMotivo('');
+                toast.success('Oficina inativada com sucesso!');
+              }}
+            >
+              Inativar cliente
             </Button>
           </DialogFooter>
         </DialogContent>
