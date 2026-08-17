@@ -35,6 +35,15 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'tipo deve ser tarefa_backlog ou pedido_interno' }, { status: 400 });
     }
 
+    // S1-04/S1-05: Criação de FU automático por tarefa_backlog e pedido_interno DESATIVADA.
+    // Esses fluxos geravam FUs duplicados e fora da cadencia de follow-up.
+    // Para criar FU manualmente, usar o modal de novo follow-up na Central.
+    return Response.json({
+      skipped: true,
+      reason: `criacao_fu_${tipo}_desativada`,
+      message: `A criação automática de follow-up por ${tipo} foi desativada. Use o fluxo manual na Central de Follow-up.`
+    });
+
     // ── Buscar o item de origem ──
     let origem = null;
     try {
