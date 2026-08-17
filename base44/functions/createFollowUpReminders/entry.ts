@@ -14,10 +14,6 @@ function normalizeDateUTC(raw) {
   return new Date(s + '-03:00');
 }
 
-/**
- * Extrai "YYYY-MM-DD" no fuso de Brasília a partir de qualquer Date UTC.
- * Substitui o padrão quebrado: date.toISOString().split('T')[0]
- */
 function extractDateBRT(d) {
   if (!d) return '';
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -26,6 +22,15 @@ function extractDateBRT(d) {
   }).formatToParts(d);
   const get = (t) => parts.find(p => p.type === t)?.value || '00';
   return `${get('year')}-${get('month')}-${get('day')}`;
+}
+
+// S1-01: Recua sábado(6) e domingo(0) para a sexta-feira anterior (BRT)
+function shiftToBusinessDay(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00.000Z');
+  const dow = d.getUTCDay();
+  if (dow === 6) d.setUTCDate(d.getUTCDate() - 1); // sáb → sex
+  if (dow === 0) d.setUTCDate(d.getUTCDate() - 2); // dom → sex
+  return d.toISOString().split('T')[0];
 }
 
 /**
