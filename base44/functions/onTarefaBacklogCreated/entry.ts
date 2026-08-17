@@ -27,13 +27,27 @@ Deno.serve(async (req) => {
     if (!/^[0-9a-f]{24}$/.test(tarefa.workshop_id)) {
       return Response.json({ skipped: true, reason: `workshop_id inválido (não-ObjectId): ${tarefa.workshop_id}` });
     }
+    let workshop = null;
     try {
       const wsItems = await base44.asServiceRole.entities.Workshop.filter({ id: tarefa.workshop_id });
-      if (!wsItems || wsItems.length === 0) {
+      workshop = wsItems?.[0] || null;
+      if (!workshop) {
         return Response.json({ skipped: true, reason: `Workshop não encontrado: ${tarefa.workshop_id}` });
       }
     } catch (e) {
       return Response.json({ skipped: true, reason: `Falha ao validar workshop: ${e.message}` });
+    }
+
+    // S2-01: Guard workshop inativo (defesa em profundidade — automation já desativada)
+    if (workshop.status !== 'ativo') {
+      console.log(`[onTarefaBacklogCreated] ${workshop.name}: status=${workshop.status}. Skip.`);
+      return Response.json({ skipped: true, reason: `workshop_inativo: ${workshop.status}` });
+    }
+
+    // S2-01: Guard plano FREE (defesa em profundidade)
+    if ((workshop.planoAtual || 'FREE') === 'FREE') {
+      console.log(`[onTarefaBacklogCreated] ${workshop.name}: plano FREE. Skip.`);
+      return Response.json({ skipped: true, reason: 'plano_free' });
     }
 
     // Idempotência: verificar se já existe FU aberto para esta tarefa
