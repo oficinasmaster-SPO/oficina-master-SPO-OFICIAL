@@ -730,6 +730,78 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
     if (file) handleFileSelect(file);
   };
 
+  // S2-02: "Follow concluído" — encerra todos FUs abertos do workshop na semana + cria 1 novo +7d
+  // Exige resultado preenchido. Integra com a cascata existente (fusDaSemanaModal).
+  const handleFollowConcluido = useCallback(async () => {
+    if (!resultado) {
+      toast.error('Preencha o resultado do contato antes de concluir.');
+      return;
+    }
+    if (!followUp?.workshop_id) return;
+
+    setSavingFollowConcluido(true);
+    try {
+      const now = new Date().toISOString();
+      const fuParaEncerrar = [
+        followUp,
+        ...fusDaSemanaModal.filter(f => f.id !== followUp.id),
+      ].filter(Boolean);
+
+      // Encerra todos em cascata
+      await Promise.all(fuParaEncerrar.map(fu =>
+        Promise.all([
+          base44.entities.FollowUpReminder.update(fu.id, {
+            is_completed: true,
+            completed_at: now,
+            consultor_executor_id: user?.id || null,
+            consultor_executor_nome: user?.full_name || user?.email || null,
+          }),
+          base44.entities.FollowUpConcluido.create({
+            followup_id: fu.id,
+            workshop_id: fu.workshop_id,
+            consultor_id: fu.consultor_principal_id || fu.consultor_id,
+            consultor_nome: fu.consultor_principal_nome || fu.consultor_nome,
+            consultor_principal_id: fu.consultor_principal_id || fu.consultor_id || null,
+            consultor_principal_nome: fu.consultor_principal_nome || fu.consultor_nome || null,
+            consultor_executor_id: user?.id || null,
+            consultor_executor_nome: user?.full_name || user?.email || null,
+            resultado,
+            dataContato: now,
+            observacoes: `[Follow concluído] Encerrado junto ao FU ${followUp.sequence_number || 1}`,
+          }),
+        ])
+      ));
+
+      // Cria 1 novo FU +7d com shiftToBusinessDay
+      const rawNext = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      const nextDate = shiftToBusinessDay(rawNext.toISOString().split('T')[0]);
+
+      await base44.entities.FollowUpReminder.create({
+        workshop_id:             followUp.workshop_id,
+        workshop_name:           followUp.workshop_name,
+        consultor_id:            followUp.consultor_principal_id || followUp.consultor_id,
+        consultor_nome:          followUp.consultor_principal_nome || followUp.consultor_nome,
+        consultor_principal_id:  followUp.consultor_principal_id || null,
+        consultor_principal_nome: followUp.consultor_principal_nome || null,
+        reminder_date:           nextDate,
+        sequence_number:         (followUp.sequence_number || 1) + 1,
+        days_since_meeting:      7,
+        message:                 `Follow-up semanal — continuidade após atendimento de ${now.split('T')[0]}`,
+        is_completed:            false,
+        origin_type:             followUp.origin_type || 'manual',
+      });
+
+      toast.success(`${fuParaEncerrar.length} follow-up(s) encerrado(s). Próximo agendado para ${nextDate}.`);
+      if (onSaved) onSaved();
+      handleClose();
+    } catch (e) {
+      console.error('[handleFollowConcluido]', e);
+      toast.error('Erro ao concluir follow-ups: ' + e.message);
+    } finally {
+      setSavingFollowConcluido(false);
+    }
+  }, [resultado, followUp, fusDaSemanaModal, user, onSaved, handleClose]);
+
   const handleClose = useCallback(() => {
     const fu = followUpRef.current;
     if (lockSetByMeRef.current && fu?.id && !fu?._isSuporteLocal) {
