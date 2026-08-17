@@ -22,7 +22,7 @@ function riscoToDotColor(risco) {
 }
 
 const FollowUpPendenteRow = memo(({
-  reminder, today, seqFU, score, onSelect, isLast, stats, isSelected, risco, onIniciarAtendimento, plano, logo_url, workshopConsultorPrincipal,
+  reminder, today, seqFU, score, onSelect, isLast, stats, isSelected, risco, onIniciarAtendimento, plano, logo_url, workshopConsultorPrincipal, atasAbertas = 0,
 }) => {
   // S1: Consultor principal — fonte canônica é o Workshop (Gestão de Tenants).
   // Fallback: campo no reminder → campo genérico consultor_nome.
