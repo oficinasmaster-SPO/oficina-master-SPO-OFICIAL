@@ -232,6 +232,21 @@ const FollowUpPendenteRow = memo(({
         )}
         <StatusBadge reminder={reminder} today={today} />
       </div>
+
+      {/* ── BOTÃO EXPANDIR ── 36px (S3-03b) */}
+      {onToggleExpand && (
+        <div className="w-[36px] flex-shrink-0 flex items-center justify-center">
+          <button
+            onClick={e => { e.stopPropagation(); onToggleExpand(); }}
+            className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+            title={isExpanded ? 'Recolher' : 'Ver todos os follows'}
+          >
+            {isExpanded
+              ? <ChevronUp className="w-3.5 h-3.5" />
+              : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
+        </div>
+      )}
     </div>
   );
 });
