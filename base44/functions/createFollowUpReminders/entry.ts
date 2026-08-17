@@ -116,47 +116,65 @@ Deno.serve(async (req) => {
     }
     workshopName = workshop.name || '';
     if (workshop.status !== 'ativo') {
-      console.log(`[createFollowUpReminders] Oficina ${workshopName} não está ativa (status="${workshop.status}"). Follow-ups não criados.`);
+      console.log(`[createFollowUpReminders] Oficina ${workshopName} não está ativa. Skip.`);
       return Response.json({ skipped: true, reason: `Workshop não ativo: ${workshop.status}` });
     }
 
-    // B4 FIX: normaliza data base corretamente (legados sem TZ assumem BRT, date-only âncora ao meio-dia BRT)
+    // S1-01: Guard plano FREE — bloqueia FU automático
+    if ((workshop.planoAtual || 'FREE') === 'FREE') {
+      console.log(`[createFollowUpReminders] ${workshopName}: plano FREE. FU automático bloqueado.`);
+      return Response.json({ skipped: true, reason: 'plano_free' });
+    }
+
+    // B4 FIX: normaliza data base corretamente
     const rawMeetingDate = data.meeting_date || atendimento.data_realizada || atendimento.data_agendada;
     const meetingDateUTC = normalizeDateUTC(rawMeetingDate);
 
-    const reminders = [];
-    for (let i = 1; i <= 4; i++) {
-      // Adiciona dias via ms — seguro, sem depender de setDate() em contexto TZ errado
-      const reminderDateUTC = new Date(meetingDateUTC.getTime() + i * 7 * 24 * 60 * 60 * 1000);
-      const daysOffset = i * 7;
+    // S1-02: 1 FU único (+7d) em vez de 4. Aplica shiftToBusinessDay.
+    const targetDateRaw = new Date(meetingDateUTC.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const targetDate = shiftToBusinessDay(extractDateBRT(targetDateRaw));
 
-      reminders.push({
-        workshop_id: workshopId,
-        workshop_name: workshopName,
-        atendimento_id: atendimento.id,
-        ata_id: ataId,
-        consultor_id: atendimento.consultor_id,
-        consultor_nome: atendimento.consultor_nome || data.consultor_name || '',
-        // B4 FIX: extrai data no fuso BRT para que o dia exibido seja correto
-        reminder_date: extractDateBRT(reminderDateUTC),
-        sequence_number: i,
-        days_since_meeting: daysOffset,
-        message: `Hoje faz ${daysOffset} dias desde o último atendimento com ${workshopName}. Seria importante dar um retorno hoje ainda para saber sobre a evolução do cliente.`,
-        is_completed: false,
-        origin_type: 'ata'
-      });
+    // S1-02: Dedup semanal — se já existe FU aberto do mesmo workshop
+    // cuja reminder_date caia na mesma semana (seg–sex) do alvo → skip
+    const tDate = new Date(targetDate + 'T12:00:00.000Z');
+    const tDow = tDate.getUTCDay();
+    const tSeg = new Date(tDate); tSeg.setUTCDate(tDate.getUTCDate() - (tDow - 1));
+    const tSex = new Date(tSeg);  tSex.setUTCDate(tSeg.getUTCDate() + 4);
+    const segStr = tSeg.toISOString().split('T')[0];
+    const sexStr = tSex.toISOString().split('T')[0];
+
+    const fusSemana = await base44.asServiceRole.entities.FollowUpReminder.filter({
+      workshop_id: workshopId,
+      is_completed: false,
+    });
+    const dedupSemanal = (fusSemana || []).some(fu =>
+      fu.reminder_date >= segStr && fu.reminder_date <= sexStr
+    );
+    if (dedupSemanal) {
+      console.log(`[createFollowUpReminders] Dedup semanal: FU já existe para ${workshopName} na semana ${segStr}–${sexStr}. Skip.`);
+      return Response.json({ skipped: true, reason: 'dedup_semanal', semana: `${segStr}/${sexStr}` });
     }
 
-    // Bulk create all 4 reminders
-    await base44.asServiceRole.entities.FollowUpReminder.bulkCreate(reminders);
+    const reminder = {
+      workshop_id: workshopId,
+      workshop_name: workshopName,
+      atendimento_id: atendimento.id,
+      ata_id: ataId,
+      consultor_id: atendimento.consultor_id,
+      consultor_nome: atendimento.consultor_nome || data.consultor_name || '',
+      consultor_principal_id: workshop.consultor_principal_id || atendimento.consultor_id || null,
+      consultor_principal_nome: workshop.consultor_principal_nome || atendimento.consultor_nome || null,
+      reminder_date: targetDate,
+      sequence_number: 1,
+      days_since_meeting: 7,
+      message: `Hoje faz 7 dias desde o último atendimento com ${workshopName}. Seria importante dar um retorno.`,
+      is_completed: false,
+      origin_type: 'ata',
+    };
 
-    console.log(`✅ Created ${reminders.length} follow-up reminders for atendimento ${atendimento.id}`, reminders.map(r => r.reminder_date));
-
-    return Response.json({ 
-      success: true, 
-      created: reminders.length,
-      dates: reminders.map(r => r.reminder_date)
-    });
+    await base44.asServiceRole.entities.FollowUpReminder.create(reminder);
+    console.log(`✅ [createFollowUpReminders] 1 FU criado para ${workshopName} em ${targetDate}`);
+    return Response.json({ created: 1, reminder_date: targetDate });
   } catch (error) {
     console.error('Error creating follow-up reminders:', error);
     return Response.json({ error: error.message }, { status: 500 });
