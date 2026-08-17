@@ -201,6 +201,23 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   const [showCheckpointModal, setShowCheckpointModal] = useState(false);
   const [savingFollowConcluido, setSavingFollowConcluido] = useState(false); // S2-02
 
+  // S2-03b: Query de atas em aberto do workshop atual para tarja no header
+  const workshopIdAtual = followUp?.workshop_id || null;
+  const { data: atasAbertasModal = [] } = useQuery({
+    queryKey: ['atas-abertas-modal', workshopIdAtual],
+    queryFn: async () => {
+      if (!workshopIdAtual) return [];
+      return base44.entities.MeetingMinutes.filter(
+        { workshop_id: workshopIdAtual, status: { $ne: 'finalizada' } },
+        '-meeting_date', 20
+      );
+    },
+    enabled: !!workshopIdAtual,
+    staleTime: 2 * 60 * 1000,
+  });
+  const qtdAtasAbertas = atasAbertasModal.length;
+  const euSouResponsavel = qtdAtasAbertas > 0 && atasAbertasModal.some(a => a.consultor_id === user?.id);
+
   // ── Concurrent attendance lock guard ──
   const [lockBloqueado, setLockBloqueado] = useState(null);
   const lockSetByMeRef = useRef(false);
