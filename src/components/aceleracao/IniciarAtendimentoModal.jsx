@@ -1377,6 +1377,19 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
 
         </div>
 
+        {/* S2-03b: Tarja âmbar de atas em aberto — exibida entre o header e o content */}
+        {qtdAtasAbertas > 0 && (
+          <div className="bg-amber-50 border-b border-amber-200 px-6 py-2 flex items-center gap-2 flex-shrink-0">
+            <FileWarning className="w-4 h-4 text-amber-600 shrink-0" />
+            <p className="text-xs text-amber-800 font-medium">
+              Este cliente tem <strong>{qtdAtasAbertas} ata{qtdAtasAbertas !== 1 ? 's' : ''} em aberto</strong>.
+              {euSouResponsavel
+                ? ' Você é o responsável — finalize o registro antes de prosseguir.'
+                : ' Oriente o fechamento antes de prosseguir.'}
+            </p>
+          </div>
+        )}
+
         {/* CONTENT - SCROLLÁVEL */}
         <div className="flex-1 overflow-hidden flex min-h-0">
           {/* LEFT COLUMN - FORM (~40%) */}
