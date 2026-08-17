@@ -115,9 +115,25 @@ export default function RelatorioSemanalFollowUp() {
           <h1 className="text-lg font-bold text-gray-900">
             Relatório Semanal de Follow-ups
           </h1>
-          <p className="periodo text-sm text-gray-500 mb-4">
-            Período: {data.periodo} · {data.totalLinhas} registro{data.totalLinhas !== 1 ? "s" : ""}
+          <p className="periodo text-sm text-gray-500 mb-2">
+            Período: {data.periodo} · {data.totalWorkshopsAtivos || data.totalLinhas} clientes ativos · {data.totalLinhas} registros
           </p>
+          {(data.totalSemFollowUp > 0 || data.totalSemRetorno > 0) && (
+            <div className="flex flex-wrap gap-3 mb-4 text-xs">
+              {data.totalSemFollowUp > 0 && (
+                <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-800 border border-amber-200 rounded-full px-3 py-1 font-semibold">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  {data.totalSemFollowUp} cliente(s) sem follow-up
+                </span>
+              )}
+              {data.totalSemRetorno > 0 && (
+                <span className="inline-flex items-center gap-1.5 bg-orange-50 text-orange-800 border border-orange-200 rounded-full px-3 py-1 font-semibold">
+                  <span className="w-2 h-2 rounded-full bg-orange-500" />
+                  {data.totalSemRetorno} cliente(s) sem retorno
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Totais por consultor */}
           {data.totais && data.totais.length > 0 && (
@@ -154,9 +170,25 @@ export default function RelatorioSemanalFollowUp() {
               </thead>
               <tbody>
                 {data.linhas.map((l, i) => (
-                  <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-gray-50/50"}>
+                  <tr
+                    key={i}
+                    className={
+                      l.semFollowUp
+                        ? "bg-amber-50/60"
+                        : i % 2 === 0
+                        ? "bg-white"
+                        : "bg-gray-50/50"
+                    }
+                  >
                     <td className="py-2 px-3 text-gray-700 font-medium">{l.consultor}</td>
-                    <td className="py-2 px-3 text-gray-900 font-semibold">{l.cliente}</td>
+                    <td className="py-2 px-3 text-gray-900 font-semibold flex items-center gap-1.5">
+                      {l.cliente}
+                      {l.semFollowUp && (
+                        <span className="inline-block text-[9px] uppercase tracking-wide font-bold text-amber-700 bg-amber-100 border border-amber-200 rounded px-1.5 py-0.5">
+                          sem FU
+                        </span>
+                      )}
+                    </td>
                     <td className="py-2 px-3 text-gray-500 text-xs">{l.diasAtendidos || "—"}</td>
                     <td className="py-2 px-3 text-center font-bold text-blue-700 tabular-nums">{l.fusFechados}</td>
                     <td className={`py-2 px-3 text-center font-bold tabular-nums ${l.fusAtrasados > 0 ? "text-red-600" : "text-gray-300"}`}>
@@ -177,6 +209,64 @@ export default function RelatorioSemanalFollowUp() {
               </tbody>
             </table>
           </div>
+
+          {/* Seção: Clientes sem follow-up (query separada) */}
+          {data.clientesSemFollowUp && data.clientesSemFollowUp.length > 0 && (
+            <div className="mt-6">
+              <h2 className="text-sm font-bold text-amber-800 mb-2 flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                Clientes ativos sem nenhum follow-up ({data.totalSemFollowUp})
+              </h2>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-amber-50 border-b-2 border-amber-200">
+                      <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-amber-700">Consultor</th>
+                      <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-amber-700">Cliente</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.clientesSemFollowUp.map((l, i) => (
+                      <tr key={`sfu-${i}`} className={i % 2 === 0 ? "bg-white" : "bg-amber-50/30"}>
+                        <td className="py-2 px-3 text-gray-700 font-medium">{l.consultor}</td>
+                        <td className="py-2 px-3 text-gray-900 font-semibold">{l.cliente}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Seção: Clientes sem retorno (FU atrasado e nenhum contato na semana) */}
+          {data.clientesSemRetorno && data.clientesSemRetorno.length > 0 && (
+            <div className="mt-6">
+              <h2 className="text-sm font-bold text-orange-800 mb-2 flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-orange-500" />
+                Clientes sem retorno ({data.totalSemRetorno})
+              </h2>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-orange-50 border-b-2 border-orange-200">
+                      <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-orange-700">Consultor</th>
+                      <th className="text-left py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-orange-700">Cliente</th>
+                      <th className="text-center py-2 px-3 text-[10px] font-bold uppercase tracking-wider text-orange-700">FUs sem retorno</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.clientesSemRetorno.map((l, i) => (
+                      <tr key={`sr-${i}`} className={i % 2 === 0 ? "bg-white" : "bg-orange-50/30"}>
+                        <td className="py-2 px-3 text-gray-700 font-medium">{l.consultor}</td>
+                        <td className="py-2 px-3 text-gray-900 font-semibold">{l.cliente}</td>
+                        <td className="py-2 px-3 text-center font-bold text-orange-700 tabular-nums">{l.fusSemRetorno}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
