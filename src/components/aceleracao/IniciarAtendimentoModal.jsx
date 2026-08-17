@@ -1989,10 +1989,22 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
              </Button>
            </div>
            <div className="flex gap-3">
-             <Button variant="outline" onClick={handleSaveDraft} disabled={saving} className="border-cyan-300 text-cyan-700 hover:bg-cyan-50">
+             <Button variant="outline" onClick={handleSaveDraft} disabled={saving || savingFollowConcluido} className="border-cyan-300 text-cyan-700 hover:bg-cyan-50">
                {saving && savingStep ? savingStep : "Rascunho"}
              </Button>
-             <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleSaveAndFinalize} disabled={saving}>
+             {/* S2-02: Botão "Follow concluído" — encerra todos FUs da semana + agenda próximo */}
+             <Button
+               variant="outline"
+               onClick={handleFollowConcluido}
+               disabled={saving || savingFollowConcluido || !resultado}
+               className="border-emerald-400 text-emerald-700 hover:bg-emerald-50 disabled:opacity-40"
+               title={!resultado ? 'Preencha o resultado do contato primeiro' : `Encerra ${fusDaSemanaModal.length + 1} follow-up(s) da semana e agenda o próximo`}
+             >
+               {savingFollowConcluido
+                 ? <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" />Concluindo...</>
+                 : <><CheckCheck className="w-4 h-4 mr-1.5" />Follow concluído</>}
+             </Button>
+             <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleSaveAndFinalize} disabled={saving || savingFollowConcluido}>
                {saving ? "Salvando..." : "Salvar e finalizar atendimento"}
              </Button>
            </div>
