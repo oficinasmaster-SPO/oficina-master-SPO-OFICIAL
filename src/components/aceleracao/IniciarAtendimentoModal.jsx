@@ -12,7 +12,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import {
   Phone, MessageCircle, Mail, Video, MapPin, CheckCircle2, X, AlertCircle,
   ChevronRight, Upload, Check, Calendar, User,
-  MessageSquare, Send, Loader2, FileText
+  MessageSquare, Send, Loader2, FileText, CheckCheck
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
