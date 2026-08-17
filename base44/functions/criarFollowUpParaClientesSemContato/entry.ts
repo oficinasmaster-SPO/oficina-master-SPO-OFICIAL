@@ -2,194 +2,131 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 /**
  * Follow-up Guarda-Chuva Semanal
- * 
- * Executa toda segunda-feira às 09:00
- * Varre TODOS workshops ativos com planos elegíveis
- * Cria FollowUpReminder se:
- * - Plano elegível (BRONZE, PRATA, GOLD, IOM, MILLIONS)
- * - NÃO tem follow-up agendado para os PRÓXIMOS 7 DIAS
- * 
- * REGRA SIMPLES: "Semana que vem este cliente vai ter contato?"
- * → NÃO vai ter → CRIA follow-up automático
- * → JÁ vai ter → Não cria
- * 
- * @param {boolean} dry_run - Se true, só simula sem criar
- * @param {string[]} planos_elegiveis - Lista de planos elegíveis
+ *
+ * Executa toda segunda-feira às 09:00.
+ * Varre workshops ativos com planos elegíveis (não-FREE).
+ * Cria 1 FollowUpReminder se o workshop não tem FU nos próximos 7 dias.
+ *
+ * S1-01: shiftToBusinessDay — reminder_date = hoje + 7d, recuado p/ sexta se cair em sáb/dom
+ * S1-03: consultor_id = workshop.consultor_principal_id (não mais o admin logado)
+ * S1-03: todas as queries via asServiceRole (não mais user-scoped)
+ * S1-01: guard FREE — workshops plano FREE são bloqueados automaticamente
  */
+
+// S1-01: Recua sábado(6) e domingo(0) para a sexta-feira anterior (BRT)
+function shiftToBusinessDay(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00.000Z');
+  const dow = d.getUTCDay();
+  if (dow === 6) d.setUTCDate(d.getUTCDate() - 1); // sáb → sex
+  if (dow === 0) d.setUTCDate(d.getUTCDate() - 2); // dom → sex
+  return d.toISOString().split('T')[0];
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    
-    // Validar autenticação (apenas admin pode executar)
+
     const user = await base44.auth.me();
     if (!user || user.role !== 'admin') {
-      return Response.json({ 
-        error: 'Unauthorized: Apenas administradores podem executar esta função',
-        success: false 
-      }, { status: 403 });
+      return Response.json({ error: 'Unauthorized: apenas administradores', success: false }, { status: 403 });
     }
 
-    // Parse do payload
-    const { 
-      dry_run = false, 
-      lookback_days = 30,
-      planos_elegiveis = ['BRONZE', 'PRATA', 'GOLD', 'IOM', 'MILLIONS']
+    const {
+      dry_run = false,
+      planos_elegiveis = ['START', 'BRONZE', 'PRATA', 'GOLD', 'IOM', 'MILLIONS']
     } = await req.json().catch(() => ({}));
 
-    console.log(`[GUARDA-CHUVA] Iniciando execução - dry_run: ${dry_run}`);
-    console.log(`[GUARDA-CHUVA] Lookback: ${lookback_days} dias`);
-    console.log(`[GUARDA-CHUVA] Planos elegíveis: ${planos_elegiveis.join(', ')}`);
+    console.log(`[GUARDA-CHUVA] Iniciando — dry_run: ${dry_run}`);
 
-    // Buscar TODOS workshops
-    const todosWorkshops = await base44.entities.Workshop.filter({
-      status: 'ativo'
-    });
+    // S1-03: asServiceRole para ver todos os workshops sem restrição de RLS
+    const todosWorkshops = await base44.asServiceRole.entities.Workshop.filter(
+      { status: 'ativo' }, 'name', 500
+    );
 
-    console.log(`[GUARDA-CHUVA] Total de workshops ativos: ${todosWorkshops.length}`);
+    console.log(`[GUARDA-CHUVA] Workshops ativos: ${todosWorkshops.length}`);
 
-    // Métricas
-    const metrics = {
-      total_workshops: todosWorkshops.length,
-      elegiveis: 0,
-      com_fu_agendado: 0,
-      plano_nao_elegivel: 0,
-      followups_criados: 0,
-      falhas: 0
-    };
-
-    const workshops_processados = [];
+    const metrics = { total: todosWorkshops.length, plano_nao_elegivel: 0, com_fu: 0, criados: 0, falhas: 0 };
+    const processados = [];
     const erros = [];
 
-    // Processar cada workshop
+    // S1-01: calcular reminder_date = hoje + 7d, com shiftToBusinessDay
+    const hoje = new Date();
+    const rawTarget = new Date(hoje.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const reminderDate = shiftToBusinessDay(rawTarget.toISOString().split('T')[0]);
+    const hojeStr = hoje.toISOString().split('T')[0];
+    const proximos7Str = rawTarget.toISOString().split('T')[0];
+
     for (const workshop of todosWorkshops) {
       try {
-        console.log(`[GUARDA-CHUVA] Processando: ${workshop.name} (${workshop.id})`);
-
-        // Critério 1: Plano elegível
-        if (!planos_elegiveis.includes(workshop.planoAtual)) {
-          console.log(`[GUARDA-CHUVA] ❌ ${workshop.name}: Plano ${workshop.planoAtual} não elegível`);
+        // Guard plano: FREE é bloqueado; planos_elegiveis devem incluir o plano
+        const plano = workshop.planoAtual || 'FREE';
+        if (!planos_elegiveis.includes(plano)) {
+          console.log(`[GUARDA-CHUVA] SKIP ${workshop.name}: plano ${plano} não elegível`);
           metrics.plano_nao_elegivel++;
           continue;
         }
 
-        // Critério 2: Verificar se tem FU AGENDADO para os PRÓXIMOS 7 DIAS
-        const hoje = new Date();
-        const proximos7Dias = new Date();
-        proximos7Dias.setDate(hoje.getDate() + 7);
-        
-        const fuPendentes = await base44.entities.FollowUpReminder.filter({
+        // S1-03: asServiceRole nas leituras de FU
+        const fuPendentes = await base44.asServiceRole.entities.FollowUpReminder.filter({
           workshop_id: workshop.id,
           is_completed: false,
-          reminder_date: { 
-            $gte: hoje.toISOString().split('T')[0],
-            $lte: proximos7Dias.toISOString().split('T')[0]
-          }
+          reminder_date: { $gte: hojeStr, $lte: proximos7Str }
         });
 
         if (fuPendentes && fuPendentes.length > 0) {
-          console.log(`[GUARDA-CHUVA] ❌ ${workshop.name}: Já tem ${fuPendentes.length} FU(s) agendado(s) para os próximos 7 dias`);
-          metrics.com_fu_recente++;
+          console.log(`[GUARDA-CHUVA] SKIP ${workshop.name}: já tem ${fuPendentes.length} FU(s) nos próximos 7 dias`);
+          metrics.com_fu++;
           continue;
         }
 
-        // Workshop é ELEGÍVEL (único critério: sem FU nos próximos 7 dias)
+        // S1-03: consultor = consultor_principal_id do workshop (não o admin logado)
+        const consultor_id   = workshop.consultor_principal_id   || user.id;
+        const consultor_nome = workshop.consultor_principal_nome || user.full_name || 'Admin';
 
-        // Workshop é ELEGÍVEL!
-        console.log(`[GUARDA-CHUVA] ✅ ${workshop.name}: ELEGÍVEL - Sem FU nos próximos 7 dias`);
-        metrics.elegiveis++;
+        console.log(`[GUARDA-CHUVA] ELEGÍVEL ${workshop.name} → consultor: ${consultor_nome}, reminder: ${reminderDate}`);
 
-        // Identificar consultor responsável (usar admin que está executando)
-        const consultor_id = user.id;
-        const consultor_nome = user.full_name || 'Admin';
-
-        // Criar FollowUpReminder (se não for dry_run)
         if (dry_run) {
-          console.log(`[GUARDA-CHUVA] 📝 [DRY_RUN] ${workshop.name}: Criaria FU para ${consultor_nome}`);
-          workshops_processados.push({
-            workshop_id: workshop.id,
-            workshop_name: workshop.name,
-            action: 'would_create',
-            consultor_id,
-            consultor_nome
-          });
-        } else {
-          // Criar de verdade
-          const followUpData = {
-            workshop_id: workshop.id,
-            workshop_name: workshop.name,
-            consultor_id,
-            consultor_nome,
-            reminder_date: new Date().toISOString().split('T')[0], // Hoje
-            sequence_number: 1,
-            days_since_meeting: 7,
-            message: `Follow-up preventivo semanal - cliente sem contato agendado para os próximos 7 dias`,
-            canal_origem: 'preventivo',
-            origin_type: 'guarda_chuva',
-            is_completed: false,
-            consulting_firm_id: workshop.consulting_firm_id
-          };
-
-          const followUpCriado = await base44.entities.FollowUpReminder.create(followUpData);
-
-          console.log(`[GUARDA-CHUVA] ✅ ${workshop.name}: FU criado com sucesso (ID: ${followUpCriado.id})`);
-          
-          metrics.followups_criados++;
-          
-          workshops_processados.push({
-            workshop_id: workshop.id,
-            workshop_name: workshop.name,
-            action: 'created',
-            followup_id: followUpCriado.id,
-            consultor_id,
-            consultor_nome
-          });
-
-          // Track analytics
-          try {
-            await base44.analytics.track({
-              eventName: 'guarda_chuva_followup_created',
-              properties: {
-                workshop_id: workshop.id,
-                consultor_id,
-                origin_type: 'guarda_chuva',
-                reason: 'sem_followup_proximos_7_dias'
-              }
-            });
-          } catch (analyticsError) {
-            console.error('[GUARDA-CHUVA] Erro ao trackar analytics:', analyticsError);
-          }
+          processados.push({ workshop_id: workshop.id, workshop_name: workshop.name, action: 'would_create', consultor_id, consultor_nome, reminder_date: reminderDate });
+          continue;
         }
 
-      } catch (workshopError) {
-        console.error(`[GUARDA-CHUVA] ❌ Erro ao processar workshop:`, workshopError);
+        const followUpData = {
+          workshop_id:             workshop.id,
+          workshop_name:           workshop.name,
+          consultor_id,
+          consultor_nome,
+          consultor_principal_id:  workshop.consultor_principal_id || null,
+          consultor_principal_nome: workshop.consultor_principal_nome || null,
+          reminder_date:           reminderDate,
+          sequence_number:         1,
+          days_since_meeting:      7,
+          message:                 `Follow-up preventivo semanal — ${workshop.name} está sem contato agendado para os próximos 7 dias.`,
+          canal_origem:            'preventivo',
+          origin_type:             'guarda_chuva',
+          atribuicao_automatica:   true,
+          is_completed:            false,
+          consulting_firm_id:      workshop.consulting_firm_id || null,
+        };
+
+        // S1-03: asServiceRole na criação para não herdar RLS do admin
+        const criado = await base44.asServiceRole.entities.FollowUpReminder.create(followUpData);
+
+        console.log(`[GUARDA-CHUVA] ✅ FU criado para ${workshop.name} (ID: ${criado.id}) em ${reminderDate}`);
+        metrics.criados++;
+        processados.push({ workshop_id: workshop.id, workshop_name: workshop.name, action: 'created', followup_id: criado.id, consultor_id, consultor_nome, reminder_date: reminderDate });
+
+      } catch (e) {
+        console.error(`[GUARDA-CHUVA] ERRO ${workshop.name}:`, e.message);
         metrics.falhas++;
-        erros.push({
-          workshop_id: workshop.id,
-          workshop_name: workshop.name,
-          error: workshopError.message
-        });
+        erros.push({ workshop_id: workshop.id, workshop_name: workshop.name, error: e.message });
       }
     }
 
-    const response = {
-      success: true,
-      timestamp: new Date().toISOString(),
-      dry_run,
-      metrics,
-      workshops_processados,
-      erros
-    };
-
-    console.log('[GUARDA-CHUVA] Execução finalizada:', response);
-
-    return Response.json(response);
+    console.log('[GUARDA-CHUVA] Finalizado:', metrics);
+    return Response.json({ success: true, timestamp: new Date().toISOString(), dry_run, metrics, processados, erros });
 
   } catch (error) {
     console.error('[GUARDA-CHUVA] Erro crítico:', error);
-    return Response.json({
-      success: false,
-      error: error.message,
-      timestamp: new Date().toISOString()
-    }, { status: 500 });
+    return Response.json({ success: false, error: error.message }, { status: 500 });
   }
 });
