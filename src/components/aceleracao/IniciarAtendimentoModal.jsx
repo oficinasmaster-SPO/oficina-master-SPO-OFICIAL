@@ -199,6 +199,7 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   const [clienteAtual, setClienteAtual] = useState(cliente);
   const [showRegistrarAtendimento, setShowRegistrarAtendimento] = useState(false);
   const [showCheckpointModal, setShowCheckpointModal] = useState(false);
+  const [savingFollowConcluido, setSavingFollowConcluido] = useState(false); // S2-02
 
   // ── Concurrent attendance lock guard ──
   const [lockBloqueado, setLockBloqueado] = useState(null);
