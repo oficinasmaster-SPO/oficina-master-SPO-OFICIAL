@@ -55,7 +55,7 @@ export default function PainelAtendimentosTab({ state }) {
   const [selectedAtendimento, setSelectedAtendimento] = useState(null);
   const [actionAtendimento, setActionAtendimento] = useState(null);
   const [selectedAta, setSelectedAta] = useState(null);
-  const [activeTab, setActiveTab] = useState(state.pendingSubTab || "todos");
+  const [activeTab, setActiveTab] = useState(state.pendingSubTab || "hoje");
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteFollowUp, setDeleteFollowUp] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -65,7 +65,7 @@ export default function PainelAtendimentosTab({ state }) {
   // Toggle "Agrupar por empresa" — disponível apenas em "todos" e "atrasado"
   // Sempre começa desativado (sessão limpa)
   const [agruparPorEmpresa, setAgruparPorEmpresa] = useState(false);
-  const showAgruparToggle = activeTab === 'todos' || activeTab === 'atrasado';
+  const showAgruparToggle = activeTab === 'hoje' || activeTab === 'todos' || activeTab === 'atrasado';
 
   // ── Validação de atendimentos ──
   const [detailsDrawer, setDetailsDrawer] = useState({ open: false, item: null, validation: null });
@@ -185,12 +185,12 @@ export default function PainelAtendimentosTab({ state }) {
         const itemDate = a.data_agendada ? brtFmt.format(new Date(a.data_agendada)) : "";
         const isHoje = itemDate === todayBRT;
 
-        // S3 — Regra de visão da aba "todos":
-        // Exibe apenas atrasados (independente de data) + agendados de hoje.
-        // As demais subtabs (agendado, confirmado, etc.) continuam mostrando
-        // todos os itens do período — o usuário já filtrou pelo status.
-        if (activeTab === "todos") {
+        // Aba "hoje": atrasados + agendados de hoje
+        if (activeTab === "hoje") {
           if (!isAtrasado && !isHoje) return false;
+        // Aba "todos": todos os atendimentos sem filtro de data/status
+        } else if (activeTab === "todos") {
+          // nenhum filtro de data — exibe tudo
         } else {
           // Subtabs específicas: filtra por status
           if (a.status !== activeTab) return false;
@@ -370,6 +370,7 @@ export default function PainelAtendimentosTab({ state }) {
         <div className="flex items-center gap-2 mb-4 flex-wrap">
           <div className="inline-flex items-center rounded-lg bg-gray-100 p-1 gap-1">
             {[
+              { value: 'hoje', label: 'Hoje' },
               { value: 'todos', label: 'Todos' },
               { value: ATENDIMENTO_STATUS.AGENDADO, label: 'Agendados' },
               { value: ATENDIMENTO_STATUS.CONFIRMADO, label: 'Confirmados' },
