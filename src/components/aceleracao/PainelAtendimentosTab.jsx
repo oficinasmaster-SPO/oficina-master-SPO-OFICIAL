@@ -674,12 +674,12 @@ export default function PainelAtendimentosTab({ state }) {
                             </p>
                           </div>
                           <div className="flex items-center gap-3 pt-2">
-                            {(localFilters.searchTerm || activeTab !== 'todos' || filtros.preset !== 'mes_atual') && (
+                            {(localFilters.searchTerm || activeTab !== 'hoje' || filtros.preset !== 'mes_atual') && (
                               <Button
                                 variant="outline"
                                 onClick={() => {
                                   setLocalFilters({ searchTerm: "" });
-                                  setActiveTab("todos");
+                                  setActiveTab("hoje");
                                   setFiltros({ ...filtros, preset: 'mes_atual', dataInicio: null, dataFim: null });
                                 }}
                               >
