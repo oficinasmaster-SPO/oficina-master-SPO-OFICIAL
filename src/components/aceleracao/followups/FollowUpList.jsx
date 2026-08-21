@@ -416,9 +416,14 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
       });
   }, [sourceList, today, filterPill]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  // FIX: usar o length correto conforme o modo de render (agrupado vs flat)
+  const displayCount = empresasAgrupadas ? empresasAgrupadas.length : filtered.length;
+  const totalPages = Math.max(1, Math.ceil(displayCount / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const empresasPaginadas = empresasAgrupadas
+    ? empresasAgrupadas.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    : null;
 
   const countAtrasados = reminders.filter(r => !r.is_completed && r.reminder_date < today).length;
   const countHoje = reminders.filter(r => !r.is_completed && r.reminder_date === today).length;
