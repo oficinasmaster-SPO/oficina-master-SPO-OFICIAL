@@ -156,6 +156,8 @@ Deno.serve(async (req) => {
       workshop_name: workshop.name,
       consultor_id: consultorId,
       consultor_nome: atendimento.consultor_nome || '',
+      consultor_principal_id: workshop.consultor_principal_id || consultorId,
+      consultor_principal_nome: workshop.consultor_principal_nome || atendimento.consultor_nome || '',
       atendimento_id: atendimento.id,
       ata_id: null,
       reminder_date: shiftToBusinessDay(hoje.toISOString().split('T')[0]), // S1-07: nunca cai em sáb/dom
