@@ -27,6 +27,8 @@ export async function criarProximoSuporteFU({ followUp, resultado, user }) {
     workshop_name: followUp.workshop_name,
     consultor_id: followUp.consultor_id,
     consultor_nome: followUp.consultor_nome,
+    consultor_principal_id: followUp.consultor_principal_id || followUp.consultor_id || null,
+    consultor_principal_nome: followUp.consultor_principal_nome || followUp.consultor_nome || null,
     sequence_number: 1,
     reminder_date: new Date().toISOString().split("T")[0],
     is_completed: false,
