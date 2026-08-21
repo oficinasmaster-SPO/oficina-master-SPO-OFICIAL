@@ -183,11 +183,10 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId,
     queryFn: async () => {
       const query = { is_completed: false };
 
-      // FIX: consultor_principal_id é opcional (round-robin) e não está populado na
-      // maioria dos registros históricos. consultor_id é required e sempre presente.
+      // S3-01: filtrar por consultor_principal_id (campo canônico — definido pelo round-robin)
       // "todos" (consultorEfetivo=null) → sem filtro de consultor
       if (consultorEfetivo) {
-        query.consultor_id = consultorEfetivo;
+        query.consultor_principal_id = consultorEfetivo;
       }
 
       return base44.entities.FollowUpReminder.filter(query, "-reminder_date", 500);
@@ -200,8 +199,8 @@ export default function FollowUpsTab({ consultorEfetivo, workshops = [], userId,
     queryKey: ["follow-up-reminders-concluidos-tab", consultorEfetivo],
     queryFn: async () => {
       const query = { is_completed: true };
-      // FIX: usar consultor_id (required, sempre populado)
-      if (consultorEfetivo) query.consultor_id = consultorEfetivo;
+      // S3-01: filtrar por consultor_principal_id
+      if (consultorEfetivo) query.consultor_principal_id = consultorEfetivo;
       return base44.entities.FollowUpReminder.filter(query, "-completed_at", 500);
     },
     staleTime: 2 * 60 * 1000,
