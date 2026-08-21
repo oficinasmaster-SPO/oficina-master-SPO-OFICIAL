@@ -385,6 +385,8 @@ export default function FollowUpDetail({ reminder, today, onBack, filaReminders 
           workshop_name: reminder.workshop_name,
           consultor_id: reminder.consultor_id,
           consultor_nome: reminder.consultor_nome,
+          consultor_principal_id: reminder.consultor_principal_id || reminder.consultor_id || null,
+          consultor_principal_nome: reminder.consultor_principal_nome || reminder.consultor_nome || null,
           sequence_number: reminder.sequence_number,
           reminder_date: nextDate.toISOString().split("T")[0],
           days_since_meeting: reminder.days_since_meeting,
