@@ -219,28 +219,8 @@ export default function PainelAtendimentosTab({ state }) {
         }
         return true;
       })
-      // S0 — Sort de 3 camadas:
-      // 1. Atrasados sempre no topo (entre si: mais antigo primeiro — cobrar o mais velho)
-      // 2. Agendados para hoje em seguida (por horário asc — próximo acontece primeiro)
-      // 3. Demais por data asc (próximos primeiro)
-      // QA-FIX: todayBRT já calculado acima no filter — reutiliza via closure,
-      // evitando recriar Intl.DateTimeFormat pra cada par de comparação no sort.
-      .sort((a, b) => {
-        const isAtrasadoA = a.status === 'atrasado';
-        const isAtrasadoB = b.status === 'atrasado';
-        // Camada 1: atrasados sempre primeiro
-        if (isAtrasadoA !== isAtrasadoB) return isAtrasadoA ? -1 : 1;
-        // Atrasados entre si: mais antigo primeiro
-        if (isAtrasadoA && isAtrasadoB) return (a.data_agendada || "").localeCompare(b.data_agendada || "");
-        // Camada 2: hoje antes dos demais
-        const dateA = (a.data_agendada || "").slice(0, 10);
-        const dateB = (b.data_agendada || "").slice(0, 10);
-        const isHojeA = dateA === todayBRT;
-        const isHojeB = dateB === todayBRT;
-        if (isHojeA !== isHojeB) return isHojeA ? -1 : 1;
-        // Camada 3: por data asc (próximos primeiro)
-        return (a.data_agendada || "").localeCompare(b.data_agendada || "");
-      });
+      // Sort: data mais recente primeiro (decrescente)
+      .sort((a, b) => (b.data_agendada || "").localeCompare(a.data_agendada || ""));
   }, [atendimentos, activeTab, filtros.dataInicio, filtros.dataFim, debouncedSearch, workshopMap, localFilters]);
 
   // Grupos por empresa (apenas quando toggle ativo) — ordenados por nome da empresa, itens por data_agendada asc
@@ -265,16 +245,8 @@ export default function PainelAtendimentosTab({ state }) {
       .map(grupo => ({
         ...grupo,
         itens: [...grupo.itens].sort((a, b) => {
-          const isAtrasadoA = a.status === 'atrasado';
-          const isAtrasadoB = b.status === 'atrasado';
-          if (isAtrasadoA !== isAtrasadoB) return isAtrasadoA ? -1 : 1;
-          if (isAtrasadoA && isAtrasadoB) return (a.data_agendada || "").localeCompare(b.data_agendada || "");
-          const dateA = (a.data_agendada || "").slice(0, 10);
-          const dateB = (b.data_agendada || "").slice(0, 10);
-          const isHojeA = dateA === todayBRTGrupo;
-          const isHojeB = dateB === todayBRTGrupo;
-          if (isHojeA !== isHojeB) return isHojeA ? -1 : 1;
-          return (a.data_agendada || "").localeCompare(b.data_agendada || "");
+          // Sort: data mais recente primeiro (decrescente)
+          return (b.data_agendada || "").localeCompare(a.data_agendada || "");
         })
       }));
   }, [agruparPorEmpresa, atendimentosFiltrados, workshopMap]);
