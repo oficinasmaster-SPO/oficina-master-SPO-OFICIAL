@@ -132,6 +132,8 @@ Deno.serve(async (req) => {
           workshop_name: workshop.name,
           consultor_id: atendimento.consultor_id || user.id,
           consultor_nome: atendimento.consultor_nome || user.full_name,
+          consultor_principal_id: workshop.consultor_principal_id || atendimento.consultor_id || user.id,
+          consultor_principal_nome: workshop.consultor_principal_nome || atendimento.consultor_nome || user.full_name,
           atendimento_id: atendimento.id,
           ata_id: null,
           reminder_date: hoje.format('YYYY-MM-DD'),
