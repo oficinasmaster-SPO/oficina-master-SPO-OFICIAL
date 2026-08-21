@@ -219,8 +219,15 @@ export default function PainelAtendimentosTab({ state }) {
         }
         return true;
       })
-      // Sort: data mais recente primeiro (decrescente)
-      .sort((a, b) => (b.data_agendada || "").localeCompare(a.data_agendada || ""));
+      // Sort: aba "hoje" → atrasados primeiro, depois data desc; demais abas → data desc
+      .sort((a, b) => {
+        if (activeTab === 'hoje') {
+          const isAtrasadoA = a.status === 'atrasado';
+          const isAtrasadoB = b.status === 'atrasado';
+          if (isAtrasadoA !== isAtrasadoB) return isAtrasadoA ? -1 : 1;
+        }
+        return (b.data_agendada || "").localeCompare(a.data_agendada || "");
+      });
   }, [atendimentos, activeTab, filtros.dataInicio, filtros.dataFim, debouncedSearch, workshopMap, localFilters]);
 
   // Grupos por empresa (apenas quando toggle ativo) — ordenados por nome da empresa, itens por data_agendada asc
