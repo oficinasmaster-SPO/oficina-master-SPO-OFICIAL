@@ -582,8 +582,8 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
             {empresasAgrupadas && <div className="w-[36px] flex-shrink-0" />}
           </div>
 
-          {/* S3-03a/b: render agrupado por empresa */}
-          {empresasAgrupadas ? empresasAgrupadas.map((grupo) => {
+          {/* S3-03a/b: render agrupado por empresa (paginado) */}
+          {empresasPaginadas ? empresasPaginadas.map((grupo) => {
             const r = grupo.maisUrgente;
             if (!r) return null;
             const isExpanded = expandedWorkshops.has(grupo.workshop_id);
@@ -705,9 +705,9 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
         </div>
       )}
 
-      {filtered.length > PAGE_SIZE && (
+      {displayCount > PAGE_SIZE && (
         <div className="flex items-center justify-between pt-2">
-          <span className="text-xs text-gray-400">{(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} de {filtered.length}</span>
+          <span className="text-xs text-gray-400">{(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, displayCount)} de {displayCount}{empresasPaginadas ? ' empresas' : ''}</span>
           <div className="flex items-center gap-2">
             <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"><ChevronLeft className="w-3.5 h-3.5" /> Anterior</button>
             <span className="text-xs text-gray-500">Página {currentPage} de {totalPages}</span>
