@@ -84,6 +84,8 @@ Deno.serve(async (req) => {
       workshop_name: tarefa.workshop_nome || null,
       consultor_id: tarefa.assignee_id,
       consultor_nome: tarefa.assignee_name || null,
+      consultor_principal_id: workshop.consultor_principal_id || tarefa.assignee_id || null,
+      consultor_principal_nome: workshop.consultor_principal_nome || tarefa.assignee_name || null,
       reminder_date: prazoStr,
       sequence_number: 1,
       origin_type: 'tarefa_backlog',
