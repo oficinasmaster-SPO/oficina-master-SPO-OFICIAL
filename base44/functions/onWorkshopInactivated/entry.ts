@@ -61,6 +61,8 @@ Deno.serve(async (req) => {
       workshop_name: data.name || existingReminders[0]?.workshop_name || 'Empresa inativada',
       consultor_id: lastConsultant.consultor_id,
       consultor_nome: lastConsultant.consultor_nome || null,
+      consultor_principal_id: data.consultor_principal_id || lastConsultant.consultor_principal_id || lastConsultant.consultor_id || null,
+      consultor_principal_nome: data.consultor_principal_nome || lastConsultant.consultor_principal_nome || lastConsultant.consultor_nome || null,
       reminder_date: reminderDate,
       sequence_number: completedHistoryCount + 1,
       days_since_meeting: 7,
