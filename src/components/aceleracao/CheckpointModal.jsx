@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Calendar, ChevronRight, AlertCircle, Check } from 'lucide-react';
+import { Calendar, ChevronRight, AlertCircle, Check, CheckCheck } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useDemandAnalytics } from './hooks/useDemandAnalytics';
 import { format } from 'date-fns';
@@ -230,6 +230,37 @@ export default function CheckpointModal({
                 selectedOption === 'on_completion' ? 'border-purple-500 bg-purple-500' : 'border-gray-300'
               }`}>
                 {selectedOption === 'on_completion' && <div className="w-2 h-2 bg-white rounded-full" />}
+              </div>
+            </div>
+          </div>
+
+          {/* Opção 4: Finalizar Follow-up */}
+          <div
+            onClick={() => setSelectedOption('finalize_followup')}
+            className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+              selectedOption === 'finalize_followup'
+                ? 'border-emerald-500 bg-emerald-50'
+                : 'border-gray-200 hover:border-gray-300 bg-white'
+            }`}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <CheckCheck className="w-4 h-4 text-emerald-600" />
+                  <p className="font-semibold text-gray-900">Finalizar Follow-up</p>
+                </div>
+                <p className="text-sm text-gray-600 mt-1">
+                  Encerra este ciclo de follow-up
+                </p>
+                <p className="text-xs text-gray-500 mt-2">
+                  ✓ Encerra todos os FUs pendentes da semana<br />
+                  ✓ Cria novo follow-up para daqui 7 dias
+                </p>
+              </div>
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                selectedOption === 'finalize_followup' ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'
+              }`}>
+                {selectedOption === 'finalize_followup' && <div className="w-2 h-2 bg-white rounded-full" />}
               </div>
             </div>
           </div>
