@@ -702,46 +702,10 @@ export default function FollowUpList({ reminders, remindersConcluidos = [], toda
                         </div>
                       </div>
 
-                      {/* Gráfico de histórico */}
+                      {/* Gráfico de histórico — busca sob demanda por workshop */}
                       <div className="w-56 flex-shrink-0">
                         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">Histórico (28 dias)</p>
-                        {(() => {
-                          const idx = concluidosIndex || [];
-                          const cutoff = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-                          const hist = idx.filter(c => c.workshop_id === grupo.workshop_id && (c.completedAt || c.created_date || '') >= cutoff);
-                          const atendeu = hist.filter(c => c.resultado === 'atendeu').length;
-                          const naoAtendeu = hist.filter(c => c.resultado === 'nao_atendeu').length;
-                          const aguardando = hist.filter(c => c.resultado === 'aguardando').length;
-                          const total = hist.length || 1;
-                          const lastAtendeu = hist.filter(c => c.resultado === 'atendeu').sort((a,b) => (b.completedAt||'').localeCompare(a.completedAt||''))[0];
-                          const lastDate = lastAtendeu?.completedAt?.split('T')[0] || null;
-                          if (hist.length === 0) return <p className="text-[11px] text-gray-400">Sem histórico nos últimos 28 dias</p>;
-                          return (
-                            <div className="space-y-1.5">
-                              {atendeu > 0 && (
-                                <div className="flex items-center gap-2">
-                                  <div className="h-2 rounded-full bg-emerald-400" style={{ width: `${Math.round(atendeu/total*100)}%`, minWidth: 8, maxWidth: 80 }} />
-                                  <span className="text-[11px] text-gray-600">Atendeu <strong>{atendeu}x</strong></span>
-                                </div>
-                              )}
-                              {naoAtendeu > 0 && (
-                                <div className="flex items-center gap-2">
-                                  <div className="h-2 rounded-full bg-red-400" style={{ width: `${Math.round(naoAtendeu/total*100)}%`, minWidth: 8, maxWidth: 80 }} />
-                                  <span className="text-[11px] text-gray-600">Não atendeu <strong>{naoAtendeu}x</strong></span>
-                                </div>
-                              )}
-                              {aguardando > 0 && (
-                                <div className="flex items-center gap-2">
-                                  <div className="h-2 rounded-full bg-amber-400" style={{ width: `${Math.round(aguardando/total*100)}%`, minWidth: 8, maxWidth: 80 }} />
-                                  <span className="text-[11px] text-gray-600">Aguardando <strong>{aguardando}x</strong></span>
-                                </div>
-                              )}
-                              {lastDate && (
-                                <p className="text-[10px] text-gray-400 mt-1">Último contato efetivo: {lastDate}</p>
-                              )}
-                            </div>
-                          );
-                        })()}
+                        <HistoricoExpandido workshopId={grupo.workshop_id} />
                       </div>
                     </div>
                   </div>
