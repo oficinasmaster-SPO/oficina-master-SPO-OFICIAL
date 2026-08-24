@@ -1036,6 +1036,30 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
       if (isFluxoSuporte) {
         novoFollowUp = await criarProximoSuporteFU({ followUp, resultado, user });
       }
+      // Finalizar Follow-up: encerra ciclo + cria novo FU +7 dias úteis
+      else if (decision === 'finalize_followup') {
+        const rawNext = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        const nextDate = shiftToBusinessDay(rawNext.toISOString().split('T')[0]);
+        const nextSeq = (followUp.sequence_number || 1) + 1;
+        novoFollowUp = await base44.entities.FollowUpReminder.create({
+          workshop_id: followUp.workshop_id,
+          workshop_name: followUp.workshop_name,
+          consultor_id: followUp.consultor_principal_id || followUp.consultor_id,
+          consultor_nome: followUp.consultor_principal_nome || followUp.consultor_nome,
+          consultor_principal_id: followUp.consultor_principal_id || followUp.consultor_id || null,
+          consultor_principal_nome: followUp.consultor_principal_nome || followUp.consultor_nome || null,
+          atendimento_id: followUp.atendimento_id,
+          ata_id: followUp.ata_id,
+          sequence_number: nextSeq,
+          reminder_date: nextDate,
+          days_since_meeting: 7,
+          origin_type: followUp.origin_type || 'manual',
+          sprint_id: followUp.sprint_id || null,
+          is_completed: false,
+          message: `Follow-up semanal — continuidade após finalização em ${new Date().toISOString().split('T')[0]}`,
+          consulting_firm_id: followUp.consulting_firm_id || null,
+        });
+      }
       // Auto-reagendamento para amanhã: nao_atendeu ou aguardando resposta (fluxo normal)
       else if (resultado === "nao_atendeu" || resultado === "aguardando") {
         const amanha = new Date();
