@@ -63,6 +63,17 @@ export default function CheckpointModal({
         ata_id: ataId
       };
 
+      // finalize_followup: não precisa de backend — lógica 100% no front (handleCheckpointDecision)
+      if (selectedOption === 'finalize_followup') {
+        const metadata = { date: null, followUpId: null, miniFollowUpId: null };
+        logCheckpointDecision('finalize_followup', metadata);
+        if (onSubmit) onSubmit('finalize_followup', metadata, fusSelecionados);
+        setSelectedOption(null);
+        setSelectedDate('');
+        setFusSelecionados([]);
+        return;
+      }
+
       // Se não há FollowUpContador vinculado, pular chamada ao backend e ir direto ao onSubmit
       if (!followUpContadorId) {
       const metadata = {
