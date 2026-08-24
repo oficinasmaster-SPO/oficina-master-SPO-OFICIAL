@@ -137,6 +137,64 @@ function getDaysOverdue(reminderDate, today) {
   return differenceInDays(new Date(today + "T00:00:00"), new Date(reminderDate + "T00:00:00"));
 }
 
+// Histórico de 28 dias sob demanda — busca FollowUpConcluido por workshop ao expandir o card
+function HistoricoExpandido({ workshopId }) {
+  const { data: hist = [], isLoading } = useQuery({
+    queryKey: ['historico-28d', workshopId],
+    queryFn: () => base44.entities.FollowUpConcluido.filter(
+      { workshop_id: workshopId, completedAt: { $gte: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString() } },
+      '-completedAt',
+      50
+    ),
+    staleTime: 3 * 60 * 1000,
+    enabled: !!workshopId,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 py-2">
+        <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400" />
+        <span className="text-[11px] text-gray-400">Carregando...</span>
+      </div>
+    );
+  }
+
+  const atendeu = hist.filter(c => c.resultado === 'atendeu').length;
+  const naoAtendeu = hist.filter(c => c.resultado === 'nao_atendeu').length;
+  const aguardando = hist.filter(c => c.resultado === 'aguardando').length;
+  const total = hist.length || 1;
+  const lastAtendeu = hist.filter(c => c.resultado === 'atendeu').sort((a, b) => (b.completedAt || '').localeCompare(a.completedAt || ''))[0];
+  const lastDate = lastAtendeu?.completedAt?.split('T')[0] || null;
+
+  if (hist.length === 0) return <p className="text-[11px] text-gray-400">Sem histórico nos últimos 28 dias</p>;
+
+  return (
+    <div className="space-y-1.5">
+      {atendeu > 0 && (
+        <div className="flex items-center gap-2">
+          <div className="h-2 rounded-full bg-emerald-400" style={{ width: `${Math.round(atendeu / total * 100)}%`, minWidth: 8, maxWidth: 80 }} />
+          <span className="text-[11px] text-gray-600">Atendeu <strong>{atendeu}x</strong></span>
+        </div>
+      )}
+      {naoAtendeu > 0 && (
+        <div className="flex items-center gap-2">
+          <div className="h-2 rounded-full bg-red-400" style={{ width: `${Math.round(naoAtendeu / total * 100)}%`, minWidth: 8, maxWidth: 80 }} />
+          <span className="text-[11px] text-gray-600">Não atendeu <strong>{naoAtendeu}x</strong></span>
+        </div>
+      )}
+      {aguardando > 0 && (
+        <div className="flex items-center gap-2">
+          <div className="h-2 rounded-full bg-amber-400" style={{ width: `${Math.round(aguardando / total * 100)}%`, minWidth: 8, maxWidth: 80 }} />
+          <span className="text-[11px] text-gray-600">Aguardando <strong>{aguardando}x</strong></span>
+        </div>
+      )}
+      {lastDate && (
+        <p className="text-[10px] text-gray-400 mt-1">Último contato efetivo: {lastDate}</p>
+      )}
+    </div>
+  );
+}
+
 function useConcluidosIndex() {
   // Índice leve via backend (projeção mínima, últimos 30 dias, top 100).
   // Substitui a leitura de 2000 registros completos com pastedImages.
