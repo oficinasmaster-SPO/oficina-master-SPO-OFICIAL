@@ -199,7 +199,6 @@ export default function IniciarAtendimentoModal({ followUp: followUpInicial, cli
   const [clienteAtual, setClienteAtual] = useState(cliente);
   const [showRegistrarAtendimento, setShowRegistrarAtendimento] = useState(false);
   const [showCheckpointModal, setShowCheckpointModal] = useState(false);
-  const [savingFollowConcluido, setSavingFollowConcluido] = useState(false); // S2-02
 
   // S2-03b: Query de atas em aberto do workshop atual para tarja no header
   const workshopIdAtual = followUp?.workshop_id || null;
