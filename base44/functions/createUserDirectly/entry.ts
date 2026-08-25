@@ -325,7 +325,7 @@ Deno.serve(async (req) => {
       // Garantir que usuário de oficina nunca tenha role=admin (somente internos podem ser admin)
       const correctedRole = isInternalUser ? (existingUserRecord?.role || 'user') : 'user';
       await base44.asServiceRole.entities.User.update(existingUserId, {
-        workshop_id: isInternalUser ? null : workshop_id,
+        workshop_id: isInternalUser ? OFICINAS_MASTER_WORKSHOP_ID : workshop_id,
         consulting_firm_id: isInternalUser ? consulting_firm_id : null,
         user_type: isInternalUser ? 'internal' : 'external',
         role: correctedRole
