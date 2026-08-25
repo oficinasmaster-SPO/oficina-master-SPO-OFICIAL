@@ -32,9 +32,9 @@ Deno.serve(async (req) => {
       if (sameWorkshop) {
         return Response.json({ 
           success: false, 
-          error: 'Já existe um colaborador com este email nesta oficina',
+          error: 'Já existe um colaborador cadastrado com este e-mail nesta oficina',
           existing_employee_id: sameWorkshop.id
-        }, { status: 409 });
+        });
       }
     }
 
