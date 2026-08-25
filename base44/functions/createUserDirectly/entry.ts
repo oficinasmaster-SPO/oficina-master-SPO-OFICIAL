@@ -246,7 +246,7 @@ Deno.serve(async (req) => {
     // 2. Criar Employee — user_id é null até o aceite (ou já vinculado se User existia)
     console.log("👥 Criando Employee...");
     const employee = await base44.asServiceRole.entities.Employee.create({
-      workshop_id: isInternalUser ? null : workshop_id,
+      workshop_id: isInternalUser ? OFICINAS_MASTER_WORKSHOP_ID : workshop_id,
       consulting_firm_id: consulting_firm_id,
       user_id: existingUserId, // null até aceite, ou já vinculado se User pré-existente
       full_name: name,
