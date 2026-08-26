@@ -167,6 +167,23 @@ Deno.serve(async (req) => {
         await base44.asServiceRole.entities.User.update(invitation.user_id, userUpdateData);
         console.log(`✅ User atualizado com Workshop: ${invitation.workshop_id}`);
 
+        // FIX: Propagar role e user_type do Employee para o User
+        // Usuários internos (admin system, consultores) devem ter role=admin e user_type=internal
+        const employeeRef = employeesFound?.[0] || newEmployee;
+        const isInternal = employeeRef.is_internal || employeeRef.user_type === 'internal';
+        if (isInternal) {
+          try {
+            await base44.asServiceRole.entities.User.update(invitation.user_id, {
+              role: 'admin',
+              user_type: 'internal',
+              consulting_firm_id: employeeRef.consulting_firm_id || null,
+            });
+            console.log(`🔑 User ${invitation.user_id} atualizado para admin/internal (Employee.is_internal=true)`);
+          } catch (e) {
+            console.error('⚠️ Erro ao propagar role/user_type do Employee interno:', e);
+          }
+        }
+
         // Promover para admin se for sócio/proprietário ou owner do workshop
         const shouldBeAdmin = 
           (inviteData.job_role === 'socio' || inviteData.job_role === 'socio_interno') ||
