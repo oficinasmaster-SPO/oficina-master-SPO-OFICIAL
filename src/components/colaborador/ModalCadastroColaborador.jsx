@@ -298,6 +298,31 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
                   <p className="text-sm text-gray-600 mt-1">Preencha os dados do novo colaborador</p>
                 </div>
 
+                {/* T3.1: Banner informativo interno vs externo */}
+                {workshop && (
+                  <div className={`flex items-start gap-3 rounded-lg border px-4 py-3 mb-2 ${
+                    isInternalUser
+                      ? 'bg-blue-50 border-blue-200 text-blue-800'
+                      : 'bg-amber-50 border-amber-200 text-amber-800'
+                  }`}>
+                    {isInternalUser
+                      ? <Building2 className="w-5 h-5 mt-0.5 flex-shrink-0 text-blue-500" />
+                      : <Wrench className="w-5 h-5 mt-0.5 flex-shrink-0 text-amber-500" />
+                    }
+                    <div>
+                      <p className="text-sm font-semibold">
+                        {isInternalUser ? 'Colaborador Interno' : 'Colaborador de Oficina'}
+                      </p>
+                      <p className="text-xs mt-0.5 opacity-80">
+                        {isInternalUser
+                          ? 'Este usuário terá acesso administrativo à plataforma Oficinas Master.'
+                          : `Este usuário terá acesso ao painel da oficina ${workshop.name}.`
+                        }
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Dados Pessoais */}
                   <Card className="shadow-none border-gray-200">
