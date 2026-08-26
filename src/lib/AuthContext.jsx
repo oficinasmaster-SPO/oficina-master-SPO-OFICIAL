@@ -132,6 +132,9 @@ export const AuthProvider = ({ children }) => {
       const effectiveUser = getEffectiveUser(currentUser);
       
       if (effectiveUser.role !== 'admin' && !effectiveUser._isImpersonated) {
+        // FIX: não bloquear usuários em onboarding — precisam chegar ao /CompletarPerfil
+        const isOnboarding = !effectiveUser.first_access_completed || !effectiveUser.profile_completed;
+        if (!isOnboarding) {
         try {
           const employees = await base44.entities.Employee.filter({ user_id: effectiveUser.id });
           // Só bloqueia se encontrou employees E todos estão inativos.
@@ -151,6 +154,7 @@ export const AuthProvider = ({ children }) => {
         } catch (err) {
           // Em caso de erro (ex: RLS bloqueou a query), não bloquear o acesso
           console.error('Error checking employee status:', err);
+        }
         }
       }
 
