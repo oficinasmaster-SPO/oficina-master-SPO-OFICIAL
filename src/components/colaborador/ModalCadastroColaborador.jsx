@@ -515,9 +515,14 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
                           </Select>
                         </div>
                         <div>
-                          <Label>Área</Label>
+                          <Label>
+                            Área
+                            {isInternalUser && <span className="text-red-500 ml-1">*</span>}
+                          </Label>
                           <Select value={formData.area} onValueChange={(value) => setFormData({...formData, area: value})}>
-                            <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                            <SelectTrigger className={isInternalUser && !formData.area ? 'border-red-300 focus:ring-red-500' : ''}>
+                              <SelectValue placeholder="Selecione..." />
+                            </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="vendas">Vendas</SelectItem>
                               <SelectItem value="comercial">Comercial</SelectItem>
@@ -528,6 +533,9 @@ export default function ModalCadastroColaborador({ isOpen, onClose, onSuccess })
                               <SelectItem value="gerencia">Gerência</SelectItem>
                             </SelectContent>
                           </Select>
+                          {isInternalUser && !formData.area && (
+                            <p className="text-xs text-red-500 mt-1">Obrigatório para colaboradores internos</p>
+                          )}
                         </div>
                         <div>
                           <Label>Data de Contratação</Label>
