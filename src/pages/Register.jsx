@@ -93,10 +93,33 @@ export default function Register() {
       }
 
       // 2. Checar estado de onboarding server-side
+      // T2.3: retry com delay progressivo para absorver race condition entre signup
+      // e o trigger createEmployeeOnUserCreation propagar role/user_type.
+      // Estados transitórios que justificam retry: PENDING_LINK e BLOCKED
+      // (Employee inativo pode ainda estar sendo processado pelo trigger).
+      const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+      const callResolveOnboarding = async () => {
+        const resp = await base44.functions.invoke("resolveOnboardingState", {});
+        return resp?.data ?? resp;
+      };
+
       let onboardingResult;
       try {
-        const onboardingResponse = await base44.functions.invoke("resolveOnboardingState", {});
-        onboardingResult = onboardingResponse?.data ?? onboardingResponse;
+        onboardingResult = await callResolveOnboarding();
+
+        // Retry até 3x em estados transitórios (1s → 2s → 3s)
+        const TRANSIENT_STATES = ['PENDING_LINK', 'BLOCKED'];
+        let retries = 0;
+        while (
+          retries < 3 &&
+          onboardingResult?.state &&
+          TRANSIENT_STATES.includes(onboardingResult.state)
+        ) {
+          retries++;
+          console.log(`[Register] Estado transitório "${onboardingResult.state}" — retry ${retries}/3 em ${retries}s...`);
+          await sleep(retries * 1000);
+          onboardingResult = await callResolveOnboarding();
+        }
       } catch (onboardingErr) {
         setError(
           "Não foi possível verificar seu perfil de acesso. " +
