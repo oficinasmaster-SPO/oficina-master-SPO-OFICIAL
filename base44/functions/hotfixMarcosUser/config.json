@@ -1,0 +1,6 @@
+{
+  "name": "hotfixMarcosUser",
+  "description": "Hotfix temporário para corrigir role/user_type do Marcos",
+  "type": "http",
+  "access": "admin"
+}
