@@ -148,6 +148,30 @@ Deno.serve(async (req) => {
 
     // BLOCKED: employee inativo sem convite pendente que o reative
     if (employee && isInactive(employee)) {
+      // FIX T1.1: Employee nasce inativo até o trigger createEmployeeOnUserCreation rodar.
+      // Se existe convite recém-aceito (< 24h), o trigger pode ainda estar processando —
+      // tratar como COMPLETE_PROFILE em vez de BLOCKED para não travar o onboarding.
+      const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+      const recentAcceptedInvite = sortedInvites.find(inv => {
+        const isAccepted = inv.status === 'concluido' || inv.status === 'acessado';
+        const updatedAt = new Date(inv.updated_date || inv.created_date || 0).getTime();
+        const isRecent = (now().getTime() - updatedAt) < TWENTY_FOUR_HOURS_MS;
+        return isAccepted && isRecent;
+      });
+
+      if (recentAcceptedInvite) {
+        console.log(`[resolveOnboardingState] Employee inativo com convite recém-aceito (${recentAcceptedInvite.id}) — redirecionando para COMPLETE_PROFILE em vez de BLOQUEAR`);
+        return Response.json({
+          success: true,
+          state: 'COMPLETE_PROFILE',
+          reason: 'Employee inativo com convite recém-aceito — trigger provavelmente ainda processando',
+          user_id: user.id,
+          employee_id: employee.id,
+          workshop_id: workshopId,
+          invite_id: recentAcceptedInvite.id,
+        });
+      }
+
       return Response.json({
         success: true,
         state: 'BLOCKED',
