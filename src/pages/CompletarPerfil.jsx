@@ -35,10 +35,16 @@ export default function CompletarPerfil() {
         return;
       }
 
-      const workshopId = getUserWorkshopId(user);
-      if (workshopId) {
-        const ws = await base44.entities.Workshop.get(workshopId);
-        setWorkshop(ws);
+      // T2.2: usar backend function com asServiceRole para evitar 404 por RLS
+      // durante onboarding (User pode ainda ter role="user" antes do trigger propagar)
+      try {
+        const wsResponse = await base44.functions.invoke('getWorkshopForOnboarding', {});
+        if (wsResponse?.data?.success && wsResponse.data.workshop) {
+          setWorkshop(wsResponse.data.workshop);
+        }
+      } catch (wsErr) {
+        console.warn('[CompletarPerfil] getWorkshopForOnboarding falhou, workshop não carregado:', wsErr.message);
+        // não bloqueia — workshop é apenas visual (exibir nome na mensagem de boas-vindas)
       }
 
       const employees = await base44.entities.Employee.filter({ user_id: user.id });
@@ -48,11 +54,6 @@ export default function CompletarPerfil() {
           cpf: employees[0].cpf || "",
           telefone: employees[0].telefone || "",
         });
-        
-        if (!workshopId && employees[0].workshop_id) {
-          const ws = await base44.entities.Workshop.get(employees[0].workshop_id);
-          setWorkshop(ws);
-        }
       }
     } catch (err) {
       console.error(err);
