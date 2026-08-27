@@ -352,7 +352,7 @@ export default function DiagnosticoProducao() {
     setSubmitting(true);
 
     try {
-      const calculations = calculateDiagnostic();
+      // calculations já calculado acima (T1.1 FIX reutiliza o mesmo resultado)
 
       const diagnostic = await base44.entities.ProductivityDiagnostic.create({
         employee_id: formData.employee_id,
