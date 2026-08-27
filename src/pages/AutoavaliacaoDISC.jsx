@@ -59,6 +59,12 @@ export default function AutoavaliacaoDISC() {
   };
 
   const submitAutoEvaluation = async (finalAnswers) => {
+    // T1.3 FIX: guard defensivo — employee nunca deve ser null aqui, mas por segurança
+    if (!employee) {
+      toast.error("Perfil de colaborador não encontrado. Recarregue a página.");
+      setStarted(false);
+      return;
+    }
     try {
       const totals = { d_score: 0, i_score: 0, s_score: 0, c_score: 0 };
       finalAnswers.forEach(a => {
