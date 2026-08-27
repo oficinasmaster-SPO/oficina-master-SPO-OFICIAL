@@ -110,6 +110,24 @@ export default function AutoavaliacaoDISC() {
     );
   }
 
+  // T1.3 FIX: guard para usuário sem Employee vinculado
+  if (!employee) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 py-8 px-4 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center border-2 border-amber-200">
+          <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <User className="w-8 h-8 text-amber-600" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Perfil de colaborador não encontrado</h2>
+          <p className="text-gray-600 text-sm">
+            Você ainda não possui um perfil de colaborador vinculado à sua conta.
+            Entre em contato com o administrador da sua empresa para regularizar seu acesso.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Tela de boas-vindas
   if (!started) {
     return (
