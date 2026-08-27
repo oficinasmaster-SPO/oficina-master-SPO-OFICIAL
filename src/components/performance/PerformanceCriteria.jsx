@@ -42,6 +42,14 @@ export const classificationRules = {
     description: "Desempenho técnico e emocional abaixo do mínimo aceitável",
     recommendation: "O colaborador apresenta desempenho insatisfatório tanto em competências técnicas quanto emocionais. Recomenda-se avaliar a possibilidade de desligamento ou um plano intensivo de recuperação com metas claras e prazo definido."
   },
+  // T1.2 FIX: cobrir faixa tech < 5 com emo em desenvolvimento (5–6.9)
+  plano_recuperacao: {
+    condition: (tech, emo) => tech < 5.0 && emo >= 5.0 && emo < 7.0,
+    title: "Plano de Recuperação",
+    color: "red",
+    description: "Competência técnica crítica, emocional em desenvolvimento",
+    recommendation: "O colaborador necessita de acompanhamento intensivo nas competências técnicas. Estabeleça um PDI com metas técnicas claras e prazo definido. O ponto positivo é que as competências emocionais estão em desenvolvimento."
+  },
   treinamento_tecnico: {
     condition: (tech, emo) => tech < 7.0 && emo >= 7.0,
     title: "Treinamento Técnico",
@@ -55,6 +63,14 @@ export const classificationRules = {
     color: "yellow",
     description: "Necessita desenvolver competências emocionais",
     recommendation: "O colaborador tem bom desempenho técnico, mas precisa trabalhar aspectos comportamentais e emocionais. Considere coaching, feedback estruturado e desenvolvimento de soft skills."
+  },
+  // T1.2 FIX: cobrir faixa emo < 5 com tech em desenvolvimento (5–6.9)
+  alerta_comportamental: {
+    condition: (tech, emo) => tech >= 5.0 && tech < 7.0 && emo < 5.0,
+    title: "Alerta Comportamental",
+    color: "orange",
+    description: "Competência emocional crítica, técnica em desenvolvimento",
+    recommendation: "O colaborador apresenta dificuldades emocionais significativas que podem impactar o ambiente de trabalho. Priorize o desenvolvimento comportamental imediato com coaching e feedback estruturado."
   },
   observacao: {
     condition: (tech, emo) => (tech >= 5.0 && tech < 7.0) && (emo >= 5.0 && emo < 7.0),
@@ -80,6 +96,15 @@ export const classificationRules = {
 };
 
 export function calculateClassification(technicalAvg, emotionalAvg) {
+  // Ordem importa: regras mais específicas primeiro para evitar falsos positivos
+  // 1. demissao (ambos críticos)
+  // 2. plano_recuperacao (tech crítico, emo em dev) ← T1.2 FIX
+  // 3. treinamento_tecnico (tech fraco, emo bom)
+  // 4. treinamento_emocional (tech bom, emo fraco)
+  // 5. alerta_comportamental (emo crítico, tech em dev) ← T1.2 FIX
+  // 6. observacao (ambos medianos)
+  // 7. reconhecimento (ambos bons)
+  // 8. investimento (ambos excelentes)
   for (const [key, rule] of Object.entries(classificationRules)) {
     if (rule.condition(technicalAvg, emotionalAvg)) {
       return {
@@ -88,6 +113,7 @@ export function calculateClassification(technicalAvg, emotionalAvg) {
       };
     }
   }
+  // Fallback seguro: nunca deveria chegar aqui com as regras acima
   return {
     classification: "observacao",
     ...classificationRules.observacao
