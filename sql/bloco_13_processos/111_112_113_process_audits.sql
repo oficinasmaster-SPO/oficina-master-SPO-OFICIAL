@@ -163,7 +163,7 @@ CREATE TABLE IF NOT EXISTS process_shares (
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_ps_doc_email
     ON process_shares (process_document_id, shared_with_email)
-    WHERE expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP;
+    WHERE expires_at IS NULL;
 
 CREATE INDEX IF NOT EXISTS idx_ps_workshop         ON process_shares(workshop_id);
 CREATE INDEX IF NOT EXISTS idx_ps_document         ON process_shares(process_document_id);
