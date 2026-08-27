@@ -342,6 +342,13 @@ export default function DiagnosticoProducao() {
       return;
     }
 
+    // T1.1 FIX: bloquear submit quando produtividade zerada para roles que dependem dela
+    const calculations = calculateDiagnostic();
+    if (calculations.classification === "sem_dados") {
+      toast.error("Preencha os dados de produtividade antes de salvar.");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
