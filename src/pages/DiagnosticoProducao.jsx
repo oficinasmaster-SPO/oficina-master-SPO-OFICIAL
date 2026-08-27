@@ -266,7 +266,15 @@ export default function DiagnosticoProducao() {
     let classification = "";
     let recommendation = "";
 
-    if (formData.employee_role === "tecnico") {
+    // T1.1 FIX: sem dados de produtividade → não classificar (evita "ideal" falso com costPercentage=0)
+    const hasSemDados =
+      (formData.employee_role === "tecnico" || formData.employee_role === "tecnico_lider" || formData.employee_role === "vendas") &&
+      totalProductivity === 0;
+
+    if (hasSemDados) {
+      classification = "sem_dados";
+      recommendation = "Preencha os dados de produtividade para que o sistema possa calcular o resultado corretamente. Com produtividade zerada não é possível avaliar a relação custo×produção.";
+    } else if (formData.employee_role === "tecnico") {
       if (costPercentage < threshold) {
         classification = "ideal";
         recommendation = "Excelente! O custo do colaborador está dentro do padrão saudável para o setor. Continue monitorando para manter este nível de eficiência.";
