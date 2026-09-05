@@ -953,15 +953,23 @@ export default function GestaoTenants() {
               variant="destructive"
               disabled={!inactivateMotivo}
               onClick={async () => {
-                await base44.entities.Workshop.update(companyToInactivate.id, {
-                  status: 'inativo',
-                  motivo_inativacao: inactivateMotivo
-                });
-                queryClient.invalidateQueries({ queryKey: ['admin-companies'] });
-                setIsInactivateDialogOpen(false);
-                setCompanyToInactivate(null);
-                setInactivateMotivo('');
-                toast.success('Oficina inativada com sucesso!');
+                try {
+                  await base44.entities.Workshop.update(companyToInactivate.id, {
+                    status: 'inativo',
+                    motivo_inativacao: inactivateMotivo
+                  });
+                  queryClient.invalidateQueries({ queryKey: ['admin-companies'] });
+                  setIsInactivateDialogOpen(false);
+                  setCompanyToInactivate(null);
+                  setInactivateMotivo('');
+                  toast.success(
+                    `${companyToInactivate.name} inativada com sucesso. Os follow-ups pendentes foram cancelados e um FU de encerramento foi criado para +7 dias.`,
+                    { duration: 6000 }
+                  );
+                } catch (err) {
+                  console.error('[GestaoTenants] Erro ao inativar:', err);
+                  toast.error('Erro ao inativar o cliente. Verifique e tente novamente.');
+                }
               }}
             >
               Inativar cliente
