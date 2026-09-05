@@ -67,7 +67,6 @@ Deno.serve(async (req) => {
     finalDate.setUTCDate(finalDate.getUTCDate() + 7);
     const reminderDate = finalDate.toISOString().split('T')[0];
     const completedHistoryCount = existingReminders.filter((item) => item.is_completed === true).length;
-    const finalMessage = 'Confirmar o encerramento do contrato, registrar a tentativa de reversão e dar o veredito final.';
 
     const finalFollowUp = await base44.asServiceRole.entities.FollowUpReminder.create({
       workshop_id: workshopId,
