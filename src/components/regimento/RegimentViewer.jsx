@@ -34,7 +34,7 @@ export default function RegimentViewer({ regiment, workshop, employee, onClose, 
     }
   }, [autoAcknowledge]);
 
-  const handlePrint = () => openRegimentPrint(regiment, workshop, employee);
+  const handlePrint = async () => openRegimentPrint(regiment, workshop, employee);
 
   const replacePlaceholders = (text) => {
     if (!text || !employee) return text;
