@@ -269,7 +269,9 @@ export async function openRegimentPrint(regiment, workshop, employee = null) {
 
   ${sectionsHTML}
 
-  <div class="print-footer"></div>
+  <div class="print-footer">
+    <span class="print-footer-text" id="footer-page-info">Regimento Interno</span>
+  </div>
 
   <div class="signature-page">
     <h3>CIÊNCIA E ASSINATURA</h3>
