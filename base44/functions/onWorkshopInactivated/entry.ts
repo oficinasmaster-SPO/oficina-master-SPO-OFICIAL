@@ -29,6 +29,7 @@ Deno.serve(async (req) => {
     const finalMessage = `Confirmar o encerramento do contrato, registrar a tentativa de reversão e dar o veredito final. Motivo da inativação: ${motivoLabel}.`;
 
     const inactivationDate = new Date().toISOString().split('T')[0];
+    const existingReminders = await base44.asServiceRole.entities.FollowUpReminder.filter(
       { workshop_id: workshopId },
       '-created_date',
       5000
