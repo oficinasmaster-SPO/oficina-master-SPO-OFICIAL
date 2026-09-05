@@ -81,7 +81,7 @@ export function openRegimentPrint(regiment, workshop, employee = null) {
   <style>
     @page {
       size: A4 portrait;
-      margin: 18mm 16mm 18mm 16mm;
+      margin: 18mm 16mm 28mm 16mm;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
