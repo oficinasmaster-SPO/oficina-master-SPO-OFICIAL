@@ -68,8 +68,8 @@ export async function openRegimentPrint(regiment, workshop, employee = null) {
     ${headerMetaLines.length > 0 ? `<div class="cover-meta">${headerMetaLines.join(' &nbsp;|&nbsp; ')}</div>` : ''}
   </div>` : '';
 
-  const logoHTML = workshop?.logo_url
-    ? `<div class="cover-logo"><img src="${workshop.logo_url}" alt="" /></div>`
+  const logoHTML = logoBase64
+    ? `<div class="cover-logo"><img src="${logoBase64}" alt="" /></div>`
     : '';
 
   const sectionsHTML = (regiment.sections || [])
