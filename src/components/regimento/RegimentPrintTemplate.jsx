@@ -126,9 +126,8 @@ export async function openRegimentPrint(regiment, workshop, employee = null) {
       color: #4b5563;
       background: white;
     }
-    .print-footer::after {
-      counter-increment: page;
-      content: "Regimento Interno | Página " counter(page);
+    .print-footer-text {
+      display: inline;
     }
 
     /* ═══════════ CAPA (PRIMEIRA PÁGINA) ═══════════ */
