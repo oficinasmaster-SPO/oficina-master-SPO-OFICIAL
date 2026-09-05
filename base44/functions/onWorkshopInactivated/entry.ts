@@ -15,8 +15,20 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Oficina sem identificador' }, { status: 400 });
     }
 
+    const motivoInativacao = data?.motivo_inativacao || null;
+    const motivoLabel = {
+      cliente_cancelou: 'Cliente cancelou',
+      contrato_encerrado: 'Contrato encerrado',
+      inadimplencia: 'Inadimplência',
+      cliente_duplicado: 'Cliente duplicado',
+      cliente_transferido: 'Cliente transferido',
+      sem_interesse: 'Sem interesse',
+      outro: 'Outro',
+    }[motivoInativacao] || motivoInativacao || 'Não informado';
+
+    const finalMessage = `Confirmar o encerramento do contrato, registrar a tentativa de reversão e dar o veredito final. Motivo da inativação: ${motivoLabel}.`;
+
     const inactivationDate = new Date().toISOString().split('T')[0];
-    const existingReminders = await base44.asServiceRole.entities.FollowUpReminder.filter(
       { workshop_id: workshopId },
       '-created_date',
       5000
