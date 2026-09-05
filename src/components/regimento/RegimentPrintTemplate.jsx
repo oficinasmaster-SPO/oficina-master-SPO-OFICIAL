@@ -9,8 +9,25 @@ import { format } from "date-fns";
  * - NUNCA exibe "Empresa não identificada", "CNPJ não informado", "about:blank", data/hora do navegador
  * - Dados ausentes = não renderiza nada (sem placeholder)
  */
-export function openRegimentPrint(regiment, workshop, employee = null) {
+export async function openRegimentPrint(regiment, workshop, employee = null) {
   const now = new Date();
+
+  // Converter logo para base64 para evitar CORS na janela de impressão (about:blank)
+  let logoBase64 = null;
+  if (workshop?.logo_url) {
+    try {
+      const resp = await fetch(workshop.logo_url);
+      const blob = await resp.blob();
+      logoBase64 = await new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = () => res(reader.result);
+        reader.onerror = rej;
+        reader.readAsDataURL(blob);
+      });
+    } catch (e) {
+      console.warn('[RegimentPrint] Falha ao converter logo para base64:', e);
+    }
+  }
   const effectiveDate = regiment.effective_date
     ? format(new Date(regiment.effective_date), 'dd/MM/yyyy')
     : null;
