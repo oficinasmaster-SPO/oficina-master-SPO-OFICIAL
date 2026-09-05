@@ -201,6 +201,7 @@ export async function openRegimentPrint(regiment, workshop, employee = null) {
     .reg-subsection p {
       font-size: 10.5pt;
       line-height: 1.55;
+      white-space: pre-line;
     }
     .reg-subsection strong {
       font-weight: 600;
