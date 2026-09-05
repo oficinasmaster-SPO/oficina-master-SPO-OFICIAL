@@ -321,7 +321,15 @@ export async function openRegimentPrint(regiment, workshop, employee = null) {
   w.focus();
 
   setTimeout(() => {
+    // Bug 4 fix: injetar total de páginas via JS para contador robusto em todos os browsers
+    try {
+      const body = w.document.body;
+      const pageHeight = w.document.documentElement.scrollHeight;
+      const a4Height = 1122; // ~297mm em 96dpi
+      const totalPages = Math.max(1, Math.ceil(pageHeight / a4Height));
+      const footerEl = w.document.getElementById('footer-page-info');
+      if (footerEl) footerEl.textContent = `Regimento Interno | Página 1 de ${totalPages}`;
+    } catch (e) { /* silencioso */ }
     w.print();
-    // Não fecha automaticamente — o usuário decide após a impressão
-  }, 500);
+  }, 600);
 }
