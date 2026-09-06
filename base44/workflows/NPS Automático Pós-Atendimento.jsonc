@@ -1,0 +1,37 @@
+{
+  "name": "NPS Autom\u00e1tico P\u00f3s-Atendimento",
+  "description": "Dispara pesquisa NPS por e-mail ao respons\u00e1vel da oficina sempre que um atendimento \u00e9 marcado como realizado.",
+  "trigger": {
+    "condition": "${ ((.trigger.changed_fields | index(\"status\") != null) and (.trigger.data.status == \"realizado\")) }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "update"
+      ],
+      "entity_name": "ConsultoriaAtendimento"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "nps_autom_tico_p_s_atendimento",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "enviarNPSPosAtendimento",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "enviarNPSPosAtendimento"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "name": "Check Pr\u00f3ximos Passos Overdue (69fb5ab53db176a79ddf8b48)",
+  "description": "Verifica pr\u00f3ximos passos com prazo vencido, marca como \"atrasado\" e cria notifica\u00e7\u00f5es para consultores.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 11 * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "check_pr_ximos_passos_overdue_69fb5ab53db176a79ddf8b48",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "checkProximosPassosOverdue",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "checkProximosPassosOverdue"
+  }
+}

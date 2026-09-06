@@ -1,0 +1,44 @@
+{
+  "name": "Health-check di\u00e1rio \u2014 atendimentos por plano",
+  "description": "Executa auditPlanAttendances diariamente \u00e0s 03:00 (baixo tr\u00e1fego) e loga o resumo no SystemEventLog (PLAN_ATTENDANCES_HEALTH_CHECK). Alerta se houver planos sem regras de atendimento.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 6 * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "health_check_di_rio_atendimentos_por_plano",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "auditPlanAttendances",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "auditPlanAttendances"
+  }
+}

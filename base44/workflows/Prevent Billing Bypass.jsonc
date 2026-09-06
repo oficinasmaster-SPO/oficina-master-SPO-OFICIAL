@@ -1,0 +1,37 @@
+{
+  "name": "Prevent Billing Bypass",
+  "description": "",
+  "trigger": {
+    "condition": "${ ((.trigger.changed_fields | index(\"planId\") != null) or (.trigger.changed_fields | index(\"planStatus\") != null) or (.trigger.changed_fields | index(\"planoAtual\") != null) or (.trigger.changed_fields | index(\"trialEndsAt\") != null) or (.trigger.changed_fields | index(\"billingCycleStart\") != null) or (.trigger.changed_fields | index(\"billingCycleEnd\") != null) or (.trigger.changed_fields | index(\"dataAssinatura\") != null) or (.trigger.changed_fields | index(\"dataRenovacao\") != null)) }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "update"
+      ],
+      "entity_name": "Workshop"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "prevent_billing_bypass",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "preventPlanBypass",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "preventPlanBypass"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "name": "Fechar FollowUpContador ao completar Bucket",
+  "description": "Quando um bucket de atendimentos \u00e9 completado, fecha o FU Contador ativo vinculado",
+  "trigger": {
+    "condition": "${ ((.trigger.changed_fields | index(\"status\") != null) and (.trigger.data.status == \"completed\") and (.trigger.data.mission_id == \"bucket\")) }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "update"
+      ],
+      "entity_name": "ConsultoriaSprint"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "fechar_followupcontador_ao_completar_bucket",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "checkBucketCompletion",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "checkBucketCompletion"
+  }
+}

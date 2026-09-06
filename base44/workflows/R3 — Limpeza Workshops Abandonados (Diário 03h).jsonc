@@ -1,0 +1,44 @@
+{
+  "name": "R3 \u2014 Limpeza Workshops Abandonados (Di\u00e1rio 03h)",
+  "description": "Detecta workshops rascunho com >48h e toma a\u00e7\u00f5es: promove para ativo se tem employee+nome, inativa duplicatas, cria Employee placeholder para owners sem workshop ativo.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 6 * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "r3_limpeza_workshops_abandonados_di_rio_03h",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "cleanupAbandonedWorkshops",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "cleanupAbandonedWorkshops"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "name": "Limpeza Di\u00e1ria \u2014 Notifica\u00e7\u00f5es Antigas",
+  "description": "Remove notifica\u00e7\u00f5es lidas > 30 dias todo dia \u00e0 meia-noite para manter o banco limpo",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 3 * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "limpeza_di_ria_notifica_es_antigas",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "limparNotificacoesAntigas",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "limparNotificacoesAntigas"
+  }
+}

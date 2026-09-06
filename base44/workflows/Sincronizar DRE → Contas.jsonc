@@ -1,0 +1,37 @@
+{
+  "name": "Sincronizar DRE \u2192 Contas",
+  "description": "Cria automaticamente ContaReceber ou ContaPagar quando um lan\u00e7amento DRE \u00e9 criado",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create"
+      ],
+      "entity_name": "DRELancamento"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "sincronizar_dre_contas",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "syncDREToContas",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "syncDREToContas"
+  }
+}

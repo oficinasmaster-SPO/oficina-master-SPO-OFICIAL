@@ -1,0 +1,37 @@
+{
+  "name": "Auto-ativar Sprint ao Criar",
+  "description": "Muda status de pending para in_progress automaticamente quando uma sprint \u00e9 criada, garantindo que apare\u00e7a imediatamente nas telas Home e Dashboard.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create"
+      ],
+      "entity_name": "ConsultoriaSprint"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "auto_ativar_sprint_ao_criar",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "onSprintCreated",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "onSprintCreated"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "name": "Briefing Matinal \u2014 Resumo Di\u00e1rio de Agenda",
+  "description": "Todo dia \u00fatil \u00e0s 7h30 (BRT) envia a cada consultor um email com todos os atendimentos do dia: hor\u00e1rio, cliente, tipo, plano, fase, link do Meet e alertas de clientes em risco.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "30 10 * * 1-5",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "briefing_matinal_resumo_di_rio_de_agenda",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "resumoDiarioAgenda",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "resumoDiarioAgenda"
+  }
+}

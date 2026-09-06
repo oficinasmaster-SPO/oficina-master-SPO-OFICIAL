@@ -1,0 +1,37 @@
+{
+  "name": "Cascade delete follow-ups ao deletar ATA",
+  "description": "Quando uma ATA (MeetingMinutes) \u00e9 deletada, remove automaticamente todos os FollowUpReminders vinculados ao ata_id, evitando follow-ups \u00f3rf\u00e3os.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "delete"
+      ],
+      "entity_name": "MeetingMinutes"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "cascade_delete_follow_ups_ao_deletar_ata",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "onAtaDeleted",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "onAtaDeleted"
+  }
+}

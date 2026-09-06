@@ -1,0 +1,37 @@
+{
+  "name": "Sync status PedidoInterno \u2192 FollowUp",
+  "description": "Quando o status de um PedidoInterno muda, atualiza o cache nos FUs abertos. Se conclu\u00eddo/cancelado, fecha os FUs automaticamente.",
+  "trigger": {
+    "condition": "${ (.trigger.changed_fields | index(\"status\") != null) }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "update"
+      ],
+      "entity_name": "PedidoInterno"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "sync_status_pedidointerno_followup",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "syncOrigemStatusToFollowUp",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "syncOrigemStatusToFollowUp"
+  }
+}

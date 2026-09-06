@@ -1,0 +1,37 @@
+{
+  "name": "Criar Follow-Up Reminders ao criar ATA",
+  "description": "Quando uma ATA \u00e9 criada, gera 4 lembretes de follow-up (7, 14, 21, 28 dias) para o consultor acompanhar o cliente",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create"
+      ],
+      "entity_name": "MeetingMinutes"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "criar_follow_up_reminders_ao_criar_ata",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "createFollowUpReminders",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "createFollowUpReminders"
+  }
+}

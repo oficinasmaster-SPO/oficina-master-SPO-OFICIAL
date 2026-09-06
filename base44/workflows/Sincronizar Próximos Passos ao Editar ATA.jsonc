@@ -1,0 +1,37 @@
+{
+  "name": "Sincronizar Pr\u00f3ximos Passos ao Editar ATA",
+  "description": "Quando uma ATA (MeetingMinutes) \u00e9 atualizada, sincroniza automaticamente os pr\u00f3ximos passos com CronogramaImplementacao, ConsultoriaProximoPasso e FollowUpReminder",
+  "trigger": {
+    "condition": "${ ((.trigger.changed_fields | index(\"proximos_passos_list\") != null) or (.trigger.changed_fields | index(\"proximos_passos\") != null) or (.trigger.changed_fields | index(\"decisoes_tomadas\") != null) or (.trigger.changed_fields | index(\"acoes_geradas\") != null)) }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "update"
+      ],
+      "entity_name": "MeetingMinutes"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "sincronizar_pr_ximos_passos_ao_editar_ata",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "onMeetingMinutesUpdate",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "onMeetingMinutesUpdate"
+  }
+}

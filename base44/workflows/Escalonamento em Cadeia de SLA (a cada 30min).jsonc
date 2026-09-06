@@ -1,0 +1,44 @@
+{
+  "name": "Escalonamento em Cadeia de SLA (a cada 30min)",
+  "description": "Verifica tarefas atrasadas e escala: 1\u00ba \u2192 l\u00edder, 2\u00ba (+2h) \u2192 admin/diretor",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "*/30 * * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "escalonamento_em_cadeia_de_sla_a_cada_30min",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "escalonarSlaViolacao",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "escalonarSlaViolacao"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "name": "Sincronizar Cronograma ao Concluir Atendimento",
+  "description": "Atualiza automaticamente o cronograma de implementa\u00e7\u00e3o quando um atendimento \u00e9 realizado, sincronizando status, datas e progresso dos itens relacionados.\"",
+  "trigger": {
+    "condition": "${ ((.trigger.changed_fields | index(\"status\") != null) and (.trigger.data.status == \"realizado\" or .trigger.data.status == \"concluido\")) }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "update"
+      ],
+      "entity_name": "ConsultoriaAtendimento"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "sincronizar_cronograma_ao_concluir_atendimento",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "syncCronogramaOnAtendimento",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "syncCronogramaOnAtendimento"
+  }
+}

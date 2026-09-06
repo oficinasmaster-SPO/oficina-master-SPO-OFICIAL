@@ -1,0 +1,37 @@
+{
+  "name": "Alerta Desvio Or\u00e7ament\u00e1rio",
+  "description": "Quando BudgetMeta \u00e9 atualizada e realizado < 80% da meta, envia alerta",
+  "trigger": {
+    "condition": "${ ((.trigger.changed_fields | index(\"meta_fixa_rs\") != null) and (.trigger.data.meta_fixa_rs > 0)) }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "update"
+      ],
+      "entity_name": "BudgetMeta"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "alerta_desvio_or_ament_rio",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "alertaDesvioOrcamentario",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "alertaDesvioOrcamentario"
+  }
+}

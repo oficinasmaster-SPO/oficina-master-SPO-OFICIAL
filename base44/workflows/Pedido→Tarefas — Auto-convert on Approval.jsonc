@@ -1,0 +1,37 @@
+{
+  "name": "Pedido\u2192Tarefas \u2014 Auto-convert on Approval",
+  "description": "Quando um PedidoInterno \u00e9 aprovado (status \u2192 aprovado), cria automaticamente uma TarefaBacklog vinculada.",
+  "trigger": {
+    "condition": "${ ((.trigger.changed_fields | index(\"status\") != null) and (.trigger.data.status == \"aprovado\")) }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "update"
+      ],
+      "entity_name": "PedidoInterno"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "pedido_tarefas_auto_convert_on_approval",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "converterPedidoEmTarefas",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "converterPedidoEmTarefas"
+  }
+}

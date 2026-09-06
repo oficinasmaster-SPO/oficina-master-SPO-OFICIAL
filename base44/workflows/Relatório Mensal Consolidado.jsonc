@@ -1,0 +1,44 @@
+{
+  "name": "Relat\u00f3rio Mensal Consolidado",
+  "description": "Envia relat\u00f3rio mensal consolidado (ranking consultores, KPIs, clientes faltosos) para todos os gestores/admins todo dia 1\u00ba \u00e0s 8h (BRT)",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 11 1 * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "relat_rio_mensal_consolidado",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "relatorioMensalConsolidado",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "relatorioMensalConsolidado"
+  }
+}
