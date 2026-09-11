@@ -218,6 +218,26 @@ export default function CronogramaConsultoria() {
     );
   }
 
+  // Guard: workshop não resolvido após o loading (RLS, plano expirado ou sem vínculo)
+  if (!isWorkshopLoading && !activeWorkshopId) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center max-w-md">
+          <div className="bg-amber-100 p-5 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-5">
+            <AlertCircle className="w-10 h-10 text-amber-600" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Não foi possível carregar sua oficina</h2>
+          <p className="text-gray-600 mb-5">
+            Não conseguimos identificar a oficina vinculada à sua conta. Isso pode ocorrer por expiração de plano, problema de permissão ou configuração incompleta.
+          </p>
+          <p className="text-sm text-gray-500">
+            Entre em contato com o administrador do sistema para regularizar seu acesso.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
