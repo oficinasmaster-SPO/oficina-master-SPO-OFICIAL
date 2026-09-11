@@ -29,7 +29,10 @@ export default function RouteGuard({ children, pageName, adminOnly = false }) {
     );
   }
 
-  if (!user) return null;
+  // Visitante não autenticado: só chega aqui em rotas públicas (ex: landing da Home),
+  // pois todas as demais rotas ficam dentro de <ProtectedRoute>, que redireciona
+  // ao login. Renderizar o conteúdo em vez de null — antes deixava a raiz "/" em branco.
+  if (!user) return <>{children}</>;
 
   // A validação de Admin / Interno é agora tratada de forma unificada dentro de canAccessPage.
   // Evitamos a duplicação de "bypass" no RouteGuard.
