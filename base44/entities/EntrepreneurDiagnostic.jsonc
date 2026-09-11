@@ -4,11 +4,11 @@
   "properties": {
     "user_id": {
       "type": "string",
-      "description": "ID do usuário que fez o diagnóstico"
+      "description": "ID do usu\u00e1rio que fez o diagn\u00f3stico"
     },
     "user_name": {
       "type": "string",
-      "description": "Nome completo do usuário (cache de full_name)"
+      "description": "Nome completo do usu\u00e1rio (cache de full_name)"
     },
     "workshop_id": {
       "type": "string",
@@ -20,12 +20,12 @@
     },
     "company_name": {
       "type": "string",
-      "description": "Razão social da empresa (cache)"
+      "description": "Raz\u00e3o social da empresa (cache)"
     },
     "diagnostic_type": {
       "type": "string",
       "const": "entrepreneur_diagnostic",
-      "description": "Tipo de diagnóstico identificador"
+      "description": "Tipo de diagn\u00f3stico identificador"
     },
     "answers": {
       "type": "array",
@@ -45,7 +45,7 @@
           }
         }
       },
-      "description": "Respostas do diagnóstico"
+      "description": "Respostas do diagn\u00f3stico"
     },
     "dominant_profile": {
       "type": "string",
@@ -72,17 +72,17 @@
           "default": 0
         }
       },
-      "description": "Pontuação de cada perfil"
+      "description": "Pontua\u00e7\u00e3o de cada perfil"
     },
     "completed": {
       "type": "boolean",
       "default": false,
-      "description": "Diagnóstico completo"
+      "description": "Diagn\u00f3stico completo"
     },
     "completed_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Data e hora de conclusão do diagnóstico"
+      "description": "Data e hora de conclus\u00e3o do diagn\u00f3stico"
     }
   },
   "required": [
@@ -97,7 +97,13 @@
           "created_by": "{{user.email}}"
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
         },
         {
           "user_condition": {
@@ -111,9 +117,7 @@
         },
         {
           "user_condition": {
-            "data": {
-              "user_type": "internal"
-            }
+            "data.user_type": "internal"
           }
         }
       ]
@@ -135,9 +139,7 @@
         },
         {
           "user_condition": {
-            "data": {
-              "user_type": "internal"
-            }
+            "data.user_type": "internal"
           }
         }
       ]
