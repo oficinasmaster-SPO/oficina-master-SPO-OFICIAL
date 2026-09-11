@@ -14,7 +14,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import ResultadoDISCModal from "@/pages/ResultadoDISC";
+import ResultadoDISCModal from "@/components/disc/ResultadoDISCModal";
 
 export default function HistoricoDISC() {
   const navigate = useNavigate();
