@@ -2,7 +2,8 @@ import React, { useState, useMemo, useCallback, useDeferredValue, useRef, useEff
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Plus, AlertCircle } from "lucide-react";
+import { Plus, AlertCircle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import NovoTarefaModal from "./NovoTarefaModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -15,9 +16,13 @@ import PedidoInternoDetail from "./PedidoInternoDetail";
 import OrderFilterBar from "./OrderFilterBar";
 import BacklogScopeSelector from "./BacklogScopeSelector";
 
+// BUG-12: tamanho do lote da listagem incremental (teto visível, nunca silencioso)
+const PAGE_SIZE = 200;
+
 export default function PedidosInternosTab({ workshopId, user }) {
   const [selectedPedido, setSelectedPedido] = useState(null);
   const [editingPedido, setEditingPedido] = useState(null);
+  const [listLimit, setListLimit] = useState(PAGE_SIZE);
   const [showNewForm, setShowNewForm] = useState(false);
   const [activeList, setActiveList] = useState("pedidos");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -34,7 +39,10 @@ export default function PedidosInternosTab({ workshopId, user }) {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === "/" && !["INPUT", "TEXTAREA"].includes(e.target.tagName)) {
+      // BUG-13: ignora input, textarea, select E contentEditable (Quill/editores)
+      const t = e.target;
+      const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName) || t.isContentEditable;
+      if (e.key === "/" && !isTyping) {
         // GUARD: as abas usam forceMount, então o input existe mesmo invisível.
         // Só foca se estiver fisicamente visível na tela (aba ativa).
         const input = searchInputRef.current;
@@ -48,12 +56,15 @@ export default function PedidosInternosTab({ workshopId, user }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const { data: pedidos = [], isLoading, isError } = useQuery({
-    queryKey: ["pedidos-internos", workshopId],
+  // BUG-12: carregamento incremental em lotes de PAGE_SIZE com "Carregar mais"
+  // explícito — substitui o teto silencioso de 500. Métricas e filtros sempre
+  // refletem exatamente o que está carregado (truncação visível, não oculta).
+  const { data: pedidos = [], isLoading, isError, isFetching } = useQuery({
+    queryKey: ["pedidos-internos", workshopId, listLimit],
     queryFn: async () => {
       const all = workshopId ?
-      await base44.entities.PedidoInterno.filter({ workshop_id: workshopId }, "-created_date", 500) :
-      await base44.entities.PedidoInterno.list("-created_date", 500);
+      await base44.entities.PedidoInterno.filter({ workshop_id: workshopId }, "-created_date", listLimit) :
+      await base44.entities.PedidoInterno.list("-created_date", listLimit);
       return all || [];
     },
     retry: false,
@@ -95,7 +106,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
       const q = deferredSearch.toLowerCase();
       if (q) {
         const haystack = [
-        p.titulo, p.workshop_nome, p.requester_name, p.cliente_nome,
+        p.titulo, p.workshop_nome, p.requester_name,
         p.assignee_name, p.codigo].
         filter(Boolean).join(" ").toLowerCase();
         if (!haystack.includes(q)) return false;
@@ -122,10 +133,34 @@ export default function PedidosInternosTab({ workshopId, user }) {
 
   const freshSelected = useMemo(() => {
     if (!selectedPedido) return null;
-    return pedidos.find((p) => p.id === selectedPedido.id) || selectedPedido;
+    // BUG-02: sem fallback para o snapshot — se o pedido sumir da lista,
+    // freshSelected é null e o efeito abaixo fecha o Detail (sem fantasma).
+    return pedidos.find((p) => p.id === selectedPedido.id) || null;
   }, [selectedPedido, pedidos]);
 
+  // BUG-02: lista carregada sem erro + pedido selecionado desaparecido
+  // (excluído por outro usuário) → fecha o Detail e informa o usuário.
+  useEffect(() => {
+    if (selectedPedido && !isLoading && !isError && !freshSelected) {
+      toast.error("Este pedido não está mais disponível. Ele pode ter sido excluído ou removido por outro usuário.");
+      setSelectedPedido(null);
+    }
+  }, [selectedPedido, freshSelected, isLoading, isError]);
+
+  // BUG-12: semeia o próximo cache com os dados atuais (sem skeleton) e amplia o lote.
+  const maybeMore = pedidos.length >= listLimit;
+  const handleLoadMore = () => {
+    queryClient.setQueryData(["pedidos-internos", workshopId, listLimit + PAGE_SIZE], pedidos);
+    setListLimit((l) => l + PAGE_SIZE);
+  };
+
   const handleSelect = useCallback((p) => setSelectedPedido(p), []);
+
+  // BUG-01: abre o NovoPedidoModal em modo edição a partir do Detail.
+  const handleEditPedido = useCallback((p) => {
+    setEditingPedido(p);
+    setShowNewForm(true);
+  }, []);
 
   const handleDetailClose = useCallback(() => {
     setSelectedPedido(null);
@@ -145,21 +180,25 @@ export default function PedidosInternosTab({ workshopId, user }) {
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white rounded-lg border border-[hsl(var(--border-subtle))] shadow-[0_1px_2px_rgba(16,24,40,.04)]">
       
       {/* Modais de Detalhe e Criação */}
-      <PedidoInternoModal open={!!selectedPedido} onClose={() => setSelectedPedido(null)} size="wide">
+      <PedidoInternoModal open={!!freshSelected} onClose={() => setSelectedPedido(null)} size="wide">
         {freshSelected &&
         <PedidoInternoDetail
           key={freshSelected.id}
           pedido={freshSelected}
           user={user}
+          onEdit={handleEditPedido}
           onCancel={() => setSelectedPedido(null)}
-          onSuccess={handleDetailClose}
-          onDelete={handleDetailClose} />
+          onSuccess={handleDetailClose} />
 
         }
       </PedidoInternoModal>
 
-      {showNewForm && !editingPedido &&
-      <NovoPedidoModal user={user} onClose={handleFormClose} />
+      {showNewForm &&
+      <NovoPedidoModal
+        key={editingPedido?.id || "novo"}
+        user={user}
+        pedido={editingPedido}
+        onClose={handleFormClose} />
       }
 
       <Tabs value={activeList} onValueChange={setActiveList} className="flex min-h-0 flex-1 flex-col">
@@ -266,7 +305,23 @@ export default function PedidosInternosTab({ workshopId, user }) {
                 <p className="mt-1 text-xs text-gray-400">Verifique sua conexão e tente novamente.</p>
               </div>
             ) : (
-              <PedidoInternoList pedidos={filteredPedidos} isLoading={isLoading} onSelect={handleSelect} selectedId={selectedPedido?.id} />
+              <>
+                <PedidoInternoList pedidos={filteredPedidos} isLoading={isLoading} onSelect={handleSelect} selectedId={selectedPedido?.id} />
+                {maybeMore && (
+                  <div className="flex items-center justify-center gap-3 border-t border-gray-100 py-3">
+                    <span className="text-[11px] text-gray-400">Mostrando {pedidos.length} pedidos</span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleLoadMore}
+                      disabled={isFetching}
+                      className="h-7 gap-1 text-xs">
+                      {isFetching && <Loader2 className="h-3 w-3 animate-spin" />}
+                      Carregar mais
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </TabsContent>

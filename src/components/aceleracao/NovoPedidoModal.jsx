@@ -157,12 +157,26 @@ function AttachmentList({ items, onRemove }) {
 /* ═══════════════════════════════════════════════════════════════════════════
    MAIN MODAL
    ═══════════════════════════════════════════════════════════════════════════ */
-export default function NovoPedidoModal({ user, onClose }) {
-  const queryClient = useQueryClient();
-  const firstFieldRef = useRef(null);
-
-  /* ── Form state ──────────────────────────────────────────────────────── */
-  const [form, setForm] = useState({
+/* Estado inicial: defaults (create) ou dados do pedido (edit).
+   Em modo edit, este form carrega SOMENTE campos editáveis — id, codigo,
+   status, requester_* e data_conclusao ficam preservados no backend. */
+function buildInitialForm(pedido) {
+  if (pedido) {
+    return {
+      tipo:            pedido.tipo || "apoio_tecnico",
+      prioridade:      pedido.prioridade || "media",
+      titulo:          pedido.titulo || "",
+      descricao:       pedido.descricao || "",
+      assignee_id:     pedido.assignee_id || "",
+      assignee_name:   pedido.assignee_name || "",
+      workshop_id:     pedido.workshop_id || "",
+      workshop_nome:   pedido.workshop_nome || "",
+      prazo:           pedido.prazo ? String(pedido.prazo).slice(0, 10) : "",
+      impacto_cliente: pedido.impacto_cliente || "medio",
+      midias_anexas:   Array.isArray(pedido.midias_anexas) ? [...pedido.midias_anexas] : [],
+    };
+  }
+  return {
     tipo:             "apoio_tecnico",
     prioridade:       "media",
     titulo:           "",
@@ -174,7 +188,17 @@ export default function NovoPedidoModal({ user, onClose }) {
     prazo:            "",
     impacto_cliente:  "medio",
     midias_anexas:    [],
-  });
+  };
+}
+
+export default function NovoPedidoModal({ user, pedido, onClose }) {
+  const queryClient = useQueryClient();
+  const firstFieldRef = useRef(null);
+  const isEdit = !!pedido;
+
+  /* ── Form state ──────────────────────────────────────────────────────── */
+  const [initialForm] = useState(() => buildInitialForm(pedido));
+  const [form, setForm] = useState(initialForm);
   const [uploading, setUploading] = useState(false);
 
   const set = useCallback((k, v) => setForm(f => ({ ...f, [k]: v })), []);
@@ -199,8 +223,18 @@ export default function NovoPedidoModal({ user, onClose }) {
   });
 
   /* ── Submit ──────────────────────────────────────────────────────────── */
-  const createMutation = useMutation({
+  const saveMutation = useMutation({
     mutationFn: async () => {
+      if (isEdit) {
+        // BUG-01: modo edição — atualiza SOMENTE campos editáveis.
+        // status, codigo, requester_*, data_conclusao e histórico são
+        // protegidos e nunca enviados. Autorização real = RLS de update.
+        const payload = {};
+        ["tipo", "prioridade", "titulo", "descricao", "assignee_id", "assignee_name",
+         "workshop_id", "workshop_nome", "prazo", "impacto_cliente", "midias_anexas",
+        ].forEach((k) => { payload[k] = form[k]; });
+        return base44.entities.PedidoInterno.update(pedido.id, payload);
+      }
       return base44.entities.PedidoInterno.create({
         ...form,
         requester_id:   user?.id,
@@ -209,12 +243,17 @@ export default function NovoPedidoModal({ user, onClose }) {
       });
     },
     onSuccess: () => {
-      toast.success("Pedido criado com sucesso!");
+      toast.success(isEdit ? "Pedido atualizado com sucesso!" : "Pedido criado com sucesso!");
       queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
+      if (!isEdit) {
+        // BUG-10: o workflow gera o PED-xxxx de forma assíncrona —
+        // re-invalida para o código aparecer na lista sem exigir F5.
+        setTimeout(() => queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] }), 2500);
+      }
       onClose();
     },
     onError: (err) => {
-      toast.error("Erro ao criar pedido");
+      toast.error(isEdit ? "Erro ao atualizar pedido" : "Erro ao criar pedido");
       console.error(err);
     },
   });
@@ -226,21 +265,28 @@ export default function NovoPedidoModal({ user, onClose }) {
     if (!form.assignee_id)       return toast.error("Selecione o responsável");
     if (!form.prazo)             return toast.error("Defina o prazo");
     const today = new Date().toLocaleDateString("sv"); // YYYY-MM-DD no fuso local
-    if (form.prazo < today) return toast.error("O prazo não pode ser uma data no passado.");
-    createMutation.mutate();
+    // Em edição, prazo passado só é bloqueado se o usuário o alterou
+    // (preserva pedidos antigos cujo prazo original já está vencido).
+    const prazoAlterado = form.prazo !== initialForm.prazo;
+    if (form.prazo < today && (!isEdit || prazoAlterado)) {
+      return toast.error("O prazo não pode ser uma data no passado.");
+    }
+    saveMutation.mutate();
   };
 
   // safeClose — bloqueia fechamento durante operações e pede confirmação
   // antes de descartar dados preenchidos (Fixes 4 e 12).
   const safeClose = useCallback(() => {
-    if (uploading || createMutation.isPending) return;
-    const hasData = form.titulo.trim() !== "" ||
-                    form.descricao.trim() !== "" ||
-                    form.prazo !== "" ||
-                    form.midias_anexas.length > 0;
+    if (uploading || saveMutation.isPending) return;
+    const hasData = isEdit
+      ? JSON.stringify(form) !== JSON.stringify(initialForm)
+      : form.titulo.trim() !== "" ||
+        form.descricao.trim() !== "" ||
+        form.prazo !== "" ||
+        form.midias_anexas.length > 0;
     if (hasData && !window.confirm("Descartar alterações não salvas?")) return;
     onClose();
-  }, [uploading, createMutation.isPending, form, onClose]);
+  }, [uploading, saveMutation.isPending, form, initialForm, isEdit, onClose]);
 
   /* ── File upload ─────────────────────────────────────────────────────── */
   const handleFiles = useCallback(async (files) => {
@@ -279,10 +325,14 @@ export default function NovoPedidoModal({ user, onClose }) {
     try {
       const uploadedItems = [];
       for (const file of validFiles) {
-        const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+        // BUG-08: anexos de pedidos internos vão para o storage PRIVADO
+        // (UploadPrivateFile). A visualização ocorre via signed URL —
+        // ver PedidoInternoDetail. Anexos legados (http) seguem funcionando.
+        const { file_uri } = await base44.integrations.Core.UploadPrivateFile({ file });
         uploadedItems.push({
           type: file.type.startsWith("image/") ? "imagem" : "arquivo",
-          url: file_url,
+          url: file_uri,
+          privado: true,
           nome: file.name,
           size: file.size,
           mimeType: file.type,
@@ -353,10 +403,18 @@ export default function NovoPedidoModal({ user, onClose }) {
   }, []);
 
   /* ── Esc to close ────────────────────────────────────────────────────── */
+  // Capture phase: quando aberto POR CIMA do Detail (Radix Dialog), o Esc
+  // deve fechar SOMENTE este modal — sem o capture, o Radix fecharia o
+  // Detail que está atrás na mesma tecla.
   useEffect(() => {
-    const h = (e) => { if (e.key === "Escape" && !e.defaultPrevented) safeClose(); };
-    document.addEventListener("keydown", h);
-    return () => document.removeEventListener("keydown", h);
+    const h = (e) => {
+      if (e.key === "Escape" && !e.defaultPrevented) {
+        e.stopPropagation();
+        safeClose();
+      }
+    };
+    document.addEventListener("keydown", h, true);
+    return () => document.removeEventListener("keydown", h, true);
   }, [safeClose]);
 
   return createPortal(
@@ -388,9 +446,9 @@ export default function NovoPedidoModal({ user, onClose }) {
             </button>
             <div>
               <h2 id="novo-pedido-title" className="text-[15px] font-extrabold text-gray-900" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "-0.02em" }}>
-                Novo Pedido Interno
+                {isEdit ? "Editar Pedido Interno" : "Novo Pedido Interno"}
               </h2>
-              <p className="text-xs text-gray-500 mt-0.5">Preencha os detalhes para abrir o chamado</p>
+              <p className="text-xs text-gray-500 mt-0.5">{isEdit ? "Altere os detalhes do pedido" : "Preencha os detalhes para abrir o chamado"}</p>
             </div>
           </div>
           <button
@@ -536,15 +594,15 @@ export default function NovoPedidoModal({ user, onClose }) {
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={createMutation.isPending || uploading || !user?.id}
+            disabled={saveMutation.isPending || uploading || !user?.id}
             className="flex h-10 items-center gap-2 rounded-[10px] bg-blue-600 px-5 text-sm font-semibold text-white shadow-[0_6px_16px_-6px_rgba(37,99,235,0.5)] transition-all hover:bg-blue-700 disabled:opacity-60"
           >
-            {createMutation.isPending ? (
+            {saveMutation.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Plus className="h-4 w-4" strokeWidth={2.5} />
             )}
-            {createMutation.isPending ? "Criando…" : "Criar Pedido"}
+            {saveMutation.isPending ? (isEdit ? "Salvando…" : "Criando…") : (isEdit ? "Salvar Alterações" : "Criar Pedido")}
           </button>
         </div>
       </div>

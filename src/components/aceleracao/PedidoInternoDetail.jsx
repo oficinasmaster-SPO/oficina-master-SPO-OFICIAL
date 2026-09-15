@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -110,7 +110,7 @@ export default function PedidoInternoDetail({
   // Editar exige permissão de resposta E pedido não finalizado
   const canEdit    = canRespond && !isReadOnly;
 
-  const criadoEm  = pedido.created_date || pedido.data_criacao;
+  const criadoEm  = pedido.created_date;
   const criadoFmt = criadoEm ? format(new Date(criadoEm), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "—";
   const slaLabel  = criadoEm ? formatDistanceToNow(new Date(criadoEm), { locale: ptBR }) : null;
   const prazoParsed = safeDateOnlyParse(pedido.prazo);
@@ -127,6 +127,29 @@ export default function PedidoInternoDetail({
 
   const done = tarefas.filter(t => t.status === "concluida").length;
 
+  // BUG-08: anexos com storage privado (file_uri, sem http) só são
+  // acessíveis via signed URL. Anexos legados (http) seguem inalterados.
+  const [signedUrls, setSignedUrls] = useState({});
+  useEffect(() => {
+    const privates = (pedido?.midias_anexas || []).filter(
+      (m) => m.privado && m.url && !String(m.url).startsWith("http")
+    );
+    if (!privates.length) { setSignedUrls({}); return; }
+    let alive = true;
+    (async () => {
+      const entries = await Promise.all(privates.map(async (m) => {
+        try {
+          const { signed_url } = await base44.integrations.Core.CreateFileSignedUrl({ file_uri: m.url, expires_in: 3600 });
+          return [m.url, signed_url];
+        } catch {
+          return [m.url, null];
+        }
+      }));
+      if (alive) setSignedUrls(Object.fromEntries(entries.filter(([, v]) => !!v)));
+    })();
+    return () => { alive = false; };
+  }, [pedido?.id, pedido?.updated_date]);
+
   // ── Formatação de Anexos para a nova AttachmentGallery ─────────────────
   const medias = pedido?.midias_anexas || [];
   const arquivosFormatados = medias.map((media, index) => {
@@ -139,7 +162,7 @@ export default function PedidoInternoDetail({
 
     return {
       id: media.id || `${index}-${media.url || media.nome}`,
-      url: media.url,
+      url: signedUrls[media.url] || media.url,
       name: media.nome,
       type: media.type === "imagem" ? "image" : media.type === "link" ? "link" : "document",
       mimeType: media.mimeType,
@@ -197,6 +220,31 @@ ${pedido.resposta ? `<h2>${pedido.status === "recusado" ? "Motivo da Recusa" : "
     setTimeout(() => w.print(), 250);
   };
 
+  // Tratamento unificado de erros de transição:
+  // 404/not_found → pedido removido (BUG-02) | 403/forbidden → sem permissão
+  // (BUG-04) | 409/conflict → status alterado por outro usuário (CAS).
+  const handleTransitionError = (error, fallbackMsg) => {
+    const data = error?.response?.data || error?.data || {};
+    const msg = String(error?.message || "").toLowerCase();
+    if (data.not_found || msg.includes("não encontrado")) {
+      toast.error("Este pedido não está mais disponível. Ele pode ter sido excluído ou removido por outro usuário.");
+      queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
+      onSuccess?.();
+      return;
+    }
+    if (data.forbidden || msg.includes("permissão")) {
+      toast.error("Você não tem permissão para alterar o status deste pedido.");
+      queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
+      return;
+    }
+    if (data.conflict || msg.includes("status atual")) {
+      toast.error("O status deste pedido já foi alterado por outra pessoa. A tela foi recarregada.");
+      queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
+      return;
+    }
+    toast.error(fallbackMsg);
+  };
+
   const recusarMutation = useMutation({
     mutationFn: async () => base44.functions.invoke("transicionarStatusPedido", {
       pedido_id: pedido.id,
@@ -204,18 +252,7 @@ ${pedido.resposta ? `<h2>${pedido.status === "recusado" ? "Motivo da Recusa" : "
       to_status: "recusado",
     }),
     onSuccess: () => { toast.success("Pedido recusado."); invalidatePedidoContext(); onSuccess?.(); },
-    onError: (error) => {
-      // Parse resiliente do 409: flag conflict no body OU palavra-chave na mensagem do SDK
-      const isConflict = error?.response?.data?.conflict ||
-                        error?.data?.conflict ||
-                        error?.message?.toLowerCase().includes("status atual");
-      if (isConflict) {
-        toast.error("O status deste pedido já foi alterado por outra pessoa. A tela foi recarregada.");
-        queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
-      } else {
-        toast.error("Erro ao recusar");
-      }
-    },
+    onError: (error) => handleTransitionError(error, "Erro ao recusar"),
   });
 
   const NEXT_STATUS = { pendente: "em_analise", em_analise: "aprovado", aprovado: "concluido" };
@@ -239,17 +276,7 @@ ${pedido.resposta ? `<h2>${pedido.status === "recusado" ? "Motivo da Recusa" : "
       return res.data;
     },
     onSuccess: () => { toast.success("Status atualizado!"); invalidatePedidoContext(); },
-    onError: (error) => {
-      const isConflict = error?.response?.data?.conflict ||
-                        error?.data?.conflict ||
-                        error?.message?.toLowerCase().includes("status atual");
-      if (isConflict) {
-        toast.error("O status deste pedido já foi alterado por outra pessoa. A tela foi recarregada.");
-        queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
-      } else {
-        toast.error("Erro ao atualizar status");
-      }
-    },
+    onError: (error) => handleTransitionError(error, "Erro ao atualizar status"),
   });
 
   return (
