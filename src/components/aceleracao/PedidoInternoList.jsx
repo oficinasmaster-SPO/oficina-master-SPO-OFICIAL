@@ -407,7 +407,10 @@ export default function PedidoInternoList({ pedidos, onSelect, isLoading, select
       map[k].sort((a,b) => {
         const vA = isOverdue(a)?0:1, vB = isOverdue(b)?0:1;
         if (vA !== vB) return vA - vB;
-        return new Date(b.created_date||0) - new Date(a.created_date||0);
+        // QA: mesmo fallback do TicketRow — pedido legado sem created_date
+        // ordena pela data real (data_criacao), não por epoch 0.
+        return new Date(b.created_date || b.data_criacao || 0) -
+               new Date(a.created_date || a.data_criacao || 0);
       });
     });
     return map;
