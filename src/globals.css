@@ -76,7 +76,7 @@
 }
 
 /* =========================================
-   STEPPER: EFEITO SHIMMER (GLASS REFLECTION)
+   STEPPER: EFEITO SHIMMER (GLASS REFLECTION PREMIUM)
    ========================================= */
 .step-shimmer {
   position: absolute;
@@ -96,9 +96,15 @@
   background: linear-gradient(
     105deg,
     rgba(255, 255, 255, 0)     0%,
-    rgba(255, 255, 255, 0.45)  40%,
-    rgba(255, 255, 255, 0)     45%,
-    rgba(255, 255, 255, 0.25)  48%,
+    rgba(255, 255, 255, 0)     28%,
+    rgba(255, 255, 255, 0.7)   36%,
+    rgba(255, 255, 255, 0.85)  40%, /* Pico do raio principal */
+    rgba(255, 255, 255, 0.7)   44%,
+    rgba(255, 255, 255, 0)     50%,
+    rgba(255, 255, 255, 0.35)  53%,
+    rgba(255, 255, 255, 0.45)  55%, /* Pico do raio secundário */
+    rgba(255, 255, 255, 0.35)  57%,
+    rgba(255, 255, 255, 0)     63%,
     rgba(255, 255, 255, 0)     100%
   );
   animation: step-shimmer-glass 3s linear infinite;
@@ -127,13 +133,9 @@
   }
 }
 
-/* Segunda declaração de `step-shimmer-glass` removida: ela sobrescrevia
-   silenciosamente a versão acima (a de 4 fases com opacity, que é a
-   funcional/desejada), fazendo o stepper rodar a animação errada.
-   `shimmer-glass-stepper` foi mantido — uso indireto não confirmado. */
-
+/* Mantém o seu delay original */
 .is-animating .step-shimmer::before {
-  animation-delay: var(--step-delay-shimmer); /* Aguarda delay se for transição */
+  animation-delay: var(--step-delay-shimmer);
 }
 
 /* ── 5. Animação: Pulso de Luz (Dot Ativo) ── */
