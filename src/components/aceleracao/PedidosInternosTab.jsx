@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback, useDeferredValue, useRef, useEff
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, AlertCircle } from "lucide-react";
 import NovoTarefaModal from "./NovoTarefaModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -41,14 +41,15 @@ export default function PedidosInternosTab({ workshopId, user }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const { data: pedidos = [], isLoading } = useQuery({
+  const { data: pedidos = [], isLoading, isError } = useQuery({
     queryKey: ["pedidos-internos", workshopId],
     queryFn: async () => {
       const all = workshopId ?
-      await base44.entities.PedidoInterno.filter({ workshop_id: workshopId }, "-created_date") :
-      await base44.entities.PedidoInterno.list("-created_date");
+      await base44.entities.PedidoInterno.filter({ workshop_id: workshopId }, "-created_date", 500) :
+      await base44.entities.PedidoInterno.list("-created_date", 500);
       return all || [];
-    }
+    },
+    retry: false,
   });
 
   // REMOVIDO: query usuarios-sistema (User.list) — era dead code (resultado nunca
@@ -226,7 +227,15 @@ export default function PedidosInternosTab({ workshopId, user }) {
         {/* Conteúdo da Lista de Pedidos */}
         <TabsContent value="pedidos" forceMount className={`mt-0 flex min-h-0 flex-1 flex-col bg-white ${activeList !== "pedidos" ? "hidden" : ""}`}>
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <PedidoInternoList pedidos={filteredPedidos} isLoading={isLoading} onSelect={handleSelect} selectedId={selectedPedido?.id} />
+            {isError ? (
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                <AlertCircle className="mb-3 h-12 w-12 text-red-300" />
+                <p className="text-sm font-medium text-red-500">Não foi possível carregar os pedidos</p>
+                <p className="mt-1 text-xs text-gray-400">Verifique sua conexão e tente novamente.</p>
+              </div>
+            ) : (
+              <PedidoInternoList pedidos={filteredPedidos} isLoading={isLoading} onSelect={handleSelect} selectedId={selectedPedido?.id} />
+            )}
           </div>
         </TabsContent>
 

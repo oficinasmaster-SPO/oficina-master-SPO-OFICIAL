@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
     try {
       await base44.asServiceRole.entities.Notification.create({
         user_id: data.assignee_id,
-        tipo: 'pedido_interno_criado',
+        type: 'pedido_interno_criado',
         title: `Novo pedido interno: ${titulo}`,
         message: `${clienteNome ? `[${clienteNome}] ` : ''}${titulo}. Solicitado por: ${solicitanteNome}`,
         is_read: false,

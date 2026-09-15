@@ -22,13 +22,47 @@ Deno.serve(async (req) => {
     }
 
     const pedido = data;
-    if (!pedido?.id || !pedido?.workshop_id) {
-      return Response.json({ skipped: true, reason: 'Pedido sem id ou workshop_id' });
+    if (!pedido?.id) {
+      return Response.json({ skipped: true, reason: 'Pedido sem id' });
+    }
+
+    // ── Gerar código sequencial PED-xxxx ANTES de qualquer guard ──────────────
+    // Todo pedido recebe código, mesmo sem workshop vinculado ou com oficina
+    // inativa (guards abaixo são apenas informativos para o fluxo antigo).
+    if (!pedido.codigo) {
+      try {
+        const recentes = await base44.asServiceRole.entities.PedidoInterno.list('-created_date', 2000);
+        let maxNum = 0;
+        for (const p of recentes || []) {
+          if (p.codigo) {
+            const m = p.codigo.match(/PED-(\d+)/);
+            if (m) {
+              const n = parseInt(m[1], 10);
+              if (n > maxNum) maxNum = n;
+            }
+          }
+        }
+        let novoCodigo = '';
+        for (let attempt = 0; attempt < 10; attempt++) {
+          maxNum += 1;
+          novoCodigo = `PED-${String(maxNum).padStart(4, '0')}`;
+          const dup = await base44.asServiceRole.entities.PedidoInterno.filter({ codigo: novoCodigo });
+          if (!dup || dup.length === 0) break;
+        }
+        await base44.asServiceRole.entities.PedidoInterno.update(pedido.id, { codigo: novoCodigo });
+        console.log(`[onPedidoInternoCreated] Código gerado: ${novoCodigo} para pedido ${pedido.id}`);
+      } catch (e) {
+        console.error('[onPedidoInternoCreated] Erro ao gerar código:', e.message);
+      }
+    }
+
+    if (!pedido.workshop_id) {
+      return Response.json({ ok: true, codigo: pedido.codigo, skipped: true, reason: 'Pedido sem workshop_id (código já gerado)' });
     }
 
     // Guard: workshop_id deve ser ObjectId válido
     if (!/^[0-9a-f]{24}$/.test(pedido.workshop_id)) {
-      return Response.json({ skipped: true, reason: `workshop_id inválido: ${pedido.workshop_id}` });
+      return Response.json({ ok: true, codigo: pedido.codigo, skipped: true, reason: `workshop_id inválido: ${pedido.workshop_id}` });
     }
 
     // Guard: workshop deve existir E estar ativo (S1-05: adicionado guard de status)
@@ -50,31 +84,7 @@ Deno.serve(async (req) => {
       return Response.json({ skipped: true, reason: `workshop_inativo: ${workshop.status}` });
     }
 
-    // ── Gerar código sequencial PED-xxxx (única responsabilidade desta function) ──
-    if (!pedido.codigo) {
-      try {
-        const todos = await base44.asServiceRole.entities.PedidoInterno.list('-created_date', 100000);
-        let maxNum = 0;
-        for (const p of todos || []) {
-          if (p.codigo) {
-            const m = p.codigo.match(/PED-(\d+)/);
-            if (m) {
-              const n = parseInt(m[1], 10);
-              if (n > maxNum) maxNum = n;
-            }
-          }
-        }
-        const novoCodigo = `PED-${String(maxNum + 1).padStart(4, '0')}`;
-        await base44.asServiceRole.entities.PedidoInterno.update(pedido.id, { codigo: novoCodigo });
-        console.log(`[onPedidoInternoCreated] Código gerado: ${novoCodigo} para pedido ${pedido.id}`);
-        return Response.json({ ok: true, codigo: novoCodigo });
-      } catch (e) {
-        console.error('[onPedidoInternoCreated] Erro ao gerar código:', e.message);
-        return Response.json({ ok: true, codigo_error: e.message });
-      }
-    }
-
-    return Response.json({ ok: true, codigo: pedido.codigo, msg: 'Código já existia' });
+    return Response.json({ ok: true, codigo: pedido.codigo, msg: 'Código já gerado ou existente' });
 
   } catch (error) {
     console.error('[onPedidoInternoCreated] Erro:', error);

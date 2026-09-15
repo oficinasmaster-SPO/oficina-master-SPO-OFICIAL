@@ -1,8 +1,7 @@
 {
   "name": "Notificar Respons\u00e1vel \u2014 Pedido Interno Criado",
-  "description": "Quando um PedidoInterno \u00e9 criado com respons\u00e1vel definido, envia notifica\u00e7\u00e3o in-app + e-mail instant\u00e2neo",
   "trigger": {
-    "condition": "${ (.trigger.data.responsavel_id != null) }",
+    "condition": "${ (.trigger.data.assignee_id != null) }",
     "config": {
       "trigger_type": "entity",
       "events": [
@@ -31,6 +30,7 @@
       }
     ]
   },
+  "description": "Quando um PedidoInterno \u00e9 criado com respons\u00e1vel definido, envia notifica\u00e7\u00e3o in-app instant\u00e2nea",
   "x-base44-migrated-from-automation": {
     "legacy_payload_function": "notificarPedidoInterno"
   }

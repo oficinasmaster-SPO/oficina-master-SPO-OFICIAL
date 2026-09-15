@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
+import { safeDateOnlyParse, isDateOnlyPast } from "@/utils/timezone";
 import { ptBR } from "date-fns/locale";
 import ActivityFeed from "./ActivityFeed";
 import PedidoInternoStepper from "./PedidoInternoStepper";
@@ -96,8 +97,9 @@ export default function PedidoInternoDetail({
   const criadoEm  = pedido.created_date || pedido.data_criacao;
   const criadoFmt = criadoEm ? format(new Date(criadoEm), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "—";
   const slaLabel  = criadoEm ? formatDistanceToNow(new Date(criadoEm), { locale: ptBR }) : null;
-  const prazoFmt  = pedido.prazo ? format(new Date(pedido.prazo), "dd/MM/yyyy", { locale: ptBR }) : null;
-  const isVencido = pedido.prazo && !isReadOnly && new Date(pedido.prazo) < new Date();
+  const prazoParsed = safeDateOnlyParse(pedido.prazo);
+  const prazoFmt  = prazoParsed ? format(prazoParsed, "dd/MM/yyyy", { locale: ptBR }) : null;
+  const isVencido = !isReadOnly && isDateOnlyPast(pedido.prazo);
 
   // Nomes resolvidos
   const requesterName = getName(pedido.requester_id, pedido.requester_name);
@@ -131,12 +133,21 @@ export default function PedidoInternoDetail({
   });
 
   const recusarMutation = useMutation({
-    mutationFn: async () => base44.entities.PedidoInterno.update(pedido.id, {
-      status: "recusado",
-      data_primeira_resposta: pedido.data_primeira_resposta || new Date().toISOString(),
+    mutationFn: async () => base44.functions.invoke("transicionarStatusPedido", {
+      pedido_id: pedido.id,
+      from_status: pedido.status,
+      to_status: "recusado",
     }),
     onSuccess: () => { toast.success("Pedido recusado."); queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] }); onSuccess?.(); },
-    onError: () => toast.error("Erro ao recusar"),
+    onError: (error) => {
+      const detail = error?.response?.data || error?.data;
+      if (detail?.conflict) {
+        toast.error("Este pedido foi alterado por outro usuário. Recarregando lista...");
+        queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
+      } else {
+        toast.error("Erro ao recusar");
+      }
+    },
   });
 
   const NEXT_STATUS = { pendente: "em_analise", em_analise: "aprovado", aprovado: "concluido" };
@@ -145,17 +156,30 @@ export default function PedidoInternoDetail({
 
   const advanceMutation = useMutation({
     mutationFn: async () => {
-      const data = { status: nextStatus };
+      const extra = {};
       if (nextStatus === "concluido") {
-        const agora = new Date().toISOString();
-        data.data_conclusao = agora;
-        data.concluido_por_id = user?.id;
-        data.concluido_por_nome = user?.full_name || user?.email;
+        extra.data_conclusao = new Date().toISOString();
+        extra.concluido_por_id = user?.id;
+        extra.concluido_por_nome = user?.full_name || user?.email;
       }
-      return base44.entities.PedidoInterno.update(pedido.id, data);
+      const res = await base44.functions.invoke("transicionarStatusPedido", {
+        pedido_id: pedido.id,
+        from_status: pedido.status,
+        to_status: nextStatus,
+        extra,
+      });
+      return res.data;
     },
     onSuccess: () => { toast.success("Status atualizado!"); queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] }); },
-    onError: () => toast.error("Erro ao atualizar status"),
+    onError: (error) => {
+      const detail = error?.response?.data || error?.data;
+      if (detail?.conflict) {
+        toast.error("Este pedido foi alterado por outro usuário. Recarregando lista...");
+        queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
+      } else {
+        toast.error("Erro ao atualizar status");
+      }
+    },
   });
 
   return (

@@ -186,4 +186,25 @@ export function parseUTCDate(isoUtc) {
   return isNaN(d.getTime()) ? null : d;
 }
 
+/**
+ * Verifica se uma data date-only ("YYYY-MM-DD") já passou, comparando
+ * DIAS CALENDÁRIO no fuso local (evita o bug de parse UTC que marcava
+ * "vencido" a partir das 21h do dia anterior em BRT).
+ * @param {string|null} dateOnly
+ * @returns {boolean}
+ */
+export function isDateOnlyPast(dateOnly) {
+  if (!dateOnly) return false;
+  const s = String(dateOnly).trim().slice(0, 10);
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) {
+    const d = new Date(dateOnly);
+    return !isNaN(d.getTime()) && d.getTime() < Date.now();
+  }
+  const target = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return target.getTime() < today.getTime();
+}
+
 export { TIMEZONE };

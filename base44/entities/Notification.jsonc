@@ -4,7 +4,7 @@
   "properties": {
     "user_id": {
       "type": "string",
-      "description": "ID do usuário destinatário"
+      "description": "ID do usu\u00e1rio destinat\u00e1rio"
     },
     "workshop_id": {
       "type": "string",
@@ -35,17 +35,19 @@
         "meta_nacional_colaborador",
         "config_preferencias",
         "alerta_seguranca",
-        "novo_comentario"
+        "novo_comentario",
+        "pedido_interno_criado",
+        "pedido_interno"
       ],
-      "description": "Tipo de notificação"
+      "description": "Tipo de notifica\u00e7\u00e3o"
     },
     "title": {
       "type": "string",
-      "description": "Título da notificação"
+      "description": "T\u00edtulo da notifica\u00e7\u00e3o"
     },
     "message": {
       "type": "string",
-      "description": "Mensagem da notificação"
+      "description": "Mensagem da notifica\u00e7\u00e3o"
     },
     "is_read": {
       "type": "boolean",
@@ -59,7 +61,7 @@
     },
     "metadata": {
       "type": "object",
-      "description": "Dados adicionais da notificação ou preferências do usuário"
+      "description": "Dados adicionais da notifica\u00e7\u00e3o ou prefer\u00eancias do usu\u00e1rio"
     }
   },
   "required": [

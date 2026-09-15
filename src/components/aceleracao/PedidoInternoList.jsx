@@ -8,6 +8,7 @@ import {
   ArrowDown, Minus, ArrowUp, AlertOctagon,
 } from "lucide-react";
 import { PEDIDO_STATUS_CONFIG } from "@/components/shared/backlogConstants";
+import { isDateOnlyPast } from "@/utils/timezone";
 import useEmployeeResolver from "@/hooks/useEmployeeResolver";
 
 /* ── Grid — colunas compactadas (~15% menos espaço), Pedido respira mais ── */
@@ -78,7 +79,7 @@ function formatCreatedAt(d) {
 
 function isOverdue(p) {
   if (!p.prazo || ["concluido","recusado"].includes(p.status)) return false;
-  return new Date(p.prazo) < new Date();
+  return isDateOnlyPast(p.prazo);
 }
 
 /* ── Avatar (componente reutilizável) ───────────────────────────────────── */
