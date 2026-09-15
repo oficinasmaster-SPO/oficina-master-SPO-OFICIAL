@@ -133,10 +133,14 @@ export default function PedidosInternosTab({ workshopId, user }) {
 
   const freshSelected = useMemo(() => {
     if (!selectedPedido) return null;
-    // BUG-02: sem fallback para o snapshot — se o pedido sumir da lista,
+    const found = pedidos.find((p) => p.id === selectedPedido.id);
+    if (found) return found;
+    // QA: transição de query (troca de lote/queryKey) deixa a lista vazia em
+    // loading — preserva o snapshot para o modal não piscar fechado/aberto.
+    // BUG-02 segue intacto: se o pedido sumir de verdade (lista carregada),
     // freshSelected é null e o efeito abaixo fecha o Detail (sem fantasma).
-    return pedidos.find((p) => p.id === selectedPedido.id) || null;
-  }, [selectedPedido, pedidos]);
+    return isLoading ? selectedPedido : null;
+  }, [selectedPedido, pedidos, isLoading]);
 
   // BUG-02: lista carregada sem erro + pedido selecionado desaparecido
   // (excluído por outro usuário) → fecha o Detail e informa o usuário.

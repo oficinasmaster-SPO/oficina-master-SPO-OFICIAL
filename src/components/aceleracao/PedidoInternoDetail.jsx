@@ -152,7 +152,10 @@ export default function PedidoInternoDetail({
 
   // ── Formatação de Anexos para a nova AttachmentGallery ─────────────────
   const medias = pedido?.midias_anexas || [];
-  const arquivosFormatados = medias.map((media, index) => {
+  // QA: anexo privado (file_uri) só entra na galeria quando a signed URL já
+  // chegou — antes disso o URI cru quebrava a renderização (flicker de anexo).
+  const mediasVisiveis = medias.filter((m) => !m.privado || !!signedUrls[m.url]);
+  const arquivosFormatados = mediasVisiveis.map((media, index) => {
     // Nova inteligência: Tenta extrair do NOME primeiro (mais confiável), depois da URL
     const extNome = media.nome?.split('.').pop()?.toLowerCase();
     const extUrl = media.url?.split('.').pop()?.split('?')[0]?.toLowerCase();
