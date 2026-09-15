@@ -50,7 +50,7 @@ export default function PedidoInternoForm({ pedido, user, usuarios: usuariosProp
 
   // Busca workshops internamente se não recebeu como prop
   const { data: workshopsInternal = [] } = useQuery({
-    queryKey: ['workshops-pedido-interno'],
+    queryKey: ['workshops-pedido-form'],
     queryFn: async () => {
       const all = await base44.entities.Workshop.list();
       return all || [];

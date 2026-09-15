@@ -7,7 +7,6 @@ import NovoTarefaModal from "./NovoTarefaModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
-import PedidoInternoForm from "./PedidoInternoForm";
 import NovoPedidoModal from "./NovoPedidoModal";
 import BacklogBoard from "./BacklogBoard";
 import PedidoInternoModal from "./PedidoInternoModal";

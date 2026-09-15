@@ -343,6 +343,13 @@ export default function NovoPedidoModal({ user, onClose }) {
     return () => clearTimeout(t);
   }, []);
 
+  /* ── Lock do scroll de fundo enquanto o modal estiver aberto ─────────── */
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
   /* ── Esc to close ────────────────────────────────────────────────────── */
   useEffect(() => {
     const h = (e) => { if (e.key === "Escape" && !e.defaultPrevented) safeClose(); };

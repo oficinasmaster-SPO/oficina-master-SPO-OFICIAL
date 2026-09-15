@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { 
   FileText, FileImage, FileSpreadsheet, FileArchive, 
   FileAudio, FileVideo, File, Link as LinkIcon, 
@@ -281,7 +282,7 @@ function FileViewerDrawer({ files, currentIndex, onClose, onChangeIndex }) {
     currentFile.name?.toLowerCase().endsWith('.pdf');
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[20002] flex justify-end bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="w-full max-w-4xl bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right-8 duration-300">
         
         {/* Header do Drawer */}
@@ -385,13 +386,14 @@ export default function AttachmentGallery({ files = [] }) {
 
   return (
     <div className="w-full text-sm">
-      {preview.isOpen && (
+      {preview.isOpen && createPortal(
         <FileViewerDrawer 
           files={preview.list} 
           currentIndex={preview.currentIndex} 
           onChangeIndex={(idx) => setPreview(prev => ({ ...prev, currentIndex: idx }))}
           onClose={() => setPreview({ isOpen: false, list: [], currentIndex: null })} 
-        />
+        />,
+        document.body
       )}
 
       <div className="flex items-center gap-2 py-3 border-b border-gray-200/70 mb-4">

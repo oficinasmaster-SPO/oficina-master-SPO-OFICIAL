@@ -132,13 +132,59 @@ export default function PedidoInternoDetail({
     };
   });
 
+  // Invalida tudo que muda com uma transição de status: lista, tarefas do
+  // pedido, timeline (ActivityLog) e board de tarefas. Workflows geram
+  // ActivityLog/tarefa de forma assíncrona — re-invalida após 2s.
+  const invalidatePedidoContext = () => {
+    queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
+    queryClient.invalidateQueries({ queryKey: ["tarefas-pedido", pedido.id] });
+    queryClient.invalidateQueries({ queryKey: ["activityLogs", "pedido_interno", pedido.id] });
+    queryClient.invalidateQueries({ queryKey: ["tarefas-backlog"] });
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ["tarefas-pedido", pedido.id] });
+      queryClient.invalidateQueries({ queryKey: ["activityLogs", "pedido_interno", pedido.id] });
+      queryClient.invalidateQueries({ queryKey: ["tarefas-backlog"] });
+    }, 2000);
+  };
+
+  const escapeHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  // Impressão em janela dedicada — o CSS global de print oculta [role=dialog],
+  // o que tornava window.print() dentro do modal uma página em branco.
+  const handlePrint = () => {
+    const linha = (campo, valor) => `<tr><th style="text-align:left;padding:6px 10px;background:#f3f4f6;width:160px;">${campo}</th><td style="padding:6px 10px;">${escapeHtml(valor)}</td></tr>`;
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Pedido ${escapeHtml(pedido.codigo || pedido.id)}</title>
+<style>body{font-family:Arial,sans-serif;padding:24px;color:#111}h1{font-size:18px;margin:0}table{border-collapse:collapse;width:100%;border:1px solid #d1d5db;margin:12px 0}th,td{border:1px solid #d1d5db;vertical-align:top;text-align:left}h2{font-size:12px;text-transform:uppercase;color:#555;margin:16px 0 4px}pre{white-space:pre-wrap;font-family:inherit;margin:0}</style></head><body>
+<h1>Pedido Interno ${escapeHtml(pedido.codigo || `#${pedido.id?.slice(-6)}`)}</h1>
+<table>
+${linha("Título", pedido.titulo)}
+${linha("Status", PEDIDO_STATUS_CONFIG[pedido.status]?.label || pedido.status)}
+${linha("Cliente", pedido.workshop_nome)}
+${linha("Solicitante", requesterName)}
+${linha("Responsável", assigneeName)}
+${linha("Categoria", TIPO_PEDIDO_LABELS[pedido.tipo] || pedido.tipo)}
+${linha("Prioridade", pedido.prioridade)}
+${linha("Prazo", prazoFmt)}
+${linha("Criado em", criadoFmt)}
+</table>
+${pedido.descricao ? `<h2>Descrição</h2><pre>${escapeHtml(pedido.descricao)}</pre>` : ""}
+${pedido.resposta ? `<h2>${pedido.status === "recusado" ? "Motivo da Recusa" : "Resposta Oficial"}</h2><pre>${escapeHtml(pedido.resposta)}</pre>` : ""}
+</body></html>`;
+    const w = window.open("", "_blank", "width=800,height=900");
+    if (!w) { toast.error("Permita pop-ups para imprimir o pedido."); return; }
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    w.print();
+  };
+
   const recusarMutation = useMutation({
     mutationFn: async () => base44.functions.invoke("transicionarStatusPedido", {
       pedido_id: pedido.id,
       from_status: pedido.status,
       to_status: "recusado",
     }),
-    onSuccess: () => { toast.success("Pedido recusado."); queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] }); onSuccess?.(); },
+    onSuccess: () => { toast.success("Pedido recusado."); invalidatePedidoContext(); onSuccess?.(); },
     onError: (error) => {
       const detail = error?.response?.data || error?.data;
       if (detail?.conflict) {
@@ -170,7 +216,7 @@ export default function PedidoInternoDetail({
       });
       return res.data;
     },
-    onSuccess: () => { toast.success("Status atualizado!"); queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] }); },
+    onSuccess: () => { toast.success("Status atualizado!"); invalidatePedidoContext(); },
     onError: (error) => {
       const detail = error?.response?.data || error?.data;
       if (detail?.conflict) {
@@ -384,7 +430,7 @@ export default function PedidoInternoDetail({
       {/* ── FOOTER ────────────────────────────────────────────────────── */}
       <div className="flex shrink-0 items-center justify-between gap-2 border-t border-gray-200 bg-gray-50 px-5 py-2">
         <div className="flex items-center gap-1.5">
-          <Button variant="ghost" size="sm" onClick={() => window.print()} className="h-7 gap-1 px-2 text-xs text-gray-400">
+          <Button variant="ghost" size="sm" onClick={handlePrint} className="h-7 gap-1 px-2 text-xs text-gray-400">
             <Printer className="h-3 w-3" /> Imprimir
           </Button>
         </div>

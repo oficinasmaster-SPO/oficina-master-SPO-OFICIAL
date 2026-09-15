@@ -504,7 +504,7 @@ export function CommentInput({ entityType, entityId, workshopId, parentCommentId
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSubmit(); }
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && !createMutation.isPending) { e.preventDefault(); handleSubmit(); }
     if (e.key === "Escape" && onCancel) { onCancel(); }
   };
 
