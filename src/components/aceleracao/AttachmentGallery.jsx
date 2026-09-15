@@ -157,6 +157,17 @@ function PdfViewer({ url, name = "documento.pdf" }) {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
   const containerRef = useRef(null);
 
+  // QA: reseta o estado ao trocar de arquivo (navegação prev/next na galeria).
+  // Sem isso, a página/zoom/rotação do PDF anterior persistiam e o <Page>
+  // renderizava com pageNumber acima do numPages do novo documento → flash
+  // de "Falha ao carregar" antes do onLoadSuccess corrigir.
+  useEffect(() => {
+    setNumPages(null);
+    setPageNumber(1);
+    setScale(1.0);
+    setRotate(0);
+  }, [url]);
+
   function onDocumentLoadSuccess({ numPages }) {
     setNumPages(numPages);
     setPageNumber(1);
