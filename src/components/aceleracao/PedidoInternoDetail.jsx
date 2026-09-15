@@ -111,7 +111,7 @@ export default function PedidoInternoDetail({
 
   // ── Formatação de Anexos para a nova AttachmentGallery ─────────────────
   const medias = pedido?.midias_anexas || [];
-  const arquivosFormatados = medias.map(media => {
+  const arquivosFormatados = medias.map((media, index) => {
     // Nova inteligência: Tenta extrair do NOME primeiro (mais confiável), depois da URL
     const extNome = media.nome?.split('.').pop()?.toLowerCase();
     const extUrl = media.url?.split('.').pop()?.split('?')[0]?.toLowerCase();
@@ -120,7 +120,7 @@ export default function PedidoInternoDetail({
     const validExtNome = extNome?.length <= 4 ? extNome : null;
 
     return {
-      id: media.id || Math.random().toString(),
+      id: media.id || `${index}-${media.url || media.nome}`,
       url: media.url,
       name: media.nome,
       type: media.type === "imagem" ? "image" : media.type === "link" ? "link" : "document",
@@ -330,8 +330,8 @@ ${pedido.resposta ? `<h2>${pedido.status === "recusado" ? "Motivo da Recusa" : "
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-3 space-y-3">
             {pedido.descricao && (
               <div className="rounded-lg border border-[#e6e6a3] bg-[#FFFF99]/30 p-3">
-                <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-[#999933]">Descrição</p>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#b3b34d]">{pedido.descricao}</p>
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-[#8a8a2e]">Descrição</p>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#6b6b23]">{pedido.descricao}</p>
               </div>
             )}
             <ActivityFeed

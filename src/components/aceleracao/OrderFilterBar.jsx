@@ -54,7 +54,8 @@ export default function OrderFilterBar({
           )}
           {search && (
             <button
-              onClick={clearFilters}
+              aria-label="Limpar busca"
+              onClick={() => setSearch("")}
               className="text-gray-400 hover:text-gray-700 hover:bg-[hsl(var(--row-hover))] text-[12.5px] rounded"
             >
               <X className="h-3.5 w-3.5" />

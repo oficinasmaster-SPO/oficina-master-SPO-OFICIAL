@@ -32,8 +32,13 @@ export default function PedidosInternosTab({ workshopId, user }) {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "/" && !["INPUT", "TEXTAREA"].includes(e.target.tagName)) {
-        e.preventDefault();
-        searchInputRef.current?.focus();
+        // GUARD: as abas usam forceMount, então o input existe mesmo invisível.
+        // Só foca se estiver fisicamente visível na tela (aba ativa).
+        const input = searchInputRef.current;
+        if (input && input.offsetParent !== null) {
+          e.preventDefault();
+          input.focus();
+        }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -113,7 +118,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
     queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
   }, [queryClient]);
 
-  const clearFilters = () => {setSearch("");setStatusFilter("all");};
+  const clearFilters = () => {setSearch("");setStatusFilter("all");setScope("todos");};
   const [showNovoTarefaModal, setShowNovoTarefaModal] = useState(false);
 
   return (
@@ -123,6 +128,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
       <PedidoInternoModal open={!!selectedPedido} onClose={() => setSelectedPedido(null)} size="wide">
         {freshSelected &&
         <PedidoInternoDetail
+          key={freshSelected.id}
           pedido={freshSelected}
           user={user}
           onCancel={() => setSelectedPedido(null)}
