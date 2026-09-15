@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -42,7 +42,8 @@ function StatusPill({ status }) {
 import Avatar from "@/components/ui/Avatar";
 
 function InfoField({ label, icon: Icon, children, className = "" }) {
-  if (!children) return null;
+  // Preserva 0, false e 0.0 — só some com null/undefined/"" de verdade
+  if (children === null || children === undefined || children === "") return null;
   return (
     <div className={`flex items-start gap-2 ${className}`}>
       {Icon && <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" />}
@@ -67,10 +68,20 @@ export default function PedidoInternoDetail({
 }) {
   const queryClient = useQueryClient();
   const { getName, getPhoto } = useEmployeeResolver();
+  // Ref do delay de invalidação assíncrona — cancelado no unmount
+  const timeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   // Navegação por setas do teclado
   useEffect(() => {
     const handleKey = (e) => {
+      // Não navegar com setas enquanto o usuário digita
+      if (["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName) || document.activeElement?.isContentEditable) return;
       if (e.key === "ArrowUp" && onNavigate) onNavigate("prev");
       if (e.key === "ArrowDown" && onNavigate) onNavigate("next");
     };
@@ -78,7 +89,11 @@ export default function PedidoInternoDetail({
     return () => document.removeEventListener("keydown", handleKey);
   }, [onNavigate]);
 
-  const { data: tarefas = [] } = useQuery({
+  const {
+    data: tarefas = [],
+    isLoading: loadingTarefas,
+    isError: errorTarefas,
+  } = useQuery({
     queryKey: ["tarefas-pedido", pedido.id],
     queryFn: async () => {
       const r = await base44.entities.TarefaBacklog.filter(
@@ -92,7 +107,8 @@ export default function PedidoInternoDetail({
   const isReadOnly = ["concluido", "recusado"].includes(pedido.status);
   const isInternal = user?.user_type === "internal" || user?.data?.user_type === "internal";
   const canRespond = user?.id === pedido.assignee_id || user?.role === "admin" || isInternal;
-  const canEdit    = canRespond;
+  // Editar exige permissão de resposta E pedido não finalizado
+  const canEdit    = canRespond && !isReadOnly;
 
   const criadoEm  = pedido.created_date || pedido.data_criacao;
   const criadoFmt = criadoEm ? format(new Date(criadoEm), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "—";
@@ -142,7 +158,7 @@ export default function PedidoInternoDetail({
     queryClient.invalidateQueries({ queryKey: ["tarefas-pedido", pedido.id] });
     queryClient.invalidateQueries({ queryKey: ["activityLogs", "pedido_interno", pedido.id] });
     queryClient.invalidateQueries({ queryKey: ["tarefas-backlog"] });
-    setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       queryClient.invalidateQueries({ queryKey: ["tarefas-pedido", pedido.id] });
       queryClient.invalidateQueries({ queryKey: ["activityLogs", "pedido_interno", pedido.id] });
       queryClient.invalidateQueries({ queryKey: ["tarefas-backlog"] });
@@ -177,7 +193,8 @@ ${pedido.resposta ? `<h2>${pedido.status === "recusado" ? "Motivo da Recusa" : "
     w.document.write(html);
     w.document.close();
     w.focus();
-    w.print();
+    // Respiro de 250ms para o browser pintar o HTML antes de abrir a caixa de impressão (Safari/Chrome)
+    setTimeout(() => w.print(), 250);
   };
 
   const recusarMutation = useMutation({
@@ -414,7 +431,11 @@ ${pedido.resposta ? `<h2>${pedido.status === "recusado" ? "Motivo da Recusa" : "
                 <span className="text-[10px] text-gray-500">{done}/{tarefas.length}</span>
               </div>
             )}
-            {tarefas.length === 0 ? (
+            {loadingTarefas ? (
+              <p className="text-xs text-gray-400 italic">Carregando tarefas...</p>
+            ) : errorTarefas ? (
+              <p className="text-xs text-red-500 italic">Não foi possível carregar as tarefas.</p>
+            ) : tarefas.length === 0 ? (
               <p className="text-xs text-gray-400 italic">Nenhuma tarefa gerada</p>
             ) : (
               <div className="space-y-1.5">
