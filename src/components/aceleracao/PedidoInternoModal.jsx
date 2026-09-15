@@ -1,8 +1,10 @@
 import React from "react";
 import { X } from "lucide-react";
 import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import useModalScrollLock from "@/hooks/useModalScrollLock";
 
 export default function PedidoInternoModal({ open, onClose, children, size = "default" }) {
+  useModalScrollLock(open);
   const sizeClass = size === "wide"
     ? "max-w-6xl h-[90vh]"
     : "max-w-3xl max-h-[92dvh]";

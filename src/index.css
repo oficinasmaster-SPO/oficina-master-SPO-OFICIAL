@@ -143,6 +143,15 @@ html:has(body[data-scroll-locked]) {
   overflow: hidden;
 }
 
+/* Aplicada por useModalScrollLock enquanto um modal Radix está aberto.
+   `!important` é necessário para vencer o padding/margin inline que o
+   react-remove-scroll escreve no <body> — com o gutter já reservado, essa
+   compensação é justamente o salto. */
+body.modal-no-shift {
+  padding-right: 0 !important;
+  margin-right: 0 !important;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
