@@ -89,23 +89,41 @@
   content: "";
   position: absolute;
   top: 0;
-  /* Começa fora da tela à esquerda */
-  left: -150%;
-  /* Mais largo que o botão para o ângulo de 45deg não cortar as pontas */
-  width: 150%;
+  left: 0;
+  width: 60%;
   height: 100%;
   background: linear-gradient(
-    45deg,
-    transparent 20%,
-    rgba(255, 255, 255, 0) 25%,
-    rgba(255, 255, 255, 0.45) 40%, /* RAIO MAIOR: Mais largo e mais brilhante */
-    rgba(255, 255, 255, 0) 45%,    /* GAP: Espaço escuro/transparente entre os raios */
-    rgba(255, 255, 255, 0.25) 48%, /* RAIO MENOR: Mais fino e um pouco mais fosco */
-    rgba(255, 255, 255, 0) 52%,
-    transparent 100%
+    105deg,
+    rgba(255, 255, 255, 0)     0%,
+    rgba(255, 255, 255, 0.45)  40%,
+    rgba(255, 255, 255, 0)     45%,
+    rgba(255, 255, 255, 0.25)  48%,
+    rgba(255, 255, 255, 0)     100%
   );
-  /* A animação dura 3s, mas configuramos os keyframes para ela passar rápido e dar uma pausa */
-  animation: step-shimmer-glass 3s infinite;
+  animation: step-shimmer-glass 3s linear infinite;
+}
+
+@keyframes step-shimmer-glass {
+  0% {
+    transform: translateX(-180%) skewX(-15deg);
+    opacity: 1;
+  }
+  33.33% {
+    transform: translateX(250%) skewX(-15deg);
+    opacity: 1;
+  }
+  33.34% {
+    transform: translateX(-180%) skewX(-15deg);
+    opacity: 0;
+  }
+  99.99% {
+    transform: translateX(-180%) skewX(-15deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(-180%) skewX(-15deg);
+    opacity: 1;
+  }
 }
 
 @keyframes step-shimmer-glass {
