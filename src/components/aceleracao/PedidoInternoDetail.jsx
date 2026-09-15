@@ -100,6 +100,8 @@ export default function PedidoInternoDetail({
   const prazoParsed = safeDateOnlyParse(pedido.prazo);
   const prazoFmt  = prazoParsed ? format(prazoParsed, "dd/MM/yyyy", { locale: ptBR }) : null;
   const isVencido = !isReadOnly && isDateOnlyPast(pedido.prazo);
+  // Tempo decorrido desde o PRAZO (não desde a criação) — usado no label "Vencido há".
+  const vencidoLabel = prazoParsed ? formatDistanceToNow(prazoParsed, { locale: ptBR }) : slaLabel;
 
   // Nomes resolvidos
   const requesterName = getName(pedido.requester_id, pedido.requester_name);
@@ -186,9 +188,12 @@ ${pedido.resposta ? `<h2>${pedido.status === "recusado" ? "Motivo da Recusa" : "
     }),
     onSuccess: () => { toast.success("Pedido recusado."); invalidatePedidoContext(); onSuccess?.(); },
     onError: (error) => {
-      const detail = error?.response?.data || error?.data;
-      if (detail?.conflict) {
-        toast.error("Este pedido foi alterado por outro usuário. Recarregando lista...");
+      // Parse resiliente do 409: flag conflict no body OU palavra-chave na mensagem do SDK
+      const isConflict = error?.response?.data?.conflict ||
+                        error?.data?.conflict ||
+                        error?.message?.toLowerCase().includes("status atual");
+      if (isConflict) {
+        toast.error("O status deste pedido já foi alterado por outra pessoa. A tela foi recarregada.");
         queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
       } else {
         toast.error("Erro ao recusar");
@@ -218,9 +223,11 @@ ${pedido.resposta ? `<h2>${pedido.status === "recusado" ? "Motivo da Recusa" : "
     },
     onSuccess: () => { toast.success("Status atualizado!"); invalidatePedidoContext(); },
     onError: (error) => {
-      const detail = error?.response?.data || error?.data;
-      if (detail?.conflict) {
-        toast.error("Este pedido foi alterado por outro usuário. Recarregando lista...");
+      const isConflict = error?.response?.data?.conflict ||
+                        error?.data?.conflict ||
+                        error?.message?.toLowerCase().includes("status atual");
+      if (isConflict) {
+        toast.error("O status deste pedido já foi alterado por outra pessoa. A tela foi recarregada.");
         queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
       } else {
         toast.error("Erro ao atualizar status");
@@ -306,7 +313,7 @@ ${pedido.resposta ? `<h2>${pedido.status === "recusado" ? "Motivo da Recusa" : "
             <>
               <span className="h-3 w-px bg-gray-200" />
               <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${isVencido ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"}`}>
-                {isVencido ? `Vencido há ${slaLabel}` : `Aberto há ${slaLabel}`}
+                {isVencido ? `Vencido há ${vencidoLabel}` : `Aberto há ${slaLabel}`}
               </span>
             </>
           )}

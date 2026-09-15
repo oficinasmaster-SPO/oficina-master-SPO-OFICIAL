@@ -27,6 +27,11 @@ export default function OrderFilterBar({
   filteredPedidos = []
 }) {
   const ASSIGNEE_OPTIONS = [{ value: "all", label: "Todo responsável" }, ...assigneeOptions];
+
+  // Algum filtro fora do padrão? (escopo padrão é "todos", os demais "all")
+  const isFilterActive = search !== "" || scope !== "todos" ||
+    statusFilter !== "all" || priorityFilter !== "all" ||
+    tipoFilter !== "all" || assigneeFilter !== "all";
   return (
     <div className="flex items-center gap-3 px-6 py-1.5 bg-gray-50/50 border-t border-[hsl(var(--border-subtle))] shrink-0">
 
@@ -103,6 +108,17 @@ export default function OrderFilterBar({
           )}
         </div>
       </div>
+
+      {/* BOTÃO LIMPAR — só aparece com filtros ativos */}
+      {isFilterActive && (
+        <button
+          onClick={clearFilters}
+          className="px-2.5 h-8 text-[12px] font-medium text-gray-500 hover:text-gray-800 hover:bg-[hsl(var(--row-hover))] rounded-md transition-colors flex items-center gap-1 shrink-0"
+        >
+          <X className="h-3 w-3" />
+          Limpar filtros
+        </button>
+      )}
 
       <div className="flex-1" />
 
