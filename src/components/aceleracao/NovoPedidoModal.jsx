@@ -9,7 +9,7 @@ import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  ArrowLeft, X, Plus, Upload, Link2, Image as ImageIcon,
+  ArrowLeft, X, Plus, Upload, Link2,
   FileText, Loader2,
 } from "lucide-react";
 import {
@@ -22,7 +22,6 @@ import Combobox from "@/components/ui/combobox";
    ═══════════════════════════════════════════════════════════════════════════ */
 const ring = "focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none";
 const inputBase = `w-full h-10 px-3 rounded-[10px] border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 transition-all ${ring}`;
-const selectBase = `${inputBase} appearance-none pr-9 cursor-pointer`;
 const textareaBase = `w-full px-3 py-2.5 rounded-[10px] border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 resize-y min-h-[96px] transition-all ${ring}`;
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -41,7 +40,6 @@ function Lbl({ children, required }) {
 
 /* ── Dropzone ──────────────────────────────────────────────────────────── */
 function Dropzone({ onFiles, uploading }) {
-  const ref = useRef(null);
   const inputRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
 
@@ -53,7 +51,6 @@ function Dropzone({ onFiles, uploading }) {
 
   return (
     <div
-      ref={ref}
       onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
       onDragLeave={() => setDragOver(false)}
       onDrop={handleDrop}
@@ -93,8 +90,17 @@ function LinkInput({ onAdd }) {
   const [val, setVal] = useState("");
   const add = () => {
     if (!val.trim()) return;
-    onAdd(val.trim());
-    setVal("");
+    try {
+      const parsed = new URL(val.trim());
+      if (!["http:", "https:"].includes(parsed.protocol)) {
+        toast.error("Use apenas URLs com http:// ou https://");
+        return;
+      }
+      onAdd(parsed.href);
+      setVal("");
+    } catch {
+      toast.error("URL inválida. Exemplo: https://exemplo.com");
+    }
   };
   return (
     <div className="flex gap-2 mt-2">
@@ -136,6 +142,7 @@ function AttachmentList({ items, onRemove }) {
           <span className="max-w-[120px] truncate text-gray-700">{m.nome}</span>
           <button
             type="button"
+            aria-label={`Remover ${m.nome}`}
             onClick={() => onRemove(i)}
             className="ml-1 flex h-4 w-4 items-center justify-center rounded-full text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-100 hover:text-red-600"
           >
@@ -213,18 +220,65 @@ export default function NovoPedidoModal({ user, onClose }) {
   });
 
   const handleSubmit = () => {
+    if (uploading) return toast.error("Aguarde o término dos uploads antes de criar o pedido.");
+    if (!user?.id) return toast.error("Usuário não identificado. Recarregue a página.");
     if (!form.titulo.trim())     return toast.error("Preencha o título do pedido");
     if (!form.assignee_id)       return toast.error("Selecione o responsável");
     if (!form.prazo)             return toast.error("Defina o prazo");
+    const today = new Date().toISOString().split("T")[0];
+    if (form.prazo < today) return toast.error("O prazo não pode ser uma data no passado.");
     createMutation.mutate();
   };
 
+  // safeClose — bloqueia fechamento durante operações e pede confirmação
+  // antes de descartar dados preenchidos (Fixes 4 e 12).
+  const safeClose = useCallback(() => {
+    if (uploading || createMutation.isPending) return;
+    const hasData = form.titulo.trim() !== "" ||
+                    form.descricao.trim() !== "" ||
+                    form.prazo !== "" ||
+                    form.midias_anexas.length > 0;
+    if (hasData && !window.confirm("Descartar alterações não salvas?")) return;
+    onClose();
+  }, [uploading, createMutation.isPending, form, onClose]);
+
   /* ── File upload ─────────────────────────────────────────────────────── */
   const handleFiles = async (files) => {
+    if (uploading) {
+      toast.error("Aguarde o upload atual terminar antes de enviar novos arquivos.");
+      return;
+    }
+
+    const MAX_SIZE_MB = 10;
+    const MAX_SIZE = MAX_SIZE_MB * 1024 * 1024;
+    const ALLOWED_TYPES = [
+      "image/jpeg", "image/png", "image/webp", "image/gif",
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "text/plain",
+    ];
+
+    const validFiles = [];
+    for (const file of files) {
+      if (file.size > MAX_SIZE) {
+        toast.error(`"${file.name}" excede ${MAX_SIZE_MB}MB e foi ignorado.`);
+        continue;
+      }
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        toast.error(`"${file.name}" — tipo de arquivo não permitido.`);
+        continue;
+      }
+      validFiles.push(file);
+    }
+    if (validFiles.length === 0) return;
+
     setUploading(true);
     try {
       const uploadedItems = [];
-      for (const file of files) {
+      for (const file of validFiles) {
         const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
         uploadedItems.push({
           type: file.type.startsWith("image/") ? "imagem" : "arquivo",
@@ -234,7 +288,7 @@ export default function NovoPedidoModal({ user, onClose }) {
         });
       }
       setForm(f => ({ ...f, midias_anexas: [...f.midias_anexas, ...uploadedItems] }));
-      toast.success(`${files.length} arquivo(s) enviado(s)`);
+      toast.success(`${validFiles.length} arquivo(s) enviado(s)`);
     } catch {
       toast.error("Erro ao fazer upload");
     } finally {
@@ -288,23 +342,17 @@ export default function NovoPedidoModal({ user, onClose }) {
 
   /* ── Esc to close ────────────────────────────────────────────────────── */
   useEffect(() => {
-    const h = (e) => { if (e.key === "Escape" && !e.defaultPrevented) onClose(); };
+    const h = (e) => { if (e.key === "Escape" && !e.defaultPrevented) safeClose(); };
     document.addEventListener("keydown", h);
     return () => document.removeEventListener("keydown", h);
-  }, [onClose]);
-
-  // Backdrop só fecha se o formulário estiver vazio — evita perda de dados por clique acidental
-  const hasFormData = form.titulo.trim() !== "" ||
-                      form.descricao.trim() !== "" ||
-                      form.prazo !== "" ||
-                      form.midias_anexas.length > 0;
+  }, [safeClose]);
 
   return createPortal(
     <div
       className="fixed inset-0 z-50 grid place-items-center p-4"
       style={{ background: "rgba(26,28,43,0.42)", backdropFilter: "blur(4px)" }}
       onClick={(e) => {
-        if (e.target === e.currentTarget && !hasFormData) onClose();
+        if (e.target === e.currentTarget) safeClose();
       }}
     >
       {/* ── Dialog ──────────────────────────────────────────────────────── */}
@@ -320,7 +368,7 @@ export default function NovoPedidoModal({ user, onClose }) {
         <div className="flex shrink-0 items-center justify-between border-b border-gray-200 px-[22px] py-[14px]">
           <div className="flex items-center gap-2.5">
             <button
-              onClick={onClose}
+              onClick={safeClose}
               className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
               aria-label="Voltar"
             >
@@ -334,7 +382,7 @@ export default function NovoPedidoModal({ user, onClose }) {
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={safeClose}
             className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
             aria-label="Fechar"
           >
@@ -375,6 +423,7 @@ export default function NovoPedidoModal({ user, onClose }) {
           <label className="block">
             <Lbl required>Título do Pedido</Lbl>
             <input
+              ref={firstFieldRef}
               value={form.titulo}
               onChange={(e) => set("titulo", e.target.value)}
               placeholder="Ex: Solicitar aprovação de desconto especial"
@@ -467,7 +516,7 @@ export default function NovoPedidoModal({ user, onClose }) {
         <div className="flex shrink-0 items-center justify-end gap-2.5 border-t border-gray-200 bg-gray-50/50 px-[22px] py-[14px]">
           <button
             type="button"
-            onClick={onClose}
+            onClick={safeClose}
             className="flex h-10 items-center gap-2 rounded-[10px] border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
           >
             Cancelar
@@ -475,7 +524,7 @@ export default function NovoPedidoModal({ user, onClose }) {
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={createMutation.isPending}
+            disabled={createMutation.isPending || uploading || !user?.id}
             className="flex h-10 items-center gap-2 rounded-[10px] bg-blue-600 px-5 text-sm font-semibold text-white shadow-[0_6px_16px_-6px_rgba(37,99,235,0.5)] transition-all hover:bg-blue-700 disabled:opacity-60"
           >
             {createMutation.isPending ? (
