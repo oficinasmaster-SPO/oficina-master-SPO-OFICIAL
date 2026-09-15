@@ -140,6 +140,12 @@ export default function Combobox({
 
   function handleKeyDown(e) {
     if (e.key === "Escape") {
+      // Esc fechando o dropdown NÃO deve borbulhar para o document
+      // (fecharia modais/dialogs hospedeiros, ex.: NovoPedidoModal).
+      if (open) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
       closeDropdown();
       inputRef.current?.blur();
     }

@@ -179,11 +179,16 @@ export default function NovoPedidoModal({ user, onClose }) {
       const r = await base44.entities.Employee.filter({ user_type: "internal" }, "full_name", 200);
       return (r || []).filter(e => e.full_name && e.user_id);
     },
+    staleTime: 5 * 60 * 1000,
+    retry: false,
   });
 
   const { data: workshops = [] } = useQuery({
     queryKey: ["workshops-pedido-interno"],
-    queryFn: async () => (await base44.entities.Workshop.list()) || [],
+    queryFn: async () =>
+      (await base44.entities.Workshop.filter({ status: "ativo" }, "name", 150)) || [],
+    staleTime: 5 * 60 * 1000,
+    retry: false,
   });
 
   /* ── Submit ──────────────────────────────────────────────────────────── */
@@ -218,17 +223,17 @@ export default function NovoPedidoModal({ user, onClose }) {
   const handleFiles = async (files) => {
     setUploading(true);
     try {
-      const newMedias = [...form.midias_anexas];
+      const uploadedItems = [];
       for (const file of files) {
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
-        newMedias.push({
+        const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+        uploadedItems.push({
           type: file.type.startsWith("image/") ? "imagem" : "arquivo",
           url: file_url,
           nome: file.name,
           uploaded_at: new Date().toISOString(),
         });
       }
-      set("midias_anexas", newMedias);
+      setForm(f => ({ ...f, midias_anexas: [...f.midias_anexas, ...uploadedItems] }));
       toast.success(`${files.length} arquivo(s) enviado(s)`);
     } catch {
       toast.error("Erro ao fazer upload");
@@ -283,16 +288,24 @@ export default function NovoPedidoModal({ user, onClose }) {
 
   /* ── Esc to close ────────────────────────────────────────────────────── */
   useEffect(() => {
-    const h = (e) => { if (e.key === "Escape") onClose(); };
+    const h = (e) => { if (e.key === "Escape" && !e.defaultPrevented) onClose(); };
     document.addEventListener("keydown", h);
     return () => document.removeEventListener("keydown", h);
   }, [onClose]);
+
+  // Backdrop só fecha se o formulário estiver vazio — evita perda de dados por clique acidental
+  const hasFormData = form.titulo.trim() !== "" ||
+                      form.descricao.trim() !== "" ||
+                      form.prazo !== "" ||
+                      form.midias_anexas.length > 0;
 
   return createPortal(
     <div
       className="fixed inset-0 z-50 grid place-items-center p-4"
       style={{ background: "rgba(26,28,43,0.42)", backdropFilter: "blur(4px)" }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !hasFormData) onClose();
+      }}
     >
       {/* ── Dialog ──────────────────────────────────────────────────────── */}
       <div
