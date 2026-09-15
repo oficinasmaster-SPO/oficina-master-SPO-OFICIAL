@@ -235,7 +235,7 @@ function PdfViewer({ url, name = "documento.pdf" }) {
         </div>
       </div>
 
-      <div ref={containerRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} className={`flex-1 overflow-auto w-full flex justify-center p-4 transition-colors ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}>
+      <div ref={containerRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} className={`flex-1 overflow-auto overscroll-contain w-full flex justify-center p-4 transition-colors ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}>
         <Document
           file={url}
           onLoadSuccess={onDocumentLoadSuccess}
@@ -265,15 +265,39 @@ function PdfViewer({ url, name = "documento.pdf" }) {
 // ============================================================================
 function FileViewerDrawer({ files, currentIndex, onClose, onChangeIndex }) {
   const [rotation, setRotation] = useState(0);
+  const closeBtnRef = useRef(null);
 
   // Reseta rotação ao trocar de arquivo
   useEffect(() => {
     setRotation(0);
   }, [currentIndex]);
 
-  if (!files || files.length === 0 || currentIndex === null) return null;
+  const isOpen = !!files && files.length > 0 && currentIndex !== null && !!files[currentIndex];
+
+  // ESC próprio do preview (LOTE 2): listener em capture phase no document
+  // para o evento NÃO alcançar o Dialog pai (Radix). Fecha somente o preview.
+  // Cleanup no return do effect — sem listeners acumulados.
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        onClose?.();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => document.removeEventListener("keydown", handleKeyDown, true);
+  }, [isOpen, onClose]);
+
+  // Ao abrir, foca o botão fechar — ESC/Tab funcionam sem focus trap extra.
+  useEffect(() => {
+    if (!isOpen) return;
+    closeBtnRef.current?.focus({ preventScroll: true });
+  }, [isOpen]);
+
+  if (!isOpen) return null;
   const currentFile = files[currentIndex];
-  if (!currentFile) return null;
   
   const isImage = currentFile.type === "image" || currentFile.mimeType?.includes("image");
   const isPdf =
@@ -282,8 +306,21 @@ function FileViewerDrawer({ files, currentIndex, onClose, onChangeIndex }) {
     currentFile.name?.toLowerCase().endsWith('.pdf');
 
   return (
-    <div className="fixed inset-0 z-[20002] flex justify-end bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-4xl bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right-8 duration-300">
+    <div
+      data-attachment-preview
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Pré-visualização: ${currentFile.name}`}
+      className="fixed inset-0 z-[20002] flex justify-end bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
+      onClick={(e) => {
+        // Clique no backdrop próprio fecha SOMENTE o preview.
+        if (e.target === e.currentTarget) onClose?.();
+      }}
+    >
+      <div
+        className="w-full max-w-4xl bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right-8 duration-300"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Header do Drawer */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 z-20 bg-white">
@@ -303,7 +340,7 @@ function FileViewerDrawer({ files, currentIndex, onClose, onChangeIndex }) {
               </button>
             )}
             <div className="w-px h-4 bg-gray-200 mx-1" />
-            <button onClick={onClose} className="p-2 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors">
+            <button ref={closeBtnRef} type="button" onClick={onClose} aria-label="Fechar pré-visualização" className="p-2 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -368,14 +405,27 @@ function FileViewerDrawer({ files, currentIndex, onClose, onChangeIndex }) {
 export default function AttachmentGallery({ files = [] }) {
   const [expanded, setExpanded] = useState({ images: true, documents: true, links: true });
   const [preview, setPreview] = useState({ isOpen: false, list: [], currentIndex: null });
+  // Elemento que abriu o preview — para devolver o foco ao fechar (LOTE 2 §7).
+  const triggerRef = useRef(null);
 
   const toggleSection = (section) => {
     setExpanded(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
   const openPreview = (fileList, file) => {
+    triggerRef.current = document.activeElement;
     const idx = fileList.findIndex(f => f.id === file.id);
     setPreview({ isOpen: true, list: fileList, currentIndex: Math.max(0, idx) });
+  };
+
+  const closePreview = () => {
+    setPreview({ isOpen: false, list: [], currentIndex: null });
+    // Foco retorna ao elemento que abriu o preview, se ainda estiver no DOM.
+    const trigger = triggerRef.current;
+    triggerRef.current = null;
+    if (trigger && document.contains(trigger) && typeof trigger.focus === "function") {
+      trigger.focus({ preventScroll: true });
+    }
   };
 
   const images = useMemo(() => files.filter(f => f.type === "image"), [files]);
@@ -391,7 +441,7 @@ export default function AttachmentGallery({ files = [] }) {
           files={preview.list} 
           currentIndex={preview.currentIndex} 
           onChangeIndex={(idx) => setPreview(prev => ({ ...prev, currentIndex: idx }))}
-          onClose={() => setPreview({ isOpen: false, list: [], currentIndex: null })} 
+          onClose={closePreview}
         />,
         document.body
       )}
