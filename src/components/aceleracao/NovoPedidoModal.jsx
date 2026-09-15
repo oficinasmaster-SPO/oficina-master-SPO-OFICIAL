@@ -66,7 +66,7 @@ function Dropzone({ onFiles, uploading }) {
         ref={inputRef}
         type="file"
         multiple
-        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+        accept="image/jpeg,image/png,image/webp,image/gif,.pdf,.doc,.docx,.xls,.xlsx,.txt"
         onChange={(e) => e.target.files && onFiles(Array.from(e.target.files))}
         className="hidden"
       />
@@ -225,7 +225,7 @@ export default function NovoPedidoModal({ user, onClose }) {
     if (!form.titulo.trim())     return toast.error("Preencha o título do pedido");
     if (!form.assignee_id)       return toast.error("Selecione o responsável");
     if (!form.prazo)             return toast.error("Defina o prazo");
-    const today = new Date().toISOString().split("T")[0];
+    const today = new Date().toLocaleDateString("sv"); // YYYY-MM-DD no fuso local
     if (form.prazo < today) return toast.error("O prazo não pode ser uma data no passado.");
     createMutation.mutate();
   };
@@ -243,7 +243,7 @@ export default function NovoPedidoModal({ user, onClose }) {
   }, [uploading, createMutation.isPending, form, onClose]);
 
   /* ── File upload ─────────────────────────────────────────────────────── */
-  const handleFiles = async (files) => {
+  const handleFiles = useCallback(async (files) => {
     if (uploading) {
       toast.error("Aguarde o upload atual terminar antes de enviar novos arquivos.");
       return;
@@ -294,7 +294,7 @@ export default function NovoPedidoModal({ user, onClose }) {
     } finally {
       setUploading(false);
     }
-  };
+  }, [uploading]);
 
   const handleAddLink = (url) => {
     set("midias_anexas", [
@@ -313,13 +313,16 @@ export default function NovoPedidoModal({ user, onClose }) {
     const h = (e) => {
       const files = [];
       for (const item of e.clipboardData?.items || []) {
-        if (item.kind === "file") files.push(item.getAsFile());
+        if (item.kind === "file") {
+          const f = item.getAsFile();
+          if (f) files.push(f); // getAsFile() pode retornar null
+        }
       }
       if (files.length) { e.preventDefault(); handleFiles(files); }
     };
     document.addEventListener("paste", h);
     return () => document.removeEventListener("paste", h);
-  }, [form.midias_anexas]);
+  }, [handleFiles]); // ← useCallback: evita stale closure que bypassava o guard de upload duplo
 
   /* ── Responsável / Cliente handlers ──────────────────────────────────── */
   const handleResponsavel = (userId) => {
