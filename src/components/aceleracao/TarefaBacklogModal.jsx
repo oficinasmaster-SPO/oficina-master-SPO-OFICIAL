@@ -1,8 +1,10 @@
 import React from "react";
 import { X } from "lucide-react";
 import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import useModalScrollLock from "@/hooks/useModalScrollLock";
 
 export default function TarefaBacklogModal({ open, onClose, children }) {
+  useModalScrollLock(open);
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
       <DialogContent

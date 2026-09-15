@@ -16,6 +16,7 @@ import {
   TIPO_PEDIDO_OPTIONS, PRIORIDADE_OPTIONS, IMPACTO_CLIENTE_OPTIONS,
 } from "@/components/shared/backlogConstants";
 import Combobox from "@/components/ui/combobox";
+import useModalScrollLock from "@/hooks/useModalScrollLock";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    DESIGN TOKENS (inline — mesmos do spec)
@@ -401,17 +402,9 @@ export default function NovoPedidoModal({ user, pedido, onClose }) {
   }, []);
 
   /* ── Lock do scroll de fundo SEM layout shift ────────────────────────── */
-  // O scroller da página é o <html>, então a trava vai nele. A compensação
-  // manual de padding-right foi removida: com `scrollbar-gutter: stable`
-  // (index.css) o espaço da barra já fica reservado, e somar padding em cima
-  // disso era justamente o deslocamento restante.
-  useEffect(() => {
-    const prevOverflowY = document.documentElement.style.overflowY;
-    document.documentElement.style.overflowY = "hidden";
-    return () => {
-      document.documentElement.style.overflowY = prevOverflowY;
-    };
-  }, []);
+  // Regra única em @/hooks/useModalScrollLock (este modal está sempre montado
+  // quando aberto, por isso `true`).
+  useModalScrollLock(true);
 
   /* ── Esc to close ────────────────────────────────────────────────────── */
   // Capture phase: quando aberto POR CIMA do Detail (Radix Dialog), o Esc
