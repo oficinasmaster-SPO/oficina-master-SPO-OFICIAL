@@ -260,6 +260,11 @@ export default function NovoPedidoModal({ user, pedido, onClose }) {
 
   const handleSubmit = () => {
     if (uploading) return toast.error("Aguarde o término dos uploads antes de criar o pedido.");
+    // Read-only: pedidos finalizados não podem ser editados (guard contra UI
+    // desatualizada — o Detail já esconde o botão Editar nesses status).
+    if (isEdit && ["concluido", "recusado"].includes(pedido.status)) {
+      return toast.error("Pedidos concluídos ou recusados não podem ser editados.");
+    }
     if (!user?.id) return toast.error("Usuário não identificado. Recarregue a página.");
     if (!form.titulo.trim())     return toast.error("Preencha o título do pedido");
     if (!form.assignee_id)       return toast.error("Selecione o responsável");
@@ -391,15 +396,24 @@ export default function NovoPedidoModal({ user, pedido, onClose }) {
 
   /* ── Focus first field on mount ──────────────────────────────────────── */
   useEffect(() => {
-    const t = setTimeout(() => firstFieldRef.current?.focus(), 100);
+    const t = setTimeout(() => firstFieldRef.current?.focus({ preventScroll: true }), 100);
     return () => clearTimeout(t);
   }, []);
 
-  /* ── Lock do scroll de fundo enquanto o modal estiver aberto ─────────── */
+  /* ── Lock do scroll de fundo SEM layout shift ────────────────────────── */
+  // O scroller da página é o <html> (html { overflow-y: scroll } no index.css),
+  // então travar o <body> não bloqueava nada. Escondemos a barra do <html> e
+  // compensamos sua largura com padding-right no <body> — trava real, zero shift.
   useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = prev; };
+    const sw = window.innerWidth - document.documentElement.clientWidth;
+    const prevOverflowY = document.documentElement.style.overflowY;
+    const prevPad = document.body.style.paddingRight;
+    document.documentElement.style.overflowY = "hidden";
+    if (sw > 0) document.body.style.paddingRight = `${sw}px`;
+    return () => {
+      document.documentElement.style.overflowY = prevOverflowY;
+      document.body.style.paddingRight = prevPad;
+    };
   }, []);
 
   /* ── Esc to close ────────────────────────────────────────────────────── */
@@ -420,7 +434,7 @@ export default function NovoPedidoModal({ user, pedido, onClose }) {
   return createPortal(
     <div
       className="fixed inset-0 z-50 grid place-items-center p-4"
-      style={{ background: "rgba(26,28,43,0.42)", backdropFilter: "blur(4px)" }}
+      style={{ background: "rgba(26,28,43,0.55)" }}
       onClick={(e) => {
         if (e.target === e.currentTarget) safeClose();
       }}

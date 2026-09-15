@@ -160,6 +160,9 @@ export default function PedidosInternosTab({ workshopId, user }) {
   const handleEditPedido = useCallback((p) => {
     setEditingPedido(p);
     setShowNewForm(true);
+    // Fecha o Detail junto — evita dois modais empilhados (form + detail),
+    // o conflito de dois locks de scroll e a sensação de "abrir 2 de uma vez".
+    setSelectedPedido(null);
   }, []);
 
   const handleDetailClose = useCallback(() => {
