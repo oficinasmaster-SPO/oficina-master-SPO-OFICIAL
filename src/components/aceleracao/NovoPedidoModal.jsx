@@ -227,14 +227,21 @@ export default function NovoPedidoModal({ user, pedido, onClose }) {
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (isEdit) {
-        // BUG-01: modo edição — atualiza SOMENTE campos editáveis.
-        // status, codigo, requester_*, data_conclusao e histórico são
-        // protegidos e nunca enviados. Autorização real = RLS de update.
-        const payload = {};
+        // LOTE 3: edição passa pela função backend atualizarPedidoInterno.
+        // A segurança (pedido finalizado, campos estruturais, mass
+        // assignment) é validada no SERVIDOR — a UI deixa de ser camada de
+        // segurança. workshop_id/workshop_nome não são enviados: são campos
+        // estruturais bloqueados no backend.
+        const changes = {};
         ["tipo", "prioridade", "titulo", "descricao", "assignee_id", "assignee_name",
-         "workshop_id", "workshop_nome", "prazo", "impacto_cliente", "midias_anexas",
-        ].forEach((k) => { payload[k] = form[k]; });
-        return base44.entities.PedidoInterno.update(pedido.id, payload);
+         "prazo", "impacto_cliente", "midias_anexas",
+        ].forEach((k) => { changes[k] = form[k]; });
+        const res = await base44.functions.invoke("atualizarPedidoInterno", {
+          pedido_id: pedido.id,
+          from_updated_date: pedido.updated_date || null,
+          changes,
+        });
+        return res?.data ?? res;
       }
       return base44.entities.PedidoInterno.create({
         ...form,
@@ -254,7 +261,24 @@ export default function NovoPedidoModal({ user, pedido, onClose }) {
       onClose();
     },
     onError: (err) => {
-      toast.error(isEdit ? "Erro ao atualizar pedido" : "Erro ao criar pedido");
+      // LOTE 3: mapeamento específico dos códigos do backend protegido.
+      const status = err?.response?.status ?? err?.status;
+      const serverMsg = err?.response?.data?.error || err?.data?.error;
+      if (status === 409) {
+        toast.error(serverMsg?.startsWith("O pedido foi alterado")
+          ? serverMsg
+          : "Este pedido já foi finalizado e não pode mais ser alterado.");
+      } else if (status === 403) {
+        toast.error("Você não tem permissão para editar este pedido.");
+      } else if (status === 404) {
+        toast.error("Pedido não encontrado. Feche e reabra a lista de pedidos.");
+      } else if (status === 422) {
+        toast.error(serverMsg || "Dados inválidos para atualização.");
+      } else if (status === 401) {
+        toast.error("Sua sessão expirou. Faça login novamente.");
+      } else {
+        toast.error(isEdit ? "Erro ao atualizar pedido" : "Erro ao criar pedido");
+      }
       console.error(err);
     },
   });
@@ -535,17 +559,29 @@ export default function NovoPedidoModal({ user, pedido, onClose }) {
             </label>
             <label className="block">
               <Lbl>Cliente Relacionado</Lbl>
-              <Combobox
-                value={form.workshop_id}
-                onChange={handleCliente}
-                options={workshops}
-                getOptionValue={(w) => w.id}
-                getOptionLabel={(w) => w.name}
-                placeholder="Selecione o cliente"
-                searchPlaceholder="Pesquisar cliente..."
-                emptyText="Nenhum cliente encontrado."
-                lazyRender
-              />
+              {/* LOTE 3: o servidor bloqueia troca de workshop_id em pedido
+                  existente (campo estrutural) — em edição o cliente é fixo. */}
+              {isEdit ? (
+                <input
+                  type="text"
+                  disabled
+                  value={form.workshop_nome || "—"}
+                  aria-label="Cliente relacionado (não editável)"
+                  className={`${inputBase} cursor-not-allowed bg-gray-50 text-gray-500`}
+                />
+              ) : (
+                <Combobox
+                  value={form.workshop_id}
+                  onChange={handleCliente}
+                  options={workshops}
+                  getOptionValue={(w) => w.id}
+                  getOptionLabel={(w) => w.name}
+                  placeholder="Selecione o cliente"
+                  searchPlaceholder="Pesquisar cliente..."
+                  emptyText="Nenhum cliente encontrado."
+                  lazyRender
+                />
+              )}
             </label>
           </div>
 
