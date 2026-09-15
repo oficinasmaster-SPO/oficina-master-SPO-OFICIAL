@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { safeDateOnlyParse } from "@/utils/timezone";
 
 const PEDIDO_STATUS_CONFIG = {
   pendente:   { label: 'Pendente',   className: 'bg-gray-100 text-gray-800' },
@@ -132,7 +133,7 @@ export default function OrigemPedidoBanner({ tarefa, compact = false }) {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 mb-0.5">Prazo</p>
-                  <p className="text-sm">{pedido.prazo ? format(new Date(pedido.prazo), 'dd/MM/yyyy', { locale: ptBR }) : '—'}</p>
+                  <p className="text-sm">{(() => { const d = safeDateOnlyParse(pedido.prazo); return d ? format(d, 'dd/MM/yyyy', { locale: ptBR }) : '—'; })()}</p>
                 </div>
               </div>
               <div className="pt-3 border-t flex justify-end">
