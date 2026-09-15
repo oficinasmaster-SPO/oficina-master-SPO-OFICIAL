@@ -128,10 +128,19 @@ html {
   scrollbar-gutter: stable;
 }
 
-/* Deixa o react-remove-scroll (Radix) ditar o padding correto quando o
-   scroll está bloqueado, sem interferir no estado normal */
+/* Com `scrollbar-gutter: stable` o espaço da barra JÁ fica reservado sempre,
+   então a compensação de largura que o react-remove-scroll (Radix) aplica no
+   <body> passa a ser um deslocamento extra → anulada aqui.
+   O scroller real é o <html>, por isso o bloqueio é aplicado nele (o
+   `overflow: hidden` no <body> sozinho não travava o fundo). */
 body[data-scroll-locked] {
   overflow: hidden !important;
+  padding-right: 0 !important;
+  margin-right: 0 !important;
+}
+
+html:has(body[data-scroll-locked]) {
+  overflow: hidden;
 }
 
 @layer base {

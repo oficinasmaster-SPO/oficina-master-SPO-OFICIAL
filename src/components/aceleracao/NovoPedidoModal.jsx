@@ -401,18 +401,15 @@ export default function NovoPedidoModal({ user, pedido, onClose }) {
   }, []);
 
   /* ── Lock do scroll de fundo SEM layout shift ────────────────────────── */
-  // O scroller da página é o <html> (html { overflow-y: scroll } no index.css),
-  // então travar o <body> não bloqueava nada. Escondemos a barra do <html> e
-  // compensamos sua largura com padding-right no <body> — trava real, zero shift.
+  // O scroller da página é o <html>, então a trava vai nele. A compensação
+  // manual de padding-right foi removida: com `scrollbar-gutter: stable`
+  // (index.css) o espaço da barra já fica reservado, e somar padding em cima
+  // disso era justamente o deslocamento restante.
   useEffect(() => {
-    const sw = window.innerWidth - document.documentElement.clientWidth;
     const prevOverflowY = document.documentElement.style.overflowY;
-    const prevPad = document.body.style.paddingRight;
     document.documentElement.style.overflowY = "hidden";
-    if (sw > 0) document.body.style.paddingRight = `${sw}px`;
     return () => {
       document.documentElement.style.overflowY = prevOverflowY;
-      document.body.style.paddingRight = prevPad;
     };
   }, []);
 
