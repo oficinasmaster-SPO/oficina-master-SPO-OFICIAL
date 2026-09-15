@@ -2,11 +2,12 @@
  * PedidoInternoList — Listagem densa estilo Linear/Jira.
  * Colunas: Cliente | Pedido | Solicitante → Responsável | Prioridade | Status | Tempo
  */
-import React, { useState, useCallback, useMemo, memo } from "react";
+import React, { useState, useCallback, useMemo, memo, useEffect } from "react";
 import {
   Clock, ClipboardList, ArrowRight,
   ArrowDown, Minus, ArrowUp, AlertOctagon, Paperclip,
 } from "lucide-react";
+import Avatar from "@/components/ui/Avatar";
 import { PEDIDO_STATUS_CONFIG } from "@/components/shared/backlogConstants";
 import { isDateOnlyPast } from "@/utils/timezone";
 import useEmployeeResolver from "@/hooks/useEmployeeResolver";
@@ -37,14 +38,17 @@ const STATUS_GROUPS = [
   { key: "em_analise", label: "Em Análise",  token: "analysis", defaultCollapsed: false },
   { key: "pendente",   label: "Pendente",    token: "pending",  defaultCollapsed: false },
   { key: "aprovado",   label: "Aprovado",    token: "approved", defaultCollapsed: false },
-  { key: "recusado",   label: "Recusado",    token: "rejected", defaultCollapsed: true },
+  { key: "recusado",   label: "Recusado",   token: "rejected", defaultCollapsed: true },
   { key: "concluido",  label: "Concluído",   token: "done",     defaultCollapsed: true },
-];
+  // QA: grupo de segurança — status fora do enum (ou null/dados sujos) caem aqui
+  // em vez de sumirem silenciosamente da listagem.
+  { key: "outros",     label: "Outros",      token: "done",     defaultCollapsed: false },
+  ];
 
 /* ── SLA — 4 níveis ────────────────────────────────────────────────────── */
-function slaLevel(d) {
+function slaLevel(d, now = Date.now()) {
   if (!d) return null;
-  const h = (Date.now() - new Date(d).getTime()) / 3600000;
+  const h = (now - new Date(d).getTime()) / 3600000;
   if (h < 24)  return "fresh";
   if (h < 72)  return "warn";
   if (h < 168) return "high";
@@ -58,9 +62,10 @@ const SLA_STYLES = {
   critical: "bg-[hsl(var(--sla-critical-bg))] text-[hsl(var(--sla-critical))]",
 };
 
-function timeSince(d) {
+function timeSince(d, now = Date.now()) {
   if (!d) return null;
-  const ms = Date.now() - new Date(d).getTime();
+  // Math.max(0, …): clock skew (data no futuro) não exibe "-Xmin".
+  const ms = Math.max(0, now - new Date(d).getTime());
   const totalHours = Math.floor(ms / 3600000);
   const days = Math.floor(totalHours / 24);
   const hours = totalHours % 24;
@@ -79,8 +84,10 @@ function formatCreatedAt(d) {
 }
 
 // Prazo em dd/MM/yy (date-only, sem deslocamento de timezone).
+// QA: suporta tanto "YYYY-MM-DD" quanto datetime ISO (pega só a parte da data).
 function formatPrazo(d) {
-  const [y, m, day] = String(d).split("-");
+  const [y, m, rest = ""] = String(d).split("-");
+  const day = rest.slice(0, 2);
   if (!y || !m || !day) return null;
   return `${day}/${m}/${y.slice(-2)}`;
 }
@@ -89,9 +96,6 @@ function isOverdue(p) {
   if (!p.prazo || ["concluido","recusado"].includes(p.status)) return false;
   return isDateOnlyPast(p.prazo);
 }
-
-/* ── Avatar (componente reutilizável) ───────────────────────────────────── */
-import Avatar from "@/components/ui/Avatar";
 
 /* ── Prioridade (ícone + label, sem fundo) ─────────────────────────────── */
 const PRIO = {
@@ -197,10 +201,14 @@ function GroupHeader({ group, count, collapsed, onToggle }) {
 /* ═══════════════════════════════════════════════════════════════════════════
    TICKET ROW — 54px, hover forte, divisores, ações no hover
    ═══════════════════════════════════════════════════════════════════════════ */
-function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
+function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto, now = Date.now() }) {
   const done   = ["concluido","recusado"].includes(pedido.status);
   const criado = pedido.created_date || pedido.data_criacao;
-  const level  = slaLevel(criado);
+  // QA: para pedidos finalizados o tempo CONGELA na data de conclusão —
+  // não conta até "agora" nem vira "critical" em pedidos antigos já fechados.
+  // Sem data_conclusao, não exibe o contador (—).
+  const slaRef = done ? (pedido.data_conclusao || null) : now;
+  const level  = slaRef ? slaLevel(criado, slaRef) : null;
   const overdue = isOverdue(pedido);
   const anexos = (pedido.midias_anexas || pedido.arquivos_anexos)?.length || 0;
 
@@ -296,7 +304,7 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
         {level ? (
           <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold tabular-nums ${SLA_STYLES[level]}`}>
             <Clock className="h-3 w-3" />
-            {timeSince(criado)}
+            {timeSince(criado, slaRef)}
           </span>
         ) : (
           <span className="text-[11px] text-gray-300">{"—"}</span>
@@ -371,6 +379,16 @@ function SkeletonRows() {
 export default function PedidoInternoList({ pedidos, onSelect, isLoading, selectedId }) {
   const { getName, getPhoto } = useEmployeeResolver();
 
+  // QA: relógio de 60s mantém o SLA ("Tempo") atualizado sem interação.
+  // Só ativo com pedidos na tela — 1 re-render/min é barato e só quebra o
+  // memo das rows nesse instante (comportamento intencional).
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (isLoading || !pedidos?.length) return undefined;
+    const t = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, [isLoading, pedidos?.length]);
+
   const [collapsed, setCollapsed] = useState(() => {
     const init = {};
     STATUS_GROUPS.forEach(g => { if (g.defaultCollapsed) init[g.key] = true; });
@@ -383,7 +401,8 @@ export default function PedidoInternoList({ pedidos, onSelect, isLoading, select
   const grouped = useMemo(() => {
     const map = {};
     STATUS_GROUPS.forEach(g => { map[g.key] = []; });
-    pedidos.forEach(p => { if (map[p.status]) map[p.status].push(p); });
+    // QA: status desconhecido/nulo cai em "outros" — nunca some da listagem.
+    pedidos.forEach(p => { (map[p.status] || map.outros).push(p); });
     Object.keys(map).forEach(k => {
       map[k].sort((a,b) => {
         const vA = isOverdue(a)?0:1, vB = isOverdue(b)?0:1;
@@ -433,6 +452,7 @@ export default function PedidoInternoList({ pedidos, onSelect, isLoading, select
                     isSelected={pedido.id === selectedId}
                     getName={getName}
                     getPhoto={getPhoto}
+                    now={now}
                   />
                 ))
               )
