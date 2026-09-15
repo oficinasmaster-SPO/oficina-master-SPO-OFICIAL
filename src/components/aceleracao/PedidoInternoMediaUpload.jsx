@@ -46,11 +46,13 @@ export default function PedidoInternoMediaUpload({ medias = [], onMediasChange }
     try {
       const newMedias = [...medias];
       for (const file of files) {
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
         newMedias.push({
           type: file.type.startsWith('image/') ? 'imagem' : 'arquivo',
           url: file_url,
           nome: file.name,
+          size: file.size,
+          mimeType: file.type,
           uploaded_at: new Date().toISOString()
         });
       }

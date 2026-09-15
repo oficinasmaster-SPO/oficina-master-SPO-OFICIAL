@@ -5,7 +5,7 @@
 import React, { useState, useCallback, useMemo, memo } from "react";
 import {
   Clock, ClipboardList, ArrowRight,
-  ArrowDown, Minus, ArrowUp, AlertOctagon,
+  ArrowDown, Minus, ArrowUp, AlertOctagon, Paperclip,
 } from "lucide-react";
 import { PEDIDO_STATUS_CONFIG } from "@/components/shared/backlogConstants";
 import { isDateOnlyPast } from "@/utils/timezone";
@@ -19,13 +19,14 @@ export const COL = {
   responsavel: "w-[140px] shrink-0",
   prioridade:  "w-[90px] shrink-0",
   status:      "w-[112px] shrink-0",
+  prazo:       "w-[78px] shrink-0",
   sla:         "w-[84px] shrink-0",
   criado:      "w-[118px] shrink-0",
   gap:         "gap-3",
   px:          "px-4",
 };
 
-const MIN_TABLE = "min-w-[1160px]";
+const MIN_TABLE = "min-w-[1240px]";
 
 /* ── Dividers — header forte, rows quase invisível, desaparecem no hover ── */
 const HD = "border-r border-r-slate-900/5";
@@ -75,6 +76,13 @@ function formatCreatedAt(d) {
   if (isNaN(dt.getTime())) return null;
   const pad = (n) => String(n).padStart(2, "0");
   return `${pad(dt.getDate())}/${pad(dt.getMonth() + 1)}/${String(dt.getFullYear()).slice(-2)} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+}
+
+// Prazo em dd/MM/yy (date-only, sem deslocamento de timezone).
+function formatPrazo(d) {
+  const [y, m, day] = String(d).split("-");
+  if (!y || !m || !day) return null;
+  return `${day}/${m}/${y.slice(-2)}`;
 }
 
 function isOverdue(p) {
@@ -152,6 +160,7 @@ export function ColumnHeaders() {
       <span className={`${COL.responsavel} ${HD}`}>Responsável</span>
       <span className={`${COL.prioridade} text-center ${HD}`}>Prioridade</span>
       <span className={`${COL.status} text-center ${HD}`}>Status</span>
+      <span className={`${COL.prazo} text-center ${HD}`}>Prazo</span>
       <span className={`${COL.sla} text-right ${HD}`}>Tempo</span>
       <span className={`${COL.criado} text-right`}>Criado em</span>
     </div>
@@ -192,6 +201,8 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
   const done   = ["concluido","recusado"].includes(pedido.status);
   const criado = pedido.created_date || pedido.data_criacao;
   const level  = slaLevel(criado);
+  const overdue = isOverdue(pedido);
+  const anexos = (pedido.midias_anexas || pedido.arquivos_anexos)?.length || 0;
 
   const rName  = getName(pedido.requester_id, pedido.requester_name);
   const rPhoto = getPhoto(pedido.requester_id);
@@ -225,8 +236,14 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
         <p className={`text-[14px] font-semibold tracking-tight truncate ${done ? "text-gray-400" : "text-gray-900"}`}>
           {pedido.titulo}
         </p>
-        <p className="text-[11px] text-gray-400 tabular-nums leading-none mt-0.5">
-          #{pedido.id?.slice(-6).toUpperCase()}
+        <p className="text-[11px] text-gray-400 tabular-nums leading-none mt-0.5 flex items-center gap-1.5">
+          {pedido.codigo || `#${pedido.id?.slice(-6).toUpperCase()}`}
+          {anexos > 0 && (
+            <span className="inline-flex items-center gap-0.5 text-gray-400" title={`${anexos} anexo(s)`}>
+              <Paperclip className="h-3 w-3" />
+              {anexos}
+            </span>
+          )}
         </p>
       </div>
 
@@ -261,6 +278,17 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto }) {
       {/* Status */}
       <div className={`${COL.status} ${RD} flex justify-center`}>
         <StatusBadgeLocal status={pedido.status} />
+      </div>
+
+      {/* Prazo — vermelho quando vencido */}
+      <div className={`${COL.prazo} ${RD} flex justify-center`}>
+        {pedido.prazo ? (
+          <span className={`text-[11.5px] tabular-nums ${overdue ? "font-semibold text-red-600" : done ? "text-gray-300" : "font-medium text-gray-600"}`}>
+            {formatPrazo(pedido.prazo)}
+          </span>
+        ) : (
+          <span className="text-[11px] text-gray-300">{"—"}</span>
+        )}
       </div>
 
       {/* Tempo Aberto — SLA badge alinhado à direita */}
@@ -326,6 +354,7 @@ function SkeletonRows() {
               </div>
               <div className={`${COL.prioridade} flex justify-center`}><div className="h-4 w-14 rounded bg-gray-100" /></div>
               <div className={`${COL.status} flex justify-center`}><div className="h-5 w-20 rounded-full bg-gray-100" /></div>
+              <div className={`${COL.prazo} flex justify-center`}><div className="h-4 w-12 rounded bg-gray-100" /></div>
               <div className={`${COL.sla} flex justify-end`}><div className="h-5 w-16 rounded-md bg-gray-100" /></div>
               <div className={`${COL.criado} flex justify-end`}><div className="h-4 w-20 rounded bg-gray-100" /></div>
             </div>

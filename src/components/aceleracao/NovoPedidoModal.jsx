@@ -284,6 +284,8 @@ export default function NovoPedidoModal({ user, onClose }) {
           type: file.type.startsWith("image/") ? "imagem" : "arquivo",
           url: file_url,
           nome: file.name,
+          size: file.size,
+          mimeType: file.type,
           uploaded_at: new Date().toISOString(),
         });
       }

@@ -21,6 +21,9 @@ export default function PedidosInternosTab({ workshopId, user }) {
   const [showNewForm, setShowNewForm] = useState(false);
   const [activeList, setActiveList] = useState("pedidos");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState("all");
+  const [tipoFilter, setTipoFilter] = useState("all");
+  const [assigneeFilter, setAssigneeFilter] = useState("all");
   const [scope, setScope] = useState("todos");
   const [blScope, setBlScope] = useState("todos");
 
@@ -85,11 +88,15 @@ export default function PedidosInternosTab({ workshopId, user }) {
         if (!isRequester) return false;
       }
 
+      if (priorityFilter !== "all" && p.prioridade !== priorityFilter) return false;
+      if (tipoFilter !== "all" && p.tipo !== tipoFilter) return false;
+      if (assigneeFilter !== "all" && p.assignee_id !== assigneeFilter) return false;
+
       const q = deferredSearch.toLowerCase();
       if (q) {
         const haystack = [
         p.titulo, p.workshop_nome, p.requester_name, p.cliente_nome,
-        p.assignee_name, p.id?.slice(-6)].
+        p.assignee_name, p.codigo].
         filter(Boolean).join(" ").toLowerCase();
         if (!haystack.includes(q)) return false;
       }
@@ -98,7 +105,20 @@ export default function PedidosInternosTab({ workshopId, user }) {
       return true;
     }).
     sort((a, b) => new Date(b.created_date || 0) - new Date(a.created_date || 0));
-  }, [pedidos, deferredSearch, statusFilter, scope, user?.id, user?.email]);
+  }, [pedidos, deferredSearch, statusFilter, priorityFilter, tipoFilter, assigneeFilter, scope, user?.id, user?.email]);
+
+  // Opções de responsável derivadas dos próprios pedidos (sem query extra).
+  const assigneeOptions = useMemo(() => {
+    const seen = new Set();
+    const out = [];
+    pedidos.forEach(p => {
+      if (p.assignee_id && p.assignee_name && !seen.has(p.assignee_id)) {
+        seen.add(p.assignee_id);
+        out.push({ value: p.assignee_id, label: p.assignee_name });
+      }
+    });
+    return out.sort((a, b) => a.label.localeCompare(b.label));
+  }, [pedidos]);
 
   const freshSelected = useMemo(() => {
     if (!selectedPedido) return null;
@@ -118,7 +138,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
     queryClient.invalidateQueries({ queryKey: ["pedidos-internos"] });
   }, [queryClient]);
 
-  const clearFilters = () => {setSearch("");setStatusFilter("all");setScope("todos");};
+  const clearFilters = () => {setSearch("");setStatusFilter("all");setScope("todos");setPriorityFilter("all");setTipoFilter("all");setAssigneeFilter("all");};
   const [showNovoTarefaModal, setShowNovoTarefaModal] = useState(false);
 
   return (
@@ -206,6 +226,13 @@ export default function PedidosInternosTab({ workshopId, user }) {
           clearFilters={clearFilters}
           statusFilter={statusFilter}
           setStatusFilter={setStatusFilter}
+          priorityFilter={priorityFilter}
+          setPriorityFilter={setPriorityFilter}
+          tipoFilter={tipoFilter}
+          setTipoFilter={setTipoFilter}
+          assigneeFilter={assigneeFilter}
+          setAssigneeFilter={setAssigneeFilter}
+          assigneeOptions={assigneeOptions}
           filteredPedidos={filteredPedidos} />
 
         }
