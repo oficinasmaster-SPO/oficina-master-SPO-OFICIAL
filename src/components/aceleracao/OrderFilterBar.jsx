@@ -1,12 +1,10 @@
 import React from "react";
 import { Search, X } from "lucide-react";
 import Combobox from "@/components/ui/combobox";
-import { PEDIDO_STATUS_OPTIONS, PRIORIDADE_OPTIONS, TIPO_PEDIDO_OPTIONS } from "@/components/shared/backlogConstants";
+import { PEDIDO_STATUS_OPTIONS } from "@/components/shared/backlogConstants";
 import ScopeSelector from "./ScopeSelector";
 
 const STATUS_OPTIONS = [{ value: "all", label: "Todos status" }, ...PEDIDO_STATUS_OPTIONS];
-const PRIORITY_OPTIONS = [{ value: "all", label: "Toda prioridade" }, ...PRIORIDADE_OPTIONS];
-const TIPO_OPTIONS = [{ value: "all", label: "Todo tipo" }, ...TIPO_PEDIDO_OPTIONS];
 
 export default function OrderFilterBar({
   scope,
@@ -17,21 +15,11 @@ export default function OrderFilterBar({
   clearFilters,
   statusFilter,
   setStatusFilter,
-  priorityFilter,
-  setPriorityFilter,
-  tipoFilter,
-  setTipoFilter,
-  assigneeFilter,
-  setAssigneeFilter,
-  assigneeOptions = [],
   filteredPedidos = []
 }) {
-  const ASSIGNEE_OPTIONS = [{ value: "all", label: "Todo responsável" }, ...assigneeOptions];
-
   // Algum filtro fora do padrão? (escopo padrão é "todos", os demais "all")
   const isFilterActive = search !== "" || scope !== "todos" ||
-    statusFilter !== "all" || priorityFilter !== "all" ||
-    tipoFilter !== "all" || assigneeFilter !== "all";
+    statusFilter !== "all";
   return (
     <div className="flex items-center gap-3 px-6 py-1.5 bg-gray-50/50 border-t border-[hsl(var(--border-subtle))] shrink-0">
 
@@ -47,36 +35,6 @@ export default function OrderFilterBar({
           searchPlaceholder="Pesquisar status..."
           emptyText="Nenhum status encontrado."
           className="h-8 w-[140px]"
-        />
-
-        <Combobox
-          value={priorityFilter}
-          onChange={setPriorityFilter}
-          options={PRIORITY_OPTIONS}
-          placeholder="Toda prioridade"
-          searchPlaceholder="Pesquisar prioridade..."
-          emptyText="Nenhuma prioridade encontrada."
-          className="h-8 w-[130px]"
-        />
-
-        <Combobox
-          value={tipoFilter}
-          onChange={setTipoFilter}
-          options={TIPO_OPTIONS}
-          placeholder="Todo tipo"
-          searchPlaceholder="Pesquisar tipo..."
-          emptyText="Nenhum tipo encontrado."
-          className="h-8 w-[130px]"
-        />
-
-        <Combobox
-          value={assigneeFilter}
-          onChange={setAssigneeFilter}
-          options={ASSIGNEE_OPTIONS}
-          placeholder="Todo responsável"
-          searchPlaceholder="Pesquisar responsável..."
-          emptyText="Nenhum responsável encontrado."
-          className="h-8 w-[150px]"
         />
       </div>
 

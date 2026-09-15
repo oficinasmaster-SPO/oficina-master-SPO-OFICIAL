@@ -88,13 +88,19 @@ function ImageViewer({ url, name, rotation }) {
   }, []);
 
   // Lógica da Mãozinha de Arrastar (Pan / Infinite Canvas)
-  const handleMouseDown = (e) => {
+  // Drag via eventos de PONTEIRO: o guard do Dialog pai chama preventDefault
+  // no pointerdown (para não fechar o modal), o que suprime o mousedown de
+  // compatibilidade — drag baseado em mouse events nunca dispararia aqui.
+  // pointermove/pointerup não são afetados pelo preventDefault.
+  const handlePointerDown = (e) => {
+    if (e.button !== 0) return;
     e.preventDefault();
+    containerRef.current?.setPointerCapture?.(e.pointerId);
     setIsDragging(true);
     setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
   };
 
-  const handleMouseMove = (e) => {
+  const handlePointerMove = (e) => {
     if (!isDragging) return;
     setPosition({
       x: e.clientX - dragStart.x,
@@ -102,16 +108,19 @@ function ImageViewer({ url, name, rotation }) {
     });
   };
 
-  const handleMouseUp = () => setIsDragging(false);
+  const handlePointerEnd = (e) => {
+    containerRef.current?.releasePointerCapture?.(e.pointerId);
+    setIsDragging(false);
+  };
 
   return (
     <div
       ref={containerRef}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      className={`w-full h-full flex items-center justify-center overflow-hidden relative select-none bg-gray-50/50 ${
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerEnd}
+      onPointerCancel={handlePointerEnd}
+      className={`w-full h-full flex items-center justify-center overflow-hidden relative select-none touch-none bg-gray-50/50 ${
         isDragging ? 'cursor-grabbing' : 'cursor-grab'
       }`}
     >
@@ -167,8 +176,11 @@ function PdfViewer({ url, name = "documento.pdf" }) {
     return () => container.removeEventListener('wheel', handleWheel);
   }, []);
 
-  const handleMouseDown = (e) => {
-    if (!containerRef.current) return;
+  // Drag via eventos de PONTEIRO — mesmo motivo do ImageViewer: o mousedown é
+  // suprimido pelo preventDefault do guard do Dialog pai (LOTE 2).
+  const handlePointerDown = (e) => {
+    if (!containerRef.current || e.button !== 0) return;
+    containerRef.current.setPointerCapture?.(e.pointerId);
     setIsDragging(true);
     setDragStart({
       x: e.clientX,
@@ -178,7 +190,7 @@ function PdfViewer({ url, name = "documento.pdf" }) {
     });
   };
 
-  const handleMouseMove = (e) => {
+  const handlePointerMove = (e) => {
     if (!isDragging || !containerRef.current) return;
     e.preventDefault();
     const dx = e.clientX - dragStart.x;
@@ -187,7 +199,10 @@ function PdfViewer({ url, name = "documento.pdf" }) {
     containerRef.current.scrollTop = dragStart.scrollTop - dy;
   };
 
-  const handleMouseUp = () => setIsDragging(false);
+  const handlePointerEnd = (e) => {
+    containerRef.current?.releasePointerCapture?.(e.pointerId);
+    setIsDragging(false);
+  };
 
   const handleZoomIn = () => setScale(prev => Math.min(prev + 0.25, 3.0));
   const handleZoomOut = () => setScale(prev => Math.max(prev - 0.25, 0.5));
@@ -235,7 +250,7 @@ function PdfViewer({ url, name = "documento.pdf" }) {
         </div>
       </div>
 
-      <div ref={containerRef} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} className={`flex-1 overflow-auto overscroll-contain w-full flex justify-center p-4 transition-colors ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}>
+      <div ref={containerRef} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerEnd} onPointerCancel={handlePointerEnd} className={`flex-1 overflow-auto overscroll-contain w-full flex justify-center p-4 transition-colors touch-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}>
         <Document
           file={url}
           onLoadSuccess={onDocumentLoadSuccess}
@@ -311,7 +326,10 @@ function FileViewerDrawer({ files, currentIndex, onClose, onChangeIndex }) {
       role="dialog"
       aria-modal="true"
       aria-label={`Pré-visualização: ${currentFile.name}`}
-      className="fixed inset-0 z-[20002] flex justify-end bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
+      // pointer-events-auto: o Radix seta pointer-events:none no <body> enquanto
+      // o modal está aberto; como este drawer é portalizado FORA do DialogContent,
+      // ele herdava o none e ficava totalmente inerte (clique/arraste/scroll mortos).
+      className="pointer-events-auto fixed inset-0 z-[20002] flex justify-end bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={(e) => {
         // Clique no backdrop próprio fecha SOMENTE o preview.
         if (e.target === e.currentTarget) onClose?.();
