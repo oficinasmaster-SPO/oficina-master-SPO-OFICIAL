@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { discQuestions } from "@/components/disc/DISCQuestions";
+import PerfilDISCRecente from "@/components/disc/PerfilDISCRecente";
 
 export default function AutoavaliacaoDISC() {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ export default function AutoavaliacaoDISC() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [started, setStarted] = useState(false);
+  const [latestDiagnostic, setLatestDiagnostic] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -29,6 +31,16 @@ export default function AutoavaliacaoDISC() {
       const employees = await base44.entities.Employee.filter({ user_id: currentUser.id });
       if (employees && employees.length > 0) {
         setEmployee(employees[0]);
+
+        // Sprint 4: resultado DISC mais recente do colaborador (autoavaliação concluída)
+        const latest = await base44.entities.DISCDiagnostic.filter(
+          { employee_id: employees[0].id, evaluation_type: "self", completed: true },
+          "-created_date",
+          1
+        );
+        if (latest && latest.length > 0) {
+          setLatestDiagnostic(latest[0]);
+        }
       }
     } catch (error) {
       console.error(error);
@@ -152,6 +164,14 @@ export default function AutoavaliacaoDISC() {
                 </div>
               </div>
 
+              {latestDiagnostic && (
+                <PerfilDISCRecente
+                  diagnostic={latestDiagnostic}
+                  onViewResult={(id) => navigate(createPageUrl("ResultadoDISC") + `?id=${id}`)}
+                  onRefazer={() => setStarted(true)}
+                />
+              )}
+
               <div className="flex gap-4 pt-4">
                 <Button
                   variant="outline"
@@ -165,7 +185,7 @@ export default function AutoavaliacaoDISC() {
                   className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-6 text-lg"
                 >
                   <Play className="w-5 h-5 mr-2" />
-                  Iniciar Autoavaliação
+                  {latestDiagnostic ? "Refazer Autoavaliação" : "Iniciar Autoavaliação"}
                 </Button>
               </div>
             </CardContent>
