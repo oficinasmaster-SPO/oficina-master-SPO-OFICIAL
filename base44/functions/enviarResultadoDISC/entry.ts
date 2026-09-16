@@ -357,6 +357,17 @@ export default async function(req) {
         : 'Consulte a plataforma para a análise completa de funções.'
     };
 
+    // ── Modo QA/prévia: envia a variante do colaborador APENAS para o e-mail
+    //    informado, sem gravar flags de envio (validação visual do template) ──
+    if (payload?.preview_to) {
+      await enviarResend(
+        payload.preview_to,
+        'Prévia (QA) — Resultado DISC',
+        buildEmailHtml(ctx, 'colaborador', colaboradorNome)
+      );
+      return Response.json({ ok: true, preview: payload.preview_to });
+    }
+
     const agora = new Date().toISOString();
     const resultado = { colaborador: null, lideranca: [] };
     const erros = [];
