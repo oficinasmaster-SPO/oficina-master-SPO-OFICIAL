@@ -114,6 +114,21 @@
     "completed": {
       "type": "boolean",
       "default": false
+    },
+    "resultado_email_colaborador_enviado": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o e-mail com o resultado foi enviado ao colaborador avaliado (trava antirreenvio)"
+    },
+    "resultado_email_lideranca_enviado": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o e-mail com o resultado foi enviado \u00e0 lideran\u00e7a da oficina (trava antirreenvio)"
+    },
+    "resultado_email_enviado_em": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do \u00faltimo e-mail de resultado enviado"
     }
   },
   "required": [
