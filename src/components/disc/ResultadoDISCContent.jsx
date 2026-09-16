@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DialogTitle } from "@/components/ui/dialog";
 import { Users, Briefcase, Sparkles } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Cell } from "recharts";
 import { profileInfo } from "@/components/disc/DISCQuestions";
@@ -105,7 +104,10 @@ export default function ResultadoDISCContent({ diagnostic, employee, teamCompari
               {diagnostic.dominant_profile.charAt(0).toUpperCase()}
             </div>
             <div>
-              <DialogTitle className="text-2xl font-bold">{employee?.full_name || 'Candidato'}</DialogTitle>
+              {/* QA: era DialogTitle — exigia contexto de Dialog e crashava com
+                  "'DialogTitle' must be used within 'Dialog'" na página
+                  /ResultadoDISC (fora de modal). Heading comum serve nos dois. */}
+              <h2 className="text-2xl font-bold">{employee?.full_name || 'Candidato'}</h2>
               <p className="text-muted-foreground">{employee?.position || diagnostic.evaluation_type === 'self' ? 'Autoavaliação' : 'Avaliação'}</p>
               {diagnostic.is_leader && (
                 <span className="inline-flex items-center gap-1 bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-semibold mt-1">
