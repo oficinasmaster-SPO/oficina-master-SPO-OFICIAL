@@ -80,69 +80,9 @@ export default function DiagnosticoDISC() {
     }
   };
 
-  const updateAnswer = (questionId, profile, value) => {
-    // Aceita apenas valores de 1 a 4 ou vazio
-    if (value !== "" && (isNaN(value) || parseInt(value) < 1 || parseInt(value) > 4)) {
-      return;
-    }
-
-    // Validar números únicos: não permitir duplicatas
-    const currentAnswers = answers[questionId] || {};
-    const usedNumbers = Object.entries(currentAnswers)
-      .filter(([key]) => key !== profile)
-      .map(([, val]) => val)
-      .filter(v => v !== "");
-
-    if (value !== "" && usedNumbers.includes(value)) {
-      toast.error(`Número ${value} já foi usado neste conjunto. Escolha outro.`);
-      return;
-    }
-
-    setAnswers({
-      ...answers,
-      [questionId]: {
-        ...answers[questionId],
-        [profile]: value
-      }
-    });
-  };
-
-  const isQuestionComplete = (questionId) => {
-    const answer = answers[questionId];
-    if (!answer) return false;
-
-    // Verifica se todos os 4 campos estão preenchidos
-    const allFilled = answer.d !== "" && answer.i !== "" && answer.s !== "" && answer.c !== "";
-    if (!allFilled) return false;
-
-    // Verifica se os números são únicos (1, 2, 3, 4)
-    const values = [answer.d, answer.i, answer.s, answer.c];
-    const uniqueValues = new Set(values);
-    const hasAllNumbers = uniqueValues.size === 4 && 
-                         values.every(v => ['1', '2', '3', '4'].includes(v));
-
-    return hasAllNumbers;
-  };
-
-  const validateAnswers = () => {
-    for (let i = 1; i <= discQuestions.length; i++) {
-      if (!isQuestionComplete(i)) {
-        toast.error(`Conjunto ${i}: Preencha todos os campos com números de 1 a 4`);
-        return false;
-      }
-    }
-    return true;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleStartAssessment = () => {
     if (!selectedEmployee) {
       toast.error("Selecione o colaborador a ser avaliado");
-      return;
-    }
-
-    if (!validateAnswers()) {
       return;
     }
 
@@ -151,21 +91,16 @@ export default function DiagnosticoDISC() {
       return;
     }
 
-    setSubmitting(true);
+    setIsAssessmentOpen(true);
+  };
 
+  // Sprint 4: avaliação roda em modal de perguntas individuais; o envio continua
+  // unificado no backend (padrão 1 = mais parecido, conversão/cálculo/e-mail no servidor)
+  const submitAssessment = async (finalAnswers) => {
+    setSubmitting(true);
     try {
       const urlWorkshopId = searchParams.get('workshop_id');
       const finalWorkshopId = urlWorkshopId || workshop?.id;
-
-      // Sprint 2: submissão unificada no backend — envia os rankings crus
-      // (padrão 1 = mais parecido); conversão, cálculo e e-mail ficam centralizados
-      const answersArray = Object.entries(answers).map(([questionId, ranks]) => ({
-        question_id: parseInt(questionId),
-        d: ranks.d,
-        i: ranks.i,
-        s: ranks.s,
-        c: ranks.c
-      }));
 
       const response = await base44.functions.invoke('submeterDiagnosticoDISC', {
         employee_id: selectedEmployee,
@@ -173,7 +108,7 @@ export default function DiagnosticoDISC() {
         evaluation_type: (currentUserEmployee && currentUserEmployee.id === selectedEmployee) ? 'self' : 'manager',
         is_leader: isLeader,
         team_name: teamName || null,
-        answers: answersArray
+        answers: finalAnswers
       });
 
       if (response.data.error) throw new Error(response.data.error);
@@ -181,6 +116,7 @@ export default function DiagnosticoDISC() {
       toast.success("Teste DISC concluído!");
       setResultDiagnosticId(response.data.id);
       setResultModalOpen(true);
+      setIsAssessmentOpen(false);
     } catch (error) {
       console.error(error);
       toast.error("Erro ao salvar diagnóstico");
@@ -188,12 +124,6 @@ export default function DiagnosticoDISC() {
       setSubmitting(false);
     }
   };
-
-  const getFilledQuestions = () => {
-    return Object.keys(answers).filter(key => isQuestionComplete(parseInt(key))).length;
-  };
-
-  const progress = (getFilledQuestions() / discQuestions.length) * 100;
 
   const handleGenerateInvite = async () => {
     const urlWorkshopId = searchParams.get('workshop_id');
@@ -369,7 +299,7 @@ export default function DiagnosticoDISC() {
           </DialogContent>
         </Dialog>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-6">
           <Card className="border-2 border-indigo-200">
             <CardHeader>
               <CardTitle>Dados do Avaliado</CardTitle>
@@ -411,126 +341,37 @@ export default function DiagnosticoDISC() {
             </CardContent>
           </Card>
 
-          <div className="bg-white rounded-lg p-4 border-2 border-indigo-200">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">
-                Progresso: {getFilledQuestions()}/{discQuestions.length} conjuntos preenchidos
-              </span>
-              <span className="text-sm text-gray-600">{progress.toFixed(0)}%</span>
-            </div>
-            <Progress value={progress} className="h-2" />
-          </div>
-
-          <Card className="bg-amber-50 border-2 border-amber-300">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-amber-900">
-                  <strong>⚠️ IMPORTANTE - Ordenação Única:</strong> Em cada conjunto, use os números de <strong>1 a 4 apenas UMA VEZ cada</strong>:
-                  <br />• <strong>1</strong> = Característica que MAIS se identifica com o colaborador
-                  <br />• <strong>2</strong> = Segunda característica mais identificada
-                  <br />• <strong>3</strong> = Terceira característica
-                  <br />• <strong>4</strong> = Característica que MENOS se identifica
-                  <br /><br />
-                  <strong>Exemplo:</strong> Se você colocar "4" na Opção A, não pode usar "4" novamente nas Opções B, C ou D.
-                  Cada número deve aparecer apenas uma vez por conjunto.
-                </div>
+          <Card className="border-2 border-indigo-200">
+            <CardContent className="p-8 text-center space-y-4">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-100 rounded-full">
+                <Brain className="w-6 h-6 text-indigo-600" />
               </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Avaliação DISC</h3>
+                <p className="text-sm text-gray-600 max-w-md mx-auto">
+                  {discQuestions.length} perguntas exibidas uma por vez em um modal. Em cada pergunta, ordene as características de 1 (mais parecido com o colaborador) a 4 (menos parecido).
+                </p>
+              </div>
+              <Button
+                onClick={handleStartAssessment}
+                disabled={submitting}
+                className="bg-indigo-600 hover:bg-indigo-700 text-lg px-10 py-6 rounded-full shadow-lg"
+              >
+                {submitting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Play className="w-5 h-5 mr-2" />}
+                Iniciar Avaliação
+              </Button>
             </CardContent>
           </Card>
-
-          {discQuestions.map((question) => {
-            const isComplete = isQuestionComplete(question.id);
-
-            return (
-              <Card key={question.id} className={`border-2 ${
-                isComplete ? 'border-green-300 bg-green-50' : 'border-gray-300'
-              }`}>
-                <CardHeader className={`${
-                  isComplete ? 'bg-gradient-to-r from-green-50 to-emerald-50' :
-                  'bg-gradient-to-r from-indigo-50 to-purple-50'
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">Conjunto {question.id}</CardTitle>
-                    {isComplete && (
-                      <div className="flex items-center gap-1 text-green-600">
-                        <Check className="w-5 h-5" />
-                        <span className="text-sm font-semibold">Completo</span>
-                      </div>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {[
-                      { key: 'd', text: question.traits.d, label: 'Opção A', color: 'red' },
-                      { key: 'i', text: question.traits.i, label: 'Opção B', color: 'yellow' },
-                      { key: 's', text: question.traits.s, label: 'Opção C', color: 'green' },
-                      { key: 'c', text: question.traits.c, label: 'Opção D', color: 'blue' }
-                    ].map((trait, index) => {
-                      const bgColors = {
-                        red: 'bg-red-100',
-                        yellow: 'bg-yellow-100',
-                        green: 'bg-green-100',
-                        blue: 'bg-blue-100'
-                      };
-                      
-                      const badgeColors = {
-                        red: 'bg-red-500',
-                        yellow: 'bg-yellow-500',
-                        green: 'bg-green-500',
-                        blue: 'bg-blue-500'
-                      };
-
-                      return (
-                        <div key={index} className={`${bgColors[trait.color]} rounded-lg p-4 border-2 border-gray-300`}>
-                          <div className="flex items-center gap-2 mb-3">
-                            <div className={`w-8 h-8 ${badgeColors[trait.color]} rounded-full flex items-center justify-center text-white font-bold text-sm`}>
-                              {String.fromCharCode(65 + index)}
-                            </div>
-                            <span className="font-semibold text-gray-900 text-sm">{trait.label}</span>
-                          </div>
-                          <p className="text-xs text-gray-700 mb-3 min-h-[48px] leading-tight">{trait.text}</p>
-                          <Input
-                            type="number"
-                            min="1"
-                            max="4"
-                            placeholder="1-4"
-                            value={answers[question.id]?.[trait.key] || ""}
-                            onChange={(e) => updateAnswer(question.id, trait.key, e.target.value)}
-                            className="text-center text-xl font-bold h-12"
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-
-          <div className="flex justify-center pt-6">
-            <Button
-              type="submit"
-              disabled={submitting || getFilledQuestions() < discQuestions.length}
-              className="bg-indigo-600 hover:bg-indigo-700 text-lg px-12 py-6 rounded-full shadow-lg"
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Processando...
-                </>
-              ) : (
-                <>
-                  <Brain className="w-5 h-5 mr-2" />
-                  Finalizar Teste DISC
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
+    <DISCAvaliacaoModal
+        open={isAssessmentOpen}
+        onOpenChange={setIsAssessmentOpen}
+        employeeName={employees.find(e => e.id === selectedEmployee)?.full_name}
+        submitting={submitting}
+        onComplete={submitAssessment}
+      />
     <ResultadoDISCModal
         open={resultModalOpen}
         onOpenChange={setResultModalOpen}
