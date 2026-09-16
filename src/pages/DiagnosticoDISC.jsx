@@ -33,6 +33,7 @@ export default function DiagnosticoDISC() {
   const [selectedEmployee, setSelectedEmployee] = useState(searchParams.get('employee_id') || searchParams.get('employeeId') || "");
   const [isLeader, setIsLeader] = useState(false);
   const [teamName, setTeamName] = useState("");
+  const [evaluationType, setEvaluationType] = useState("");
   const [isAssessmentOpen, setIsAssessmentOpen] = useState(false);
   const [inviteLink, setInviteLink] = useState("");
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -105,7 +106,7 @@ export default function DiagnosticoDISC() {
       const response = await base44.functions.invoke('submeterDiagnosticoDISC', {
         employee_id: selectedEmployee,
         workshop_id: finalWorkshopId || null,
-        evaluation_type: (currentUserEmployee && currentUserEmployee.id === selectedEmployee) ? 'self' : 'manager',
+        evaluation_type: (evaluationType === 'self' || (currentUserEmployee && currentUserEmployee.id === selectedEmployee)) ? 'self' : 'manager',
         is_leader: isLeader,
         team_name: teamName || null,
         answers: finalAnswers
@@ -311,7 +312,9 @@ export default function DiagnosticoDISC() {
                   <EvaluationGate 
                     employees={employees || []}
                     selectedEmployee={selectedEmployee} 
-                    onSelectEmployee={setSelectedEmployee} 
+                    onSelectEmployee={setSelectedEmployee}
+                    evaluationType={evaluationType}
+                    onEvaluationTypeChange={setEvaluationType}
                   />
                 </div>
                 
@@ -368,7 +371,7 @@ export default function DiagnosticoDISC() {
     <DISCAvaliacaoModal
         open={isAssessmentOpen}
         onOpenChange={setIsAssessmentOpen}
-        employeeName={employees.find(e => e.id === selectedEmployee)?.full_name}
+        employeeName={employees.find(e => e.id === selectedEmployee)?.full_name || currentUserEmployee?.full_name}
         submitting={submitting}
         onComplete={submitAssessment}
       />

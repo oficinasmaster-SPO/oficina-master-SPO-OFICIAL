@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { discQuestions } from "@/components/disc/DISCQuestions";
+import useModalScrollLock from "@/hooks/useModalScrollLock";
 
 // Modal de avaliação DISC com perguntas individuais (padrão 1 = mais parecido).
 // Usado pelo diagnóstico do gestor; conversão, cálculo e e-mail ficam no backend.
@@ -12,6 +13,9 @@ export default function DISCAvaliacaoModal({ open, onOpenChange, employeeName, s
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [selected, setSelected] = useState({});
+
+  // Trava o scroll de fundo sem layout shift ao abrir o modal
+  useModalScrollLock(open);
 
   // Reset do progresso ao fechar o modal
   useEffect(() => {
