@@ -114,46 +114,21 @@ export default function PublicDISC() {
 
     setSubmitting(true);
     try {
-      let totalD = 0, totalI = 0, totalS = 0, totalC = 0;
-      const answersArray = Object.entries(answers).map(([questionId, scores]) => {
-        const d = parseInt(scores.d) || 0;
-        const i = parseInt(scores.i) || 0;
-        const s = parseInt(scores.s) || 0;
-        const c = parseInt(scores.c) || 0;
-        totalD += d; totalI += i; totalS += s; totalC += c;
-        return { question_id: parseInt(questionId), d_score: d, i_score: i, s_score: s, c_score: c };
-      });
+      // Sprint 3: submissão unificada — envia os rankings crus (1 = mais parecido);
+      // o backend centraliza conversão, cálculo e disparo de e-mail
+      const answersArray = Object.entries(answers).map(([questionId, ranks]) => ({
+        question_id: parseInt(questionId),
+        d: ranks.d,
+        i: ranks.i,
+        s: ranks.s,
+        c: ranks.c
+      }));
 
-      const total = totalD + totalI + totalS + totalC;
-      const profileScores = {
-        executor_d: (totalD / total) * 100,
-        comunicador_i: (totalI / total) * 100,
-        planejador_s: (totalS / total) * 100,
-        analista_c: (totalC / total) * 100
-      };
-
-      const dominant = Object.keys(profileScores).reduce((a, b) => profileScores[a] > profileScores[b] ? a : b);
-
-      // Create diagnostic via API/Function or direct insert
-      const diagData = {
-        workshop_id: session.workshop_id,
-        candidate_name: formData.name,
-        evaluation_type: 'self',
-        answers: answersArray,
-        profile_scores: profileScores,
-        dominant_profile: dominant,
-        completed: true,
-        invite_id: session.id
-      };
-      
-      if (session.employee_id) diagData.employee_id = session.employee_id;
-      else diagData.candidate_id = "external_candidate";
-
-      await base44.functions.invoke('publicEndpoints', {
+      const res = await base44.functions.invoke('publicEndpoints', {
         action: 'submitDisc',
         data: {
           session_id: session.id,
-          diagData,
+          answers: answersArray,
           candidateData: {
             candidate_name: formData.name,
             candidate_phone: formData.phone,
@@ -162,7 +137,9 @@ export default function PublicDISC() {
         }
       });
 
-      setResult({ profileScores, dominant });
+      if (res.data?.error) throw new Error(res.data.error);
+
+      setResult({ profileScores: res.data.profile_scores, dominant: res.data.dominant_profile });
       setStep(3);
     } catch (error) {
       console.error(error);
@@ -252,7 +229,7 @@ export default function PublicDISC() {
               
               <div className="mt-4 p-4 bg-amber-50 rounded-lg border border-amber-200 text-sm text-amber-900">
                 <strong>Regra Importante:</strong> Em cada conjunto, dê notas de <strong>1 a 4</strong> para as alternativas. 
-                Use cada número apenas UMA vez por conjunto (4 = Mais parece com você, 1 = Menos parece).
+                Use cada número apenas UMA vez por conjunto (1 = Mais parece com você, 4 = Menos parece).
               </div>
             </div>
 

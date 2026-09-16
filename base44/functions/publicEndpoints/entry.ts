@@ -1,4 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { waitUntil } from 'base44:runtime';
+import { validarEConverterRespostas, calcularPerfilDISC } from '../../shared/discEngine/entry.ts';
 
 Deno.serve(async (req) => {
     try {
@@ -27,15 +29,48 @@ Deno.serve(async (req) => {
         }
 
         if (action === 'submitDisc') {
-            const { session_id, diagData, candidateData } = data;
-            const diag = await base44.asServiceRole.entities.DISCDiagnostic.create(diagData);
+            // Sprint 3: submissão unificada — rankings crus (1 = mais parecido),
+            // cálculo centralizado no motor único e disparo de e-mail no pipeline.
+            const { session_id, answers, candidateData } = data;
+
+            const session = await base44.asServiceRole.entities.DISCPublicSession.get(session_id).catch(() => null);
+            if (!session) return Response.json({ error: 'Sessão não encontrada' }, { status: 404 });
+            if (session.status === 'concluido') return Response.json({ error: 'Teste já realizado para este link' }, { status: 400 });
+
+            const validacao = validarEConverterRespostas(answers);
+            if (validacao.error) return Response.json({ error: validacao.error }, { status: 400 });
+
+            const { profileScores, dominant, recommendedRoles } = calcularPerfilDISC(validacao.answers);
+
+            const diag = await base44.asServiceRole.entities.DISCDiagnostic.create({
+                workshop_id: session.workshop_id,
+                employee_id: session.employee_id || null,
+                candidate_id: session.employee_id ? null : 'external_candidate',
+                candidate_name: candidateData?.candidate_name || null,
+                evaluation_type: 'self',
+                answers: validacao.answers,
+                profile_scores: profileScores,
+                dominant_profile: dominant,
+                recommended_roles: recommendedRoles,
+                completed: true,
+                invite_id: session.id
+            });
+
             await base44.asServiceRole.entities.DISCPublicSession.update(session_id, {
                 status: "concluido",
                 completed_at: new Date().toISOString(),
-                ...candidateData,
+                candidate_name: candidateData?.candidate_name || null,
+                candidate_phone: candidateData?.candidate_phone || null,
+                candidate_email: candidateData?.candidate_email || null,
                 result_id: diag.id
             });
-            return Response.json({ success: true, diag_id: diag.id });
+
+            // Pipeline de e-mail — assíncrono; travas antirreenvio no destino
+            waitUntil(
+                base44.asServiceRole.functions.invoke('enviarResultadoDISC', { diagnostic_id: diag.id }).catch(() => {})
+            );
+
+            return Response.json({ success: true, diag_id: diag.id, profile_scores: profileScores, dominant_profile: dominant });
         }
 
         if (action === 'submitNps') {
