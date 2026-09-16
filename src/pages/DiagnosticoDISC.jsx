@@ -9,9 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
+import DISCAvaliacaoModal from "@/components/disc/DISCAvaliacaoModal";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
-import { Loader2, Brain, AlertCircle, Check, Link as LinkIcon, History, Copy, X } from "lucide-react";
+import { Loader2, Brain, Link as LinkIcon, History, Copy, Play } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { discQuestions } from "@/components/disc/DISCQuestions";
 // HMR force update
@@ -33,7 +33,7 @@ export default function DiagnosticoDISC() {
   const [selectedEmployee, setSelectedEmployee] = useState(searchParams.get('employee_id') || searchParams.get('employeeId') || "");
   const [isLeader, setIsLeader] = useState(false);
   const [teamName, setTeamName] = useState("");
-  const [answers, setAnswers] = useState({});
+  const [isAssessmentOpen, setIsAssessmentOpen] = useState(false);
   const [inviteLink, setInviteLink] = useState("");
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [generatingInvite, setGeneratingInvite] = useState(false);
@@ -72,13 +72,6 @@ export default function DiagnosticoDISC() {
         activeEmployees = allEmployees.filter(e => e.status === "ativo");
       }
       setEmployees(activeEmployees);
-
-      // Inicializar respostas vazias
-      const initialAnswers = {};
-      discQuestions.forEach(q => {
-        initialAnswers[q.id] = { d: "", i: "", s: "", c: "" };
-      });
-      setAnswers(initialAnswers);
     } catch (error) {
       toast.error("Você precisa estar logado");
       base44.auth.redirectToLogin(createPageUrl("DiagnosticoDISC"));
