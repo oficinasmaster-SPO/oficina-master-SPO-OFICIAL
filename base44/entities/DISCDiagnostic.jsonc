@@ -16,7 +16,7 @@
     },
     "evaluator_id": {
       "type": "string",
-      "description": "ID do avaliador (opcional se autoavaliação)"
+      "description": "ID do avaliador (opcional se autoavalia\u00e7\u00e3o)"
     },
     "workshop_id": {
       "type": "string",
@@ -37,16 +37,16 @@
         "self"
       ],
       "default": "manager",
-      "description": "Tipo de avaliação: Gestor ou Autoavaliação"
+      "description": "Tipo de avalia\u00e7\u00e3o: Gestor ou Autoavalia\u00e7\u00e3o"
     },
     "is_leader": {
       "type": "boolean",
       "default": false,
-      "description": "Se é um líder de equipe"
+      "description": "Se \u00e9 um l\u00edder de equipe"
     },
     "team_name": {
       "type": "string",
-      "description": "Nome da equipe (para comparação)"
+      "description": "Nome da equipe (para compara\u00e7\u00e3o)"
     },
     "answers": {
       "type": "array",
@@ -105,7 +105,7 @@
       "items": {
         "type": "string"
       },
-      "description": "Funções recomendadas"
+      "description": "Fun\u00e7\u00f5es recomendadas"
     },
     "invite_id": {
       "type": "string",
@@ -135,7 +135,7 @@
         {
           "$and": [
             {
-              "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+              "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
             },
             {
               "user_condition": {
@@ -147,7 +147,7 @@
         {
           "$and": [
             {
-              "company_id": "{{user.data.company_id}}"
+              "data.company_id": "{{user.data.company_id}}"
             },
             {
               "user_condition": {
@@ -157,7 +157,13 @@
           ]
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
         },
         {
           "user_condition": {
@@ -166,9 +172,7 @@
         },
         {
           "user_condition": {
-            "data": {
-              "user_type": "internal"
-            }
+            "data.user_type": "internal"
           }
         }
       ]
@@ -186,7 +190,7 @@
         {
           "$and": [
             {
-              "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+              "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
             },
             {
               "user_condition": {
@@ -198,7 +202,7 @@
         {
           "$and": [
             {
-              "company_id": "{{user.data.company_id}}"
+              "data.company_id": "{{user.data.company_id}}"
             },
             {
               "user_condition": {
@@ -208,7 +212,13 @@
           ]
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
         },
         {
           "user_condition": {
@@ -217,9 +227,7 @@
         },
         {
           "user_condition": {
-            "data": {
-              "user_type": "internal"
-            }
+            "data.user_type": "internal"
           }
         }
       ]
@@ -237,7 +245,7 @@
         {
           "$and": [
             {
-              "consulting_firm_id": "{{user.data.consulting_firm_id}}"
+              "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
             },
             {
               "user_condition": {
@@ -249,7 +257,7 @@
         {
           "$and": [
             {
-              "company_id": "{{user.data.company_id}}"
+              "data.company_id": "{{user.data.company_id}}"
             },
             {
               "user_condition": {
@@ -259,7 +267,13 @@
           ]
         },
         {
-          "workshop_id": "{{user.data.workshop_id}}"
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
         },
         {
           "user_condition": {
@@ -268,9 +282,7 @@
         },
         {
           "user_condition": {
-            "data": {
-              "user_type": "internal"
-            }
+            "data.user_type": "internal"
           }
         }
       ]
