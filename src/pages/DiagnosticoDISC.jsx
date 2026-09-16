@@ -164,53 +164,23 @@ export default function DiagnosticoDISC() {
       const urlWorkshopId = searchParams.get('workshop_id');
       const finalWorkshopId = urlWorkshopId || workshop?.id;
 
-      let totalD = 0, totalI = 0, totalS = 0, totalC = 0;
-      
-      const answersArray = Object.entries(answers).map(([questionId, scores]) => {
-        const d = parseInt(scores.d) || 0;
-        const i = parseInt(scores.i) || 0;
-        const s = parseInt(scores.s) || 0;
-        const c = parseInt(scores.c) || 0;
-        
-        totalD += d;
-        totalI += i;
-        totalS += s;
-        totalC += c;
-        
-        return {
-          question_id: parseInt(questionId),
-          d_score: d,
-          i_score: i,
-          s_score: s,
-          c_score: c
-        };
-      });
+      // Sprint 2: submissão unificada no backend — envia os rankings crus
+      // (padrão 1 = mais parecido); conversão, cálculo e e-mail ficam centralizados
+      const answersArray = Object.entries(answers).map(([questionId, ranks]) => ({
+        question_id: parseInt(questionId),
+        d: ranks.d,
+        i: ranks.i,
+        s: ranks.s,
+        c: ranks.c
+      }));
 
-      const total = totalD + totalI + totalS + totalC;
-      const profileScores = {
-        executor_d: (totalD / total) * 100,
-        comunicador_i: (totalI / total) * 100,
-        planejador_s: (totalS / total) * 100,
-        analista_c: (totalC / total) * 100
-      };
-
-      const dominant = Object.keys(profileScores).reduce((a, b) => 
-        profileScores[a] > profileScores[b] ? a : b
-      );
-
-      const recommendedRoles = getRecommendedRoles(profileScores);
-
-      const response = await base44.functions.invoke('submitAppForms', {
-        form_type: 'manager_disc_diagnostic',
+      const response = await base44.functions.invoke('submeterDiagnosticoDISC', {
         employee_id: selectedEmployee,
         workshop_id: finalWorkshopId || null,
+        evaluation_type: (currentUserEmployee && currentUserEmployee.id === selectedEmployee) ? 'self' : 'manager',
         is_leader: isLeader,
         team_name: teamName || null,
-        evaluation_type: (currentUserEmployee && currentUserEmployee.id === selectedEmployee) ? 'self' : 'manager',
-        answers: answersArray,
-        profile_scores: profileScores,
-        dominant_profile: dominant,
-        recommended_roles: recommendedRoles
+        answers: answersArray
       });
 
       if (response.data.error) throw new Error(response.data.error);
@@ -224,39 +194,6 @@ export default function DiagnosticoDISC() {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const getRecommendedRoles = (scores) => {
-    const roles = [];
-    const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-    const top1 = sorted[0][0];
-    const top2 = sorted[1][0];
-
-    if (top1 === "executor_d" || top2 === "executor_d") {
-      if (scores.executor_d > 30) {
-        roles.push("Gerente Geral", "Líder de Equipe", "Coordenador de Produção");
-      }
-    }
-    
-    if (top1 === "comunicador_i" || top2 === "comunicador_i") {
-      if (scores.comunicador_i > 30) {
-        roles.push("Consultor de Vendas", "Atendimento ao Cliente", "Marketing");
-      }
-    }
-    
-    if (top1 === "planejador_s" || top2 === "planejador_s") {
-      if (scores.planejador_s > 30) {
-        roles.push("Coordenador Administrativo", "Supervisor de Processos", "Planejador", "Gestor de Qualidade");
-      }
-    }
-    
-    if (top1 === "analista_c" || top2 === "analista_c") {
-      if (scores.analista_c > 30) {
-        roles.push("Analista de Qualidade", "Controlador Financeiro", "Técnico Especialista");
-      }
-    }
-
-    return roles.length > 0 ? roles : ["Função a definir conforme necessidade da oficina"];
   };
 
   const getFilledQuestions = () => {
@@ -497,10 +434,10 @@ export default function DiagnosticoDISC() {
                 <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-amber-900">
                   <strong>⚠️ IMPORTANTE - Ordenação Única:</strong> Em cada conjunto, use os números de <strong>1 a 4 apenas UMA VEZ cada</strong>:
-                  <br />• <strong>4</strong> = Característica que MAIS se identifica com o colaborador
-                  <br />• <strong>3</strong> = Segunda característica mais identificada
-                  <br />• <strong>2</strong> = Terceira característica
-                  <br />• <strong>1</strong> = Característica que MENOS se identifica
+                  <br />• <strong>1</strong> = Característica que MAIS se identifica com o colaborador
+                  <br />• <strong>2</strong> = Segunda característica mais identificada
+                  <br />• <strong>3</strong> = Terceira característica
+                  <br />• <strong>4</strong> = Característica que MENOS se identifica
                   <br /><br />
                   <strong>Exemplo:</strong> Se você colocar "4" na Opção A, não pode usar "4" novamente nas Opções B, C ou D.
                   Cada número deve aparecer apenas uma vez por conjunto.

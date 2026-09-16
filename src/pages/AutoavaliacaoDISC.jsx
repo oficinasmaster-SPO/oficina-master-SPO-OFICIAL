@@ -38,8 +38,8 @@ export default function AutoavaliacaoDISC() {
     }
   };
 
-  const handleAnswer = (scores) => {
-    const newAnswers = [...answers, { question_id: currentQuestion, ...scores }];
+  const handleAnswer = (ranks) => {
+    const newAnswers = [...answers, { question_id: discQuestions[currentQuestion].id, ...ranks }];
     setAnswers(newAnswers);
 
     if (currentQuestion < discQuestions.length - 1) {
@@ -66,39 +66,14 @@ export default function AutoavaliacaoDISC() {
       return;
     }
     try {
-      const totals = { d_score: 0, i_score: 0, s_score: 0, c_score: 0 };
-      finalAnswers.forEach(a => {
-        totals.d_score += a.d_score || 0;
-        totals.i_score += a.i_score || 0;
-        totals.s_score += a.s_score || 0;
-        totals.c_score += a.c_score || 0;
-      });
-
-      const maxScore = Math.max(totals.d_score, totals.i_score, totals.s_score, totals.c_score);
-      const sum = Object.values(totals).reduce((a, b) => a + b, 0);
-
-      const profileScores = {
-        executor_d: (totals.d_score / sum) * 100,
-        comunicador_i: (totals.i_score / sum) * 100,
-        planejador_s: (totals.s_score / sum) * 100,
-        analista_c: (totals.c_score / sum) * 100
-      };
-
-      let dominant = 'executor_d';
-      if (totals.i_score === maxScore) dominant = 'comunicador_i';
-      else if (totals.s_score === maxScore) dominant = 'planejador_s';
-      else if (totals.c_score === maxScore) dominant = 'analista_c';
-
-      const diagnostic = await base44.entities.DISCDiagnostic.create({
+      // Sprint 2: submissão unificada no backend (conversão, cálculo e e-mail centralizados)
+      const response = await base44.functions.invoke('submeterDiagnosticoDISC', {
         employee_id: employee.id,
-        evaluator_id: user.id,
-        workshop_id: employee.workshop_id,
         evaluation_type: 'self',
-        answers: finalAnswers,
-        profile_scores: profileScores,
-        dominant_profile: dominant,
-        completed: true
+        answers: finalAnswers
       });
+      if (response.data?.error) throw new Error(response.data.error);
+      const diagnostic = { id: response.data.id };
 
       toast.success("Autoavaliação DISC concluída!");
       navigate(createPageUrl("ResultadoDISC") + `?id=${diagnostic.id}`);
@@ -252,7 +227,6 @@ export default function AutoavaliacaoDISC() {
 }
 
 function DISCQuestionCard({ question, onAnswer }) {
-  const [scores, setScores] = useState({ d_score: 0, i_score: 0, s_score: 0, c_score: 0 });
   const [selected, setSelected] = useState({});
 
   const handleSelect = (trait, value) => {
@@ -269,16 +243,9 @@ function DISCQuestionCard({ question, onAnswer }) {
     const newSelected = { ...selected, [trait]: value };
     setSelected(newSelected);
 
-    const newScores = {
-      d_score: newSelected.d ? (5 - newSelected.d) : 0,
-      i_score: newSelected.i ? (5 - newSelected.i) : 0,
-      s_score: newSelected.s ? (5 - newSelected.s) : 0,
-      c_score: newSelected.c ? (5 - newSelected.c) : 0
-    };
-    setScores(newScores);
-
+    // Sprint 2: envia os rankings crus (1 = mais parecido); conversão fica no backend
     if (Object.keys(newSelected).length === 4) {
-      setTimeout(() => onAnswer(newScores), 300);
+      setTimeout(() => onAnswer({ d: newSelected.d, i: newSelected.i, s: newSelected.s, c: newSelected.c }), 300);
     }
   };
 
@@ -290,7 +257,7 @@ function DISCQuestionCard({ question, onAnswer }) {
     <div className="space-y-4">
       <div className="bg-amber-50 border border-amber-300 rounded-lg p-3 mb-4">
         <p className="text-sm text-amber-900">
-          <strong>⚠️ Use cada número apenas uma vez:</strong> Ordene as características de 1 (menos) a 4 (mais).
+          <strong>⚠️ Use cada número apenas uma vez:</strong> Ordene as características de 1 (mais parecido) a 4 (menos parecido).
         </p>
       </div>
       {Object.entries(question.traits).map(([key, trait]) => (
