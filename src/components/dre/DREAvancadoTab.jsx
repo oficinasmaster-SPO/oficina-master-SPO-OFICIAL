@@ -172,14 +172,14 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
 
   // Callback: novo cliente criado via modal → atualiza lista + seleciona automaticamente
   const handleClienteCriado = (novo) => {
-    queryClient.invalidateQueries(["workshop-clientes", workshopId]);
+    queryClient.invalidateQueries({ queryKey: ["workshop-clientes", workshopId] });
     setClienteId(novo.id);
     setClienteNome(novo.nome);
   };
 
   // Callback: novo fornecedor criado via modal → atualiza lista + seleciona automaticamente
   const handleFornecedorCriado = (novo) => {
-    queryClient.invalidateQueries(["workshop-fornecedores", workshopId]);
+    queryClient.invalidateQueries({ queryKey: ["workshop-fornecedores", workshopId] });
     setFornecedorId(novo.id);
     setFornecedorNome(novo.nome);
   };
