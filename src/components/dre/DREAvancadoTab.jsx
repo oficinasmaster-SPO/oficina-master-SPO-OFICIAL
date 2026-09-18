@@ -113,6 +113,8 @@ const CATEGORIAS_RECEITA = {
 
 // ─── FORMULÁRIO DE LANÇAMENTO ─────────────────────────────────────────────────
 function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
+  const queryClient = useQueryClient();
+
   const [catKey, setCatKey] = useState("");
   const [subcat, setSubcat] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -120,7 +122,68 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
   const [dataVencimento, setDataVencimento] = useState("");
   const [dataPagamento, setDataPagamento] = useState("");
   const [saving, setSaving] = useState(false);
-  
+
+  // ── Cliente (receita) ──
+  const [clienteId, setClienteId] = useState("");
+  const [clienteNome, setClienteNome] = useState("");
+  const [modalClienteOpen, setModalClienteOpen] = useState(false);
+
+  // ── Fornecedor (despesa) ──
+  const [fornecedorId, setFornecedorId] = useState("");
+  const [fornecedorNome, setFornecedorNome] = useState("");
+  const [modalFornecedorOpen, setModalFornecedorOpen] = useState(false);
+
+  // ── Queries de clientes e fornecedores ──
+  const { data: clientes = [] } = useQuery({
+    queryKey: ["workshop-clientes", workshopId],
+    queryFn: () =>
+      base44.entities.WorkshopCliente.list({
+        filters: [{ field: "workshop_id", operator: "eq", value: workshopId }],
+        limit: 200,
+      }),
+    enabled: tipo === "receita" && !!workshopId,
+    staleTime: 30_000,
+  });
+
+  const { data: fornecedores = [] } = useQuery({
+    queryKey: ["workshop-fornecedores", workshopId],
+    queryFn: () =>
+      base44.entities.WorkshopFornecedor.list({
+        filters: [{ field: "workshop_id", operator: "eq", value: workshopId }],
+        limit: 200,
+      }),
+    enabled: tipo === "despesa" && !!workshopId,
+    staleTime: 30_000,
+  });
+
+  // Ao selecionar cliente via combobox, desnormaliza o nome
+  const handleClienteChange = (id) => {
+    setClienteId(id || "");
+    const found = clientes.find((c) => c.id === id);
+    setClienteNome(found ? found.nome : "");
+  };
+
+  // Ao selecionar fornecedor via combobox, desnormaliza o nome
+  const handleFornecedorChange = (id) => {
+    setFornecedorId(id || "");
+    const found = fornecedores.find((f) => f.id === id);
+    setFornecedorNome(found ? found.nome : "");
+  };
+
+  // Callback: novo cliente criado via modal → atualiza lista + seleciona automaticamente
+  const handleClienteCriado = (novo) => {
+    queryClient.invalidateQueries(["workshop-clientes", workshopId]);
+    setClienteId(novo.id);
+    setClienteNome(novo.nome);
+  };
+
+  // Callback: novo fornecedor criado via modal → atualiza lista + seleciona automaticamente
+  const handleFornecedorCriado = (novo) => {
+    queryClient.invalidateQueries(["workshop-fornecedores", workshopId]);
+    setFornecedorId(novo.id);
+    setFornecedorNome(novo.nome);
+  };
+
   // Inferir tipo automaticamente baseado na categoria selecionada
   const tipoInferido = catKey ? inferirTipoPorCategoria(catKey) : tipo;
 
