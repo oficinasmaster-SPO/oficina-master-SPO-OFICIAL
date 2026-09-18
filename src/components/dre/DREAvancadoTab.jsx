@@ -7,13 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import {
   Plus, Trash2, ArrowUpCircle, ArrowDownCircle,
   CheckCircle, AlertCircle, BarChart3, TrendingUp, TrendingDown,
-  ChevronDown, ChevronUp, Loader2, RefreshCw
+  ChevronDown, ChevronUp, Loader2, RefreshCw, UserPlus, Building2
 } from "lucide-react";
 import { formatCurrency } from "@/components/utils/formatters";
 import { toast } from "sonner";
 import SubcategoriaSelector from "./SubcategoriaSelector";
 import FiltroPeriodo from "./FiltroPeriodo";
 import ConfiguracaoRecorrencia from "./ConfiguracaoRecorrencia";
+import Combobox from "@/components/ui/combobox";
+import ModalCadastroCliente from "./ModalCadastroCliente";
+import ModalCadastroFornecedor from "./ModalCadastroFornecedor";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, Legend } from "recharts";
 
 const FREQUENCIAS = [
