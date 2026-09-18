@@ -254,6 +254,9 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
           frequencia: "unico",
           ...(dataVencimento && { data_vencimento: dataVencimento }),
           ...(dataPagamento && { data_pagamento: dataPagamento }),
+          // ── vínculos cliente / fornecedor ──
+          ...((tipoInferido || tipo) === "receita" && clienteId ? { cliente_id: clienteId, cliente_nome: clienteNome } : {}),
+          ...((tipoInferido || tipo) === "despesa" && fornecedorId ? { fornecedor_id: fornecedorId, fornecedor_nome: fornecedorNome } : {}),
         });
         window.dispatchEvent(new CustomEvent('dre-lancamento-criado', {
           detail: { workshop_id: workshopId, mes, lancamento: novoLancamento }
