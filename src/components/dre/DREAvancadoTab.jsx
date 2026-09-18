@@ -369,66 +369,62 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
           </div>
         </div>
 
-      {catKey && tipo === "despesa" && (
-        <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-lg ${catSelecionada?.entra_tcmp2 ? "bg-blue-100 text-blue-700" : "bg-red-50 text-red-700"}`}>
-          {catSelecionada?.entra_tcmp2
-            ? <><CheckCircle className="w-3 h-3 flex-shrink-0" /> Este custo <strong className="ml-1">ENTRA</strong> no cálculo do TCMP²</>
-            : <><AlertCircle className="w-3 h-3 flex-shrink-0" /> Este custo <strong className="ml-1">NÃO ENTRA</strong> no cálculo do TCMP²</>
-          }
-        </div>
-      )}
+        {catKey && tipo === "despesa" && (
+          <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-lg ${catSelecionada?.entra_tcmp2 ? "bg-blue-100 text-blue-700" : "bg-red-50 text-red-700"}`}>
+            {catSelecionada?.entra_tcmp2
+              ? <><CheckCircle className="w-3 h-3 flex-shrink-0" /> Este custo <strong className="ml-1">ENTRA</strong> no cálculo do TCMP²</>
+              : <><AlertCircle className="w-3 h-3 flex-shrink-0" /> Este custo <strong className="ml-1">NÃO ENTRA</strong> no cálculo do TCMP²</>
+            }
+          </div>
+        )}
 
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Descrição *</label>
-          <input
-className={inputCls} placeholder="Ex: Energia elétrica maio" value={descricao} onChange={e => setDescricao(e.target.value)} />
+        {/* ── DESCRIÇÃO + VALOR ── */}
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Descrição *</label>
+            <input className={inputCls} placeholder="Ex: Energia elétrica maio" value={descricao} onChange={e => setDescricao(e.target.value)} />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Valor (R$) *</label>
+            <input className={`${inputCls} text-right font-mono`} placeholder="0,00" value={valor} onChange={e => setValor(e.target.value)} />
+          </div>
         </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Valor (R$) *</label>
-          <input
-className={`${inputCls} text-right font-mono`} placeholder="0,00" value={valor} onChange={e => setValor(e.target.value)} />
-        </div>
-      </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">📅 Vencimento <span className="text-gray-400">(opcional)</span></label>
-          <input
-            type="date"
-className={inputCls} value={dataVencimento} onChange={e => setDataVencimento(e.target.value)} />
-        </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">✅ Data Pagamento <span className="text-gray-400">(opcional)</span></label>
-          <input
-            type="date"
-className={inputCls} value={dataPagamento} onChange={e => setDataPagamento(e.target.value)}
+        {/* ── VENCIMENTO + PAGAMENTO ── */}
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">📅 Vencimento <span className="text-gray-400">(opcional)</span></label>
+            <input type="date" className={inputCls} value={dataVencimento} onChange={e => setDataVencimento(e.target.value)} />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">✅ Data Pagamento <span className="text-gray-400">(opcional)</span></label>
+            <input type="date" className={inputCls} value={dataPagamento} onChange={e => setDataPagamento(e.target.value)}
               disabled={frequencia !== "unico"} title={frequencia !== "unico" ? "Data de pagamento só disponível para lançamentos únicos" : ""} />
+          </div>
+        </div>
+
+        {/* ── RECORRÊNCIA ── */}
+        <div>
+          <label className="text-xs text-gray-500 mb-1 block">🔁 Recorrência</label>
+          <select className={inputCls} value={frequencia} onChange={e => setFrequencia(e.target.value)}>
+            {FREQUENCIAS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+          </select>
+        </div>
+
+        {frequencia !== "unico" && (
+          <ConfiguracaoRecorrencia frequencia={frequencia} dataInicio={recorrencia.data_inicio}
+            dataFim={recorrencia.data_fim} numeroParcelas={recorrencia.numero_parcelas}
+            onChange={(partial) => setRecorrencia(prev => ({ ...prev, ...partial }))} />
+        )}
+
+        <div className="flex gap-2">
+          <Button size="sm" onClick={handleSave} disabled={saving} className={`${cor.btn} text-white flex-1`}>
+            {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Plus className="w-4 h-4 mr-1" />}
+            {frequencia !== "unico" ? "Criar Recorrência" : "Adicionar"}
+          </Button>
+          <Button size="sm" variant="outline" onClick={onCancel}>Cancelar</Button>
         </div>
       </div>
-
-      {/* ── RECORRÊNCIA ─────────────────────────────────────────────── */}
-      <div>
-        <label className="text-xs text-gray-500 mb-1 block">🔁 Recorrência</label>
-        <select className={inputCls} value={frequencia} onChange={e => setFrequencia(e.target.value)}>
-          {FREQUENCIAS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
-        </select>
-      </div>
-
-      {frequencia !== "unico" && (
-        <ConfiguracaoRecorrencia frequencia={frequencia} dataInicio={recorrencia.data_inicio}
-          dataFim={recorrencia.data_fim} numeroParcelas={recorrencia.numero_parcelas}
-          onChange={(partial) => setRecorrencia(prev => ({ ...prev, ...partial }))} />
-      )}
-
-      <div className="flex gap-2">
-        <Button size="sm" onClick={handleSave} disabled={saving} className={`${cor.btn} text-white flex-1`}>
-          {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Plus className="w-4 h-4 mr-1" />}
-          {frequencia !== "unico" ? "Criar Recorrência" : "Adicionar"}
-        </Button>
-        <Button size="sm" variant="outline" onClick={onCancel}>Cancelar</Button>
-      </div>
-    </div>
     </>
   );
 }
