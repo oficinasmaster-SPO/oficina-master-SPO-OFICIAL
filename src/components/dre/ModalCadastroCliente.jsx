@@ -1,172 +1,114 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Loader2, Search, UserPlus } from "lucide-react";
 import { toast } from "sonner";
-import { Loader2, Search, UserPlus, Upload, X, FileText, Image as ImageIcon } from "lucide-react";
 import AttachmentGallery from "@/components/aceleracao/AttachmentGallery";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function maskCpfCnpj(v = "") {
-  const digits = v.replace(/\D/g, "");
-  if (digits.length <= 11) {
-    return digits
-      .replace(/(\d{3})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+// ─── BUSCA CEP ────────────────────────────────────────────────────────────────
+async function buscarCEP(cep) {
+  const cepLimpo = cep.replace(/\D/g, "");
+  if (cepLimpo.length !== 8) return null;
+  try {
+    const res = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+    const data = await res.json();
+    if (data.erro) return null;
+    return data;
+  } catch {
+    return null;
   }
-  return digits
-    .replace(/^(\d{2})(\d)/, "$1.$2")
-    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-    .replace(/\.(\d{3})(\d)/, ".$1/$2")
-    .replace(/(\d{4})(\d)/, "$1-$2")
-    .slice(0, 18);
 }
 
-function maskTelefone(v = "") {
-  const digits = v.replace(/\D/g, "");
-  if (digits.length <= 10)
-    return digits.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3");
-  return digits.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3").slice(0, 15);
-}
-
-function maskCep(v = "") {
-  return v.replace(/\D/g, "").replace(/(\d{5})(\d{0,3})/, "$1-$2").slice(0, 9);
-}
-
-const CAMPO = "w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-300 disabled:bg-gray-50 disabled:text-gray-400";
-const LABEL = "text-xs text-gray-500 mb-1 block font-medium";
-
-// ─── Componente de Upload de Anexos ───────────────────────────────────────────
-function AnexosUploader({ anexos, onChange }) {
-  const fileInputRef = useRef(null);
-  const [uploading, setUploading] = useState(false);
-
-  const handleFiles = async (files) => {
-    if (!files?.length) return;
-    setUploading(true);
-    try {
-      const novos = [];
-      for (const file of Array.from(files)) {
-        const uploaded = await base44.storage.upload(file);
-        const isImage = file.type.startsWith("image/");
-        novos.push({
-          id: uploaded.file_id || crypto.randomUUID(),
-          url: uploaded.url,
-          name: file.name,
-          type: isImage ? "image" : "document",
-          size: file.size,
-          extension: file.name.split(".").pop()?.toLowerCase() || "",
-        });
-      }
-      onChange([...anexos, ...novos]);
-    } catch (e) {
-      toast.error("Erro ao fazer upload: " + (e.message || "tente novamente"));
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const remover = (id) => onChange(anexos.filter((a) => a.id !== id));
-
+// ─── CAMPO COM LABEL ──────────────────────────────────────────────────────────
+function Field({ label, required, children }) {
   return (
-    <div className="space-y-2">
-      <div
-        className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center cursor-pointer hover:border-green-300 hover:bg-green-50/30 transition-colors"
-        onClick={() => fileInputRef.current?.click()}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => { e.preventDefault(); handleFiles(e.dataTransfer.files); }}
-      >
-        {uploading ? (
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-            <Loader2 className="w-4 h-4 animate-spin" /> Enviando...
-          </div>
-        ) : (
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
-            <Upload className="w-4 h-4" />
-            <span>Arraste ou <span className="text-green-600 font-medium">clique para anexar</span> PDFs e imagens</span>
-          </div>
-        )}
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept="image/*,.pdf"
-          className="hidden"
-          onChange={(e) => handleFiles(e.target.files)}
-        />
-      </div>
-
-      {/* Lista dos anexos já adicionados (antes de salvar) */}
-      {anexos.length > 0 && (
-        <div className="space-y-1.5">
-          {anexos.map((a) => {
-            const isImg = a.type === "image";
-            return (
-              <div key={a.id} className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-                {isImg
-                  ? <ImageIcon className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                  : <FileText className="w-4 h-4 text-red-400 flex-shrink-0" />
-                }
-                <span className="text-xs text-gray-700 truncate flex-1">{a.name}</span>
-                <button type="button" onClick={() => remover(a.id)} className="text-gray-400 hover:text-red-500 transition-colors">
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      )}
+    <div>
+      <label className="block text-xs font-medium text-gray-600 mb-1">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      {children}
     </div>
   );
 }
 
-// ─── Modal Principal ──────────────────────────────────────────────────────────
-export default function ModalCadastroCliente({ workshopId, open, onClose, onCriado }) {
-  const [form, setForm] = useState({
-    nome: "",
-    cpf_cnpj: "",
-    telefone: "",
-    veiculo: "",
-    numero_os: "",
-    endereco_cep: "",
-    endereco_logradouro: "",
-    endereco_numero: "",
-    endereco_complemento: "",
-    endereco_bairro: "",
-    endereco_cidade: "",
-    endereco_uf: "",
-  });
-  const [anexos, setAnexos] = useState([]);
+const INPUT_CLS =
+  "w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-300 disabled:opacity-50";
+
+// ─── MODAL PRINCIPAL ──────────────────────────────────────────────────────────
+export default function ModalCadastroCliente({ open, onClose, workshopId, onCriado }) {
+  const [nome, setNome] = useState("");
+  const [cpfCnpj, setCpfCnpj] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [veiculo, setVeiculo] = useState("");
+  const [numeroOs, setNumeroOs] = useState("");
+
+  // Endereço
+  const [cep, setCep] = useState("");
   const [buscandoCep, setBuscandoCep] = useState(false);
+  const [logradouro, setLogradouro] = useState("");
+  const [numero, setNumero] = useState("");
+  const [complemento, setComplemento] = useState("");
+  const [bairro, setBairro] = useState("");
+  const [cidade, setCidade] = useState("");
+  const [uf, setUf] = useState("");
+
+  // Anexos
+  const [anexos, setAnexos] = useState([]);
+  const [uploadingAnexo, setUploadingAnexo] = useState(false);
+
   const [saving, setSaving] = useState(false);
 
-  const set = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
-
-  const buscarCep = async (cep) => {
-    const digits = cep.replace(/\D/g, "");
-    if (digits.length !== 8) return;
+  // ── Busca CEP ───────────────────────────────────────────────────────────────
+  const handleCepBlur = async () => {
+    if (cep.replace(/\D/g, "").length !== 8) return;
     setBuscandoCep(true);
+    const dados = await buscarCEP(cep);
+    setBuscandoCep(false);
+    if (!dados) {
+      toast.error("CEP não encontrado");
+      return;
+    }
+    setLogradouro(dados.logradouro || "");
+    setBairro(dados.bairro || "");
+    setCidade(dados.localidade || "");
+    setUf(dados.uf || "");
+  };
+
+  // ── Upload de Anexo ─────────────────────────────────────────────────────────
+  const handleFileChange = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setUploadingAnexo(true);
     try {
-      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
-      const data = await res.json();
-      if (data.erro) { toast.error("CEP não encontrado"); return; }
-      setForm((prev) => ({
-        ...prev,
-        endereco_logradouro: data.logradouro || "",
-        endereco_bairro: data.bairro || "",
-        endereco_cidade: data.localidade || "",
-        endereco_uf: data.uf || "",
-      }));
-    } catch {
-      toast.error("Erro ao buscar CEP");
+      const uploads = await Promise.all(
+        files.map(async (file) => {
+          const uploaded = await base44.storage.upload(file);
+          const ext = file.name.split(".").pop()?.toLowerCase() || "";
+          const isImage = file.type.startsWith("image/");
+          return {
+            id: uploaded.file_path || uploaded.url || String(Date.now()),
+            url: uploaded.url,
+            name: file.name,
+            type: isImage ? "image" : "document",
+            size: file.size,
+            extension: ext,
+          };
+        })
+      );
+      setAnexos((prev) => [...prev, ...uploads]);
+      toast.success(`${uploads.length} arquivo(s) anexado(s)`);
+    } catch (err) {
+      toast.error("Erro ao enviar arquivo: " + (err.message || "tente novamente"));
     } finally {
-      setBuscandoCep(false);
+      setUploadingAnexo(false);
+      e.target.value = "";
     }
   };
 
+  // ── Salvar ──────────────────────────────────────────────────────────────────
   const handleSave = async () => {
-    if (!form.nome.trim()) {
+    if (!nome.trim()) {
       toast.error("Nome do cliente é obrigatório");
       return;
     }
@@ -174,136 +116,228 @@ export default function ModalCadastroCliente({ workshopId, open, onClose, onCria
     try {
       const novo = await base44.entities.WorkshopCliente.create({
         workshop_id: workshopId,
-        ...form,
-        anexos,
+        nome: nome.trim(),
+        ...(cpfCnpj && { cpf_cnpj: cpfCnpj }),
+        ...(telefone && { telefone }),
+        ...(veiculo && { veiculo }),
+        ...(numeroOs && { numero_os: numeroOs }),
+        ...(cep && { endereco_cep: cep }),
+        ...(logradouro && { endereco_logradouro: logradouro }),
+        ...(numero && { endereco_numero: numero }),
+        ...(complemento && { endereco_complemento: complemento }),
+        ...(bairro && { endereco_bairro: bairro }),
+        ...(cidade && { endereco_cidade: cidade }),
+        ...(uf && { endereco_uf: uf }),
+        ...(anexos.length > 0 && { anexos }),
       });
-      toast.success("Cliente cadastrado!");
+      toast.success("Cliente cadastrado com sucesso!");
       onCriado(novo);
-      onClose();
-      // Reset
-      setForm({ nome: "", cpf_cnpj: "", telefone: "", veiculo: "", numero_os: "", endereco_cep: "", endereco_logradouro: "", endereco_numero: "", endereco_complemento: "", endereco_bairro: "", endereco_cidade: "", endereco_uf: "" });
-      setAnexos([]);
-    } catch (e) {
-      toast.error("Erro ao salvar cliente: " + (e.message || "tente novamente"));
+      handleClose();
+    } catch (err) {
+      toast.error("Erro ao salvar cliente: " + (err.message || "tente novamente"));
     } finally {
       setSaving(false);
     }
   };
 
+  const handleClose = () => {
+    setNome(""); setCpfCnpj(""); setTelefone(""); setVeiculo(""); setNumeroOs("");
+    setCep(""); setLogradouro(""); setNumero(""); setComplemento("");
+    setBairro(""); setCidade(""); setUf(""); setAnexos([]);
+    onClose();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-green-700">
             <UserPlus className="w-5 h-5" />
-            Cadastrar Novo Cliente
+            Cadastrar Cliente
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           {/* ── Dados Principais ── */}
+          <Field label="Nome" required>
+            <input
+              className={INPUT_CLS}
+              placeholder="Nome completo do cliente"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+            />
+          </Field>
+
           <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
-              <label className={LABEL}>Nome completo *</label>
-              <input className={CAMPO} placeholder="Ex: João Silva" value={form.nome} onChange={(e) => set("nome", e.target.value)} />
-            </div>
-            <div>
-              <label className={LABEL}>CPF / CNPJ</label>
-              <input className={CAMPO} placeholder="000.000.000-00" value={form.cpf_cnpj}
-                onChange={(e) => set("cpf_cnpj", maskCpfCnpj(e.target.value))} maxLength={18} />
-            </div>
-            <div>
-              <label className={LABEL}>Telefone</label>
-              <input className={CAMPO} placeholder="(00) 00000-0000" value={form.telefone}
-                onChange={(e) => set("telefone", maskTelefone(e.target.value))} maxLength={15} />
-            </div>
-            <div>
-              <label className={LABEL}>Veículo</label>
-              <input className={CAMPO} placeholder="Ex: Toyota Corolla 2022" value={form.veiculo}
-                onChange={(e) => set("veiculo", e.target.value)} />
-            </div>
-            <div>
-              <label className={LABEL}>Nº Ordem de Serviço</label>
-              <input className={CAMPO} placeholder="Ex: OS-2024-001" value={form.numero_os}
-                onChange={(e) => set("numero_os", e.target.value)} />
-            </div>
+            <Field label="CPF / CNPJ">
+              <input
+                className={INPUT_CLS}
+                placeholder="000.000.000-00"
+                value={cpfCnpj}
+                onChange={(e) => setCpfCnpj(e.target.value)}
+              />
+            </Field>
+            <Field label="Telefone">
+              <input
+                className={INPUT_CLS}
+                placeholder="(11) 99999-9999"
+                value={telefone}
+                onChange={(e) => setTelefone(e.target.value)}
+              />
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Veículo">
+              <input
+                className={INPUT_CLS}
+                placeholder="Ex: Toyota Corolla 2022"
+                value={veiculo}
+                onChange={(e) => setVeiculo(e.target.value)}
+              />
+            </Field>
+            <Field label="Nº Ordem de Serviço">
+              <input
+                className={INPUT_CLS}
+                placeholder="Ex: OS-2024-001"
+                value={numeroOs}
+                onChange={(e) => setNumeroOs(e.target.value)}
+              />
+            </Field>
           </div>
 
           {/* ── Endereço ── */}
-          <div>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Endereço</p>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className={LABEL}>CEP</label>
-                <div className="relative">
-                  <input
-                    className={CAMPO + " pr-9"}
-                    placeholder="00000-000"
-                    value={form.endereco_cep}
-                    onChange={(e) => {
-                      const v = maskCep(e.target.value);
-                      set("endereco_cep", v);
-                      if (v.replace(/\D/g, "").length === 8) buscarCep(v);
-                    }}
-                    maxLength={9}
-                  />
-                  {buscandoCep && (
-                    <Loader2 className="absolute right-2.5 top-2.5 w-4 h-4 animate-spin text-gray-400" />
-                  )}
-                  {!buscandoCep && (
-                    <button type="button" onClick={() => buscarCep(form.endereco_cep)}
-                      className="absolute right-2.5 top-2.5 text-gray-400 hover:text-green-600">
-                      <Search className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
+          <div className="border-t pt-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+              Endereço
+            </p>
+
+            <div className="grid grid-cols-3 gap-3 mb-3">
               <div className="col-span-2">
-                <label className={LABEL}>Logradouro</label>
-                <input className={CAMPO} placeholder="Rua / Avenida" value={form.endereco_logradouro}
-                  onChange={(e) => set("endereco_logradouro", e.target.value)} disabled={buscandoCep} />
+                <Field label="CEP">
+                  <div className="relative">
+                    <input
+                      className={INPUT_CLS + " pr-9"}
+                      placeholder="00000-000"
+                      value={cep}
+                      onChange={(e) => setCep(e.target.value)}
+                      onBlur={handleCepBlur}
+                    />
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                      {buscandoCep ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                      ) : (
+                        <Search className="w-4 h-4 text-gray-300" />
+                      )}
+                    </div>
+                  </div>
+                </Field>
               </div>
-              <div>
-                <label className={LABEL}>Número</label>
-                <input className={CAMPO} placeholder="123" value={form.endereco_numero}
-                  onChange={(e) => set("endereco_numero", e.target.value)} />
-              </div>
-              <div>
-                <label className={LABEL}>Complemento</label>
-                <input className={CAMPO} placeholder="Apto, Sala..." value={form.endereco_complemento}
-                  onChange={(e) => set("endereco_complemento", e.target.value)} />
-              </div>
-              <div>
-                <label className={LABEL}>Bairro</label>
-                <input className={CAMPO} placeholder="Bairro" value={form.endereco_bairro}
-                  onChange={(e) => set("endereco_bairro", e.target.value)} disabled={buscandoCep} />
-              </div>
-              <div className="col-span-2">
-                <label className={LABEL}>Cidade</label>
-                <input className={CAMPO} placeholder="Cidade" value={form.endereco_cidade}
-                  onChange={(e) => set("endereco_cidade", e.target.value)} disabled={buscandoCep} />
-              </div>
-              <div>
-                <label className={LABEL}>UF</label>
-                <input className={CAMPO} placeholder="SP" value={form.endereco_uf}
-                  onChange={(e) => set("endereco_uf", e.target.value.toUpperCase())} maxLength={2} disabled={buscandoCep} />
-              </div>
+              <Field label="UF">
+                <input
+                  className={INPUT_CLS}
+                  placeholder="SP"
+                  value={uf}
+                  onChange={(e) => setUf(e.target.value)}
+                  maxLength={2}
+                />
+              </Field>
             </div>
+
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              <div className="col-span-2">
+                <Field label="Logradouro">
+                  <input
+                    className={INPUT_CLS}
+                    placeholder="Rua / Avenida"
+                    value={logradouro}
+                    onChange={(e) => setLogradouro(e.target.value)}
+                  />
+                </Field>
+              </div>
+              <Field label="Número">
+                <input
+                  className={INPUT_CLS}
+                  placeholder="123"
+                  value={numero}
+                  onChange={(e) => setNumero(e.target.value)}
+                />
+              </Field>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <Field label="Complemento">
+                <input
+                  className={INPUT_CLS}
+                  placeholder="Apto, sala..."
+                  value={complemento}
+                  onChange={(e) => setComplemento(e.target.value)}
+                />
+              </Field>
+              <Field label="Bairro">
+                <input
+                  className={INPUT_CLS}
+                  placeholder="Bairro"
+                  value={bairro}
+                  onChange={(e) => setBairro(e.target.value)}
+                />
+              </Field>
+            </div>
+
+            <Field label="Cidade">
+              <input
+                className={INPUT_CLS}
+                placeholder="São Paulo"
+                value={cidade}
+                onChange={(e) => setCidade(e.target.value)}
+              />
+            </Field>
           </div>
 
           {/* ── Anexos ── */}
-          <div>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Anexos</p>
-            <AnexosUploader anexos={anexos} onChange={setAnexos} />
+          <div className="border-t pt-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+              Anexos
+            </p>
+
+            <label className="flex items-center justify-center gap-2 w-full py-2 px-3 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:border-green-400 hover:bg-green-50 transition-colors text-sm text-gray-500 hover:text-green-700">
+              {uploadingAnexo ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Enviando...</>
+              ) : (
+                <>+ Adicionar PDF ou Imagem</>
+              )}
+              <input
+                type="file"
+                accept=".pdf,.png,.jpg,.jpeg,.webp"
+                multiple
+                className="hidden"
+                onChange={handleFileChange}
+                disabled={uploadingAnexo}
+              />
+            </label>
+
+            {anexos.length > 0 && (
+              <div className="mt-3">
+                <AttachmentGallery files={anexos} />
+              </div>
+            )}
           </div>
         </div>
 
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={onClose} disabled={saving}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white">
-            {saving ? <><Loader2 className="w-4 h-4 animate-spin mr-1" /> Salvando...</> : "Cadastrar Cliente"}
+        {/* ── Footer ── */}
+        <div className="flex gap-2 pt-2 border-t">
+          <Button
+            className="flex-1 bg-green-600 hover:bg-green-700"
+            onClick={handleSave}
+            disabled={saving || uploadingAnexo}
+          >
+            {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+            Salvar Cliente
           </Button>
-        </DialogFooter>
+          <Button variant="outline" onClick={handleClose} disabled={saving}>
+            Cancelar
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
