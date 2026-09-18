@@ -399,13 +399,14 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
       )}
 
       <div className="flex gap-2">
-        <Button size="sm" onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700 flex-1">
+        <Button size="sm" onClick={handleSave} disabled={saving} className={`${cor.btn} text-white flex-1`}>
           {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Plus className="w-4 h-4 mr-1" />}
           {frequencia !== "unico" ? "Criar Recorrência" : "Adicionar"}
         </Button>
         <Button size="sm" variant="outline" onClick={onCancel}>Cancelar</Button>
       </div>
     </div>
+    </>
   );
 }
 
