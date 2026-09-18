@@ -1,0 +1,140 @@
+{
+  "properties": {
+    "anexos": {
+      "description": "Arquivos anexados ao cadastro do cliente (PDFs, imagens)",
+      "items": {
+        "properties": {
+          "extension": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "size": {
+            "type": "number"
+          },
+          "type": {
+            "description": "image | document | link",
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "cpf_cnpj": {
+      "description": "CPF ou CNPJ do cliente",
+      "type": "string"
+    },
+    "endereco_bairro": {
+      "description": "Bairro",
+      "type": "string"
+    },
+    "endereco_cep": {
+      "description": "CEP",
+      "type": "string"
+    },
+    "endereco_cidade": {
+      "description": "Cidade",
+      "type": "string"
+    },
+    "endereco_complemento": {
+      "description": "Complemento",
+      "type": "string"
+    },
+    "endereco_logradouro": {
+      "description": "Rua / Avenida",
+      "type": "string"
+    },
+    "endereco_numero": {
+      "description": "N\u00famero",
+      "type": "string"
+    },
+    "endereco_uf": {
+      "description": "UF (2 letras)",
+      "type": "string"
+    },
+    "nome": {
+      "description": "Nome completo do cliente (obrigat\u00f3rio)",
+      "type": "string"
+    },
+    "numero_os": {
+      "description": "N\u00famero da Ordem de Servi\u00e7o",
+      "type": "string"
+    },
+    "telefone": {
+      "description": "Telefone de contato",
+      "type": "string"
+    },
+    "veiculo": {
+      "description": "Ve\u00edculo do cliente (ex: Toyota Corolla 2022)",
+      "type": "string"
+    },
+    "workshop_id": {
+      "description": "ID da oficina propriet\u00e1ria. Isola o registro por tenant.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "workshop_id",
+    "nome"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  },
+  "type": "object",
+  "name": "WorkshopCliente"
+}
