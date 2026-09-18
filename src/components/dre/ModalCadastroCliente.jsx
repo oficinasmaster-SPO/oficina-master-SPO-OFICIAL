@@ -37,6 +37,17 @@ const INPUT_CLS =
 
 // ─── MODAL PRINCIPAL ──────────────────────────────────────────────────────────
 export default function ModalCadastroCliente({ open, onClose, workshopId, onCriado }) {
+  // Trava o scroll do body quando o modal abre, evitando layout shift da scrollbar
+  useEffect(() => {
+    if (!open) return;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = "hidden";
+    document.body.style.paddingRight = `${scrollbarWidth}px`;
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+    };
+  }, [open]);
   const [nome, setNome] = useState("");
   const [cpfCnpj, setCpfCnpj] = useState("");
   const [telefone, setTelefone] = useState("");
