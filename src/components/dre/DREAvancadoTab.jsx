@@ -294,23 +294,80 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
           )}
         </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Categoria *</label>
-          <select
-            className={`w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 ${cor.ring}`}
-            value={catKey}
-            onChange={e => { setCatKey(e.target.value); setSubcat(""); }}
-          >
+        {/* ── CLIENTE (receita) ── */}
+        {tipo === "receita" && (
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block font-medium">Cliente</label>
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <Combobox
+                  options={clientes}
+                  value={clienteId}
+                  onChange={handleClienteChange}
+                  getOptionLabel={(c) => c.nome}
+                  getOptionValue={(c) => c.id}
+                  placeholder="Selecione o cliente..."
+                  emptyText="Nenhum cliente. Cadastre um novo →"
+                  clearValue=""
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalClienteOpen(true)}
+                className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-lg border-2 border-dashed border-green-300 text-green-600 hover:bg-green-100 hover:border-green-500 transition-colors"
+                title="Cadastrar novo cliente"
+              >
+                <UserPlus className="w-4 h-4" />
+              </button>
+            </div>
+            {clienteNome && <p className="text-xs text-green-600 mt-1 pl-1">✓ {clienteNome}</p>}
+          </div>
+        )}
+
+        {/* ── FORNECEDOR (despesa) ── */}
+        {tipo === "despesa" && (
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block font-medium">Fornecedor</label>
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <Combobox
+                  options={fornecedores}
+                  value={fornecedorId}
+                  onChange={handleFornecedorChange}
+                  getOptionLabel={(f) => f.nome}
+                  getOptionValue={(f) => f.id}
+                  placeholder="Selecione o fornecedor..."
+                  emptyText="Nenhum fornecedor. Cadastre um novo →"
+                  clearValue=""
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalFornecedorOpen(true)}
+                className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-lg border-2 border-dashed border-red-300 text-red-600 hover:bg-red-100 hover:border-red-500 transition-colors"
+                title="Cadastrar novo fornecedor"
+              >
+                <Building2 className="w-4 h-4" />
+              </button>
+            </div>
+            {fornecedorNome && <p className="text-xs text-red-600 mt-1 pl-1">✓ {fornecedorNome}</p>}
+          </div>
+        )}
+
+        {/* ── CATEGORIA + SUBCATEGORIA ── */}
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Categoria *</label>
+            <select className={inputCls} value={catKey} onChange={e => { setCatKey(e.target.value); setSubcat(""); }}>
               <option value="">Selecione...</option>
               {Object.entries(categorias).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
             </select>
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">Subcategoria *</label>
+            <SubcategoriaSelector categoria={catKey} workshopId={workshopId} value={subcat} onChange={setSubcat} disabled={!catKey} placeholder="Selecione ou crie..." />
+          </div>
         </div>
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Subcategoria *</label>
-          <SubcategoriaSelector categoria={catKey} workshopId={workshopId} value={subcat} onChange={setSubcat} disabled={!catKey} placeholder="Selecione ou crie..." />
-        </div>
-      </div>
 
       {catKey && tipo === "despesa" && (
         <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-lg ${catSelecionada?.entra_tcmp2 ? "bg-blue-100 text-blue-700" : "bg-red-50 text-red-700"}`}>
