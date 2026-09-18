@@ -294,88 +294,18 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
         )}
       </div>
 
-      {/* ── Campo Cliente (apenas receitas) ── */}
-      {tipo === "receita" && (
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Cliente <span className="text-gray-400">(opcional)</span></label>
-          <div className="flex gap-2 items-center">
-            <div className="flex-1">
-              <Combobox
-                options={clientes}
-                value={clienteId}
-                onChange={handleClienteChange}
-                getOptionLabel={(c) => c.nome}
-                getOptionValue={(c) => c.id}
-                placeholder="Selecione o cliente..."
-                emptyText="Nenhum cliente cadastrado"
-                className="h-9"
-              />
-            </div>
-            <button
-              type="button"
-              title="Cadastrar novo cliente"
-              onClick={() => setModalClienteOpen(true)}
-              className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-lg border border-green-300 bg-green-50 text-green-700 hover:bg-green-100 transition-colors"
-            >
-              <UserPlus className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ── Campo Fornecedor (apenas despesas) ── */}
-      {tipo === "despesa" && (
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">Fornecedor <span className="text-gray-400">(opcional)</span></label>
-          <div className="flex gap-2 items-center">
-            <div className="flex-1">
-              <Combobox
-                options={fornecedores}
-                value={fornecedorId}
-                onChange={handleFornecedorChange}
-                getOptionLabel={(f) => f.nome}
-                getOptionValue={(f) => f.id}
-                placeholder="Selecione o fornecedor..."
-                emptyText="Nenhum fornecedor cadastrado"
-                className="h-9"
-              />
-            </div>
-            <button
-              type="button"
-              title="Cadastrar novo fornecedor"
-              onClick={() => setModalFornecedorOpen(true)}
-              className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-lg border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 transition-colors"
-            >
-              <Building2 className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label className="text-xs text-gray-500 mb-1 block">Categoria *</label>
           <select
-            className={`w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 ${cor.ring}`}
-            value={catKey}
-            onChange={e => { setCatKey(e.target.value); setSubcat(""); }}
-          >
-            <option value="">Selecione...</option>
-            {Object.entries(categorias).map(([k, v]) => (
-              <option key={k} value={k}>{v.label}</option>
-            ))}
-          </select>
+            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 ${cor.ring}" value={catKey} onChange={e => { setCatKey(e.target.value); setSubcat(""); }}>
+              <option value="">Selecione...</option>
+              {Object.entries(categorias).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+            </select>
         </div>
         <div>
           <label className="text-xs text-gray-500 mb-1 block">Subcategoria *</label>
-          <SubcategoriaSelector
-            categoria={catKey}
-            workshopId={workshopId}
-            value={subcat}
-            onChange={setSubcat}
-            disabled={!catKey}
-            placeholder="Selecione ou crie..."
-          />
+          <SubcategoriaSelector categoria={catKey} workshopId={workshopId} value={subcat} onChange={setSubcat} disabled={!catKey} placeholder="Selecione ou crie..." />
         </div>
       </div>
 
@@ -392,20 +322,12 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
         <div>
           <label className="text-xs text-gray-500 mb-1 block">Descrição *</label>
           <input
-            className={inputCls}
-            placeholder="Ex: Energia elétrica maio"
-            value={descricao}
-            onChange={e => setDescricao(e.target.value)}
-          />
+className={inputCls} placeholder="Ex: Energia elétrica maio" value={descricao} onChange={e => setDescricao(e.target.value)} />
         </div>
         <div>
           <label className="text-xs text-gray-500 mb-1 block">Valor (R$) *</label>
           <input
-            className={`${inputCls} text-right font-mono`}
-            placeholder="0,00"
-            value={valor}
-            onChange={e => setValor(e.target.value)}
-          />
+className={`${inputCls} text-right font-mono`} placeholder="0,00" value={valor} onChange={e => setValor(e.target.value)} />
         </div>
       </div>
 
@@ -414,46 +336,29 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
           <label className="text-xs text-gray-500 mb-1 block">📅 Vencimento <span className="text-gray-400">(opcional)</span></label>
           <input
             type="date"
-            className={inputCls}
-            value={dataVencimento}
-            onChange={e => setDataVencimento(e.target.value)}
-          />
+className={inputCls} value={dataVencimento} onChange={e => setDataVencimento(e.target.value)} />
         </div>
         <div>
           <label className="text-xs text-gray-500 mb-1 block">✅ Data Pagamento <span className="text-gray-400">(opcional)</span></label>
           <input
             type="date"
-            className={inputCls}
-            value={dataPagamento}
-            onChange={e => setDataPagamento(e.target.value)}
-            disabled={frequencia !== "unico"}
-            title={frequencia !== "unico" ? "Data de pagamento só disponível para lançamentos únicos" : ""}
-          />
+className={inputCls} value={dataPagamento} onChange={e => setDataPagamento(e.target.value)}
+              disabled={frequencia !== "unico"} title={frequencia !== "unico" ? "Data de pagamento só disponível para lançamentos únicos" : ""} />
         </div>
       </div>
 
       {/* ── RECORRÊNCIA ─────────────────────────────────────────────── */}
       <div>
         <label className="text-xs text-gray-500 mb-1 block">🔁 Recorrência</label>
-        <select
-          className={inputCls}
-          value={frequencia}
-          onChange={e => setFrequencia(e.target.value)}
-        >
-          {FREQUENCIAS.map(f => (
-            <option key={f.value} value={f.value}>{f.label}</option>
-          ))}
+        <select className={inputCls} value={frequencia} onChange={e => setFrequencia(e.target.value)}>
+          {FREQUENCIAS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
         </select>
       </div>
 
       {frequencia !== "unico" && (
-        <ConfiguracaoRecorrencia
-          frequencia={frequencia}
-          dataInicio={recorrencia.data_inicio}
-          dataFim={recorrencia.data_fim}
-          numeroParcelas={recorrencia.numero_parcelas}
-          onChange={(partial) => setRecorrencia(prev => ({ ...prev, ...partial }))}
-        />
+        <ConfiguracaoRecorrencia frequencia={frequencia} dataInicio={recorrencia.data_inicio}
+          dataFim={recorrencia.data_fim} numeroParcelas={recorrencia.numero_parcelas}
+          onChange={(partial) => setRecorrencia(prev => ({ ...prev, ...partial }))} />
       )}
 
       <div className="flex gap-2">
