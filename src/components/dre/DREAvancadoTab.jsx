@@ -287,12 +287,12 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
           <p className={`text-sm font-semibold ${cor.title}`}>
             {tipo === "receita" ? "💰 Novo Lançamento de Receita" : "📋 Novo Lançamento de Despesa"}
           </p>
-        {catKey && tipoInferido && (
-          <Badge className={tipoInferido === "receita" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
-            {tipoInferido === "receita" ? "💰 Receita" : "📉 Despesa"} Detectado
-          </Badge>
-        )}
-      </div>
+          {catKey && tipoInferido && (
+            <Badge className={tipoInferido === "receita" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
+              {tipoInferido === "receita" ? "💰 Receita" : "📉 Despesa"} Detectado
+            </Badge>
+          )}
+        </div>
 
       <div className="grid grid-cols-2 gap-2">
         <div>
