@@ -271,12 +271,22 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
     }
   };
 
+  // Paleta dinâmica por tipo
+  const cor = tipo === "receita"
+    ? { bg: "bg-green-50", border: "border-green-200", title: "text-green-700", ring: "focus:ring-green-300", btn: "bg-green-600 hover:bg-green-700" }
+    : { bg: "bg-red-50", border: "border-red-200", title: "text-red-700", ring: "focus:ring-red-300", btn: "bg-red-600 hover:bg-red-700" };
+  const inputCls = `w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 ${cor.ring}`;
+
   return (
-    <div className="bg-blue-50 border-2 border-dashed border-blue-200 rounded-xl p-4 space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-semibold text-blue-700">
-          {tipo === "receita" ? "💰 Novo Lançamento de Receita" : "📋 Novo Lançamento de Despesa"}
-        </p>
+    <>
+      <ModalCadastroCliente workshopId={workshopId} open={modalClienteOpen} onClose={() => setModalClienteOpen(false)} onCriado={handleClienteCriado} />
+      <ModalCadastroFornecedor workshopId={workshopId} open={modalFornecedorOpen} onClose={() => setModalFornecedorOpen(false)} onCriado={handleFornecedorCriado} />
+
+      <div className={`${cor.bg} border-2 border-dashed ${cor.border} rounded-xl p-4 space-y-3`}>
+        <div className="flex items-center justify-between gap-2">
+          <p className={`text-sm font-semibold ${cor.title}`}>
+            {tipo === "receita" ? "💰 Novo Lançamento de Receita" : "📋 Novo Lançamento de Despesa"}
+          </p>
         {catKey && tipoInferido && (
           <Badge className={tipoInferido === "receita" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
             {tipoInferido === "receita" ? "💰 Receita" : "📉 Despesa"} Detectado
