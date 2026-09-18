@@ -639,6 +639,16 @@ function LancamentoRow({ item, onDelete, onSaved }) {
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
           <span className="text-xs text-gray-400">{cat?.label ?? item.categoria}</span>
           {item.subcategoria && <span className="text-xs text-gray-400">· {item.subcategoria}</span>}
+          {item.tipo === "receita" && item.cliente_nome && (
+            <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-1.5 py-0.5 rounded-full font-medium">
+              👤 {item.cliente_nome}
+            </span>
+          )}
+          {item.tipo === "despesa" && item.fornecedor_nome && (
+            <span className="text-xs bg-gray-100 text-gray-600 border border-gray-200 px-1.5 py-0.5 rounded-full font-medium">
+              🏪 {item.fornecedor_nome}
+            </span>
+          )}
           {item.tipo === "despesa" && (
             item.entra_tcmp2
               ? <span className="text-xs text-blue-600">✅ TCMP²</span>
