@@ -294,11 +294,69 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
         )}
       </div>
 
+      {/* ── Campo Cliente (apenas receitas) ── */}
+      {tipo === "receita" && (
+        <div>
+          <label className="text-xs text-gray-500 mb-1 block">Cliente <span className="text-gray-400">(opcional)</span></label>
+          <div className="flex gap-2 items-center">
+            <div className="flex-1">
+              <Combobox
+                options={clientes}
+                value={clienteId}
+                onChange={handleClienteChange}
+                getOptionLabel={(c) => c.nome}
+                getOptionValue={(c) => c.id}
+                placeholder="Selecione o cliente..."
+                emptyText="Nenhum cliente cadastrado"
+                className="h-9"
+              />
+            </div>
+            <button
+              type="button"
+              title="Cadastrar novo cliente"
+              onClick={() => setModalClienteOpen(true)}
+              className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-lg border border-green-300 bg-green-50 text-green-700 hover:bg-green-100 transition-colors"
+            >
+              <UserPlus className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Campo Fornecedor (apenas despesas) ── */}
+      {tipo === "despesa" && (
+        <div>
+          <label className="text-xs text-gray-500 mb-1 block">Fornecedor <span className="text-gray-400">(opcional)</span></label>
+          <div className="flex gap-2 items-center">
+            <div className="flex-1">
+              <Combobox
+                options={fornecedores}
+                value={fornecedorId}
+                onChange={handleFornecedorChange}
+                getOptionLabel={(f) => f.nome}
+                getOptionValue={(f) => f.id}
+                placeholder="Selecione o fornecedor..."
+                emptyText="Nenhum fornecedor cadastrado"
+                className="h-9"
+              />
+            </div>
+            <button
+              type="button"
+              title="Cadastrar novo fornecedor"
+              onClick={() => setModalFornecedorOpen(true)}
+              className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-lg border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 transition-colors"
+            >
+              <Building2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label className="text-xs text-gray-500 mb-1 block">Categoria *</label>
           <select
-            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 ${cor.ring}"
+            className={`w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 ${cor.ring}`}
             value={catKey}
             onChange={e => { setCatKey(e.target.value); setSubcat(""); }}
           >
@@ -334,7 +392,7 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
         <div>
           <label className="text-xs text-gray-500 mb-1 block">Descrição *</label>
           <input
-            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+            className={inputCls}
             placeholder="Ex: Energia elétrica maio"
             value={descricao}
             onChange={e => setDescricao(e.target.value)}
@@ -343,7 +401,7 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
         <div>
           <label className="text-xs text-gray-500 mb-1 block">Valor (R$) *</label>
           <input
-            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 text-right font-mono"
+            className={`${inputCls} text-right font-mono`}
             placeholder="0,00"
             value={valor}
             onChange={e => setValor(e.target.value)}
@@ -356,7 +414,7 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
           <label className="text-xs text-gray-500 mb-1 block">📅 Vencimento <span className="text-gray-400">(opcional)</span></label>
           <input
             type="date"
-            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+            className={inputCls}
             value={dataVencimento}
             onChange={e => setDataVencimento(e.target.value)}
           />
@@ -365,7 +423,7 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
           <label className="text-xs text-gray-500 mb-1 block">✅ Data Pagamento <span className="text-gray-400">(opcional)</span></label>
           <input
             type="date"
-            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-300"
+            className={inputCls}
             value={dataPagamento}
             onChange={e => setDataPagamento(e.target.value)}
             disabled={frequencia !== "unico"}
@@ -378,7 +436,7 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
       <div>
         <label className="text-xs text-gray-500 mb-1 block">🔁 Recorrência</label>
         <select
-          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+          className={inputCls}
           value={frequencia}
           onChange={e => setFrequencia(e.target.value)}
         >
