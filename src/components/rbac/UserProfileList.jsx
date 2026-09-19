@@ -18,6 +18,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { jobRoles } from "@/components/lib/jobRoles";
+import { assertProfileDeletable } from "@/components/rbac/profileDeleteGuard";
 import { useQuery } from "@tanstack/react-query";
 
 export default function UserProfileList({ profiles, onEdit, onClone, getUserCount }) {
@@ -36,7 +37,12 @@ export default function UserProfileList({ profiles, onEdit, onClone, getUserCoun
   });
 
   const deleteProfileMutation = useMutation({
-    mutationFn: (id) => base44.entities.UserProfile.delete(id),
+    // Etapa 2: perfil em uso (membership/Employee) NÃO pode ser excluído —
+    // referência órfã resulta em 0 permissões para o usuário.
+    mutationFn: async (id) => {
+      await assertProfileDeletable(id);
+      return base44.entities.UserProfile.delete(id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['userProfiles']);
       toast.success("Perfil de usuário excluído com sucesso!");

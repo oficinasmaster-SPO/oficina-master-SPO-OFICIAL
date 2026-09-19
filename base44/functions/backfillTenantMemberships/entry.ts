@@ -32,12 +32,20 @@ Deno.serve(async (req) => {
       return [...byId.values()];
     };
 
-    const [users, workshops, employees, existentes] = await Promise.all([
+    const [users, workshops, employees, existentes, perfis] = await Promise.all([
       listAll('User'),
       listAll('Workshop'),
       listAll('Employee'),
-      listAll('TenantMembership')
+      listAll('TenantMembership'),
+      listAll('UserProfile')
     ]);
+
+    // Guarda (Etapa 2): apenas UserProfile EXISTENTE pode ser copiado para a
+    // membership. Copiar profile_id de um perfil deletado cria membership com
+    // RBAC vazio (incidente 695a8c3c...). Casos inválidos são registrados no
+    // relatório para auditoria — nada é sobrescrito ou apagado.
+    const perfisValidos = new Set(perfis.map((p) => p.id));
+    const profilesInvalidos = [];
 
     const userIds = new Set(users.map((u) => u.id));
     const workshopById = new Map(workshops.map((w) => [w.id, w]));
@@ -62,13 +70,23 @@ Deno.serve(async (req) => {
     for (const e of employees) {
       if (!e.user_id || !e.workshop_id) continue;
       if (e.status === 'inativo' || e.user_status === 'inativo' || e.user_status === 'bloqueado') continue;
+      const perfilValido = e.profile_id && perfisValidos.has(e.profile_id);
+      if (e.profile_id && !perfilValido) {
+        // NÃO copiar profile inexistente — registrar para auditoria.
+        profilesInvalidos.push({
+          employee_id: e.id,
+          user_id: e.user_id,
+          workshop_id: e.workshop_id,
+          profile_id_invalido: e.profile_id
+        });
+      }
       propor({
         user_id: e.user_id,
         workshop_id: e.workshop_id,
         company_id: e.company_id || workshopById.get(e.workshop_id)?.company_id || undefined,
         consulting_firm_id: e.consulting_firm_id || workshopById.get(e.workshop_id)?.consulting_firm_id || undefined,
         employee_id: e.id,
-        profile_id: e.profile_id || undefined,
+        profile_id: perfilValido ? e.profile_id : undefined,
         membership_type: 'employee',
         status: 'active',
         is_default: false,
@@ -219,6 +237,7 @@ Deno.serve(async (req) => {
         ignorados
       },
       conflitos: { total: conflitos.length, itens: conflitos },
+      profiles_invalidos: { total: profilesInvalidos.length, itens: profilesInvalidos },
       amostra_propostas: aCriar.slice(0, 30)
     });
   } catch (error) {

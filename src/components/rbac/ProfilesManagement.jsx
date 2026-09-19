@@ -16,6 +16,7 @@ import ProfileCreator from "@/components/profiles/ProfileCreator";
 import ProfileAudit from "@/components/profiles/ProfileAudit";
 import ProfileDetailsModal from "@/components/rbac/ProfileDetailsModal";
 import { systemRoles } from "@/components/lib/systemRoles";
+import { assertProfileDeletable } from "@/components/rbac/profileDeleteGuard";
 
 export default function ProfilesManagement() {
   const [selectedProfile, setSelectedProfile] = useState(null);
@@ -68,11 +69,19 @@ export default function ProfilesManagement() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.UserProfile.delete(id),
+    // Etapa 2: perfil em uso (membership/Employee) NÃO pode ser excluído —
+    // referência órfã resulta em 0 permissões para o usuário.
+    mutationFn: async (id) => {
+      await assertProfileDeletable(id);
+      return base44.entities.UserProfile.delete(id);
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["user-profiles"] });
       await refetch();
       toast.success("Perfil excluído");
+    },
+    onError: (err) => {
+      toast.error(err.message || "Erro ao excluir perfil");
     },
   });
 
