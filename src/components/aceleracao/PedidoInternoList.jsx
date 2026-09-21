@@ -184,7 +184,7 @@ function GroupHeader({ group, count, collapsed, onToggle }) {
       onClick={onToggle}
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onToggle(); } }}
       /* 🌟 Alterado de px-4 para pl-10 pr-4 para empurrar o conteúdo para a direita */
-      className={`flex items-center ${MIN_TABLE} py-2.5 pl-10 pr-4 cursor-pointer select-none transition-all duration-150 ${bgCls} ${collapsed ? "opacity-50" : ""}`}
+      className={`flex items-center ${MIN_TABLE} py-2.5 pl-10 pr-4 cursor-pointer select-none transition-[background-color,opacity] duration-150 ${bgCls} ${collapsed ? "opacity-50" : ""}`}
     >
       <div className="flex items-center gap-2 shrink-0">
         <span className={`h-[7px] w-[7px] rounded-full ${dotCls}`} />
@@ -226,7 +226,7 @@ function TicketRow({ pedido, onSelect, isSelected, getName, getPhoto, now = Date
       className={`
         group relative flex w-full items-center ${COL.gap} ${COL.px} ${MIN_TABLE}
         h-[54px] text-left cursor-pointer select-none
-        transition-all duration-150
+        transition-colors duration-150
         border-b border-[hsl(var(--border-subtle))]
         before:absolute before:left-0 before:top-1 before:bottom-1 before:w-0.5 before:rounded-r before:transition-colors before:duration-150
         ${isSelected

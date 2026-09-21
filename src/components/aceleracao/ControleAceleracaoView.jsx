@@ -74,11 +74,10 @@ export default function ControleAceleracaoView({ state }) {
   const [showMassRegistration, setShowMassRegistration] = useState(false);
   const [showSuporteRapido, setShowSuporteRapido] = useState(false);
 
-  // Track visited tabs — lazy-mount on first visit, keep mounted after
-  const [visitedTabs, setVisitedTabs] = useState(() => new Set([activeTab]));
-  const markVisited = useCallback((tab) => {
-    setVisitedTabs(prev => prev.has(tab) ? prev : new Set(prev).add(tab));
-  }, []);
+  // PERF: apenas a aba ativa fica montada. Antes, toda aba visitada continuava
+  // montada escondida (forceMount + keep-mounted), rodando queries, timers e
+  // websockets em segundo plano — saturava a main thread e o :hover da lista
+  // de pedidos "travava" atrás do cursor.
 
   // Observability
   const { trackTabChange, trackFilterChange, trackAtendimentoOpen, trackMassRegistrationOpen } = useAceleracaoObservability(user);
@@ -93,9 +92,8 @@ export default function ControleAceleracaoView({ state }) {
     }
     trackTabChange(prevTabRef.current, newTab);
     prevTabRef.current = newTab;
-    markVisited(newTab);
     setActiveTab(newTab);
-  }, [setActiveTab, trackTabChange, markVisited, navigate]);
+  }, [setActiveTab, trackTabChange, navigate]);
 
   const queryClient = useQueryClient();
 
@@ -204,8 +202,7 @@ export default function ControleAceleracaoView({ state }) {
             gap: "0.7rem",
             padding: "0.525rem",
             borderRadius: "1.05rem",
-            background: "rgba(255,255,255,0.85)",
-            backdropFilter: "blur(12px)",
+            background: "#ffffff",
             border: "1px solid hsl(220 15% 82% / 0.6)",
             boxShadow: "0 8px 32px -6px hsl(220 30% 10% / 0.22), 0 2px 8px -2px hsl(220 30% 10% / 0.12)",
           }}
@@ -417,10 +414,10 @@ export default function ControleAceleracaoView({ state }) {
           </TabsList>
         </div>
 
-        {/* Tab Content — forceMount + hidden on all tabs; lazy-mount on first visit */}
+        {/* Tab Content — só a aba ativa renderiza conteúdo (as demais ficam vazias) */}
         <div className={activeTab === "pedidos" ? "flex min-h-0 flex-1 flex-col" : ""}>
           <TabsContent value="visao-geral" forceMount className={`mt-0 ${activeTab !== "visao-geral" ? "hidden" : ""}`}>
-            {visitedTabs.has("visao-geral") && (
+            {activeTab === "visao-geral" && (
               <TabErrorBoundary tabName="Visão Geral">
                 <Suspense fallback={<TabSkeleton variant="overview" />}>
                   {loadingAtendimentos ? <TabSkeleton variant="overview" /> : <VisaoGeralTab state={state} />}
@@ -430,7 +427,7 @@ export default function ControleAceleracaoView({ state }) {
           </TabsContent>
 
           <TabsContent value="atendimentos" forceMount className={`mt-0 ${activeTab !== "atendimentos" ? "hidden" : ""}`}>
-            {visitedTabs.has("atendimentos") && (
+            {activeTab === "atendimentos" && (
               <TabErrorBoundary tabName="Atendimentos">
                 <Suspense fallback={<TabSkeleton variant="table" />}>
                   {loadingAtendimentos ? <TabSkeleton variant="table" /> : <PainelAtendimentosTab state={state} />}
@@ -440,7 +437,7 @@ export default function ControleAceleracaoView({ state }) {
           </TabsContent>
 
           <TabsContent value="cronograma" forceMount className={`mt-0 ${activeTab !== "cronograma" ? "hidden" : ""}`}>
-            {visitedTabs.has("cronograma") && (
+            {activeTab === "cronograma" && (
               <TabErrorBoundary tabName="Cronograma">
                 <Suspense fallback={<TabSkeleton variant="table" />}>
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -452,7 +449,7 @@ export default function ControleAceleracaoView({ state }) {
           </TabsContent>
 
           <TabsContent value="pedidos" forceMount className={`mt-0 flex min-h-0 flex-1 flex-col ${activeTab !== "pedidos" ? "hidden" : ""}`}>
-            {visitedTabs.has("pedidos") && (
+            {activeTab === "pedidos" && (
               <TabErrorBoundary tabName="Pedidos & Backlog">
                 <Suspense fallback={<TabSkeleton />}>
                   <PedidosInternosTab user={user} />
@@ -462,7 +459,7 @@ export default function ControleAceleracaoView({ state }) {
           </TabsContent>
 
           <TabsContent value="agenda-visual" forceMount className={`mt-0 ${activeTab !== "agenda-visual" ? "hidden" : ""}`}>
-            {visitedTabs.has("agenda-visual") && (
+            {activeTab === "agenda-visual" && (
               <TabErrorBoundary tabName="Agenda Visual">
                 <Suspense fallback={<TabSkeleton variant="overview" />}>
                   <AgendaVisualTab state={state} />
@@ -472,7 +469,7 @@ export default function ControleAceleracaoView({ state }) {
           </TabsContent>
 
           <TabsContent value="dashboard-operacional" forceMount className={`mt-0 ${activeTab !== "dashboard-operacional" ? "hidden" : ""}`}>
-            {visitedTabs.has("dashboard-operacional") && (
+            {activeTab === "dashboard-operacional" && (
               <TabErrorBoundary tabName="Dashboard Sprints">
                 <Suspense fallback={<TabSkeleton variant="overview" />}>
                   <DashboardOperacionalTabRedesigned user={user} workshops={workshops} />
@@ -482,7 +479,7 @@ export default function ControleAceleracaoView({ state }) {
           </TabsContent>
 
           <TabsContent value="consultoria" forceMount className={`mt-0 ${activeTab !== "consultoria" ? "hidden" : ""}`}>
-            {visitedTabs.has("consultoria") && (
+            {activeTab === "consultoria" && (
               <TabErrorBoundary tabName="Consultoria Global">
                 <Suspense fallback={<TabSkeleton variant="overview" />}>
                   <ConsultoriaGlobalTab />
@@ -492,7 +489,7 @@ export default function ControleAceleracaoView({ state }) {
           </TabsContent>
 
           <TabsContent value="proximos-passos" forceMount className={`mt-0 ${activeTab !== "proximos-passos" ? "hidden" : ""}`}>
-            {visitedTabs.has("proximos-passos") && (
+            {activeTab === "proximos-passos" && (
               <TabErrorBoundary tabName="Próximos Passos">
                 <Suspense fallback={<TabSkeleton variant="table" />}>
                   <CentralProximosPassos isTab={true} />

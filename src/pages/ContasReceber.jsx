@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, DollarSign, AlertCircle, Trash2, History, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, DollarSign, AlertCircle, Trash2, History, ChevronDown, ChevronUp, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -17,11 +17,123 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import ModalRegistrarRecebimento from "@/components/financeiro/ModalRegistrarRecebimento";
 import HistoricoAlteracoes from "@/components/financeiro/HistoricoAlteracoes";
 
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('pt-BR') : '—';
+
+// S1-T1.2: Modal de estorno para Contas a Receber
+function ModalEstornoReceber({ aberto, onFechar, conta, onSuccess }) {
+  const [motivo, setMotivo] = useState("");
+  const [estornando, setEstornando] = useState(false);
+  const [liquidacoes, setLiquidacoes] = useState([]);
+  const [liquidacaoSelecionada, setLiquidacaoSelecionada] = useState(null);
+  const [carregando, setCarregando] = useState(false);
+
+  React.useEffect(() => {
+    if (!aberto || !conta?.id) return;
+    setMotivo("");
+    setLiquidacaoSelecionada(null);
+    setCarregando(true);
+    base44.entities.LiquidacaoFinanceira
+      .filter({ conta_receber_id: conta.id }, '-data_liquidacao', 20)
+      .then(r => setLiquidacoes(r || []))
+      .catch(() => setLiquidacoes([]))
+      .finally(() => setCarregando(false));
+  }, [aberto, conta?.id]);
+
+  const handleEstornar = async () => {
+    if (!liquidacaoSelecionada) { toast.error('Selecione a baixa a estornar'); return; }
+    if (!motivo.trim()) { toast.error('Informe o motivo do estorno'); return; }
+    setEstornando(true);
+    try {
+      await base44.functions.invoke('desfazerLiquidacao', {
+        liquidacao_id: liquidacaoSelecionada,
+        motivo: motivo.trim(),
+      });
+      toast.success('✅ Estorno realizado! O recebimento foi revertido.');
+      onSuccess?.();
+      onFechar();
+    } catch (e) {
+      toast.error('Erro ao estornar: ' + (e.message || 'tente novamente'));
+    } finally {
+      setEstornando(false);
+    }
+  };
+
+  return (
+    <Dialog open={aberto} onOpenChange={onFechar}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-orange-700">
+            <RotateCcw className="w-5 h-5" /> Estornar Recebimento
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm">
+            <p className="font-semibold text-orange-800">{conta?.cliente_nome || '—'}</p>
+            <p className="text-orange-700 text-xs mt-0.5">Valor original: {fmt(conta?.valor_original)}</p>
+          </div>
+          {carregando ? (
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <Loader2 className="w-4 h-4 animate-spin" /> Buscando recebimentos registrados...
+            </div>
+          ) : liquidacoes.length === 0 ? (
+            <p className="text-sm text-gray-500 italic">Nenhum recebimento encontrado para esta conta.</p>
+          ) : (
+            <div>
+              <Label className="text-xs">Selecione o recebimento a estornar *</Label>
+              <div className="space-y-2 mt-1">
+                {liquidacoes.map(liq => (
+                  <button
+                    key={liq.id}
+                    onClick={() => setLiquidacaoSelecionada(liq.id)}
+                    className={`w-full text-left p-3 rounded-lg border-2 transition-all text-sm ${
+                      liquidacaoSelecionada === liq.id
+                        ? 'border-orange-400 bg-orange-50'
+                        : 'border-gray-200 hover:border-orange-200'
+                    }`}
+                  >
+                    <div className="flex justify-between">
+                      <span className="font-medium">{fmt(liq.valor_liquidacao)}</span>
+                      <span className="text-gray-500">{liq.data_liquidacao ? new Date(liq.data_liquidacao).toLocaleDateString('pt-BR') : '—'}</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5">{liq.forma_pagamento?.replace('_', ' ')}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <div>
+            <Label className="text-xs">Motivo do estorno *</Label>
+            <Textarea
+              value={motivo}
+              onChange={e => setMotivo(e.target.value)}
+              placeholder="Ex: Recebimento baixado na data errada (18/09 em vez de 09/09)"
+              className="mt-1 text-sm resize-none"
+              rows={3}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onFechar}>Cancelar</Button>
+          <Button
+            onClick={handleEstornar}
+            disabled={estornando || !liquidacaoSelecionada || !motivo.trim()}
+            className="bg-orange-600 hover:bg-orange-700"
+          >
+            {estornando && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+            Confirmar Estorno
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 function StatusBadge({ status }) {
   const map = {
@@ -41,6 +153,7 @@ export default function ContasReceber() {
   const [contaSelecionada, setContaSelecionada] = useState(null);
   const [contaParaDeletar, setContaParaDeletar] = useState(null);
   const [contaHistoricoAberta, setContaHistoricoAberta] = useState(null);
+  const [contaParaEstornar, setContaParaEstornar] = useState(null); // S1-T1.2
   const [deletando, setDeletando] = useState(false);
   const [loadingReceber, setLoadingReceber] = useState(false);
 
@@ -179,6 +292,19 @@ export default function ContasReceber() {
                       Registrar
                     </Button>
                   )}
+                  {/* S1-T1.2: estorno para contas pagas ou parciais */}
+                  {(conta.status === 'pago' || conta.status === 'parcial') && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                      onClick={() => setContaParaEstornar(conta)}
+                      title="Estornar recebimento"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-1" />
+                      Estornar
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="ghost"
@@ -208,6 +334,16 @@ export default function ContasReceber() {
           </Card>
         ))}
       </div>
+
+      {/* S1-T1.2: Modal estorno recebimento */}
+      {contaParaEstornar && (
+        <ModalEstornoReceber
+          aberto={!!contaParaEstornar}
+          onFechar={() => setContaParaEstornar(null)}
+          conta={contaParaEstornar}
+          onSuccess={() => { setContaParaEstornar(null); refetch(); }}
+        />
+      )}
 
       {/* Modal correto com data + fonte de saída */}
       {contaSelecionada && (

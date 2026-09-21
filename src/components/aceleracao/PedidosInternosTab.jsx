@@ -43,8 +43,8 @@ export default function PedidosInternosTab({ workshopId, user }) {
       const t = e.target;
       const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName) || t.isContentEditable;
       if (e.key === "/" && !isTyping) {
-        // GUARD: as abas usam forceMount, então o input existe mesmo invisível.
-        // Só foca se estiver fisicamente visível na tela (aba ativa).
+        // GUARD: o input pode estar desmontado (aba Backlog ativa) ou invisível.
+        // Só foca se existir e estiver fisicamente visível na tela (aba ativa).
         const input = searchInputRef.current;
         if (input && input.offsetParent !== null) {
           e.preventDefault();
@@ -303,7 +303,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
         }
 
         {/* Conteúdo da Lista de Pedidos */}
-        <TabsContent value="pedidos" forceMount className={`mt-0 flex min-h-0 flex-1 flex-col bg-white ${activeList !== "pedidos" ? "hidden" : ""}`}>
+        <TabsContent value="pedidos" className="mt-0 flex min-h-0 flex-1 flex-col bg-white">
           <div className="min-h-0 flex-1 overflow-y-auto">
             {isError ? (
               <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -334,7 +334,7 @@ export default function PedidosInternosTab({ workshopId, user }) {
         </TabsContent>
 
         {/* Conteúdo do Backlog */}
-        <TabsContent value="backlog" forceMount className={`mt-0 flex min-h-0 flex-1 flex-col overflow-hidden ${activeList !== "backlog" ? "hidden" : ""}`}>
+        <TabsContent value="backlog" className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden">
           <BacklogBoard workshopId={workshopId} user={user} scope={blScope} />
         </TabsContent>
 
