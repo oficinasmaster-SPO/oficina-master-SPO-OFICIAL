@@ -47,12 +47,22 @@ Deno.serve(async (req) => {
     const novoStatus = novoValorAberto >= conta.valor_original ? 'aberto' : 'parcial';
 
     // 1. Reverte ContaReceber ou ContaPagar
+    // S1-T1.2: appenda item ao historico_alteracoes para rastreabilidade na UI
+    const historicoAtual = conta.historico_alteracoes || [];
+    const itemEstorno = {
+      tipo: 'estorno',
+      usuario_nome: user.full_name || user.email || '—',
+      usuario_email: user.email || '',
+      data_hora: new Date().toISOString(),
+      detalhes: `Estorno de R$${liquidacao.valor_liquidacao.toFixed(2)}. Motivo: ${motivo.trim()}`,
+    };
     await base44.entities[entityName].update(entidadeId, {
       valor_pago: Math.max(0, novoValorPago),
       valor_aberto: Math.max(0, novoValorAberto),
       status: novoStatus,
-      data_primeiro_pagamento: null, // Remove data de pagamento
-      dias_atraso: 0
+      data_primeiro_pagamento: novoValorPago <= 0 ? null : conta.data_primeiro_pagamento,
+      dias_atraso: 0,
+      historico_alteracoes: [...historicoAtual, itemEstorno],
     });
 
     // 2. Deleta DFC gerado (se existir)
@@ -67,20 +77,25 @@ Deno.serve(async (req) => {
     // 3. Deleta LiquidaçãoFinanceira
     await base44.entities.LiquidacaoFinanceira.delete(liquidacao_id);
 
-    // 4. Registra auditoria
-    await base44.functions.auditLog({
-      acao: 'desfazer_liquidacao',
-      entidade: 'LiquidacaoFinanceira',
-      entidade_id: liquidacao_id,
-      usuario_id: user.id,
-      usuario_email: user.email,
-      detalhes: {
-        motivo: 'Reversão de liquidação',
-        valor: liquidacao.valor_liquidacao,
-        conta_id: entidadeId,
-        conta_tipo: entityName
-      }
-    });
+    // 4. Registra auditoria com motivo informado pelo usuário
+    try {
+      await base44.functions.invoke('auditLog', {
+        acao: 'desfazer_liquidacao',
+        entidade: 'LiquidacaoFinanceira',
+        entidade_id: liquidacao_id,
+        usuario_id: user.id,
+        usuario_email: user.email,
+        detalhes: {
+          motivo: motivo.trim(),
+          valor: liquidacao.valor_liquidacao,
+          conta_id: entidadeId,
+          conta_tipo: entityName,
+          perfil_usuario: perfilUsuario,
+        }
+      });
+    } catch (_) {
+      // auditLog falha silenciosamente — o estorno já foi concluído
+    }
 
     return Response.json({
       success: true,
