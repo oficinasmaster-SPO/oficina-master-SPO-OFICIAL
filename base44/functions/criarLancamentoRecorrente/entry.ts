@@ -23,7 +23,11 @@ Deno.serve(async (req) => {
       frequencia,
       numero_parcelas,
       data_inicio,
-      data_fim
+      data_fim,
+      data_competencia,
+      data_documento,
+      tipo_documento,
+      numero_documento
     } = body;
 
     if (!frequencia || frequencia === 'unico') {
@@ -47,19 +51,30 @@ Deno.serve(async (req) => {
     // Criar lançamentos para cada período
     const lancamentosCriados = [];
     
-    // Extrair dia da data_vencimento original
-    const dataVencimentoOriginal = new Date(data_vencimento);
-    const diaVencimento = dataVencimentoOriginal.getDate();
+    // Datas-base opcionais: sem vencimento/competência, os lançamentos ficam sem a data
+    const dataVencimentoOriginal = data_vencimento ? new Date(data_vencimento) : null;
+    const dataCompetenciaOriginal = data_competencia ? new Date(data_competencia) : null;
 
     for (let i = 0; i < meses.length; i++) {
       const mesRef = meses[i].mes;
       const parcelaAtual = i + 1;
-      
-      // Calcular data_vencimento para esta parcela
+
+      // Calcular data_vencimento para esta parcela (mesmo dia, avançando 1 período por parcela)
       // Exemplo: se era 19/05/2026 e frequência=mensal, a próxima é 19/06/2026, depois 19/07, etc
-      const dataParcela = new Date(dataVencimentoOriginal);
-      dataParcela.setMonth(dataParcela.getMonth() + i);
-      const dataVencimentoParcela = dataParcela.toISOString().split('T')[0];
+      let dataVencimentoParcela;
+      if (dataVencimentoOriginal) {
+        const dataParcela = new Date(dataVencimentoOriginal);
+        dataParcela.setMonth(dataParcela.getMonth() + i);
+        dataVencimentoParcela = dataParcela.toISOString().split('T')[0];
+      }
+
+      // data_competencia também avança 1 período por parcela (fato gerador de cada ocorrência)
+      let dataCompetenciaParcela;
+      if (dataCompetenciaOriginal) {
+        const dataComp = new Date(dataCompetenciaOriginal);
+        dataComp.setMonth(dataComp.getMonth() + i);
+        dataCompetenciaParcela = dataComp.toISOString().split('T')[0];
+      }
 
       const lancamento = await base44.entities.DRELancamento.create({
         workshop_id,
@@ -70,7 +85,11 @@ Deno.serve(async (req) => {
         descricao,
         valor,
         entra_tcmp2: entra_tcmp2 ?? true,
-        data_vencimento: dataVencimentoParcela,
+        ...(dataVencimentoParcela && { data_vencimento: dataVencimentoParcela }),
+        ...(dataCompetenciaParcela && { data_competencia: dataCompetenciaParcela }),
+        ...(data_documento && { data_documento }),
+        ...(tipo_documento && { tipo_documento }),
+        ...(numero_documento && { numero_documento }),
         frequencia,
         recorrencia_id,
         data_inicio,
