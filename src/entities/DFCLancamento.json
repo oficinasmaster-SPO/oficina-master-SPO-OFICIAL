@@ -40,10 +40,15 @@
       "type": "string",
       "enum": [
         "manual",
-        "dre_automatico"
+        "dre_automatico",
+        "liquidacao_financeira"
       ],
       "default": "manual",
-      "description": "Se foi inserido manualmente pelo usuário ou mapeado automaticamente do DRE"
+      "description": "Se foi inserido manualmente, mapeado do DRE ou gerado por liquidação financeira (ContaReceber/ContaPagar)"
+    },
+    "liquidacao_financeira_id": {
+      "type": "string",
+      "description": "ID da LiquidacaoFinanceira que gerou este lançamento. Preenchido por registrarLiquidacao. Usado por desfazerLiquidacao para localizar e deletar o DFC no estorno."
     },
     "saldo_inicial": {
       "type": "number",
