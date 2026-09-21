@@ -27,6 +27,13 @@ const FREQUENCIAS = [
   { value: "anual", label: "Anual" },
 ];
 
+const TIPOS_DOCUMENTO = [
+  { value: "nota_fiscal", label: "Nota Fiscal" },
+  { value: "pedido_compra", label: "Pedido de Compra" },
+  { value: "fatura", label: "Fatura" },
+  { value: "outro", label: "Outro" },
+];
+
 // ─── DETECÇÃO AUTOMÁTICA DE TIPO ─────────────────────────────────────────────
 const CATEGORIAS_RECEITA_KEYS = ['pecas_aplicadas', 'servicos', 'outras'];
 const CATEGORIAS_DESPESA_KEYS = ['operacional', 'pessoas', 'marketing', 'manutencao', 'terceirizados', 'administrativo', 'financeiro', 'pecas_estoque', 'tecnologia', 'juridico'];
@@ -122,6 +129,13 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
   const [dataVencimento, setDataVencimento] = useState("");
   const [dataPagamento, setDataPagamento] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // ── Documento (opcional) ──
+  const [docOpen, setDocOpen] = useState(false);
+  const [dataCompetencia, setDataCompetencia] = useState("");
+  const [dataDocumento, setDataDocumento] = useState("");
+  const [tipoDocumento, setTipoDocumento] = useState("");
+  const [numeroDocumento, setNumeroDocumento] = useState("");
 
   // ── Cliente (receita) ──
   const [clienteId, setClienteId] = useState("");
@@ -254,6 +268,11 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
           frequencia: "unico",
           ...(dataVencimento && { data_vencimento: dataVencimento }),
           ...(dataPagamento && { data_pagamento: dataPagamento }),
+          // ── documento (opcional) ──
+          ...(dataCompetencia && { data_competencia: dataCompetencia }),
+          ...(dataDocumento && { data_documento: dataDocumento }),
+          ...(tipoDocumento && { tipo_documento: tipoDocumento }),
+          ...(numeroDocumento.trim() && { numero_documento: numeroDocumento.trim() }),
           // ── vínculos cliente / fornecedor ──
           ...((tipoInferido || tipo) === "receita" && clienteId ? { cliente_id: clienteId, cliente_nome: clienteNome } : {}),
           ...((tipoInferido || tipo) === "despesa" && fornecedorId ? { fornecedor_id: fornecedorId, fornecedor_nome: fornecedorNome } : {}),
@@ -389,6 +408,45 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
             <input className={`${inputCls} text-right font-mono`} placeholder="0,00" value={valor} onChange={e => setValor(e.target.value)} />
           </div>
         </div>
+
+        {/* ── DOCUMENTO (despesa: colapsável) / DATA DA VENDA (receita) ── */}
+        {tipo === "receita" ? (
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block">🛒 Data da Venda <span className="text-gray-400">(opcional)</span></label>
+            <input type="date" className={inputCls} value={dataCompetencia} onChange={e => setDataCompetencia(e.target.value)} />
+          </div>
+        ) : (
+          <div className="border border-gray-200 rounded-lg bg-white/70">
+            <button type="button" onClick={() => setDocOpen(!docOpen)}
+              className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-gray-500 hover:text-gray-700">
+              <span>📄 Documento <span className="text-gray-400 font-normal">(opcional)</span></span>
+              {docOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </button>
+            {docOpen && (
+              <div className="px-3 pb-3 pt-2 grid grid-cols-2 gap-2 border-t border-gray-100">
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Data de Competência</label>
+                  <input type="date" className={inputCls} value={dataCompetencia} onChange={e => setDataCompetencia(e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Data do Documento</label>
+                  <input type="date" className={inputCls} value={dataDocumento} onChange={e => setDataDocumento(e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Tipo de Documento</label>
+                  <select className={inputCls} value={tipoDocumento} onChange={e => setTipoDocumento(e.target.value)}>
+                    <option value="">Selecione...</option>
+                    {TIPOS_DOCUMENTO.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">Número do Documento</label>
+                  <input className={inputCls} placeholder="Ex: NF 1234" value={numeroDocumento} onChange={e => setNumeroDocumento(e.target.value)} />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── VENCIMENTO + PAGAMENTO ── */}
         <div className="grid grid-cols-2 gap-2">
@@ -647,6 +705,16 @@ function LancamentoRow({ item, onDelete, onSaved }) {
           {item.tipo === "despesa" && item.fornecedor_nome && (
             <span className="text-xs bg-gray-100 text-gray-600 border border-gray-200 px-1.5 py-0.5 rounded-full font-medium">
               🏪 {item.fornecedor_nome}
+            </span>
+          )}
+          {item.data_competencia && (
+            <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full font-medium">
+              {item.tipo === "receita" ? "🛒" : "📅"} {item.tipo === "receita" ? "venda" : "competência"} {fmtData(item.data_competencia)}
+            </span>
+          )}
+          {(item.tipo_documento || item.numero_documento) && (
+            <span className="text-xs bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded-full font-medium">
+              📄 {TIPOS_DOCUMENTO.find(t => t.value === item.tipo_documento)?.label ?? "Documento"}{item.numero_documento ? ` ${item.numero_documento}` : ""}
             </span>
           )}
           {item.tipo === "despesa" && (

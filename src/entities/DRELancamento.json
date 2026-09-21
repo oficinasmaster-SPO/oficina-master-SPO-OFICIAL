@@ -82,6 +82,25 @@
     "parcela_atual": {
       "type": "integer",
       "description": "Número da parcela atual (1, 2, 3...)"
+    },
+    "data_competencia": {
+      "type": "string",
+      "format": "date",
+      "description": "Data em que a venda ou compra ocorreu (fato gerador). Para receitas exibida como 'Data da Venda'."
+    },
+    "data_documento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data da NF, pedido ou fatura vinculado ao lançamento"
+    },
+    "tipo_documento": {
+      "type": "string",
+      "enum": ["nota_fiscal", "pedido_compra", "fatura", "outro"],
+      "description": "Tipo do documento vinculado ao lançamento"
+    },
+    "numero_documento": {
+      "type": "string",
+      "description": "Número da NF/pedido/fatura vinculado ao lançamento"
     }
   },
   "required": [
