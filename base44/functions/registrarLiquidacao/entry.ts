@@ -132,10 +132,13 @@ Deno.serve(async (req) => {
     });
 
     // 3. Cria DFCLancamento
+    // VÍNCULO OBRIGATÓRIO: sem liquidacao_financeira_id o estorno
+    // (desfazerLiquidacao) não encontra o DFC e ele fica órfão no caixa.
     const mesReferencia = String(data_liquidacao).slice(0, 7);
     await base44.entities.DFCLancamento.create({
       workshop_id: conta.workshop_id,
       mes: mesReferencia,
+      liquidacao_financeira_id: liquidacao.id,
       origem: 'liquidacao_financeira',
       tipo: tipo === 'recebimento' ? 'entrada' : 'saida',
       grupo: 'operacional',
