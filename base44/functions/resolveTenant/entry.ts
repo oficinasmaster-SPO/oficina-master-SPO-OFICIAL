@@ -96,16 +96,14 @@ async function resolveTenantCore(sr, authUser, params = {}) {
   // Só quando sync_user_field=true (endpoint resolveTenant); nunca em impersonação
   // nem em override sintético de admin.
   if (sync_user_field && !isImpersonating && effectiveMembership.notes !== 'admin-override') {
-    const updates = {};
-    if ((effectiveUser.tenant_workshop_id || null) !== effectiveMembership.workshop_id) {
-      updates.tenant_workshop_id = effectiveMembership.workshop_id;
-    }
-    if ((effectiveUser.data?.workshop_id || null) !== effectiveMembership.workshop_id) {
-      updates.data = { ...(effectiveUser.data || {}), workshop_id: effectiveMembership.workshop_id };
-    }
-    if (Object.keys(updates).length) {
-      try { await sr.entities.User.update(effectiveUser.id, updates); } catch (_) {}
-    }
+    const updates: Record<string, unknown> = {};
+    // FIX (2026-09-21): Sempre gravar tenant_workshop_id e data.workshop_id para garantir
+    // que o JWT seja emitido com os valores corretos no próximo refresh de token.
+    // A condição anterior (só gravar se diferente) deixava JWTs antigos (de antes do
+    // backfill) sem atualização, fazendo o RLS bloquear leituras do próprio tenant.
+    updates.tenant_workshop_id = effectiveMembership.workshop_id;
+    updates.data = { ...(effectiveUser.data || {}), workshop_id: effectiveMembership.workshop_id };
+    try { await sr.entities.User.update(effectiveUser.id, updates); } catch (_) {}
   }
 
   return {
