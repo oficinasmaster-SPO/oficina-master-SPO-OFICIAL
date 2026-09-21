@@ -132,10 +132,18 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
       const [anoStr, mesStr] = mes.split('-');
       const ano = parseInt(anoStr);
       const mesIdx = parseInt(mesStr); // 1-based
-      const ultimoDia = new Date(ano, mesIdx, 0).getDate(); // new Date(ano, mesIdx, 0) = último dia do mês
-      const dataInicio = `${mes}-01T00:00:00.000Z`;
-      const dataFim    = `${mes}-${String(ultimoDia).padStart(2, '0')}T23:59:59.999Z`;
-      // Filtra server-side pelo intervalo do mês — limit 1 porque só precisamos saber se existe
+      const ultimoDia = new Date(ano, mesIdx, 0).getDate();
+      // Fuso Brasília = UTC-3.
+      // Dia 1 do mês às 00:00 BRT = dia 1 às 03:00 UTC.
+      // Último dia do mês às 23:59 BRT = próximo dia às 02:59 UTC.
+      // Usamos margem de +4h (UTC-4 mais conservador) para cobrir horário de verão e bordas.
+      const dataInicio = `${mes}-01T03:00:00.000Z`;
+      const dataFimDia = String(ultimoDia).padStart(2, '0');
+      // 23:59:59 BRT do último dia = seguinte dia 02:59:59 UTC — usamos o próximo mês dia 1 02:59 para cobrir tudo
+      const anoFim = mesIdx === 12 ? ano + 1 : ano;
+      const mesFimIdx = mesIdx === 12 ? 1 : mesIdx + 1;
+      const mesFimStr = String(mesFimIdx).padStart(2, '0');
+      const dataFim = `${anoFim}-${mesFimStr}-01T02:59:59.999Z`;
       const liquidacoes = await base44.entities.LiquidacaoFinanceira.filter(
         {
           workshop_id: workshopId,
