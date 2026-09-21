@@ -1,19 +1,37 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+// S1-T1.2: Perfis autorizados a executar estorno de baixa.
+// 'admin' sempre pode. 'bpo_financeiro' é o perfil operacional do BPO.
+// Para adicionar novos perfis basta incluir aqui — sem mexer na lógica de negócio.
+const PERFIS_AUTORIZADOS = ['admin', 'bpo_financeiro'];
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    
+
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (user.role !== 'admin') {
-      return Response.json({ error: 'Apenas administradores podem desfazer liquidação' }, { status: 403 });
+    // S1-T1.2: aceita admin OU perfil bpo_financeiro
+    // (anteriormente apenas admin — bloqueava operação para o BPO)
+    const perfilUsuario = user.role || user.data?.role || user.data?.perfil || '';
+    const autorizado = PERFIS_AUTORIZADOS.includes(perfilUsuario);
+    if (!autorizado) {
+      return Response.json(
+        { error: 'Sem permissão para estornar liquidações. Contate o administrador.' },
+        { status: 403 }
+      );
     }
 
-    const { liquidacao_id } = await req.json();
+    const body = await req.json();
+    const { liquidacao_id, motivo } = body;
+
+    // S1-T1.2: motivo é obrigatório — gera trilha de auditoria rastreável
+    if (!motivo || !motivo.trim()) {
+      return Response.json({ error: 'Informe o motivo do estorno' }, { status: 400 });
+    }
 
     if (!liquidacao_id) {
       return Response.json({ error: 'ID da liquidação obrigatório' }, { status: 400 });
@@ -21,7 +39,7 @@ Deno.serve(async (req) => {
 
     // Busca a liquidação
     const liquidacao = await base44.entities.LiquidacaoFinanceira.get(liquidacao_id);
-    
+
     if (!liquidacao) {
       return Response.json({ error: 'Liquidação não encontrada' }, { status: 404 });
     }
@@ -29,14 +47,14 @@ Deno.serve(async (req) => {
     // Determina qual conta afetar
     const entidadeId = liquidacao.conta_receber_id || liquidacao.conta_pagar_id;
     const entityName = liquidacao.conta_receber_id ? 'ContaReceber' : 'ContaPagar';
-    
+
     if (!entidadeId) {
       return Response.json({ error: 'Liquidação sem conta vinculada' }, { status: 400 });
     }
 
     // Busca a conta
     const conta = await base44.entities[entityName].get(entidadeId);
-    
+
     if (!conta) {
       return Response.json({ error: 'Conta não encontrada' }, { status: 404 });
     }
@@ -65,19 +83,22 @@ Deno.serve(async (req) => {
       historico_alteracoes: [...historicoAtual, itemEstorno],
     });
 
-    // 2. Deleta DFC gerado (se existir)
-    const dfcs = await base44.entities.DFCLancamento.filter({
-      liquidacao_financeira_id: liquidacao_id
-    });
-
-    for (const dfc of dfcs) {
-      await base44.entities.DFCLancamento.delete(dfc.id);
+    // 2. Deleta DFCLancamentos gerados por esta liquidação (se existirem)
+    try {
+      const dfcs = await base44.entities.DFCLancamento.filter({
+        liquidacao_financeira_id: liquidacao_id,
+      });
+      for (const dfc of (dfcs || [])) {
+        await base44.entities.DFCLancamento.delete(dfc.id);
+      }
+    } catch (_) {
+      // DFCs podem não existir — continua
     }
 
-    // 3. Deleta LiquidaçãoFinanceira
+    // 3. Deleta a LiquidacaoFinanceira
     await base44.entities.LiquidacaoFinanceira.delete(liquidacao_id);
 
-    // 4. Registra auditoria com motivo informado pelo usuário
+    // 4. Registra auditoria com motivo informado pelo usuário (falha silenciosa)
     try {
       await base44.functions.invoke('auditLog', {
         acao: 'desfazer_liquidacao',
@@ -91,10 +112,10 @@ Deno.serve(async (req) => {
           conta_id: entidadeId,
           conta_tipo: entityName,
           perfil_usuario: perfilUsuario,
-        }
+        },
       });
     } catch (_) {
-      // auditLog falha silenciosamente — o estorno já foi concluído
+      // auditLog falha silenciosamente — o estorno já foi concluído com sucesso
     }
 
     return Response.json({
@@ -102,7 +123,7 @@ Deno.serve(async (req) => {
       message: 'Liquidação desfeita com sucesso',
       conta_status: novoStatus,
       valor_pago: Math.max(0, novoValorPago),
-      valor_aberto: Math.max(0, novoValorAberto)
+      valor_aberto: Math.max(0, novoValorAberto),
     });
 
   } catch (error) {
