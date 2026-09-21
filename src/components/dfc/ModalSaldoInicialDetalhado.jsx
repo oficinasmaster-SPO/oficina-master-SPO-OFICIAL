@@ -119,30 +119,40 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
     if (saldoInicialEfetivo?.id && !modoSimulacao) registroIdRef.current = saldoInicialEfetivo.id;
   }, [saldoInicialEfetivo?.id, modoSimulacao]);
 
-  // ── Verifica se há liquidações no mês (bloqueia edição) ─────────
-  const { data: hasLiquidacoes = false } = useQuery({
-    queryKey: ["has-liquidacoes", workshopId, mes],
+  // ── Verifica se há liquidações NESTE MÊS ESPECÍFICO (bloqueia edição de saldo existente) ────
+  // BUG FIX S1-T1.1: a query anterior buscava sem filtro de mês (limit:1 global),
+  // fazendo qualquer liquidação histórica do workshop bloquear o cadastro PERMANENTEMENTE.
+  // Correção: filtramos apenas liquidações cujo data_liquidacao pertence ao mês `mes`.
+  // O bloqueio agora protege apenas a EDIÇÃO de saldo de contas já usadas neste mês.
+  // Adicionar NOVAS contas (banco/máquina) NÃO é bloqueado — veja disabled nos botões abaixo.
+  const { data: hasLiquidacoesNoMes = false } = useQuery({
+    queryKey: ["has-liquidacoes-mes", workshopId, mes],
     queryFn: async () => {
       if (!workshopId || !mes) return false;
+      const [anoStr, mesStr] = mes.split('-');
+      const ano = parseInt(anoStr);
+      const mesIdx = parseInt(mesStr); // 1-based
+      const ultimoDia = new Date(ano, mesIdx, 0).getDate(); // new Date(ano, mesIdx, 0) = último dia do mês
+      const dataInicio = `${mes}-01T00:00:00.000Z`;
+      const dataFim    = `${mes}-${String(ultimoDia).padStart(2, '0')}T23:59:59.999Z`;
+      // Filtra server-side pelo intervalo do mês — limit 1 porque só precisamos saber se existe
       const liquidacoes = await base44.entities.LiquidacaoFinanceira.filter(
-        { workshop_id: workshopId },
+        {
+          workshop_id: workshopId,
+          data_liquidacao: { $gte: dataInicio, $lte: dataFim },
+        },
         '-data_liquidacao',
         1
       );
-      if (!liquidacoes || liquidacoes.length === 0) return false;
-      // Verifica se alguma liquidação é do mês
-      const liquidacoesDoMes = liquidacoes.filter(liq => {
-        const dataLiq = new Date(liq.data_liquidacao);
-        const mesAno = `${dataLiq.getFullYear()}-${String(dataLiq.getMonth() + 1).padStart(2, '0')}`;
-        return mesAno === mes;
-      });
-      return liquidacoesDoMes.length > 0;
+      return (liquidacoes?.length ?? 0) > 0;
     },
     enabled: !!workshopId && !!mes && aberto,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 2 * 60 * 1000,
   });
 
-  const bloqueadoPorLiquidacao = hasLiquidacoes;
+  // bloqueadoPorLiquidacao: impede EDITAR saldo de contas que já têm liquidações neste mês.
+  // Não impede adicionar novas contas — ver prop `disabled` nos botões de Adicionar.
+  const bloqueadoPorLiquidacao = hasLiquidacoesNoMes;
 
   const [lastSaved, setLastSaved] = useState(null);
   const [modalFormAberto, setModalFormAberto] = useState(false);
