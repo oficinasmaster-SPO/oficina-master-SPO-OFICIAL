@@ -97,6 +97,58 @@ Deno.serve(async (req) => {
     // 3. Deleta a LiquidacaoFinanceira
     await base44.entities.LiquidacaoFinanceira.delete(liquidacao_id);
 
+    // 3.5. Reverte o saldo da fonte (banco / máquina / caixa) que foi alterado no pagamento.
+    // banco_origem = fonte usada em pagamento; banco_destino = fonte usada em recebimento.
+    const fonteKey = liquidacao.banco_origem || liquidacao.banco_destino || null;
+    if (fonteKey) {
+      try {
+        const mesLiquidacao = String(liquidacao.data_liquidacao).slice(0, 7);
+        const registrosSaldo = await base44.entities.DFCLancamento.filter(
+          { workshop_id: liquidacao.workshop_id || conta.workshop_id, mes: mesLiquidacao, grupo: 'saldo_inicial' },
+          '-updated_date', 1
+        );
+        const regSaldo = registrosSaldo?.[0];
+        if (regSaldo) {
+          const det = {
+            bancos: regSaldo.detalhes?.bancos || [],
+            maquinas_cartao: regSaldo.detalhes?.maquinas_cartao || [],
+            caixa: regSaldo.detalhes?.caixa || 0,
+          };
+          // O estorno INVERTE o delta original:
+          // pagamento subtraiu da fonte → estorno soma de volta.
+          // recebimento somou na fonte → estorno subtrai.
+          const delta = liquidacao.tipo === 'pagamento'
+            ? liquidacao.valor_liquidacao   // devolve o dinheiro à fonte
+            : -liquidacao.valor_liquidacao; // remove o recebimento da fonte
+          const partes = fonteKey.split(':');
+          const tipoFonte = partes[0];  // 'banco' | 'maquina' | 'caixa'
+          const idFonte   = partes[1];  // id do banco/máquina ou 'caixa'
+          if (tipoFonte === 'banco') {
+            det.bancos = det.bancos.map(b =>
+              b.id === idFonte ? { ...b, saldo: Math.max(0, (b.saldo || 0) + delta) } : b
+            );
+          } else if (tipoFonte === 'maquina') {
+            det.maquinas_cartao = det.maquinas_cartao.map(m =>
+              m.id === idFonte ? { ...m, saldo: Math.max(0, (m.saldo || 0) + delta) } : m
+            );
+          } else if (tipoFonte === 'caixa') {
+            det.caixa = Math.max(0, det.caixa + delta);
+          }
+          const novoTotal =
+            det.bancos.reduce((s, b) => s + (b.saldo || 0), 0) +
+            det.maquinas_cartao.reduce((s, m) => s + (m.saldo || 0), 0) +
+            det.caixa;
+          await base44.entities.DFCLancamento.update(regSaldo.id, {
+            detalhes: det,
+            valor: novoTotal,
+            saldo_inicial: novoTotal,
+          });
+        }
+      } catch (_) {
+        // Reversão de saldo falha silenciosamente — não bloqueia o estorno
+      }
+    }
+
     // 4. Registra auditoria com motivo informado pelo usuário (falha silenciosa)
     try {
       await base44.functions.invoke('auditLog', {
