@@ -119,8 +119,8 @@ export default function CronogramaConsultoria() {
 
     const unsubscribe = base44.entities.MeetingMinutes.subscribe((event) => {
       if (event.data?.workshop_id === activeWorkshopId) {
-        // Refetch instantaneamente quando ATA muda
-        queryClient.refetchQueries(['meeting-minutes', activeWorkshopId]);
+        // Refetch BFF quando ATA muda
+        queryClient.refetchQueries(['cronograma-data-bff', activeWorkshopId]);
       }
     });
 
