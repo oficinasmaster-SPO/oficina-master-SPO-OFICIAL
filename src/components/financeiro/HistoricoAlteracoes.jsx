@@ -6,6 +6,8 @@ const tipoConfig = {
   editado:                  { icon: Edit2,        color: "text-amber-600", bg: "bg-amber-50", label: "Editado" },
   recebimento_registrado:   { icon: DollarSign,  color: "text-green-600", bg: "bg-green-50", label: "Recebimento Registrado" },
   pagamento_registrado:     { icon: DollarSign,  color: "text-red-600",   bg: "bg-red-50",   label: "Pagamento Registrado" },
+  // S1-T1.2: estorno adicionado
+  estorno:                  { icon: XCircle,     color: "text-orange-600",bg: "bg-orange-50",label: "Estorno" },
   cancelado:                { icon: XCircle,     color: "text-gray-500",  bg: "bg-gray-50",  label: "Cancelado" },
 };
 
