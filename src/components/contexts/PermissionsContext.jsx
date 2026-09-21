@@ -49,7 +49,16 @@ export function PermissionsProvider({ children }) {
       const isImpersonated = isImpersonating || user._isImpersonated === true;
       const activeProfileId = membership.profile_id || profileId || null;
       const activeRole = membership.membership_type || membershipType || (user.role === 'admin' ? 'admin' : 'outros');
-      const isOwnerOrPartner = ['owner', 'partner'].includes(membership.membership_type || membershipType);
+      // FIX (2026-09-21): O backfill criou 3 memberships por sócio (employee=default, partner, owner).
+      // Checar apenas a membership padrão fazia isOwnerOrPartner=false para sócios cujo default
+      // é 'employee', bloqueando o acesso às páginas que exigem permissões de sócio.
+      // Solução: considerar QUALQUER membership ativa do tipo partner/owner na oficina atual.
+      const allMemberships = memberships || [];
+      const currentWorkshopMemberships = allMemberships.filter(
+        (m) => m.workshop_id === workshopId && m.status !== 'inactive'
+      );
+      const isOwnerOrPartner = ['owner', 'partner'].includes(membership.membership_type || membershipType)
+        || currentWorkshopMemberships.some((m) => ['owner', 'partner'].includes(m.membership_type));
       let granularConfig = {};
 
       const settings = await base44.entities.SystemSetting.filter({ key: 'granular_permissions' }).catch(() => []);
