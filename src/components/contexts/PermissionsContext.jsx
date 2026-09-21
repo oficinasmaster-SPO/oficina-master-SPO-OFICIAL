@@ -39,7 +39,7 @@ export function PermissionsProvider({ children }) {
   const user = effectiveUser || realUser;
 
   const { data: permissionsData, isLoading: permissionsLoading } = useQuery({
-    queryKey: ['permissions', user?.id, workshopId, membership?.id, profileId, isAdminMode, isImpersonating],
+    queryKey: ['permissions', user?.id, workshopId, membership?.id, profileId, isAdminMode, isImpersonating, memberships?.length],
     gcTime: 5 * 60 * 1000,
     // RAIZ-429: herda retry global (ignora 429). Antes retry: 2 retentava em 429.
     queryFn: async () => {
