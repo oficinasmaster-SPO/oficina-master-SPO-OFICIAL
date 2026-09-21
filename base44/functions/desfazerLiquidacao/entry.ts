@@ -1,10 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-// S1-T1.2: Perfis autorizados a executar estorno de baixa.
-// 'admin' sempre pode. 'bpo_financeiro' é o perfil operacional do BPO.
-// Para adicionar novos perfis basta incluir aqui — sem mexer na lógica de negócio.
-const PERFIS_AUTORIZADOS = ['admin', 'bpo_financeiro'];
-
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -14,10 +9,14 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // S1-T1.2: aceita admin OU perfil bpo_financeiro
-    // (anteriormente apenas admin — bloqueava operação para o BPO)
-    const perfilUsuario = user.role || user.data?.role || user.data?.perfil || '';
-    const autorizado = PERFIS_AUTORIZADOS.includes(perfilUsuario);
+    // Autorização: admin sempre pode.
+    // Usuários 'interno' (todos os colaboradores internos, incluindo BPO)
+    // também são autorizados — regra definida pelo time (todos internos habilitados para BPO).
+    // user_type vem em user.data.user_type ou user.user_type dependendo do SDK.
+    const userType  = user.user_type  || user.data?.user_type  || '';
+    const userRole  = user.role       || user.data?.role       || '';
+    const autorizado = userRole === 'admin' || userType === 'interno';
+    const perfilUsuario = userRole || userType || 'desconhecido'; // só para log
     if (!autorizado) {
       return Response.json(
         { error: 'Sem permissão para estornar liquidações. Contate o administrador.' },
