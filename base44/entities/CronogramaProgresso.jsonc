@@ -1,113 +1,163 @@
 {
+  "description": "READ MODEL derivado. N\u00c3O \u00e9 source of truth. \u00c9 uma proje\u00e7\u00e3o calculada a partir de CronogramaImplementacao para uso em dashboards e widgets de compatibilidade legado. N\u00e3o adicionar l\u00f3gica operacional aqui.",
   "name": "CronogramaProgresso",
-  "type": "object",
-  "description": "READ MODEL derivado. NÃO é source of truth. É uma projeção calculada a partir de CronogramaImplementacao para uso em dashboards e widgets de compatibilidade legado. Não adicionar lógica operacional aqui.",
   "properties": {
-    "workshop_id": {
-      "type": "string",
-      "description": "ID da oficina"
-    },
-    "implementacao_id": {
-      "type": "string",
-      "description": "[READ MODEL] ID do CronogramaImplementacao que originou este registro. Nulo = legado não migrado."
-    },
-    "read_model_version": {
-      "type": "string",
-      "enum": [
-        "legacy_direct",
-        "derived_v1"
-      ],
-      "default": "legacy_direct",
-      "description": "[READ MODEL] legacy_direct = escrito direto pelo Engine A; derived_v1 = projetado por syncImplementacaoToProgresso"
-    },
-    "source_engine": {
-      "type": "string",
-      "enum": [
-        "legacy_v0",
-        "legacy_v1",
-        "template_v2",
-        "unknown"
-      ],
-      "default": "unknown",
-      "description": "[READ MODEL] Engine que gerou o CronogramaImplementacao de origem"
-    },
-    "synced_at": {
-      "type": "string",
-      "format": "date-time",
-      "description": "[READ MODEL] Última vez que este registro foi sincronizado a partir do write model"
+    "anotacoes_consultor": {
+      "type": "string"
     },
     "atendimento_id": {
-      "type": "string",
-      "description": "ID do atendimento vinculado"
+      "description": "ID do atendimento vinculado",
+      "type": "string"
     },
-    "template_id": {
-      "type": "string",
-      "description": "ID do template usado"
+    "atividades_previstas": {
+      "default": 0,
+      "type": "integer"
+    },
+    "atividades_realizadas": {
+      "default": 0,
+      "type": "integer"
+    },
+    "avaliacao_participante": {
+      "properties": {
+        "comentario": {
+          "type": "string"
+        },
+        "data": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "nota": {
+          "maximum": 10,
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "avaliacao_programa": {
+      "properties": {
+        "data": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "observacoes": {
+          "type": "string"
+        },
+        "resultado": {
+          "enum": [
+            "excelente",
+            "bom",
+            "regular",
+            "necessita_melhoria"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "data_conclusao_cliente": {
+      "description": "Data de t\u00e9rmino definida pelo cliente (edit\u00e1vel)",
+      "format": "date",
+      "type": "string"
+    },
+    "data_conclusao_previsto": {
+      "format": "date",
+      "type": "string"
+    },
+    "data_conclusao_realizado": {
+      "format": "date",
+      "type": "string"
+    },
+    "data_inicio_previsto": {
+      "format": "date",
+      "type": "string"
+    },
+    "data_inicio_realizado": {
+      "description": "Preenchido automaticamente quando cliente visualizar",
+      "format": "date",
+      "type": "string"
+    },
+    "data_visualizacao": {
+      "description": "Timestamp da primeira visualiza\u00e7\u00e3o pelo cliente",
+      "format": "date-time",
+      "type": "string"
+    },
+    "evidencias": {
+      "items": {
+        "properties": {
+          "data_upload": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "descricao": {
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "foto",
+              "video",
+              "documento",
+              "planilha",
+              "outro"
+            ],
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "type": "array"
     },
     "fase_oficina": {
-      "type": "integer",
       "enum": [
         1,
         2,
         3,
         4
-      ]
-    },
-    "modulo_codigo": {
-      "type": "string",
-      "description": "Código do módulo (ex: RD, GPS, TCMP2)"
-    },
-    "modulo_nome": {
-      "type": "string",
-      "description": "Nome do módulo"
-    },
-    "tipo_conteudo": {
-      "type": "string",
-      "enum": [
-        "processo",
-        "diagnostico",
-        "teste"
       ],
-      "default": "processo",
-      "description": "Tipo de conteúdo: Processo, Ferramenta de Diagnóstico ou Teste"
+      "type": "integer"
     },
-    "ordem": {
-      "type": "integer",
-      "description": "Ordem no cronograma"
-    },
-    "data_inicio_previsto": {
-      "type": "string",
-      "format": "date"
-    },
-    "data_inicio_realizado": {
-      "type": "string",
-      "format": "date",
-      "description": "Preenchido automaticamente quando cliente visualizar"
-    },
-    "data_visualizacao": {
-      "type": "string",
-      "format": "date-time",
-      "description": "Timestamp da primeira visualização pelo cliente"
-    },
-    "data_conclusao_previsto": {
-      "type": "string",
-      "format": "date"
-    },
-    "data_conclusao_realizado": {
-      "type": "string",
-      "format": "date"
-    },
-    "data_conclusao_cliente": {
-      "type": "string",
-      "format": "date",
-      "description": "Data de término definida pelo cliente (editável)"
+    "implementacao_id": {
+      "description": "[READ MODEL] ID do CronogramaImplementacao que originou este registro. Nulo = legado n\u00e3o migrado.",
+      "type": "string"
     },
     "justificativa_prazo": {
-      "type": "string",
-      "description": "Justificativa do cliente ao alterar prazo"
+      "description": "Justificativa do cliente ao alterar prazo",
+      "type": "string"
+    },
+    "modulo_codigo": {
+      "description": "C\u00f3digo do m\u00f3dulo (ex: RD, GPS, TCMP2)",
+      "type": "string"
+    },
+    "modulo_nome": {
+      "description": "Nome do m\u00f3dulo",
+      "type": "string"
+    },
+    "notificacao_diaria_ativa": {
+      "default": false,
+      "description": "Se mensagens motivacionais di\u00e1rias est\u00e3o ativas",
+      "type": "boolean"
+    },
+    "ordem": {
+      "description": "Ordem no cronograma",
+      "type": "integer"
+    },
+    "proxima_acao": {
+      "type": "string"
+    },
+    "read_model_version": {
+      "default": "legacy_direct",
+      "description": "[READ MODEL] legacy_direct = escrito direto pelo Engine A; derived_v1 = projetado por syncImplementacaoToProgresso",
+      "enum": [
+        "legacy_direct",
+        "derived_v1"
+      ],
+      "type": "string"
     },
     "situacao": {
-      "type": "string",
+      "default": "nao_iniciado",
       "enum": [
         "nao_iniciado",
         "em_andamento",
@@ -115,104 +165,53 @@
         "cancelado",
         "atrasado"
       ],
-      "default": "nao_iniciado"
+      "type": "string"
     },
-    "atividades_previstas": {
-      "type": "integer",
-      "default": 0
+    "source_engine": {
+      "default": "unknown",
+      "description": "[READ MODEL] Engine que gerou o CronogramaImplementacao de origem",
+      "enum": [
+        "legacy_v0",
+        "legacy_v1",
+        "template_v2",
+        "unknown"
+      ],
+      "type": "string"
     },
-    "atividades_realizadas": {
-      "type": "integer",
-      "default": 0
-    },
-    "tarefas_solicitadas": {
-      "type": "integer",
-      "default": 0
+    "synced_at": {
+      "description": "[READ MODEL] \u00daltima vez que este registro foi sincronizado a partir do write model",
+      "format": "date-time",
+      "type": "string"
     },
     "tarefas_entregues": {
-      "type": "integer",
-      "default": 0
+      "default": 0,
+      "type": "integer"
     },
-    "avaliacao_participante": {
-      "type": "object",
-      "properties": {
-        "nota": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 10
-        },
-        "comentario": {
-          "type": "string"
-        },
-        "data": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
+    "tarefas_solicitadas": {
+      "default": 0,
+      "type": "integer"
     },
-    "avaliacao_programa": {
-      "type": "object",
-      "properties": {
-        "resultado": {
-          "type": "string",
-          "enum": [
-            "excelente",
-            "bom",
-            "regular",
-            "necessita_melhoria"
-          ]
-        },
-        "observacoes": {
-          "type": "string"
-        },
-        "data": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
-    },
-    "evidencias": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "tipo": {
-            "type": "string",
-            "enum": [
-              "foto",
-              "video",
-              "documento",
-              "planilha",
-              "outro"
-            ]
-          },
-          "url": {
-            "type": "string"
-          },
-          "descricao": {
-            "type": "string"
-          },
-          "data_upload": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      }
-    },
-    "anotacoes_consultor": {
+    "template_id": {
+      "description": "ID do template usado",
       "type": "string"
     },
-    "proxima_acao": {
+    "tipo_conteudo": {
+      "default": "processo",
+      "description": "Tipo de conte\u00fado: Processo, Ferramenta de Diagn\u00f3stico ou Teste",
+      "enum": [
+        "processo",
+        "diagnostico",
+        "teste"
+      ],
       "type": "string"
-    },
-    "notificacao_diaria_ativa": {
-      "type": "boolean",
-      "default": false,
-      "description": "Se mensagens motivacionais diárias estão ativas"
     },
     "ultima_notificacao_enviada": {
-      "type": "string",
-      "format": "date-time"
+      "format": "date-time",
+      "type": "string"
+    },
+    "workshop_id": {
+      "description": "ID da oficina",
+      "type": "string"
     }
   },
   "required": [
@@ -222,31 +221,6 @@
   ],
   "rls": {
     "create": true,
-    "read": {
-      "$or": [
-        {
-          "workshop_id": "{{user.workshop_id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "user_type": "internal"
-          }
-        },
-        {
-          "user_condition": {
-            "data": {
-              "user_type": "internal"
-            }
-          }
-        }
-      ]
-    },
-    "update": true,
     "delete": {
       "$or": [
         {
@@ -261,12 +235,40 @@
         },
         {
           "user_condition": {
-            "data": {
-              "user_type": "internal"
-            }
+            "data.user_type": "internal"
           }
         }
       ]
-    }
-  }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.workshop_id": "{{user.tenant_workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.workshop_id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
+    "update": true
+  },
+  "type": "object"
 }
