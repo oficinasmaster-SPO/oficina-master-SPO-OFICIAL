@@ -543,7 +543,8 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
                   <Building2 className="w-4 h-4" /> 🏦 Contas Bancárias
                   <span className="text-xs font-normal text-blue-500">({(localDetalhes?.bancos || []).length})</span>
                 </h3>
-                <Button size="sm" variant="outline" onClick={adicionarBanco} disabled={isSaving || bloqueadoPorLiquidacao}
+                {/* S1-T1.1: adicionar nova conta nunca é bloqueado — só editar saldo existente é */}
+                <Button size="sm" variant="outline" onClick={adicionarBanco} disabled={isSaving}
                   className="gap-1 text-xs text-blue-700 border-blue-300 h-7">
                   <Plus className="w-3 h-3" /> Adicionar Banco
                 </Button>
@@ -578,7 +579,8 @@ export default function ModalSaldoInicialDetalhado({ aberto, onFechar, mes, work
                   <CreditCard className="w-4 h-4" /> 💳 Máquinas de Cartão
                   <span className="text-xs font-normal text-green-500">({(localDetalhes?.maquinas_cartao || []).length})</span>
                 </h3>
-                <Button size="sm" variant="outline" onClick={adicionarMaquina} disabled={isSaving || bloqueadoPorLiquidacao}
+                {/* S1-T1.1: adicionar nova máquina nunca é bloqueado — só editar saldo existente é */}
+                <Button size="sm" variant="outline" onClick={adicionarMaquina} disabled={isSaving}
                   className="gap-1 text-xs text-green-700 border-green-300 h-7">
                   <Plus className="w-3 h-3" /> Adicionar Máquina
                 </Button>
