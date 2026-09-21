@@ -27,6 +27,7 @@ export function PermissionsProvider({ children }) {
   const { effectiveUser } = useImpersonation();
   const {
     membership,
+    memberships,
     membershipType,
     profileId,
     workshopId,
