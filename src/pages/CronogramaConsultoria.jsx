@@ -76,17 +76,18 @@ export default function CronogramaConsultoria() {
     ? (urlWorkshop || workshop)
     : workshop;
 
-  // ✅ Filtro único por empresa logada — sem exceções por perfil
-  // NOTA: queryKey alinhado com o usado em ControleAceleracao para que invalidações funcionem
-  const { data: allAtendimentos, isLoading: loadingAtendimentos } = useQuery({
-    queryKey: ['consultoria-atendimentos', user?.id, activeWorkshopId],
+  // FIX (2026-09-21): Substituído queries diretas de entidade por BFF getCronogramaData.
+  // Queries diretas dependiam do RLS avaliar o JWT do usuário externo — JWTs antigos
+  // (emitidos antes do backfill de julho) tinham data.workshop_id=null no payload,
+  // bloqueando a leitura mesmo com dados corretos no banco e token renovado.
+  // O BFF roda como asServiceRole, valida o vínculo de TenantMembership manualmente
+  // e retorna os dados sem depender do JWT do usuário.
+  const { data: cronogramaData, isLoading: loadingCronograma } = useQuery({
+    queryKey: ['cronograma-data-bff', activeWorkshopId, user?.id],
     queryFn: async () => {
-      if (!activeWorkshopId) return [];
-      return await base44.entities.ConsultoriaAtendimento.filter(
-        { workshop_id: activeWorkshopId },
-        '-data_agendada',
-        500
-      );
+      if (!activeWorkshopId) return { atendimentos: [], atas: [], followUps: [] };
+      const res = await base44.functions.invoke('getCronogramaData', { workshop_id: activeWorkshopId });
+      return res?.data || { atendimentos: [], atas: [], followUps: [] };
     },
     enabled: !!activeWorkshopId && !!user?.id,
     staleTime: 2 * 60 * 1000,
@@ -95,40 +96,12 @@ export default function CronogramaConsultoria() {
     retry: false,
   });
 
-  const { data: allAtas, isLoading: loadingAtas } = useQuery({
-    queryKey: ['meeting-minutes', activeWorkshopId],
-    queryFn: async () => {
-      if (!activeWorkshopId) return [];
-      return await base44.entities.MeetingMinutes.filter(
-        { workshop_id: activeWorkshopId },
-        '-meeting_date',
-        500
-      );
-    },
-    enabled: !!activeWorkshopId,
-    staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    retry: false,
-  });
-
-  // Follow-ups realizados — filtrados por workshop_id ativo
-  // queryKey alinhado com o usado em FollowUpPostIt para invalidação funcionar
-  const { data: followUpsRealizados, isLoading: loadingFollowUps } = useQuery({
-    queryKey: ['follow-up-reminders', activeWorkshopId],
-    queryFn: async () => {
-      if (!activeWorkshopId) return [];
-      const all = await base44.entities.FollowUpReminder.filter(
-        { workshop_id: activeWorkshopId, is_completed: true },
-        '-completed_at',
-        500
-      );
-      return all;
-    },
-    enabled: !!activeWorkshopId,
-    staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    retry: false,
-  });
+  const allAtendimentos = cronogramaData?.atendimentos || [];
+  const allAtas = cronogramaData?.atas || [];
+  const followUpsRealizados = cronogramaData?.followUps || [];
+  const loadingAtendimentos = loadingCronograma;
+  const loadingAtas = loadingCronograma;
+  const loadingFollowUps = loadingCronograma;
 
   const { data: consultores } = useQuery({
     queryKey: ['consultores-list', activeWorkshopId],
