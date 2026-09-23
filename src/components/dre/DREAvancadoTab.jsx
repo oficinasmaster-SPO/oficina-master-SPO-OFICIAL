@@ -1016,6 +1016,7 @@ function PainelAnalise({ lancamentos, tecnicosCount, horasMes }) {
 export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMes, onConsolidar }) {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(null); // 'receita' | 'despesa' | null
+  const [showTransferencia, setShowTransferencia] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState("todos"); // todos | receitas | despesas | analise
   const [periodo, setPeriodo] = useState("mensal"); // mensal | anual
   
