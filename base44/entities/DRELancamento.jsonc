@@ -117,6 +117,14 @@
       "description": "Valor em reais",
       "type": "number"
     },
+    "anexo_url": {
+      "description": "URL do arquivo anexado ao lan\u00e7amento (NF, fatura, pedido, comprovante). Gerado por integrations.Core.UploadFile.",
+      "type": "string"
+    },
+    "anexo_nome": {
+      "description": "Nome original do arquivo anexado (exibido na UI).",
+      "type": "string"
+    },
     "workshop_id": {
       "description": "ID da oficina",
       "type": "string"
