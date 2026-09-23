@@ -807,6 +807,19 @@ function LancamentoRow({ item, onDelete, onSaved }) {
           ) : null}
         </div>
       </div>
+      {/* S3-T3.3: ícone de clipe quando há anexo */}
+      {item.anexo_url && (
+        <a
+          href={item.anexo_url}
+          target="_blank"
+          rel="noreferrer"
+          title={item.anexo_nome || 'Ver anexo'}
+          onClick={e => e.stopPropagation()}
+          className="flex-shrink-0 text-blue-400 hover:text-blue-600 transition-colors"
+        >
+          <Paperclip className="w-3.5 h-3.5" />
+        </a>
+      )}
       <span className={`font-bold text-sm flex-shrink-0 ${item.tipo === "receita" ? "text-green-600" : "text-red-600"}`}>
         {item.tipo === "receita" ? "+" : "-"} {formatCurrency(item.valor)}
       </span>
