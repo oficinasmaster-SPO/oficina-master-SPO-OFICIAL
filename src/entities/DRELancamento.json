@@ -101,6 +101,14 @@
     "numero_documento": {
       "type": "string",
       "description": "Número da NF/pedido/fatura vinculado ao lançamento"
+    },
+    "anexo_url": {
+      "type": "string",
+      "description": "URL do arquivo anexado (NF, fatura, pedido, comprovante). Gerado por integrations.Core.UploadFile."
+    },
+    "anexo_nome": {
+      "type": "string",
+      "description": "Nome original do arquivo anexado (exibido na UI)."
     }
   },
   "required": [
