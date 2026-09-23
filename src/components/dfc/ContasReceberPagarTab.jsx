@@ -10,11 +10,116 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { InputMoeda } from "@/components/ui/InputMoeda";
-import { Loader2, DollarSign, CreditCard, CheckCircle, AlertCircle, Building2 } from "lucide-react";
+import { Loader2, DollarSign, CreditCard, CheckCircle, AlertCircle, Building2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import FiltroPeriodo from "../dre/FiltroPeriodo";
 import ModalRegistrarRecebimentoShared from "@/components/financeiro/ModalRegistrarRecebimento";
 import ModalRegistrarPagamentoContaShared from "@/components/financeiro/ModalRegistrarPagamentoConta";
+import { Textarea } from "@/components/ui/textarea";
+
+// ── Modal de Estorno (P1-2: acessível dentro do DRETCMP2) ─────────────────────
+function ModalEstornoTab({ aberto, onFechar, conta, tipo, onSuccess }) {
+  const [motivo, setMotivo] = useState("");
+  const [estornando, setEstornando] = useState(false);
+  const [liquidacoes, setLiquidacoes] = useState([]);
+  const [liquidacaoSelecionada, setLiquidacaoSelecionada] = useState(null);
+  const [carregando, setCarregando] = useState(false);
+  const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+
+  useEffect(() => {
+    if (!aberto || !conta?.id) return;
+    setMotivo(""); setLiquidacaoSelecionada(null);
+    setCarregando(true);
+    const filtro = tipo === 'receber'
+      ? { conta_receber_id: conta.id }
+      : { conta_pagar_id: conta.id };
+    base44.entities.LiquidacaoFinanceira
+      .filter(filtro, '-data_liquidacao', 20)
+      .then(r => setLiquidacoes(r || []))
+      .catch(() => setLiquidacoes([]))
+      .finally(() => setCarregando(false));
+  }, [aberto, conta?.id, tipo]);
+
+  const handleEstornar = async () => {
+    if (!liquidacaoSelecionada) { toast.error('Selecione a baixa a estornar'); return; }
+    if (!motivo.trim()) { toast.error('Informe o motivo do estorno'); return; }
+    setEstornando(true);
+    try {
+      await base44.functions.invoke('desfazerLiquidacao', {
+        liquidacao_id: liquidacaoSelecionada,
+        motivo: motivo.trim(),
+      });
+      toast.success('\u2705 Estorno realizado com sucesso!');
+      onSuccess?.();
+      onFechar();
+    } catch (e) {
+      toast.error('Erro ao estornar: ' + (e.message || 'tente novamente'));
+    } finally {
+      setEstornando(false);
+    }
+  };
+
+  const nomePessoa = tipo === 'receber' ? conta?.cliente_nome : conta?.fornecedor_nome;
+
+  return (
+    <Dialog open={aberto} onOpenChange={onFechar}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-orange-700">
+            <RotateCcw className="w-5 h-5" />
+            Estornar {tipo === 'receber' ? 'Recebimento' : 'Pagamento'}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm">
+            <p className="font-semibold text-orange-800">{nomePessoa || '\u2014'}</p>
+            <p className="text-orange-700 text-xs mt-0.5">Valor original: {fmt(conta?.valor_original)}</p>
+          </div>
+          {carregando ? (
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <Loader2 className="w-4 h-4 animate-spin" /> Buscando baixas...
+            </div>
+          ) : liquidacoes.length === 0 ? (
+            <p className="text-sm text-gray-500 italic">Nenhuma baixa encontrada para esta conta.</p>
+          ) : (
+            <div>
+              <Label className="text-xs">Selecione a baixa a estornar *</Label>
+              <div className="space-y-2 mt-1">
+                {liquidacoes.map(liq => (
+                  <button key={liq.id} onClick={() => setLiquidacaoSelecionada(liq.id)}
+                    className={`w-full text-left p-3 rounded-lg border-2 transition-all text-sm ${
+                      liquidacaoSelecionada === liq.id ? 'border-orange-400 bg-orange-50' : 'border-gray-200 hover:border-orange-200'
+                    }`}>
+                    <div className="flex justify-between">
+                      <span className="font-medium">{fmt(liq.valor_liquidacao)}</span>
+                      <span className="text-gray-500">{liq.data_liquidacao ? new Date(liq.data_liquidacao).toLocaleDateString('pt-BR') : '\u2014'}</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5">{liq.forma_pagamento?.replace('_', ' ')}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <div>
+            <Label className="text-xs">Motivo do estorno *</Label>
+            <Textarea value={motivo} onChange={e => setMotivo(e.target.value)}
+              placeholder="Ex: Data de pagamento informada incorretamente (09/09 em vez de 18/09)"
+              className="mt-1 text-sm resize-none" rows={3} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onFechar}>Cancelar</Button>
+          <Button onClick={handleEstornar}
+            disabled={estornando || !liquidacaoSelecionada || !motivo.trim()}
+            className="bg-orange-600 hover:bg-orange-700">
+            {estornando && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+            Confirmar Estorno
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 // Hook para buscar as fontes de dinheiro do saldo inicial
 // Busca o registro mais recente de saldo_inicial da oficina (independente do mês filtrado)
