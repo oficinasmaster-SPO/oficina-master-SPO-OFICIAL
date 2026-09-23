@@ -599,6 +599,8 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
   const queryClient = useQueryClient();
   const [contaReceberModal, setContaReceberModal] = useState(null);
   const [contaPagarModal, setContaPagarModal] = useState(null);
+  const [contaEstornoModal, setContaEstornoModal] = useState(null); // P1-2: estorno no DRETCMP2
+  const [tipoEstorno, setTipoEstorno] = useState(null); // 'receber' | 'pagar'
   const [periodo, setPeriodo] = useState("mensal"); // mensal | anual
   const [ano, setAno] = useState(mes ? parseInt(mes.split('-')[0]) : new Date().getFullYear());
   const [mesSelecionado, setMesSelecionado] = useState(mes ? mes.split('-')[1] : String(new Date().getMonth() + 1).padStart(2, '0'));
