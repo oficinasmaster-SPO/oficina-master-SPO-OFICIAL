@@ -928,10 +928,6 @@ export default function DFCTab({ workshopId, mes }) {
               onEdit={(item) => abrirModal("financiamento", item)}
               onMarcarPagamento={setItemPagamento} />
 
-      {/* Transferências entre contas — movimentação interna, sem impacto no resultado */}
-      <TransferenciasEntreContas workshopId={workshopId} mes={mes} />
-            
-
       {/* Composição do saldo — resumo compacto */}
       <div className={`rounded-xl border-2 px-4 py-3 flex flex-wrap gap-3 items-center justify-between text-xs ${saldoFinal >= 0 ? "border-emerald-300 bg-emerald-50" : "border-red-300 bg-red-50"}`}>
         <span className="font-semibold text-gray-700">Composição:</span>
