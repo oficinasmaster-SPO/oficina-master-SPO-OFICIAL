@@ -314,6 +314,8 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
           // ── vínculos cliente / fornecedor ──
           ...((tipoInferido || tipo) === "receita" && clienteId ? { cliente_id: clienteId, cliente_nome: clienteNome } : {}),
           ...((tipoInferido || tipo) === "despesa" && fornecedorId ? { fornecedor_id: fornecedorId, fornecedor_nome: fornecedorNome } : {}),
+          // ── anexo (S3) ──
+          ...(anexoUrl ? { anexo_url: anexoUrl, anexo_nome: anexoNome } : {}),
         });
         window.dispatchEvent(new CustomEvent('dre-lancamento-criado', {
           detail: { workshop_id: workshopId, mes, lancamento: novoLancamento }
