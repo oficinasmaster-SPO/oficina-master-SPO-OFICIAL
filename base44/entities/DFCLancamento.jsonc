@@ -129,12 +129,7 @@
     },
     "fonte_saida": {
       "type": "string",
-      "enum": [
-        "banco",
-        "maquina_cartao",
-        "caixa"
-      ],
-      "description": "De onde saiu o dinheiro para este lan\u00e7amento de sa\u00edda"
+      "description": "Chave da conta de origem do lan\u00e7amento. Para liquida\u00e7\u00f5es: 'banco', 'maquina_cartao' ou 'caixa'. Para transfer\u00eancias: chave composta 'banco:<id>:<nome>', 'maquina:<id>:<nome>' ou 'caixa:caixa:Caixa'. String livre para n\u00e3o bloquear nenhum dos dois formatos."
     },
     "fonte_entrada": {
       "type": "string",
