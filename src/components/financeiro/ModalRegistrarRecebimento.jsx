@@ -111,7 +111,12 @@ export default function ModalRegistrarRecebimento({ aberto, onFechar, conta, wor
   const [multa, setMulta] = useState(0);
   const [saving, setSaving] = useState(false);
 
-  const { data: fontes } = useFontesDinheiro(workshopId, mes);
+  // FIX QA-2.8: as fontes devem refletir o mês da DATA DE RECEBIMENTO, não o mês
+  // de vencimento da conta (prop `mes`). O backend (registrarLiquidacao) credita o
+  // saldo do mês de data_liquidacao — usar o mês de vencimento aqui fazia o modal
+  // cair no fallback com saldos zerados e bloquear o registro ("Saldo insuficiente: R$ 0").
+  const mesRecebimento = (dataLiquidacao || new Date().toISOString().split("T")[0]).slice(0, 7);
+  const { data: fontes } = useFontesDinheiro(workshopId, mesRecebimento);
 
   useEffect(() => {
     if (aberto && conta) {
@@ -163,8 +168,8 @@ export default function ModalRegistrarRecebimento({ aberto, onFechar, conta, wor
       queryClient.invalidateQueries({ queryKey: ["dfc-saldo"] });
       queryClient.invalidateQueries({ queryKey: ["saldoInicial"] });
       queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes"] });
-      window.dispatchEvent(new CustomEvent('recebimento-registrado', { detail: { workshopId, mes } }));
-      window.dispatchEvent(new CustomEvent('liquidacao-registrada', { detail: { workshopId, mes } }));
+      window.dispatchEvent(new CustomEvent('recebimento-registrado', { detail: { workshopId, mes: mesRecebimento } }));
+      window.dispatchEvent(new CustomEvent('liquidacao-registrada', { detail: { workshopId, mes: mesRecebimento } }));
       toast.success("Recebimento registrado!");
       onSuccess?.();
       onFechar();

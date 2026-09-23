@@ -79,6 +79,11 @@ Presente em `registrarLiquidacao`, `desfazerLiquidacao` e `atualizarSaldoFonte`.
 - Parsing de valor no formulário do DRE (`replace(/\./g,"")`) trata ponto como milhar — padrão BR aceitável, mas o app já possui `InputMoeda` (usado no DFC) — padronizar reduz risco de "1.500" virar 150.
 - Item 2.4 do PDF (remoção de NF/Pedido fixos do fornecedor): campos continuam no modal e na entidade `WorkshopFornecedor` — decidir entre remover do modal (schema pode manter por retrocompatibilidade).
 
+### 2.8 🔴 CRÍTICO (adicionado pós-fechamento, reportado em 23/09 11:00) — Baixa bloqueada com "saldo zerado": modal usa mês do vencimento, backend usa mês do pagamento
+**Arquivos:** `src/components/financeiro/ModalRegistrarPagamentoConta.jsx`, `src/components/financeiro/ModalRegistrarRecebimento.jsx` (hook `useFontesDinheiro`) × chamadas em `ContasPagar.jsx`/`ContasReceber.jsx`.
+**Causa raiz:** As páginas passam `mes` = mês do **vencimento** da conta para o modal. O modal busca as fontes de dinheiro (Saldo Inicial) **desse mês**; se não houver registro, o fallback devolve as contas do mês mais recente **com saldos zerados** → o seletor mostra "R$ 0,00" e a validação bloqueia com "Saldo insuficiente". Enquanto isso, o backend (`registrarLiquidacao`) debita/credita o saldo do mês da **data de liquidação** — ou seja, a validação do frontend e a mutação do backend olhavam meses diferentes. **Reprodução:** Saldo Inicial configurado no mês atual + despesa com vencimento em outro mês → baixa impossível ("saldo zerado"), embora o saldo exista.
+**Correção aplicada (23/09):** os dois modais agora derivam o mês das fontes da própria data de pagamento/recebimento (`dataLiquidacao`), alinhando com o backend; ao trocar a data no modal, o seletor recarrega as fontes do mês correspondente. Eventos `pagamento-registrado`/`recebimento-registrado`/`liquidacao-registrada` passam a propagar o mês correto. **Status: CORRIGIDO.**
+
 ---
 
 ## 3. PONTOS POSITIVOS VALIDADOS
@@ -104,15 +109,17 @@ Presente em `registrarLiquidacao`, `desfazerLiquidacao` e `atualizarSaldoFonte`.
 | Contas a Receber pós-migração | Usuário só-TenantMembership abre a tela | Lista carrega (após fix 2.3) |
 | Despesa recorrente com anexo | Criar mensal com NF anexa | Anexo presente em todas as parcelas (após fix 2.4) |
 | Saldo inicial bloqueado | Mês com liquidação: editar saldo existente / adicionar novo banco | Editar bloqueado, adicionar liberado |
+| Baixa com vencimento em outro mês | Configurar Saldo Inicial no mês atual → baixar despesa com vencimento em outro mês | Fontes exibem o saldo do mês do pagamento; baixa liberada (fix 2.8) |
+| Trocar data de pagamento no modal | Mudar a data para outro mês com saldo configurado | Seletor recarrega as fontes com os saldos daquele mês (fix 2.8) |
 | Fornecedor sem NF fixa | Cadastrar fornecedor | Sem campos NFe/Pedido (após item 2.4 do PDF) |
 
 ---
 
 ## 5. VEREDITO E ENCERRAMENTO
 
-**Status do chamado: ENCERRADO COM REPROVAÇÃO PARCIAL.**
+**Status do chamado: ENCERRADO COM REPROVAÇÃO PARCIAL (atualizado 23/09 11:05 com adição do 6º defeito — 2.8 — já corrigido).**
 
-Dos 9 itens solicitados, **7 já estão implementados e aprovados no QA**; **2 itens de padronização permanecem pendentes** (remoção de NF/Pedido fixos do fornecedor; rótulo/exposição de "Data da Compra") e a análise sênior **elevou 2 defeitos críticos e 1 alto** que bloqueiam a operação plena pelo time BPO (autorização de estorno com valor canônico errado; reversão do DRE no estorno; resolução legada de oficina em Contas a Receber).
+Dos 9 itens solicitados, **7 já estão implementados e aprovados no QA**; **2 itens de padronização permanecem pendentes** (remoção de NF/Pedido fixos do fornecedor; rótulo/exposição de "Data da Compra") e a análise sênior **elevou 6 defeitos** (2.1–2.8), sendo **1 já corrigido** (2.8 — baixa bloqueada por "saldo zerado") e **3 bloqueantes** para a operação plena do BPO (autorização de estorno com valor canônico errado; reversão do DRE no estorno; resolução legada de oficina em Contas a Receber).
 
 **Próximos passos sugeridos (ordem de prioridade):**
 1. Corrigir 2.1 (autorização `internal`) — 1 linha, desbloqueia o BPO.
@@ -120,5 +127,6 @@ Dos 9 itens solicitados, **7 já estão implementados e aprovados no QA**; **2 i
 3. Corrigir 2.3 (ContasReceber via `useWorkshopContext`).
 4. Ajustes P2 do PDF: remover NF/Pedido fixos do fornecedor + renomear/expor "Data da Compra".
 5. Corrigir 2.4 (anexo em recorrências) e executar plano de testes da seção 4.
+6. ✅ ~~Corrigir 2.8 (baixa com "saldo zerado")~~ — concluído em 23/09 (modais de pagamento e recebimento).
 
-*Aprovado para arquivamento após tratamento dos itens 1–4 acima. Nenhum dado em produção foi alterado durante esta auditoria.*
+*Aprovado para arquivamento após tratamento dos itens 1–4 acima. Nenhum dado em produção foi alterado durante a auditoria; a correção 2.8 alterou apenas código de frontend.*
