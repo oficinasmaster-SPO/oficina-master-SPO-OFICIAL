@@ -1427,6 +1427,14 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
             </div>
           )}
         </div>
+
+      {/* Modal de transferência — reutiliza o componente do DFC */}
+      <ModalTransferenciaContas
+        aberto={showTransferencia}
+        onFechar={() => setShowTransferencia(false)}
+        workshopId={workshopId}
+        onSucesso={() => setShowTransferencia(false)}
+      />
       )}
     </div>
   );
