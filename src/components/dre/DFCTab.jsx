@@ -869,6 +869,9 @@ export default function DFCTab({ workshopId, mes }) {
         onVerDetalhe={() => setModalSaldoDetalhadoAberto(true)}
       />
 
+      {/* Transferências entre contas — sempre visível, independente da view selecionada */}
+      <TransferenciasEntreContas workshopId={workshopId} mes={mes} />
+
       {/* Tabs de view */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
           <button
