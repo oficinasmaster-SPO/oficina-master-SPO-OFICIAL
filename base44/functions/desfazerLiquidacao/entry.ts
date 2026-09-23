@@ -59,9 +59,11 @@ Deno.serve(async (req) => {
     }
 
     // Calcula novos valores (reverter)
-    const novoValorPago = (conta.valor_pago || 0) - liquidacao.valor_liquidacao;
-    const novoValorAberto = conta.valor_original - novoValorPago;
-    const novoStatus = novoValorAberto >= conta.valor_original ? 'aberto' : 'parcial';
+    // QA: novoValorPago clampado em 0 antes de derivar novoValorAberto
+    // para evitar abertura negativa em caso de duplo estorno ou dados inconsistentes.
+    const novoValorPago   = Math.max(0, (conta.valor_pago || 0) - liquidacao.valor_liquidacao);
+    const novoValorAberto = Math.max(0, conta.valor_original - novoValorPago);
+    const novoStatus      = novoValorPago <= 0.01 ? 'aberto' : 'parcial';
 
     // 1. Reverte ContaReceber ou ContaPagar
     // S1-T1.2: appenda item ao historico_alteracoes para rastreabilidade na UI
