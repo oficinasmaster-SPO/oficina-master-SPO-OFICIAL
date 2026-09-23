@@ -14,15 +14,20 @@
       "type": "string",
       "description": "ID da LiquidacaoFinanceira que gerou este lan\u00e7amento. Usado pelo estorno (desfazerLiquidacao) para localizar e deletar o DFC \u2014 sem ele o lan\u00e7amento fica \u00f3rf\u00e3o no caixa."
     },
+    "transferencia_id": {
+      "type": "string",
+      "description": "ID \u00fanico que amarra o par de lan\u00e7amentos (sa\u00edda + entrada) de uma transfer\u00eancia entre contas (grupo=transferencia). Usado pelo estorno (desfazerTransferencia) para localizar e reverter o par completo \u2014 sem ele o estorno n\u00e3o consegue garantir a revers\u00e3o dos dois lados."
+    },
     "grupo": {
       "type": "string",
       "enum": [
         "operacional",
         "investimento",
         "financiamento",
-        "saldo_inicial"
+        "saldo_inicial",
+        "transferencia"
       ],
-      "description": "Grupo do fluxo de caixa"
+      "description": "Grupo do fluxo de caixa. 'transferencia' = movimenta\u00e7\u00e3o entre contas da pr\u00f3pria oficina (n\u00e3o altera o resultado do m\u00eas nem o saldo total \u2014 apenas a distribui\u00e7\u00e3o entre contas)."
     },
     "tipo": {
       "type": "string",
@@ -30,7 +35,7 @@
         "entrada",
         "saida"
       ],
-      "description": "Se \u00e9 uma entrada ou sa\u00edda de caixa"
+      "description": "Se \u00e9 uma entrada ou sa\u00edda de caixa. Em transfer\u00eancias: 'saida' = sai da conta de origem, 'entrada' = chega na conta de destino."
     },
     "descricao": {
       "type": "string",
@@ -45,10 +50,11 @@
       "enum": [
         "manual",
         "dre_automatico",
-        "liquidacao_financeira"
+        "liquidacao_financeira",
+        "transferencia"
       ],
       "default": "manual",
-      "description": "Se foi inserido manualmente, mapeado do DRE ou gerado por uma liquida\u00e7\u00e3o financeira"
+      "description": "Se foi inserido manualmente, mapeado do DRE, gerado por uma liquida\u00e7\u00e3o financeira ou gerado por uma transfer\u00eancia entre contas"
     },
     "saldo_inicial": {
       "type": "number",
@@ -129,6 +135,10 @@
         "caixa"
       ],
       "description": "De onde saiu o dinheiro para este lan\u00e7amento de sa\u00edda"
+    },
+    "fonte_entrada": {
+      "type": "string",
+      "description": "Conta de destino de uma transfer\u00eancia entre contas (chave 'banco:<id>:<nome>', 'maquina:<id>:<nome>' ou 'caixa:caixa:Caixa' \u2014 mesmo formato de fonte_saida). Apenas para grupo=transferencia, tipo=entrada."
     }
   },
   "required": [

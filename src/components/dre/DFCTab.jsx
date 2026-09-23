@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { mapDREtoDFC } from "./mapDREtoDFC";
 import ProjecaoCaixaView from "./ProjecaoCaixaView";
 import ModalSaldoInicialDetalhado from "../dfc/ModalSaldoInicialDetalhado";
+import TransferenciasEntreContas from "../dfc/TransferenciasEntreContas";
 import SaldoConsolidadoCard from "../dfc/SaldoConsolidadoCard";
 import FonteSaidaSelector from "../dfc/FonteSaidaSelector";
 import FiltroPeriodo from "./FiltroPeriodo";
@@ -923,6 +924,9 @@ export default function DFCTab({ workshopId, mes }) {
               onDelete={handleDelete}
               onEdit={(item) => abrirModal("financiamento", item)}
               onMarcarPagamento={setItemPagamento} />
+
+      {/* Transferências entre contas — movimentação interna, sem impacto no resultado */}
+      <TransferenciasEntreContas workshopId={workshopId} mes={mes} />
             
 
       {/* Composição do saldo — resumo compacto */}
