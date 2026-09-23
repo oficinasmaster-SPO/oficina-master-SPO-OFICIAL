@@ -761,14 +761,14 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
         />
       )}
 
-      {contaPagarModal && (
-        <ModalRegistrarPagamentoContaShared
-          aberto={!!contaPagarModal}
-          onFechar={() => setContaPagarModal(null)}
-          conta={contaPagarModal}
-          workshopId={workshopId}
-          mes={`${ano}-${mesPadded}`}
-          onSuccess={handleSuccess}
+      {/* P1-2: Modal de Estorno acessível dentro do DRETCMP2 */}
+      {contaEstornoModal && (
+        <ModalEstornoTab
+          aberto={!!contaEstornoModal}
+          onFechar={() => { setContaEstornoModal(null); setTipoEstorno(null); }}
+          conta={contaEstornoModal}
+          tipo={tipoEstorno}
+          onSuccess={() => { setContaEstornoModal(null); setTipoEstorno(null); handleSuccess(); }}
         />
       )}
     </div>
