@@ -182,24 +182,18 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
   const [modalFornecedorOpen, setModalFornecedorOpen] = useState(false);
 
   // ── Queries de clientes e fornecedores ──
+  // S4-T4.2: corrigido de .list({ filters }) para .filter() — método padrão do SDK no SPO.
+  // .list() com esse formato retornava array vazio silenciosamente, causando o Combobox vazio.
   const { data: clientes = [] } = useQuery({
     queryKey: ["workshop-clientes", workshopId],
-    queryFn: () =>
-      base44.entities.WorkshopCliente.list({
-        filters: [{ field: "workshop_id", operator: "eq", value: workshopId }],
-        limit: 200,
-      }),
+    queryFn: () => base44.entities.WorkshopCliente.filter({ workshop_id: workshopId }, 'nome', 200),
     enabled: tipo === "receita" && !!workshopId,
     staleTime: 30_000,
   });
 
   const { data: fornecedores = [] } = useQuery({
     queryKey: ["workshop-fornecedores", workshopId],
-    queryFn: () =>
-      base44.entities.WorkshopFornecedor.list({
-        filters: [{ field: "workshop_id", operator: "eq", value: workshopId }],
-        limit: 200,
-      }),
+    queryFn: () => base44.entities.WorkshopFornecedor.filter({ workshop_id: workshopId }, 'nome', 200),
     enabled: tipo === "despesa" && !!workshopId,
     staleTime: 30_000,
   });
