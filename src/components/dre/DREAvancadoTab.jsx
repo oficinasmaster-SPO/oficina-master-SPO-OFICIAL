@@ -1317,6 +1317,58 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
                     <ArrowDownCircle className="w-4 h-4 mr-1" /> + Despesa
                   </Button>
                 )}
+
+                {/* Botão Transferência — desabilitado se menos de 2 contas cadastradas */}
+                <div
+                  className="relative group"
+                  title={!podeTransferir
+                    ? `Cadastre pelo menos 2 contas no Saldo Inicial do DFC para habilitar (atual: ${totalContas} conta${totalContas === 1 ? '' : 's'})`
+                    : undefined}
+                >
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className={`border-blue-300 transition-all ${
+                      podeTransferir
+                        ? 'text-blue-700 hover:bg-blue-50 cursor-pointer'
+                        : 'text-blue-300 border-blue-200 opacity-50 cursor-not-allowed'
+                    }`}
+                    onClick={() => podeTransferir && setShowTransferencia(true)}
+                    disabled={false} /* desabilitado visualmente via classe, não via prop — para o tooltip funcionar no hover */
+                  >
+                    <ArrowLeftRight className="w-4 h-4 mr-1" />
+                    Transferir entre Contas
+                  </Button>
+
+                  {/* Tooltip custom — só aparece quando desabilitado */}
+                  {!podeTransferir && (
+                    <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50
+                      w-64 rounded-lg bg-gray-900 text-white text-xs px-3 py-2 shadow-lg
+                      opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                      <p className="font-semibold mb-0.5">Contas insuficientes</p>
+                      <p>
+                        Para transferir entre contas é necessário ter pelo menos
+                        <strong> 2 contas</strong> cadastradas no Saldo Inicial do DFC
+                        (bancos, máquinas de cartão ou caixa).
+                      </p>
+                      {totalContas === 1 && (
+                        <p className="mt-1 text-gray-300">
+                          Você tem <strong>1 conta</strong> cadastrada.
+                          Adicione mais uma no DFC → Saldo Inicial.
+                        </p>
+                      )}
+                      {totalContas === 0 && (
+                        <p className="mt-1 text-gray-300">
+                          Nenhuma conta cadastrada ainda.
+                          Configure o Saldo Inicial no DFC primeiro.
+                        </p>
+                      )}
+                      {/* Setinha do tooltip */}
+                      <div className="absolute top-full left-1/2 -translate-x-1/2
+                        border-4 border-transparent border-t-gray-900" />
+                    </div>
+                  )}
+                </div>
                 <div className="ml-auto flex gap-2">
                   <Button size="sm" variant="outline" onClick={refresh}>
                     <RefreshCw className="w-4 h-4" />
