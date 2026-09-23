@@ -8,7 +8,7 @@ import {
   Plus, Trash2, ArrowUpCircle, ArrowDownCircle,
   CheckCircle, AlertCircle, BarChart3, TrendingUp, TrendingDown,
   ChevronDown, ChevronUp, Loader2, RefreshCw, UserPlus, Building2,
-  Paperclip, X as XIcon
+  Paperclip, X as XIcon, ArrowLeftRight
 } from "lucide-react";
 import { formatCurrency } from "@/components/utils/formatters";
 import { toast } from "sonner";
@@ -19,6 +19,8 @@ import Combobox from "@/components/ui/combobox";
 import ModalCadastroCliente from "./ModalCadastroCliente";
 import ModalCadastroFornecedor from "./ModalCadastroFornecedor";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, Legend } from "recharts";
+import ModalTransferenciaContas from "@/components/dfc/ModalTransferenciaContas";
+import useFontesDinheiro from "@/components/dfc/useFontesDinheiro";
 
 const FREQUENCIAS = [
   { value: "unico", label: "Único (só este mês)" },
