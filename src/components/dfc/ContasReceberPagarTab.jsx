@@ -785,7 +785,3 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
     </div>
   );
 }
-          tipo={tipoEstorno}
-          onSuccess={() => { setContaEstornoModal(null); setTipoEstorno(null); handleSuccess(); }}
-        />
-      )}
