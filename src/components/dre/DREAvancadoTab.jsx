@@ -1427,15 +1427,15 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
             </div>
           )}
         </div>
+      )}
 
-      {/* Modal de transferência — reutiliza o componente do DFC */}
+      {/* Modal de transferência — reutiliza o componente do DFC, fora do bloco mensal para sempre montar */}
       <ModalTransferenciaContas
         aberto={showTransferencia}
         onFechar={() => setShowTransferencia(false)}
         workshopId={workshopId}
         onSucesso={() => setShowTransferencia(false)}
       />
-      )}
     </div>
   );
 }
