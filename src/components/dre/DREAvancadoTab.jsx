@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   Plus, Trash2, ArrowUpCircle, ArrowDownCircle,
   CheckCircle, AlertCircle, BarChart3, TrendingUp, TrendingDown,
-  ChevronDown, ChevronUp, Loader2, RefreshCw, UserPlus, Building2
+  ChevronDown, ChevronUp, Loader2, RefreshCw, UserPlus, Building2,
+  Paperclip, X as XIcon
 } from "lucide-react";
 import { formatCurrency } from "@/components/utils/formatters";
 import { toast } from "sonner";
