@@ -16,6 +16,7 @@ import FiltroPeriodo from "../dre/FiltroPeriodo";
 import ModalRegistrarRecebimentoShared from "@/components/financeiro/ModalRegistrarRecebimento";
 import ModalRegistrarPagamentoContaShared from "@/components/financeiro/ModalRegistrarPagamentoConta";
 import { Textarea } from "@/components/ui/textarea";
+import SeletorFonte from "@/components/dfc/SeletorFonte";
 
 // ── Modal de Estorno (P1-2: acessível dentro do DRETCMP2) ─────────────────────
 function ModalEstornoTab({ aberto, onFechar, conta, tipo, onSuccess }) {
