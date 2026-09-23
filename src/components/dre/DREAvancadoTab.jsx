@@ -131,6 +131,39 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
   const [dataPagamento, setDataPagamento] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // ── Anexo ──
+  const [anexoFile, setAnexoFile]   = useState(null);   // File selecionado
+  const [anexoUrl, setAnexoUrl]     = useState("");     // URL após upload
+  const [anexoNome, setAnexoNome]   = useState("");     // nome original
+  const [uploadingAnexo, setUploadingAnexo] = useState(false);
+
+  const handleAnexoChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Limite 10 MB
+    if (file.size > 10 * 1024 * 1024) { toast.error('Arquivo muito grande (máx. 10 MB)'); return; }
+    setAnexoFile(file);
+    setAnexoNome(file.name);
+    setUploadingAnexo(true);
+    try {
+      const { url } = await base44.integrations.Core.UploadFile({ file });
+      setAnexoUrl(url);
+      toast.success('Anexo pronto!');
+    } catch (err) {
+      toast.error('Erro no upload: ' + (err.message || 'tente novamente'));
+      setAnexoFile(null);
+      setAnexoNome("");
+    } finally {
+      setUploadingAnexo(false);
+    }
+  };
+
+  const handleRemoverAnexo = () => {
+    setAnexoFile(null);
+    setAnexoUrl("");
+    setAnexoNome("");
+  };
+
   // ── Documento (opcional) ──
   const [docOpen, setDocOpen] = useState(false);
   const [dataCompetencia, setDataCompetencia] = useState("");
