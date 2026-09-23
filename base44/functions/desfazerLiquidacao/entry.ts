@@ -76,10 +76,10 @@ Deno.serve(async (req) => {
       detalhes: `Estorno de R$${liquidacao.valor_liquidacao.toFixed(2)}. Motivo: ${motivo.trim()}`,
     };
     await base44.entities[entityName].update(entidadeId, {
-      valor_pago: Math.max(0, novoValorPago),
-      valor_aberto: Math.max(0, novoValorAberto),
+      valor_pago: novoValorPago,
+      valor_aberto: novoValorAberto,
       status: novoStatus,
-      data_primeiro_pagamento: novoValorPago <= 0 ? null : conta.data_primeiro_pagamento,
+      data_primeiro_pagamento: novoValorPago <= 0.01 ? null : conta.data_primeiro_pagamento,
       dias_atraso: 0,
       historico_alteracoes: [...historicoAtual, itemEstorno],
     });
