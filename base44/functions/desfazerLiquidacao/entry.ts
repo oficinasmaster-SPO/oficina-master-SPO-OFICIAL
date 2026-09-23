@@ -10,12 +10,14 @@ Deno.serve(async (req) => {
     }
 
     // Autorização: admin sempre pode.
-    // Usuários 'interno' (todos os colaboradores internos, incluindo BPO)
+    // Usuários 'internal' (todos os colaboradores internos, incluindo BPO)
     // também são autorizados — regra definida pelo time (todos internos habilitados para BPO).
+    // FIX QA-2.1: comparava com 'interno', mas o valor canônico do enum é 'internal' —
+    // internos recebiam 403 e só admins conseguiam estornar.
     // user_type vem em user.data.user_type ou user.user_type dependendo do SDK.
     const userType  = user.user_type  || user.data?.user_type  || '';
     const userRole  = user.role       || user.data?.role       || '';
-    const autorizado = userRole === 'admin' || userType === 'interno';
+    const autorizado = userRole === 'admin' || userType === 'internal';
     const perfilUsuario = userRole || userType || 'desconhecido'; // só para log
     if (!autorizado) {
       return Response.json(
@@ -83,6 +85,29 @@ Deno.serve(async (req) => {
       dias_atraso: 0,
       historico_alteracoes: [...historicoAtual, itemEstorno],
     });
+
+    // 1.5. Reverte a data_pagamento no DRELancamento vinculado — o registrarLiquidacao
+    // a escreveu na baixa; sem esta reversão o DRE continuaria "pago" após o estorno,
+    // divergindo do Contas a Pagar/Receber (QA-2.2). Se restarem outras liquidações
+    // (estorno parcial), a data passa a ser a da baixa restante mais recente.
+    // A liquidação atual ainda existe neste ponto, então é excluída do cálculo.
+    try {
+      if (conta.dre_lancamento_id) {
+        const liqs = await base44.entities.LiquidacaoFinanceira.filter(
+          liquidacao.conta_receber_id
+            ? { conta_receber_id: entidadeId }
+            : { conta_pagar_id: entidadeId },
+          '-data_liquidacao', 5
+        );
+        const restantes = (liqs || []).filter(l => l.id !== liquidacao_id);
+        const dataPagamento = restantes.length > 0 ? restantes[0].data_liquidacao : null;
+        await base44.entities.DRELancamento.update(conta.dre_lancamento_id, {
+          data_pagamento: dataPagamento,
+        });
+      }
+    } catch (_) {
+      // reversão do DRE falha silenciosamente — não bloqueia o estorno
+    }
 
     // 2. Deleta DFCLancamentos gerados por esta liquidação (se existirem)
     try {

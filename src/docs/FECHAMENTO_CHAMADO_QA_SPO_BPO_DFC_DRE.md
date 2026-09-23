@@ -26,9 +26,9 @@
 | P1-1 | Cadastro de novas contas no DFC | ✅ APROVADO | Botões "Adicionar Banco/Máquina" sem limite de contas. Bloqueio de edição aplica-se apenas a contas com liquidação no mês (regra correta de integridade). Adição de novas contas permanece liberada mesmo com mês bloqueado. |
 | P1-2 | Estorno de baixa financeira | ⚠️ APROVADO COM RESSALVAS | Fluxo completo existe (motivo obrigatório, reverte conta, deleta DFC, devolve saldo da fonte, auditoria). **Porém: 2 defeitos críticos encontrados — ver seções 2.1 e 2.2.** |
 | P1-3 | Anexo na despesa (vinculado ao lançamento) | ✅ APROVADO | Upload direto no lançamento (`anexo_url`/`anexo_nome`), limite 10 MB, preview e remoção. Defeito menor: **anexo não se aplica a lançamentos recorrentes** (ver 2.4). |
-| P2-4 | NF/Pedido/Fatura na despesa, não no cadastro | ⚠️ PENDENTE | Campos corretos existem no lançamento (tipo_documento + numero_documento). **Campos fixos `numero_nfe`/`numero_pedido` AINDA presentes no cadastro de fornecedor** — duplicidade; migração do PDF não executada. |
+| P2-4 | NF/Pedido/Fatura na despesa, não no cadastro | ✅ CORRIGIDO | Campos corretos existem no lançamento (tipo_documento + numero_documento). Campos fixos `numero_nfe`/`numero_pedido` **removidos do modal de cadastro de fornecedor** (23/09) — a NF/pedido agora é informada por lançamento, no bloco "Documento" da despesa. Schema mantido por retrocompatibilidade. |
 | P2-5 | Data da Venda (receita) | ✅ APROVADO | Campo `data_competencia`, rótulo "🛒 Data da Venda", badge na listagem, avança corretamente em recorrências (backend). |
-| P2-6 | Data da Compra (despesa) | ⚠️ PENDENTE | Campo existe (`data_competencia`) mas com rótulo "Data de Competência", **escondido dentro do accordion "Documento" (fechado por padrão)**. Rótulo/exposição não atendem à expectativa do BPO. |
+| P2-6 | Data da Compra (despesa) | ✅ CORRIGIDO | Campo renomeado para "🛒 Data da Compra" e **movido para fora do accordion — sempre visível** no formulário (23/09). O accordion "Documento" agora contém apenas Data do Documento, Tipo e Número. Badge da listagem exibe "🛒 compra dd/mm". |
 | P2-7 | Data NF / Data do Pedido | ✅ APROVADO | `data_documento` + seletor de tipo (NF/Pedido/Fatura/Outro) + badge "📄" na listagem. |
 | P3-8 | Nome do cliente visível na receita | ✅ APROVADO | `cliente_nome` desnormalizado no lançamento + badge "👤" na listagem. |
 | P3-9 | Autocomplete de clientes (já cadastrados) | ✅ APROVADO | Combobox com busca sobre `WorkshopCliente` (limite 200, suficiente), empty-state direcionando para cadastro, integração com modal de cadastro rápido. |
@@ -45,12 +45,12 @@
 const autorizado = userRole === 'admin' || userType === 'interno';
 ```
 **Evidência:** O valor canônico de `User.user_type` é `internal`/`external` (enum em `base44/entities/User.jsonc`, marcado como "FONTE ÚNICA DE VERDADE"). A comparação com a string `'interno'` **nunca casa**, logo **qualquer usuário interno do BPO recebe 403 ao estornar** — só admins conseguem. Como o requisito do chamado é exatamente habilitar o BPO a operar estornos, o item P1-2 está funcionalmente comprometido para o público-alvo.
-**Correção:** `userType === 'internal'`. Testar com usuário interno não-admin (esperado: estorno permitido) e com usuário externo (esperado: 403).
+**Correção:** `userType === 'internal'`. Testar com usuário interno não-admin (esperado: estorno permitido) e com usuário externo (esperado: 403). **Status: CORRIGIDO (23/09) — comparador alterado para o valor canônico `internal`.**
 
 ### 2.2 🔴 CRÍTICO — Estorno não reverte `data_pagamento` do DRELancamento vinculado
 **Arquivos:** `registrarLiquidacao` (passo 5 escreve `data_pagamento` no DRE vinculado) × `desfazerLiquidacao` (não reverte).
 **Impacto:** Após estornar uma baixa, o lançamento do DRE continua exibindo "✅ pago dd/mm" — o DRE fica inconsistente com o Contas a Pagar/Receber (que volta a "aberto/parcial"). O usuário verá a conta em aberto no DFC e, ao mesmo tempo, paga no DRE.
-**Correção:** No `desfazerLiquidacao`, se `conta.dre_lancamento_id` e `novoValorPago <= 0.01`, limpar `data_pagamento` (null) no DRELancamento; se parcial, recalcular (idealmente a partir da liquidação restante mais recente).
+**Correção:** No `desfazerLiquidacao`, se `conta.dre_lancamento_id` e `novoValorPago <= 0.01`, limpar `data_pagamento` (null) no DRELancamento; se parcial, recalcular (idealmente a partir da liquidação restante mais recente). **Status: CORRIGIDO (23/09) — passo 1.5 adicionado ao `desfazerLiquidacao`: reverte `data_pagamento` do DRE vinculado para a data da baixa restante mais recente, ou null se não restar nenhuma.**
 
 ### 2.3 🟠 ALTO — ContasReceber resolve oficina por campo legado (`user.data.workshop_id`)
 **Arquivo:** `src/pages/ContasReceber.jsx` (linha ~165)
@@ -58,7 +58,7 @@ const autorizado = userRole === 'admin' || userType === 'interno';
 const workshopId = user?.data?.workshop_id;
 ```
 **Impacto:** Pós-migração de tenant (TenantMembership como fonte de verdade), usuários cujo vínculo nunca populou o campo legado **veem a lista de Contas a Receber vazia** — mesmo padrão de resíduo já catalogado na página CronogramaConsultoria. A página ContasPagar já usa `useWorkshopContext()` (correto).
-**Correção:** Substituir por `useWorkshopContext()`, alinhando com ContasPagar. Reprodução: logar com usuário criado via convite pós-migração (ex.: rafaelbertuolla) e abrir Contas a Receber.
+**Correção:** Substituir por `useWorkshopContext()`, alinhando com ContasPagar. Reprodução: logar com usuário criado via convite pós-migração (ex.: rafaelbertuolla) e abrir Contas a Receber. **Status: CORRIGIDO (23/09) — `ContasReceber.jsx` agora usa `useWorkshopContext()`.**
 
 ### 2.4 🟡 MÉDIO — Anexo não é propagado para lançamentos recorrentes
 **Arquivo:** `DREAvancadoTab.jsx` — branch recorrente do `handleSave` envia `criarLancamentoRecorrente` **sem** `anexo_url`/`anexo_nome` (e sem os vínculos de cliente/fornecedor). Usuário anexa a NF, escolhe "Mensal" e o anexo se perde silenciosamente.
@@ -117,16 +117,18 @@ Presente em `registrarLiquidacao`, `desfazerLiquidacao` e `atualizarSaldoFonte`.
 
 ## 5. VEREDITO E ENCERRAMENTO
 
-**Status do chamado: ENCERRADO COM REPROVAÇÃO PARCIAL (atualizado 23/09 11:05 com adição do 6º defeito — 2.8 — já corrigido).**
+**Status do chamado: ENCERRADO COM APROVAÇÃO CONDICIONAL (atualizado 23/09 11:15).**
 
-Dos 9 itens solicitados, **7 já estão implementados e aprovados no QA**; **2 itens de padronização permanecem pendentes** (remoção de NF/Pedido fixos do fornecedor; rótulo/exposição de "Data da Compra") e a análise sênior **elevou 6 defeitos** (2.1–2.8), sendo **1 já corrigido** (2.8 — baixa bloqueada por "saldo zerado") e **3 bloqueantes** para a operação plena do BPO (autorização de estorno com valor canônico errado; reversão do DRE no estorno; resolução legada de oficina em Contas a Receber).
+Dos 9 itens do PDF: **7 aprovados**, **2 itens de padronização agora CORRIGIDOS** (P2-4 — NF/Pedido fixos removidos do cadastro de fornecedor; P2-6 — "Data da Compra" renomeada e sempre visível). Dos **6 defeitos** da análise sênior (2.1–2.8), **4 estão CORRIGIDOS**:
+- ✅ 2.1 — autorização do estorno usa o valor canônico `internal` (BPO desbloqueado);
+- ✅ 2.2 — estorno reverte `data_pagamento` do DRE vinculado (DRE e DFC voltam a conversar);
+- ✅ 2.3 — Contas a Receber resolve a oficina via `useWorkshopContext()` (fim da lista vazia pós-migração);
+- ✅ 2.8 — baixa/recebimento leem as fontes pelo mês da data de pagamento (fim do "saldo zerado").
 
-**Próximos passos sugeridos (ordem de prioridade):**
-1. Corrigir 2.1 (autorização `internal`) — 1 linha, desbloqueia o BPO.
-2. Corrigir 2.2 (reverter `data_pagamento` no DRE no estorno).
-3. Corrigir 2.3 (ContasReceber via `useWorkshopContext`).
-4. Ajustes P2 do PDF: remover NF/Pedido fixos do fornecedor + renomear/expor "Data da Compra".
-5. Corrigir 2.4 (anexo em recorrências) e executar plano de testes da seção 4.
-6. ✅ ~~Corrigir 2.8 (baixa com "saldo zerado")~~ — concluído em 23/09 (modais de pagamento e recebimento).
+**Pendências remanescentes (não bloqueantes para o BPO):**
+1. 2.4 — anexo não propagado em lançamentos recorrentes;
+2. 2.5/2.6 — estorno não-atômico e clamp de saldo que mascara inconsistência (mitigações recomendadas);
+3. 2.7 — itens menores (drift de SDK, `zerarTudo` sem histórico, status `vencido` pós-estorno, padronização `InputMoeda` no DRE);
+4. Executar o plano de testes de regressão da seção 4 — em especial os cenários de estorno por usuário interno e pagamento em mês de vencimento diferente.
 
-*Aprovado para arquivamento após tratamento dos itens 1–4 acima. Nenhum dado em produção foi alterado durante a auditoria; a correção 2.8 alterou apenas código de frontend.*
+*Chamado aprovado para arquivamento condicionado à execução do plano de testes. Alterações em produção nesta rodada: apenas código (frontend + 2 backend functions); nenhum dado foi modificado diretamente.*

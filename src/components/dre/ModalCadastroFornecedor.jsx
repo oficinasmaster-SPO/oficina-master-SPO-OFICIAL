@@ -51,8 +51,6 @@ export default function ModalCadastroFornecedor({ open, onClose, workshopId, onC
   const [nome, setNome] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [contato, setContato] = useState("");
-  const [numeroNfe, setNumeroNfe] = useState("");
-  const [numeroPedido, setNumeroPedido] = useState("");
 
   // Endereço
   const [cep, setCep] = useState("");
@@ -130,8 +128,6 @@ export default function ModalCadastroFornecedor({ open, onClose, workshopId, onC
         nome: nome.trim(),
         ...(cnpj && { cnpj }),
         ...(contato && { contato }),
-        ...(numeroNfe && { numero_nfe: numeroNfe }),
-        ...(numeroPedido && { numero_pedido: numeroPedido }),
         ...(cep && { endereco_cep: cep }),
         ...(logradouro && { endereco_logradouro: logradouro }),
         ...(numero && { endereco_numero: numero }),
@@ -152,7 +148,7 @@ export default function ModalCadastroFornecedor({ open, onClose, workshopId, onC
   };
 
   const handleClose = () => {
-    setNome(""); setCnpj(""); setContato(""); setNumeroNfe(""); setNumeroPedido("");
+    setNome(""); setCnpj(""); setContato("");
     setCep(""); setLogradouro(""); setNumero(""); setComplemento("");
     setBairro(""); setCidade(""); setUf(""); setAnexos([]);
     onClose();
@@ -198,24 +194,8 @@ export default function ModalCadastroFornecedor({ open, onClose, workshopId, onC
             </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Nº NFe">
-              <input
-                className={INPUT_CLS}
-                placeholder="Ex: NF-2024-00123"
-                value={numeroNfe}
-                onChange={(e) => setNumeroNfe(e.target.value)}
-              />
-            </Field>
-            <Field label="Nº Pedido">
-              <input
-                className={INPUT_CLS}
-                placeholder="Ex: PED-001"
-                value={numeroPedido}
-                onChange={(e) => setNumeroPedido(e.target.value)}
-              />
-            </Field>
-          </div>
+          {/* QA P2-4: Nº NFe e Nº Pedido removidos do cadastro fixo do fornecedor —
+              agora são informados por lançamento, no bloco "Documento" da despesa no DRE. */}
 
           {/* ── Endereço ── */}
           <div className="border-t pt-3">

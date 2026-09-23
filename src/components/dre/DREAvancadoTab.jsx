@@ -447,24 +447,25 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
         </div>
 
         {/* ── DOCUMENTO (despesa: colapsável) / DATA DA VENDA (receita) ── */}
-        {tipo === "receita" ? (
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">🛒 Data da Venda <span className="text-gray-400">(opcional)</span></label>
-            <input type="date" className={inputCls} value={dataCompetencia} onChange={e => setDataCompetencia(e.target.value)} />
-          </div>
-        ) : (
+        {/* QA P2-6: Data da Venda (receita) / Data da Compra (despesa) — sempre visível,
+            fora do accordion de Documento */}
+        <div>
+          <label className="text-xs text-gray-500 mb-1 block">
+            {tipo === "receita" ? "🛒 Data da Venda" : "🛒 Data da Compra"} <span className="text-gray-400">(opcional)</span>
+          </label>
+          <input type="date" className={inputCls} value={dataCompetencia} onChange={e => setDataCompetencia(e.target.value)} />
+        </div>
+
+        {/* Documento (NF/Pedido/Fatura) — apenas despesa, colapsável */}
+        {tipo === "despesa" && (
           <div className="border border-gray-200 rounded-lg bg-white/70">
             <button type="button" onClick={() => setDocOpen(!docOpen)}
               className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-gray-500 hover:text-gray-700">
-              <span>📄 Documento <span className="text-gray-400 font-normal">(opcional)</span></span>
+              <span>📄 Documento (NF, Pedido, Fatura) <span className="text-gray-400 font-normal">(opcional)</span></span>
               {docOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             </button>
             {docOpen && (
               <div className="px-3 pb-3 pt-2 grid grid-cols-2 gap-2 border-t border-gray-100">
-                <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Data de Competência</label>
-                  <input type="date" className={inputCls} value={dataCompetencia} onChange={e => setDataCompetencia(e.target.value)} />
-                </div>
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Data do Documento</label>
                   <input type="date" className={inputCls} value={dataDocumento} onChange={e => setDataDocumento(e.target.value)} />
@@ -774,7 +775,7 @@ function LancamentoRow({ item, onDelete, onSaved }) {
           )}
           {item.data_competencia && (
             <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full font-medium">
-              {item.tipo === "receita" ? "🛒" : "📅"} {item.tipo === "receita" ? "venda" : "competência"} {fmtData(item.data_competencia)}
+              🛒 {item.tipo === "receita" ? "venda" : "compra"} {fmtData(item.data_competencia)}
             </span>
           )}
           {(item.tipo_documento || item.numero_documento) && (

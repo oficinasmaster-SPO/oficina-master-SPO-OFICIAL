@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import ModalRegistrarRecebimento from "@/components/financeiro/ModalRegistrarRecebimento";
 import HistoricoAlteracoes from "@/components/financeiro/HistoricoAlteracoes";
+import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('pt-BR') : '—';
@@ -157,12 +158,11 @@ export default function ContasReceber() {
   const [deletando, setDeletando] = useState(false);
   const [loadingReceber, setLoadingReceber] = useState(false);
 
-  const { data: user } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: () => base44.auth.me()
-  });
-
-  const workshopId = user?.data?.workshop_id;
+  // FIX QA-2.3: antes resolvia a oficina pelo campo legado user.data.workshop_id —
+  // usuários cujo vínculo vem apenas de TenantMembership viam a lista vazia.
+  // Agora usa a fonte canônica (mesmo padrão de ContasPagar).
+  const { workshop } = useWorkshopContext();
+  const workshopId = workshop?.id;
   const mesAtual = new Date().toISOString().slice(0, 7); // YYYY-MM
 
   const { data: contas = [], isLoading, refetch } = useQuery({
