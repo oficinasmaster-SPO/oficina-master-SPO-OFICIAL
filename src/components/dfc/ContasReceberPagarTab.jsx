@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { InputMoeda } from "@/components/ui/InputMoeda";
-import { Loader2, DollarSign, CreditCard, CheckCircle, AlertCircle, Building2, RotateCcw } from "lucide-react";
+import { Loader2, DollarSign, CreditCard, CheckCircle, AlertCircle, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import FiltroPeriodo from "../dre/FiltroPeriodo";
 import ModalRegistrarRecebimentoShared from "@/components/financeiro/ModalRegistrarRecebimento";
