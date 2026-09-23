@@ -162,6 +162,9 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
     setAnexoFile(null);
     setAnexoUrl("");
     setAnexoNome("");
+    // QA: reseta o input file para que o mesmo arquivo possa ser selecionado novamente
+    const input = document.querySelector('input[type="file"][accept=".pdf,.jpg,.jpeg,.png,.webp"]');
+    if (input) input.value = '';
   };
 
   // ── Documento (opcional) ──
