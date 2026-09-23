@@ -488,6 +488,34 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
           </div>
         )}
 
+        {/* ── ANEXO (S3-T3.2) ── */}
+        <div className="border border-gray-200 rounded-lg bg-white/70 px-3 py-2">
+          <p className="text-xs font-medium text-gray-500 mb-1.5">
+            <Paperclip className="w-3 h-3 inline mr-1" />
+            Anexo <span className="font-normal text-gray-400">(NF, fatura, comprovante — opcional)</span>
+          </p>
+          {!anexoNome ? (
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={handleAnexoChange} disabled={uploadingAnexo} />
+              <span className="flex items-center gap-1.5 text-xs border border-dashed border-gray-300 rounded-lg px-3 py-2 text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors">
+                {uploadingAnexo ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                {uploadingAnexo ? 'Enviando...' : 'Selecionar arquivo'}
+              </span>
+            </label>
+          ) : (
+            <div className="flex items-center justify-between gap-2 text-xs bg-blue-50 border border-blue-200 rounded-lg px-2 py-1.5">
+              <a href={anexoUrl} target="_blank" rel="noreferrer"
+                className="flex items-center gap-1.5 text-blue-700 hover:underline truncate">
+                <Paperclip className="w-3 h-3 flex-shrink-0" />
+                <span className="truncate">{anexoNome}</span>
+              </a>
+              <button type="button" onClick={handleRemoverAnexo} className="flex-shrink-0 text-gray-400 hover:text-red-500">
+                <XIcon className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* ── VENCIMENTO + PAGAMENTO ── */}
         <div className="grid grid-cols-2 gap-2">
           <div>
