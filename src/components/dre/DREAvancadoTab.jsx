@@ -1037,6 +1037,14 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
     enabled: periodo === "anual" && !!workshopId && !!ano
   });
 
+  // Fontes de dinheiro do mês — usadas para habilitar/desabilitar o botão de transferência
+  const { data: fontesDinheiro } = useFontesDinheiro(workshopId, mes);
+  // Total de contas distintas: cada banco, cada máquina e caixa (se > 0) contam como 1
+  const totalContas = (fontesDinheiro?.bancos?.length ?? 0)
+    + (fontesDinheiro?.maquinas_cartao?.length ?? 0)
+    + ((fontesDinheiro?.caixa ?? 0) > 0 ? 1 : 0);
+  const podeTransferir = totalContas >= 2;
+
   // Query para dados mensais (padrão)
   const { data: lancamentos = [], isLoading, refetch } = useQuery({
     queryKey: ["dre-lancamentos", workshopId, mes],
