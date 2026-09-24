@@ -643,6 +643,28 @@ export default function DFCTab({ workshopId, mes }) {
     enabled: !!workshopId && !!mes
   });
 
+  // ── Frente 1: Liquidacões do mês (baixas conciliadas e não conciliadas) ———————————
+  // Filtro por intervalo de data em BRT (UTC-3): dia 1 às 03:00 UTC → dia 1 do mês seguinte às 02:59 UTC
+  const { data: liquidacoesMes = [], isLoading: isLoadingLiquidacoes } = useQuery({
+    queryKey: ["dfc-liquidacoes-mes", workshopId, mes],
+    queryFn: async () => {
+      if (!workshopId || !mes) return [];
+      const [anoStr, mesStr] = mes.split("-");
+      const ano = parseInt(anoStr), mesIdx = parseInt(mesStr);
+      const anoFim = mesIdx === 12 ? ano + 1 : ano;
+      const mesFimStr = String(mesIdx === 12 ? 1 : mesIdx + 1).padStart(2, "0");
+      const dataInicio = `${mes}-01T03:00:00.000Z`;
+      const dataFim    = `${anoFim}-${mesFimStr}-01T02:59:59.999Z`;
+      return base44.entities.LiquidacaoFinanceira.filter(
+        { workshop_id: workshopId, data_liquidacao: { $gte: dataInicio, $lte: dataFim } },
+        "-data_liquidacao",
+        100
+      );
+    },
+    enabled: !!workshopId && !!mes,
+    staleTime: 30_000,
+  });
+
   // ── DFC Anual ──
   const { data: dadosAnuaisDFC, isLoading: isLoadingAnual } = useQuery({
     queryKey: ["dfc-anual", workshopId, ano],
