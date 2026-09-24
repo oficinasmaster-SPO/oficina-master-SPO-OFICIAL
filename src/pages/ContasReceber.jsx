@@ -337,12 +337,14 @@ export default function ContasReceber() {
         ))}
       </div>
 
-      {/* S1-T1.2: Modal estorno recebimento */}
+      {/* S1-T1.2: Modal estorno recebimento — usa componente compartilhado */}
       {contaParaEstornar && (
-        <ModalEstornoReceber
+        <ModalEstornoLiquidacao
           aberto={!!contaParaEstornar}
           onFechar={() => setContaParaEstornar(null)}
           conta={contaParaEstornar}
+          tipo="receber"
+          workshopId={workshopId}
           onSuccess={() => { setContaParaEstornar(null); refetch(); }}
         />
       )}
