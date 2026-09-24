@@ -38,14 +38,64 @@ const fmt = (v) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
 
 const hoje = new Date().toISOString().split("T")[0];
+const hojeMs = new Date(hoje + "T12:00:00").getTime();
 
-/** Retorna true quando a conta está aberta e a data de vencimento já passou. */
+/** Retorna true quando a conta está aberta/parcial e a data de vencimento já passou. */
 function isVencida(conta) {
   return (
-    conta.status === "aberto" &&
+    (conta.status === "aberto" || conta.status === "parcial") &&
     !!conta.data_vencimento &&
     conta.data_vencimento < hoje
   );
+}
+
+/** Calcula dias de atraso.
+ *  Usa `dias_atraso` do backend se disponível (ContaReceber).
+ *  Caso contrário calcula client-side (ContaPagar não tem o campo). */
+function diasDeAtraso(conta) {
+  if (typeof conta.dias_atraso === "number" && conta.dias_atraso > 0) return conta.dias_atraso;
+  if (!conta.data_vencimento) return 0;
+  const diffMs = hojeMs - new Date(conta.data_vencimento + "T12:00:00").getTime();
+  const dias = Math.floor(diffMs / 86400000);
+  return dias > 0 ? dias : 0;
+}
+
+/**
+ * B1 — Ordenação tri-faixa:
+ *   1º Vencidas (atraso decrescente — mais atrasada primeiro)
+ *   2º A vencer (vencimento crescente — próxima primeiro)
+ *   3º Sem data de vencimento (por último)
+ *   4º Pagas (no final, só para contexto de estorno)
+ */
+function ordenarPorUrgencia(contas) {
+  return [...contas].sort((a, b) => {
+    const aVencida = isVencida(a);
+    const bVencida = isVencida(b);
+    const aPago    = a.status === "pago";
+    const bPago    = b.status === "pago";
+    const aSemData = !a.data_vencimento;
+    const bSemData = !b.data_vencimento;
+
+    // Pagas sempre no final
+    if (aPago !== bPago) return aPago ? 1 : -1;
+
+    // Faixa 1: Vencidas primeiro
+    if (aVencida !== bVencida) return aVencida ? -1 : 1;
+    if (aVencida && bVencida) {
+      // Mais atrasada primeiro (atraso decrescente)
+      return diasDeAtraso(b) - diasDeAtraso(a);
+    }
+
+    // Faixa 3: Sem data por último (antes das pagas)
+    if (aSemData !== bSemData) return aSemData ? 1 : -1;
+
+    // Faixa 2: A vencer — vencimento crescente (próxima primeiro)
+    if (a.data_vencimento && b.data_vencimento) {
+      return a.data_vencimento.localeCompare(b.data_vencimento);
+    }
+
+    return 0;
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
