@@ -26,6 +26,8 @@ import FonteSaidaSelector from "../dfc/FonteSaidaSelector";
 import FiltroPeriodo from "./FiltroPeriodo";
 import ContasReceberPagarTab from "../dfc/ContasReceberPagarTab";
 import ModalLiquidacaoDRE from "../dfc/ModalLiquidacaoDRE";
+import ModalEstornoLiquidacao from "../dfc/ModalEstornoLiquidacao";
+import { RotateCcw } from "lucide-react";
 import VencimentosCard from "./VencimentosCard";
 
 // ─── Formatação ────────────────────────────────────────────────────
