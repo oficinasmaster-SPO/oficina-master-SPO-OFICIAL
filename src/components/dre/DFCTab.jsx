@@ -179,7 +179,7 @@ function ModalLancamento({ aberto, onFechar, onSalvar, isSaving, lancamentoEdica
             <Label>Valor (R$) *</Label>
             <InputMoeda
               value={parseFloat(form.valor) || 0}
-              onChange={(e) => setForm((f) => ({ ...f, valor: e.target.value }))}
+              onChange={(v) => setForm((f) => ({ ...f, valor: v }))}
               className="text-right" />
           </div>
           
