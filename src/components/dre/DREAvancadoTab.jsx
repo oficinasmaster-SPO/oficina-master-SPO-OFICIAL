@@ -8,8 +8,10 @@ import {
   Plus, Trash2, ArrowUpCircle, ArrowDownCircle,
   CheckCircle, AlertCircle, BarChart3, TrendingUp, TrendingDown,
   ChevronDown, ChevronUp, Loader2, RefreshCw, UserPlus, Building2,
-  Paperclip, X as XIcon, ArrowLeftRight
+  Paperclip, X as XIcon, ArrowLeftRight,
+  Pencil, CheckSquare, Calendar, DollarSign, FileText, RotateCcw
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { formatCurrency } from "@/components/utils/formatters";
 import { toast } from "sonner";
 import SubcategoriaSelector from "./SubcategoriaSelector";
