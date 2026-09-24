@@ -936,6 +936,7 @@ export default function DFCTab({ workshopId, mes }) {
         </div>
 
         {baixasMesAberta && (
+          <div>
           {isLoadingLiquidacoes ? (
             <div className="flex items-center gap-2 text-sm text-gray-500 px-4 py-4">
               <Loader2 className="w-4 h-4 animate-spin" /> Carregando baixas...
