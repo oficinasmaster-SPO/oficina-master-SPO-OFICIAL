@@ -3,9 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, DollarSign, AlertCircle, Trash2, History, ChevronDown, ChevronUp, RotateCcw } from "lucide-react";
+import { Loader2, DollarSign, AlertCircle, Trash2, History, ChevronUp, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -17,9 +15,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import ModalRegistrarRecebimento from "@/components/financeiro/ModalRegistrarRecebimento";
 import HistoricoAlteracoes from "@/components/financeiro/HistoricoAlteracoes";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
