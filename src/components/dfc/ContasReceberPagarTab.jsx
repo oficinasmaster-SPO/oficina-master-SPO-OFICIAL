@@ -37,15 +37,18 @@ import ModalEstornoLiquidacao from "@/components/dfc/ModalEstornoLiquidacao";
 const fmt = (v) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
 
-const hoje = new Date().toISOString().split("T")[0];
-const hojeMs = new Date(hoje + "T12:00:00").getTime();
+/** Retorna a data de hoje no formato YYYY-MM-DD. Recalculada a cada chamada
+ *  para não ficar stale se o usuário mantiver a aba aberta passando da meia-noite. */
+function getHoje() {
+  return new Date().toISOString().split("T")[0];
+}
 
 /** Retorna true quando a conta está aberta/parcial e a data de vencimento já passou. */
 function isVencida(conta) {
   return (
     (conta.status === "aberto" || conta.status === "parcial") &&
     !!conta.data_vencimento &&
-    conta.data_vencimento < hoje
+    conta.data_vencimento < getHoje()
   );
 }
 
@@ -55,6 +58,7 @@ function isVencida(conta) {
 function diasDeAtraso(conta) {
   if (typeof conta.dias_atraso === "number" && conta.dias_atraso > 0) return conta.dias_atraso;
   if (!conta.data_vencimento) return 0;
+  const hojeMs = new Date(getHoje() + "T12:00:00").getTime();
   const diffMs = hojeMs - new Date(conta.data_vencimento + "T12:00:00").getTime();
   const dias = Math.floor(diffMs / 86400000);
   return dias > 0 ? dias : 0;
