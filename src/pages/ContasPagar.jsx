@@ -377,10 +377,11 @@ export default function ContasPagar() {
 
       {/* S1-T1.2: Modal de estorno */}
       {contaParaEstornar && (
-        <ModalEstorno
+        <ModalEstornoLiquidacao
           aberto={!!contaParaEstornar}
           onFechar={() => setContaParaEstornar(null)}
           conta={contaParaEstornar}
+          tipo="pagar"
           workshopId={workshop?.id}
           onSuccess={() => { setContaParaEstornar(null); refetch(); }}
         />
