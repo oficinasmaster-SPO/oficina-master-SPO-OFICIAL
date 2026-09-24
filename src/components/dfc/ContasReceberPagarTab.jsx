@@ -363,14 +363,28 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
         permitir estorno quando necessário.
       </div>
 
-      {/* #7 Filtro de período — sincronizado com o DFC via useEffect acima */}
+      {/* C1: Filtro de período — sincronizado bidirecionalmente com o DFC.
+           DFC → Carteira: via useEffect no prop `mes`.
+           Carteira → DFC: via CustomEvent 'dre-mudar-mes' (mesmo padrão do DRE Avançado). */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <FiltroPeriodo
           mes={mesPadded}
           ano={ano}
           periodo={periodo}
-          onMesChange={setMesSelecionado}
-          onAnoChange={(v) => setAno(parseInt(v))}
+          onMesChange={(novoMes) => {
+            setMesSelecionado(novoMes);
+            // Despacha evento para o DRETCMP2 sincronizar todas as abas
+            const novaData = `${ano}-${String(novoMes).padStart(2, '0')}`;
+            window.dispatchEvent(new CustomEvent('dre-mudar-mes', { detail: { mes: novaData } }));
+          }}
+          onAnoChange={(novoAno) => {
+            const anoInt = parseInt(novoAno);
+            setAno(anoInt);
+            if (periodo === 'mensal') {
+              const novaData = `${anoInt}-${mesPadded}`;
+              window.dispatchEvent(new CustomEvent('dre-mudar-mes', { detail: { mes: novaData } }));
+            }
+          }}
           onPeriodoChange={setPeriodo}
         />
       </div>
