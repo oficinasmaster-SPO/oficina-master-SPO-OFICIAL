@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import ModalRegistrarRecebimento from "@/components/financeiro/ModalRegistrarRecebimento";
 import HistoricoAlteracoes from "@/components/financeiro/HistoricoAlteracoes";
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
+import ModalEstornoLiquidacao from "@/components/dfc/ModalEstornoLiquidacao";
 
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('pt-BR') : '—';
