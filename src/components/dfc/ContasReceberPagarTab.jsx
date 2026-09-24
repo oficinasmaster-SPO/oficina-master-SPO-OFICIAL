@@ -625,13 +625,14 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
         />
       )}
 
-      {/* P1-2: Modal de Estorno acessível dentro do DRETCMP2 */}
+      {/* P1-2: Modal de Estorno acessível dentro do DRETCMP2 — usa componente compartilhado */}
       {contaEstornoModal && (
-        <ModalEstornoTab
+        <ModalEstornoLiquidacao
           aberto={!!contaEstornoModal}
           onFechar={() => { setContaEstornoModal(null); setTipoEstorno(null); }}
           conta={contaEstornoModal}
           tipo={tipoEstorno}
+          workshopId={workshopId}
           onSuccess={() => { setContaEstornoModal(null); setTipoEstorno(null); handleSuccess(); }}
         />
       )}
