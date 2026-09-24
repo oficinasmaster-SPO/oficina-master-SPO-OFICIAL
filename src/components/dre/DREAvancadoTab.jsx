@@ -39,94 +39,37 @@ const TIPOS_DOCUMENTO = [
   { value: "outro", label: "Outro" },
 ];
 
-// ─── DETECÇÃO AUTOMÁTICA DE TIPO ─────────────────────────────────────────────
 const CATEGORIAS_RECEITA_KEYS = ['pecas_aplicadas', 'servicos', 'outras'];
 const CATEGORIAS_DESPESA_KEYS = ['operacional', 'pessoas', 'marketing', 'manutencao', 'terceirizados', 'administrativo', 'financeiro', 'pecas_estoque', 'tecnologia', 'juridico'];
 
-/**
- * Infere automaticamente se uma categoria é receita ou despesa
- * @param {string} categoria - chave da categoria (ex: 'pecas_aplicadas', 'operacional')
- * @returns {'receita' | 'despesa' | null}
- */
 function inferirTipoPorCategoria(categoria) {
   if (CATEGORIAS_RECEITA_KEYS.includes(categoria)) return 'receita';
   if (CATEGORIAS_DESPESA_KEYS.includes(categoria)) return 'despesa';
   return null;
 }
 
-// ─── CATEGORIAS ───────────────────────────────────────────────────────────────
 const CATEGORIAS_DESPESA = {
-  operacional: {
-    label: "Operacional",
-    entra_tcmp2: true,
-    subcategorias: ["Aluguel", "Energia elétrica", "Água e esgoto", "Telefone / Internet", "IPTU", "Seguro predial"]
-  },
-  pessoas: {
-    label: "Pessoas",
-    entra_tcmp2: true,
-    subcategorias: ["Salários", "FGTS", "INSS", "Vale transporte", "Vale refeição", "Férias / 13º (provisão)", "Pró-labore sócios"]
-  },
-  marketing: {
-    label: "Marketing",
-    entra_tcmp2: true,
-    subcategorias: ["Tráfego pago (Meta/Google)", "Agência de marketing", "Material gráfico", "Patrocínios", "Uniforme / Branding"]
-  },
-  manutencao: {
-    label: "Manutenção",
-    entra_tcmp2: true,
-    subcategorias: ["Manutenção predial", "Manutenção de equipamentos", "Ferramentas", "EPI"]
-  },
-  terceirizados: {
-    label: "Serviços Terceiros",
-    entra_tcmp2: true,
-    subcategorias: ["Contabilidade", "Advocacia", "Consultoria", "TI / Software de gestão", "Limpeza / Segurança"]
-  },
-  administrativo: {
-    label: "Administrativo",
-    entra_tcmp2: true,
-    subcategorias: ["Material de escritório", "Taxas bancárias", "Impostos sobre serviço", "Certificações", "Seguros gerais"]
-  },
-  financeiro: {
-    label: "Financeiro / Investimento",
-    entra_tcmp2: false,
-    subcategorias: ["Financiamento (veículo/imóvel)", "Consórcio", "Parcelamento de equipamento", "Empréstimo bancário", "Processos judiciais", "Compra de imóvel/terreno"]
-  },
-  pecas_estoque: {
-    label: "Peças para Estoque",
-    entra_tcmp2: false,
-    subcategorias: ["Boleto de peças (estoque)", "Compra antecipada", "Devolução de peças"]
-  },
-  tecnologia: {
-    label: "Tecnologia",
-    entra_tcmp2: true,
-    subcategorias: ["APIs IA", "Base44", "Cloud", "OpenAI", "Software", "Infraestrutura", "Segurança"]
-  },
-  juridico: {
-    label: "Jurídico",
-    entra_tcmp2: false,
-    subcategorias: ["Processos Trabalhistas", "Processos Cíveis", "Honorários Jurídicos", "Acordos", "Custas Judiciais", "Indenizações", "Multas"]
-  }
-  };
+  operacional:    { label: "Operacional",              entra_tcmp2: true,  subcategorias: ["Aluguel", "Energia elétrica", "Água e esgoto", "Telefone / Internet", "IPTU", "Seguro predial"] },
+  pessoas:        { label: "Pessoas",                  entra_tcmp2: true,  subcategorias: ["Salários", "FGTS", "INSS", "Vale transporte", "Vale refeição", "Férias / 13º (provisão)", "Pró-labore sócios"] },
+  marketing:      { label: "Marketing",                entra_tcmp2: true,  subcategorias: ["Tráfego pago (Meta/Google)", "Agência de marketing", "Material gráfico", "Patrocínios", "Uniforme / Branding"] },
+  manutencao:     { label: "Manutenção",               entra_tcmp2: true,  subcategorias: ["Manutenção predial", "Manutenção de equipamentos", "Ferramentas", "EPI"] },
+  terceirizados:  { label: "Serviços Terceiros",       entra_tcmp2: true,  subcategorias: ["Contabilidade", "Advocacia", "Consultoria", "TI / Software de gestão", "Limpeza / Segurança"] },
+  administrativo: { label: "Administrativo",           entra_tcmp2: true,  subcategorias: ["Material de escritório", "Taxas bancárias", "Impostos sobre serviço", "Certificações", "Seguros gerais"] },
+  financeiro:     { label: "Financeiro / Investimento",entra_tcmp2: false, subcategorias: ["Financiamento (veículo/imóvel)", "Consórcio", "Parcelamento de equipamento", "Empréstimo bancário", "Processos judiciais", "Compra de imóvel/terreno"] },
+  pecas_estoque:  { label: "Peças para Estoque",      entra_tcmp2: false, subcategorias: ["Boleto de peças (estoque)", "Compra antecipada", "Devolução de peças"] },
+  tecnologia:     { label: "Tecnologia",               entra_tcmp2: true,  subcategorias: ["APIs IA", "Base44", "Cloud", "OpenAI", "Software", "Infraestrutura", "Segurança"] },
+  juridico:       { label: "Jurídico",                 entra_tcmp2: false, subcategorias: ["Processos Trabalhistas", "Processos Cíveis", "Honorários Jurídicos", "Acordos", "Custas Judiciais", "Indenizações", "Multas"] },
+};
 
 const CATEGORIAS_RECEITA = {
-  pecas_aplicadas: {
-    label: "Peças Aplicadas",
-    subcategorias: ["Peças mecânicas", "Peças elétricas", "Funilaria / Pintura", "Pneus / Rodas", "Acessórios"]
-  },
-  servicos: {
-    label: "Serviços (Mão de Obra)",
-    subcategorias: ["Revisão / Manutenção", "Funilaria", "Pintura", "Alinhamento / Balanceamento", "Elétrica / Scanner", "Vidros / Insulfilm"]
-  },
-  outras: {
-    label: "Outras Receitas",
-    subcategorias: ["Venda de sucata", "Locadora / Seguradora", "Franquia / Repasse", "Outros"]
-  }
+  pecas_aplicadas: { label: "Peças Aplicadas",        subcategorias: ["Peças mecânicas", "Peças elétricas", "Funilaria / Pintura", "Pneus / Rodas", "Acessórios"] },
+  servicos:        { label: "Serviços (Mão de Obra)", subcategorias: ["Revisão / Manutenção", "Funilaria", "Pintura", "Alinhamento / Balanceamento", "Elétrica / Scanner", "Vidros / Insulfilm"] },
+  outras:          { label: "Outras Receitas",         subcategorias: ["Venda de sucata", "Locadora / Seguradora", "Franquia / Repasse", "Outros"] },
 };
 
 // ─── FORMULÁRIO DE LANÇAMENTO ─────────────────────────────────────────────────
 function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
   const queryClient = useQueryClient();
-
   const [catKey, setCatKey] = useState("");
   const [subcat, setSubcat] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -134,204 +77,113 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
   const [dataVencimento, setDataVencimento] = useState("");
   const [dataPagamento, setDataPagamento] = useState("");
   const [saving, setSaving] = useState(false);
-
-  // ── Anexo ──
-  const [anexoFile, setAnexoFile]   = useState(null);   // File selecionado
-  const [anexoUrl, setAnexoUrl]     = useState("");     // URL após upload
-  const [anexoNome, setAnexoNome]   = useState("");     // nome original
+  const [anexoFile, setAnexoFile]   = useState(null);
+  const [anexoUrl, setAnexoUrl]     = useState("");
+  const [anexoNome, setAnexoNome]   = useState("");
   const [uploadingAnexo, setUploadingAnexo] = useState(false);
 
   const handleAnexoChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // Limite 10 MB
     if (file.size > 10 * 1024 * 1024) { toast.error('Arquivo muito grande (máx. 10 MB)'); return; }
-    setAnexoFile(file);
-    setAnexoNome(file.name);
-    setUploadingAnexo(true);
+    setAnexoFile(file); setAnexoNome(file.name); setUploadingAnexo(true);
     try {
       const { url } = await base44.integrations.Core.UploadFile({ file });
-      setAnexoUrl(url);
-      toast.success('Anexo pronto!');
+      setAnexoUrl(url); toast.success('Anexo pronto!');
     } catch (err) {
       toast.error('Erro no upload: ' + (err.message || 'tente novamente'));
-      setAnexoFile(null);
-      setAnexoNome("");
-    } finally {
-      setUploadingAnexo(false);
-    }
+      setAnexoFile(null); setAnexoNome("");
+    } finally { setUploadingAnexo(false); }
   };
 
   const handleRemoverAnexo = () => {
-    setAnexoFile(null);
-    setAnexoUrl("");
-    setAnexoNome("");
-    // QA: reseta o input file para que o mesmo arquivo possa ser selecionado novamente
+    setAnexoFile(null); setAnexoUrl(""); setAnexoNome("");
     const input = document.querySelector('input[type="file"][accept=".pdf,.jpg,.jpeg,.png,.webp"]');
     if (input) input.value = '';
   };
 
-  // ── Documento (opcional) ──
   const [docOpen, setDocOpen] = useState(false);
   const [dataCompetencia, setDataCompetencia] = useState("");
   const [dataDocumento, setDataDocumento] = useState("");
   const [tipoDocumento, setTipoDocumento] = useState("");
   const [numeroDocumento, setNumeroDocumento] = useState("");
-
-  // ── Cliente (receita) ──
   const [clienteId, setClienteId] = useState("");
   const [clienteNome, setClienteNome] = useState("");
   const [modalClienteOpen, setModalClienteOpen] = useState(false);
-
-  // ── Fornecedor (despesa) ──
   const [fornecedorId, setFornecedorId] = useState("");
   const [fornecedorNome, setFornecedorNome] = useState("");
   const [modalFornecedorOpen, setModalFornecedorOpen] = useState(false);
 
-  // ── Queries de clientes e fornecedores ──
-  // S4-T4.2: corrigido de .list({ filters }) para .filter() — método padrão do SDK no SPO.
-  // .list() com esse formato retornava array vazio silenciosamente, causando o Combobox vazio.
   const { data: clientes = [] } = useQuery({
     queryKey: ["workshop-clientes", workshopId],
     queryFn: () => base44.entities.WorkshopCliente.filter({ workshop_id: workshopId }, 'nome', 200),
-    enabled: tipo === "receita" && !!workshopId,
-    staleTime: 30_000,
+    enabled: tipo === "receita" && !!workshopId, staleTime: 30_000,
   });
-
   const { data: fornecedores = [] } = useQuery({
     queryKey: ["workshop-fornecedores", workshopId],
     queryFn: () => base44.entities.WorkshopFornecedor.filter({ workshop_id: workshopId }, 'nome', 200),
-    enabled: tipo === "despesa" && !!workshopId,
-    staleTime: 30_000,
+    enabled: tipo === "despesa" && !!workshopId, staleTime: 30_000,
   });
 
-  // Ao selecionar cliente via combobox, desnormaliza o nome
-  const handleClienteChange = (id) => {
-    setClienteId(id || "");
-    const found = clientes.find((c) => c.id === id);
-    setClienteNome(found ? found.nome : "");
-  };
+  const handleClienteChange = (id) => { setClienteId(id || ""); const f = clientes.find(c => c.id === id); setClienteNome(f ? f.nome : ""); };
+  const handleFornecedorChange = (id) => { setFornecedorId(id || ""); const f = fornecedores.find(f => f.id === id); setFornecedorNome(f ? f.nome : ""); };
+  const handleClienteCriado = (novo) => { queryClient.invalidateQueries({ queryKey: ["workshop-clientes", workshopId] }); setClienteId(novo.id); setClienteNome(novo.nome); };
+  const handleFornecedorCriado = (novo) => { queryClient.invalidateQueries({ queryKey: ["workshop-fornecedores", workshopId] }); setFornecedorId(novo.id); setFornecedorNome(novo.nome); };
 
-  // Ao selecionar fornecedor via combobox, desnormaliza o nome
-  const handleFornecedorChange = (id) => {
-    setFornecedorId(id || "");
-    const found = fornecedores.find((f) => f.id === id);
-    setFornecedorNome(found ? found.nome : "");
-  };
-
-  // Callback: novo cliente criado via modal → atualiza lista + seleciona automaticamente
-  const handleClienteCriado = (novo) => {
-    queryClient.invalidateQueries({ queryKey: ["workshop-clientes", workshopId] });
-    setClienteId(novo.id);
-    setClienteNome(novo.nome);
-  };
-
-  // Callback: novo fornecedor criado via modal → atualiza lista + seleciona automaticamente
-  const handleFornecedorCriado = (novo) => {
-    queryClient.invalidateQueries({ queryKey: ["workshop-fornecedores", workshopId] });
-    setFornecedorId(novo.id);
-    setFornecedorNome(novo.nome);
-  };
-
-  // Inferir tipo automaticamente baseado na categoria selecionada
   const tipoInferido = catKey ? inferirTipoPorCategoria(catKey) : tipo;
-
-  // Recorrência
   const [frequencia, setFrequencia] = useState("unico");
-  const [recorrencia, setRecorrencia] = useState({
-    data_inicio: mes ? mes + "-01" : "",
-    data_fim: null,
-    numero_parcelas: 12,
-  });
+  const [recorrencia, setRecorrencia] = useState({ data_inicio: mes ? mes + "-01" : "", data_fim: null, numero_parcelas: 12 });
 
   const categorias = tipo === "receita" ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
   const catSelecionada = categorias[catKey];
 
   const handleSave = async () => {
-    if (!catKey || !valor || !descricao) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
-    }
-    if (!subcat) {
-      toast.error("Selecione uma subcategoria");
-      return;
-    }
-    // Remove pontos de milhar, troca vírgula decimal por ponto
+    if (!catKey || !valor || !descricao) { toast.error("Preencha todos os campos obrigatórios"); return; }
+    if (!subcat) { toast.error("Selecione uma subcategoria"); return; }
     const valorLimpo = String(valor).replace(/\./g, "").replace(",", ".");
     const valorNum = parseFloat(valorLimpo);
-    if (isNaN(valorNum) || valorNum <= 0) {
-      toast.error("Informe um valor maior que zero");
-      return;
-    }
-
+    if (isNaN(valorNum) || valorNum <= 0) { toast.error("Informe um valor maior que zero"); return; }
     setSaving(true);
     try {
       if (frequencia && frequencia !== "unico") {
-        // ── RECORRENTE: chama backend ─────────────────────────────
-        if (!recorrencia.data_inicio) {
-          toast.error("Informe a data de início da recorrência");
-          setSaving(false);
-          return;
-        }
+        if (!recorrencia.data_inicio) { toast.error("Informe a data de início da recorrência"); setSaving(false); return; }
         const resp = await base44.functions.invoke("criarLancamentoRecorrente", {
-          workshop_id: workshopId,
-          mes_inicio: mes,
-          tipo: tipoInferido || tipo,  // ✅ USA DETECÇÃO AUTOMÁTICA
-          categoria: catKey,
-          subcategoria: subcat,
-          descricao,
-          valor: valorNum,
+          workshop_id: workshopId, mes_inicio: mes, tipo: tipoInferido || tipo,
+          categoria: catKey, subcategoria: subcat, descricao, valor: valorNum,
           entra_tcmp2: catSelecionada?.entra_tcmp2 ?? true,
           ...(dataVencimento && { data_vencimento: dataVencimento }),
           ...(dataCompetencia && { data_competencia: dataCompetencia }),
           ...(dataDocumento && { data_documento: dataDocumento }),
           ...(tipoDocumento && { tipo_documento: tipoDocumento }),
           ...(numeroDocumento.trim() && { numero_documento: numeroDocumento.trim() }),
-          frequencia,
-          data_inicio: recorrencia.data_inicio,
+          frequencia, data_inicio: recorrencia.data_inicio,
           ...(recorrencia.data_fim ? { data_fim: recorrencia.data_fim } : { numero_parcelas: recorrencia.numero_parcelas }),
         });
-        const total = resp.data?.total_criado ?? 0;
-        toast.success(`${total} lançamentos recorrentes criados!`);
+        toast.success(`${resp.data?.total_criado ?? 0} lançamentos recorrentes criados!`);
       } else {
-        // ── ÚNICO: cria direto ────────────────────────────────────
         const novoLancamento = await base44.entities.DRELancamento.create({
-          workshop_id: workshopId,
-          mes,
-          tipo: tipoInferido || tipo,  // ✅ USA DETECÇÃO AUTOMÁTICA
-          categoria: catKey,
-          subcategoria: subcat,
-          descricao,
-          valor: valorNum,
-          entra_tcmp2: catSelecionada?.entra_tcmp2 ?? true,
-          frequencia: "unico",
+          workshop_id: workshopId, mes, tipo: tipoInferido || tipo,
+          categoria: catKey, subcategoria: subcat, descricao, valor: valorNum,
+          entra_tcmp2: catSelecionada?.entra_tcmp2 ?? true, frequencia: "unico",
           ...(dataVencimento && { data_vencimento: dataVencimento }),
           ...(dataPagamento && { data_pagamento: dataPagamento }),
-          // ── documento (opcional) ──
           ...(dataCompetencia && { data_competencia: dataCompetencia }),
           ...(dataDocumento && { data_documento: dataDocumento }),
           ...(tipoDocumento && { tipo_documento: tipoDocumento }),
           ...(numeroDocumento.trim() && { numero_documento: numeroDocumento.trim() }),
-          // ── vínculos cliente / fornecedor ──
           ...((tipoInferido || tipo) === "receita" && clienteId ? { cliente_id: clienteId, cliente_nome: clienteNome } : {}),
           ...((tipoInferido || tipo) === "despesa" && fornecedorId ? { fornecedor_id: fornecedorId, fornecedor_nome: fornecedorNome } : {}),
-          // ── anexo (S3) ──
           ...(anexoUrl ? { anexo_url: anexoUrl, anexo_nome: anexoNome } : {}),
         });
-        window.dispatchEvent(new CustomEvent('dre-lancamento-criado', {
-          detail: { workshop_id: workshopId, mes, lancamento: novoLancamento }
-        }));
+        window.dispatchEvent(new CustomEvent('dre-lancamento-criado', { detail: { workshop_id: workshopId, mes, lancamento: novoLancamento } }));
         toast.success("Lançamento adicionado!");
       }
       onSuccess();
     } catch (e) {
       toast.error("Erro ao salvar: " + (e.message || "tente novamente"));
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
-  // Paleta dinâmica por tipo
   const cor = tipo === "receita"
     ? { bg: "bg-green-50", border: "border-green-200", title: "text-green-700", ring: "focus:ring-green-300", btn: "bg-green-600 hover:bg-green-700" }
     : { bg: "bg-red-50", border: "border-red-200", title: "text-red-700", ring: "focus:ring-red-300", btn: "bg-red-600 hover:bg-red-700" };
@@ -341,80 +193,49 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
     <>
       <ModalCadastroCliente workshopId={workshopId} open={modalClienteOpen} onClose={() => setModalClienteOpen(false)} onCriado={handleClienteCriado} />
       <ModalCadastroFornecedor workshopId={workshopId} open={modalFornecedorOpen} onClose={() => setModalFornecedorOpen(false)} onCriado={handleFornecedorCriado} />
-
       <div className={`${cor.bg} border-2 border-dashed ${cor.border} rounded-xl p-4 space-y-3`}>
         <div className="flex items-center justify-between gap-2">
-          <p className={`text-sm font-semibold ${cor.title}`}>
-            {tipo === "receita" ? "💰 Novo Lançamento de Receita" : "📋 Novo Lançamento de Despesa"}
-          </p>
+          <p className={`text-sm font-semibold ${cor.title}`}>{tipo === "receita" ? "💰 Novo Lançamento de Receita" : "📋 Novo Lançamento de Despesa"}</p>
           {catKey && tipoInferido && (
             <Badge className={tipoInferido === "receita" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
               {tipoInferido === "receita" ? "💰 Receita" : "📉 Despesa"} Detectado
             </Badge>
           )}
         </div>
-
-        {/* ── CLIENTE (receita) ── */}
         {tipo === "receita" && (
           <div>
             <label className="text-xs text-gray-500 mb-1 block font-medium">Cliente</label>
             <div className="flex items-center gap-2">
               <div className="flex-1">
-                <Combobox
-                  options={clientes}
-                  value={clienteId}
-                  onChange={handleClienteChange}
-                  getOptionLabel={(c) => c.nome}
-                  getOptionValue={(c) => c.id}
-                  placeholder="Selecione o cliente..."
-                  emptyText="Nenhum cliente. Cadastre um novo →"
-                  clearValue=""
-                />
+                <Combobox options={clientes} value={clienteId} onChange={handleClienteChange}
+                  getOptionLabel={(c) => c.nome} getOptionValue={(c) => c.id}
+                  placeholder="Selecione o cliente..." emptyText="Nenhum cliente. Cadastre um novo →" clearValue="" />
               </div>
-              <button
-                type="button"
-                onClick={() => setModalClienteOpen(true)}
-                className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-lg border-2 border-dashed border-green-300 text-green-600 hover:bg-green-100 hover:border-green-500 transition-colors"
-                title="Cadastrar novo cliente"
-              >
+              <button type="button" onClick={() => setModalClienteOpen(true)}
+                className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-lg border-2 border-dashed border-green-300 text-green-600 hover:bg-green-100 hover:border-green-500 transition-colors" title="Cadastrar novo cliente">
                 <UserPlus className="w-4 h-4" />
               </button>
             </div>
             {clienteNome && <p className="text-xs text-green-600 mt-1 pl-1">✓ {clienteNome}</p>}
           </div>
         )}
-
-        {/* ── FORNECEDOR (despesa) ── */}
         {tipo === "despesa" && (
           <div>
             <label className="text-xs text-gray-500 mb-1 block font-medium">Fornecedor</label>
             <div className="flex items-center gap-2">
               <div className="flex-1">
-                <Combobox
-                  options={fornecedores}
-                  value={fornecedorId}
-                  onChange={handleFornecedorChange}
-                  getOptionLabel={(f) => f.nome}
-                  getOptionValue={(f) => f.id}
-                  placeholder="Selecione o fornecedor..."
-                  emptyText="Nenhum fornecedor. Cadastre um novo →"
-                  clearValue=""
-                />
+                <Combobox options={fornecedores} value={fornecedorId} onChange={handleFornecedorChange}
+                  getOptionLabel={(f) => f.nome} getOptionValue={(f) => f.id}
+                  placeholder="Selecione o fornecedor..." emptyText="Nenhum fornecedor. Cadastre um novo →" clearValue="" />
               </div>
-              <button
-                type="button"
-                onClick={() => setModalFornecedorOpen(true)}
-                className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-lg border-2 border-dashed border-red-300 text-red-600 hover:bg-red-100 hover:border-red-500 transition-colors"
-                title="Cadastrar novo fornecedor"
-              >
+              <button type="button" onClick={() => setModalFornecedorOpen(true)}
+                className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-lg border-2 border-dashed border-red-300 text-red-600 hover:bg-red-100 hover:border-red-500 transition-colors" title="Cadastrar novo fornecedor">
                 <Building2 className="w-4 h-4" />
               </button>
             </div>
             {fornecedorNome && <p className="text-xs text-red-600 mt-1 pl-1">✓ {fornecedorNome}</p>}
           </div>
         )}
-
-        {/* ── CATEGORIA + SUBCATEGORIA ── */}
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-xs text-gray-500 mb-1 block">Categoria *</label>
@@ -428,17 +249,13 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
             <SubcategoriaSelector categoria={catKey} workshopId={workshopId} value={subcat} onChange={setSubcat} disabled={!catKey} placeholder="Selecione ou crie..." />
           </div>
         </div>
-
         {catKey && tipo === "despesa" && (
           <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-lg ${catSelecionada?.entra_tcmp2 ? "bg-blue-100 text-blue-700" : "bg-red-50 text-red-700"}`}>
             {catSelecionada?.entra_tcmp2
               ? <><CheckCircle className="w-3 h-3 flex-shrink-0" /> Este custo <strong className="ml-1">ENTRA</strong> no cálculo do TCMP²</>
-              : <><AlertCircle className="w-3 h-3 flex-shrink-0" /> Este custo <strong className="ml-1">NÃO ENTRA</strong> no cálculo do TCMP²</>
-            }
+              : <><AlertCircle className="w-3 h-3 flex-shrink-0" /> Este custo <strong className="ml-1">NÃO ENTRA</strong> no cálculo do TCMP²</>}
           </div>
         )}
-
-        {/* ── DESCRIÇÃO + VALOR ── */}
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-xs text-gray-500 mb-1 block">Descrição *</label>
@@ -449,18 +266,10 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
             <input className={`${inputCls} text-right font-mono`} placeholder="0,00" value={valor} onChange={e => setValor(e.target.value)} />
           </div>
         </div>
-
-        {/* ── DOCUMENTO (despesa: colapsável) / DATA DA VENDA (receita) ── */}
-        {/* QA P2-6: Data da Venda (receita) / Data da Compra (despesa) — sempre visível,
-            fora do accordion de Documento */}
         <div>
-          <label className="text-xs text-gray-500 mb-1 block">
-            {tipo === "receita" ? "🛒 Data da Venda" : "🛒 Data da Compra"} <span className="text-gray-400">(opcional)</span>
-          </label>
+          <label className="text-xs text-gray-500 mb-1 block">{tipo === "receita" ? "🛒 Data da Venda" : "🛒 Data da Compra"} <span className="text-gray-400">(opcional)</span></label>
           <input type="date" className={inputCls} value={dataCompetencia} onChange={e => setDataCompetencia(e.target.value)} />
         </div>
-
-        {/* Documento (NF/Pedido/Fatura) — apenas despesa, colapsável */}
         {tipo === "despesa" && (
           <div className="border border-gray-200 rounded-lg bg-white/70">
             <button type="button" onClick={() => setDocOpen(!docOpen)}
@@ -489,13 +298,8 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
             )}
           </div>
         )}
-
-        {/* ── ANEXO (S3-T3.2) ── */}
         <div className="border border-gray-200 rounded-lg bg-white/70 px-3 py-2">
-          <p className="text-xs font-medium text-gray-500 mb-1.5">
-            <Paperclip className="w-3 h-3 inline mr-1" />
-            Anexo <span className="font-normal text-gray-400">(NF, fatura, comprovante — opcional)</span>
-          </p>
+          <p className="text-xs font-medium text-gray-500 mb-1.5"><Paperclip className="w-3 h-3 inline mr-1" />Anexo <span className="font-normal text-gray-400">(NF, fatura, comprovante — opcional)</span></p>
           {!anexoNome ? (
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={handleAnexoChange} disabled={uploadingAnexo} />
@@ -506,19 +310,13 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
             </label>
           ) : (
             <div className="flex items-center justify-between gap-2 text-xs bg-blue-50 border border-blue-200 rounded-lg px-2 py-1.5">
-              <a href={anexoUrl} target="_blank" rel="noreferrer"
-                className="flex items-center gap-1.5 text-blue-700 hover:underline truncate">
-                <Paperclip className="w-3 h-3 flex-shrink-0" />
-                <span className="truncate">{anexoNome}</span>
+              <a href={anexoUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-blue-700 hover:underline truncate">
+                <Paperclip className="w-3 h-3 flex-shrink-0" /><span className="truncate">{anexoNome}</span>
               </a>
-              <button type="button" onClick={handleRemoverAnexo} className="flex-shrink-0 text-gray-400 hover:text-red-500">
-                <XIcon className="w-3 h-3" />
-              </button>
+              <button type="button" onClick={handleRemoverAnexo} className="flex-shrink-0 text-gray-400 hover:text-red-500"><XIcon className="w-3 h-3" /></button>
             </div>
           )}
         </div>
-
-        {/* ── VENCIMENTO + PAGAMENTO ── */}
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-xs text-gray-500 mb-1 block">📅 Vencimento <span className="text-gray-400">(opcional)</span></label>
@@ -530,21 +328,17 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
               disabled={frequencia !== "unico"} title={frequencia !== "unico" ? "Data de pagamento só disponível para lançamentos únicos" : ""} />
           </div>
         </div>
-
-        {/* ── RECORRÊNCIA ── */}
         <div>
           <label className="text-xs text-gray-500 mb-1 block">🔁 Recorrência</label>
           <select className={inputCls} value={frequencia} onChange={e => setFrequencia(e.target.value)}>
             {FREQUENCIAS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
           </select>
         </div>
-
         {frequencia !== "unico" && (
           <ConfiguracaoRecorrencia frequencia={frequencia} dataInicio={recorrencia.data_inicio}
             dataFim={recorrencia.data_fim} numeroParcelas={recorrencia.numero_parcelas}
             onChange={(partial) => setRecorrencia(prev => ({ ...prev, ...partial }))} />
         )}
-
         <div className="flex gap-2">
           <Button size="sm" onClick={handleSave} disabled={saving} className={`${cor.btn} text-white flex-1`}>
             {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Plus className="w-4 h-4 mr-1" />}
@@ -557,25 +351,69 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
   );
 }
 
-// ─── LINHA DE LANÇAMENTO (com edição inline ao clicar) ───────────────────────
+// ─── LINHA DE LANÇAMENTO — Sprint A ───────────────────────────────────────────
+// 3 estados separados:
+//   expanded      — accordion de detalhe (clique na linha)
+//   editing       — Dialog de edição (botão Editar)
+//   confirmDelete — confirmação inline de exclusão
 function LancamentoRow({ item, onDelete, onSaved }) {
-  const [editing, setEditing] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [expanded,      setExpanded]      = useState(false);
+  const [editing,       setEditing]       = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting,      setDeleting]      = useState(false);
+  const [saving,        setSaving]        = useState(false);
+  const [markingPago,   setMarkingPago]   = useState(false);
 
-  // campos editáveis
   const categorias = item.tipo === "receita" ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
-  const cat = categorias[item.categoria];
+  const cat        = categorias[item.categoria];
 
-  const [catKey, setCatKey]       = useState(item.categoria);
-  const [subcat, setSubcat]       = useState(item.subcategoria || "");
-  const [descricao, setDescricao] = useState(item.descricao || "");
-  const [valor, setValor]         = useState(String(item.valor));
+  const [catKey,         setCatKey]         = useState(item.categoria);
+  const [subcat,         setSubcat]         = useState(item.subcategoria || "");
+  const [descricao,      setDescricao]      = useState(item.descricao || "");
+  const [valor,          setValor]          = useState(String(item.valor));
   const [dataVencimento, setDataVencimento] = useState(item.data_vencimento || "");
-  const [dataPagamento, setDataPagamento]   = useState(item.data_pagamento || "");
-  const [frequencia, setFrequencia]         = useState(item.frequencia || "unico");
+  const [dataPagamento,  setDataPagamento]  = useState(item.data_pagamento  || "");
+  const [frequencia,     setFrequencia]     = useState(item.frequencia || "unico");
 
   const catSelecionada = categorias[catKey];
+
+  const abrirEdicao = (e) => {
+    e.stopPropagation();
+    setCatKey(item.categoria);
+    setSubcat(item.subcategoria || "");
+    setDescricao(item.descricao || "");
+    setValor(String(item.valor));
+    setDataVencimento(item.data_vencimento || "");
+    setDataPagamento(item.data_pagamento   || "");
+    setFrequencia(item.frequencia || "unico");
+    setEditing(true);
+  };
+
+  const handleMarcarPago = async (e) => {
+    e.stopPropagation();
+    if (item.data_pagamento) return;
+    const hoje = new Date().toISOString().split("T")[0];
+    setMarkingPago(true);
+    try {
+      await base44.entities.DRELancamento.update(item.id, { data_pagamento: hoje });
+      window.dispatchEvent(new CustomEvent("dre-lancamento-criado", { detail: { workshop_id: item.workshop_id, mes: item.mes } }));
+      toast.success("✅ Marcado como pago!");
+      onSaved();
+    } catch { toast.error("Erro ao marcar como pago"); }
+    finally { setMarkingPago(false); }
+  };
+
+  const handleDesfazerPago = async (e) => {
+    e.stopPropagation();
+    setSaving(true);
+    try {
+      await base44.entities.DRELancamento.update(item.id, { data_pagamento: null });
+      window.dispatchEvent(new CustomEvent("dre-lancamento-criado", { detail: { workshop_id: item.workshop_id, mes: item.mes } }));
+      toast.success("Pagamento revertido");
+      onSaved();
+    } catch { toast.error("Erro ao reverter"); }
+    finally { setSaving(false); }
+  };
 
   const handleDelete = async (e) => {
     e.stopPropagation();
@@ -583,258 +421,288 @@ function LancamentoRow({ item, onDelete, onSaved }) {
     try {
       await base44.entities.DRELancamento.delete(item.id);
       onDelete();
-    } catch {
-      toast.error("Erro ao excluir");
-      setDeleting(false);
-    }
+    } catch { toast.error("Erro ao excluir"); setDeleting(false); }
   };
 
   const handleSave = async () => {
     const valorNum = parseFloat(String(valor).replace(/\./g, "").replace(",", "."));
-    if (!catKey || !descricao || isNaN(valorNum) || valorNum <= 0) {
-      toast.error("Preencha todos os campos corretamente");
-      return;
-    }
+    if (!catKey || !descricao || isNaN(valorNum) || valorNum <= 0) { toast.error("Preencha todos os campos corretamente"); return; }
     setSaving(true);
     try {
       await base44.entities.DRELancamento.update(item.id, {
-        categoria: catKey,
-        subcategoria: subcat,
-        descricao,
-        valor: valorNum,
+        categoria: catKey, subcategoria: subcat, descricao, valor: valorNum,
         entra_tcmp2: catSelecionada?.entra_tcmp2 ?? item.entra_tcmp2,
         data_vencimento: dataVencimento || null,
-        data_pagamento: dataPagamento || null,
+        data_pagamento:  dataPagamento  || null,
         frequencia: frequencia || "unico",
       });
-      // Propagar edição para DFC e Controle Orçamentário via custom event
-      window.dispatchEvent(new CustomEvent('dre-lancamento-criado', {
-        detail: { workshop_id: item.workshop_id, mes: item.mes }
-      }));
+      window.dispatchEvent(new CustomEvent("dre-lancamento-criado", { detail: { workshop_id: item.workshop_id, mes: item.mes } }));
       toast.success("Lançamento atualizado!");
       setEditing(false);
       onSaved();
-    } catch {
-      toast.error("Erro ao salvar");
-    } finally {
-      setSaving(false);
-    }
+    } catch { toast.error("Erro ao salvar"); }
+    finally { setSaving(false); }
   };
 
-  const handleCancel = () => {
-    setCatKey(item.categoria);
-    setSubcat(item.subcategoria || "");
-    setDescricao(item.descricao || "");
-    setValor(String(item.valor));
-    setDataVencimento(item.data_vencimento || "");
-    setDataPagamento(item.data_pagamento || "");
-    setFrequencia(item.frequencia || "unico");
-    setEditing(false);
-  };
+  const fmtData     = (d) => { if (!d) return ""; const [,m,dia] = d.split("-"); return `${dia}/${m}`; };
+  const fmtDataLonga = (d) => { if (!d) return ""; const [ano,m,dia] = d.split("-"); return `${dia}/${m}/${ano}`; };
 
-  // ── MODO EDIÇÃO ──────────────────────────────────────────────────────────────
-  if (editing) {
-    return (
-      <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 space-y-3">
-        <p className="text-xs font-semibold text-amber-700">✏️ Editando lançamento</p>
+  const isPago    = !!item.data_pagamento;
+  const hasVenc   = !!item.data_vencimento;
+  const hoje      = new Date().toISOString().split("T")[0];
+  const isVencido = hasVenc && !isPago && item.data_vencimento < hoje;
 
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Categoria</label>
-            <select
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300"
-              value={catKey}
-              onChange={e => { setCatKey(e.target.value); setSubcat(""); }}
-            >
-              {Object.entries(categorias).map(([k, v]) => (
-                <option key={k} value={k}>{v.label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Subcategoria</label>
-            <SubcategoriaSelector
-              categoria={catKey}
-              workshopId={item.workshop_id}
-              value={subcat}
-              onChange={setSubcat}
-              placeholder="Selecione ou crie..."
-            />
-          </div>
-        </div>
-
-        {catKey && item.tipo === "despesa" && (
-          <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-lg ${catSelecionada?.entra_tcmp2 ? "bg-blue-100 text-blue-700" : "bg-red-50 text-red-700"}`}>
-            {catSelecionada?.entra_tcmp2
-              ? <><CheckCircle className="w-3 h-3 flex-shrink-0" /> <strong>ENTRA</strong> no cálculo do TCMP²</>
-              : <><AlertCircle className="w-3 h-3 flex-shrink-0" /> <strong>NÃO ENTRA</strong> no cálculo do TCMP²</>
-            }
-          </div>
-        )}
-
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Descrição</label>
-            <input
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300"
-              value={descricao}
-              onChange={e => setDescricao(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">Valor (R$)</label>
-            <input
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300 text-right font-mono"
-              value={valor}
-              onChange={e => setValor(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">📅 Vencimento</label>
-            <input
-              type="date"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300"
-              value={dataVencimento}
-              onChange={e => setDataVencimento(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">✅ Pago em</label>
-            <input
-              type="date"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-300"
-              value={dataPagamento}
-              onChange={e => setDataPagamento(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Recorrência (somente leitura na edição — mostra o tipo atual) */}
-        <div>
-          <label className="text-xs text-gray-500 mb-1 block">🔁 Recorrência</label>
-          <select
-            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300"
-            value={frequencia}
-            onChange={e => setFrequencia(e.target.value)}
-          >
-            {FREQUENCIAS.map(f => (
-              <option key={f.value} value={f.value}>{f.label}</option>
-            ))}
-          </select>
-          {item.recorrencia_id && (
-            <p className="text-xs text-amber-600 mt-1">
-              ⚠️ Este lançamento faz parte de uma recorrência. Alterar a frequência afeta só este item.
-            </p>
-          )}
-        </div>
-
-        <div className="flex gap-2">
-          <Button size="sm" onClick={handleSave} disabled={saving} className="bg-amber-500 hover:bg-amber-600 text-white flex-1">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
-            Salvar alterações
-          </Button>
-          <Button size="sm" variant="outline" onClick={handleCancel}>Cancelar</Button>
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            className="ml-auto text-xs text-red-500 hover:text-red-700 flex items-center gap-1 px-2"
-          >
-            {deleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
-            Excluir
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ── MODO LEITURA ─────────────────────────────────────────────────────────────
-  const fmtData = (d) => { if (!d) return ""; const [,m,dia] = d.split("-"); return `${dia}/${m}`; };
-  const isPago = !!item.data_pagamento;
-  const hasVenc = !!item.data_vencimento;
+  const barColor   = item.tipo === "receita" ? "bg-green-400" : item.entra_tcmp2 ? "bg-blue-400" : "bg-orange-400";
+  const cardBorder = isVencido ? "border-red-200 bg-red-50/30"
+    : expanded ? "border-blue-200 bg-blue-50/20"
+    : "border-gray-200 bg-white";
 
   return (
-    <div
-      onClick={() => setEditing(true)}
-      className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg hover:border-amber-300 hover:bg-amber-50/30 transition-colors group cursor-pointer"
-      title="Clique para editar"
-    >
-      <div className={`w-1.5 h-8 rounded-full flex-shrink-0 ${item.tipo === "receita" ? "bg-green-400" : item.entra_tcmp2 ? "bg-blue-400" : "bg-red-400"}`} />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 truncate">{item.descricao}</p>
-        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-          <span className="text-xs text-gray-400">{cat?.label ?? item.categoria}</span>
-          {item.subcategoria && <span className="text-xs text-gray-400">· {item.subcategoria}</span>}
-          {item.tipo === "receita" && item.cliente_nome && (
-            <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-1.5 py-0.5 rounded-full font-medium">
-              👤 {item.cliente_nome}
+    <>
+      <div className={`relative border rounded-xl overflow-hidden shadow-sm transition-all duration-150 ${cardBorder}`}>
+        <div className={`absolute left-0 top-0 bottom-0 w-1 ${barColor}`} />
+
+        {/* Linha principal — clique expande/recolhe */}
+        <div className="flex items-center gap-3 pl-4 pr-3 py-3 cursor-pointer group select-none"
+             onClick={() => setExpanded(v => !v)}>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900 truncate">{item.descricao}</p>
+            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+              <span className="text-[11px] text-gray-400">{cat?.label ?? item.categoria}</span>
+              {item.subcategoria && <span className="text-[11px] text-gray-400">· {item.subcategoria}</span>}
+              {item.tipo === "receita" && item.cliente_nome && (
+                <span className="inline-flex items-center gap-1 text-[11px] bg-green-50 text-green-700 border border-green-200 px-1.5 py-0.5 rounded-full">👤 {item.cliente_nome}</span>
+              )}
+              {item.tipo === "despesa" && item.fornecedor_nome && (
+                <span className="inline-flex items-center gap-1 text-[11px] bg-gray-100 text-gray-600 border border-gray-200 px-1.5 py-0.5 rounded-full">🏪 {item.fornecedor_nome}</span>
+              )}
+              {item.data_competencia && (
+                <span className="text-[11px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full">
+                  {item.tipo === "receita" ? "venda" : "compra"} {fmtData(item.data_competencia)}
+                </span>
+              )}
+              {(item.tipo_documento || item.numero_documento) && (
+                <span className="text-[11px] bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded-full">
+                  📄 {TIPOS_DOCUMENTO.find(t => t.value === item.tipo_documento)?.label ?? "Doc"}{item.numero_documento ? ` ${item.numero_documento}` : ""}
+                </span>
+              )}
+              {item.tipo === "despesa" && (
+                item.entra_tcmp2
+                  ? <span className="text-[11px] text-blue-600">✅ TCMP²</span>
+                  : <span className="text-[11px] text-orange-500">🚫 Fora TCMP²</span>
+              )}
+              {item.frequencia && item.frequencia !== "unico" && (
+                <span className="text-[11px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full">
+                  🔁 {FREQUENCIAS.find(f => f.value === item.frequencia)?.label ?? item.frequencia}
+                  {item.parcela_atual && item.numero_parcelas ? ` (${item.parcela_atual}/${item.numero_parcelas})` : ""}
+                </span>
+              )}
+              {isPago ? (
+                <span className="inline-flex items-center gap-1 text-[11px] bg-green-100 text-green-700 border border-green-200 px-1.5 py-0.5 rounded-full font-medium">✅ pago {fmtData(item.data_pagamento)}</span>
+              ) : isVencido ? (
+                <span className="inline-flex items-center gap-1 text-[11px] bg-red-100 text-red-700 border border-red-200 px-1.5 py-0.5 rounded-full font-medium">⚠️ venceu {fmtData(item.data_vencimento)}</span>
+              ) : hasVenc ? (
+                <span className="inline-flex items-center gap-1 text-[11px] bg-amber-100 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded-full font-medium">🕐 vence {fmtData(item.data_vencimento)}</span>
+              ) : null}
+              {item.anexo_url && (
+                <a href={item.anexo_url} target="_blank" rel="noreferrer"
+                   onClick={e => e.stopPropagation()} title={item.anexo_nome || "Ver anexo"}
+                   className="text-blue-400 hover:text-blue-600"><Paperclip className="w-3 h-3" /></a>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className={`text-sm font-bold ${item.tipo === "receita" ? "text-green-600" : "text-red-600"}`}>
+              {item.tipo === "receita" ? "+" : "-"} {formatCurrency(item.valor)}
             </span>
-          )}
-          {item.tipo === "despesa" && item.fornecedor_nome && (
-            <span className="text-xs bg-gray-100 text-gray-600 border border-gray-200 px-1.5 py-0.5 rounded-full font-medium">
-              🏪 {item.fornecedor_nome}
-            </span>
-          )}
-          {item.data_competencia && (
-            <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full font-medium">
-              🛒 {item.tipo === "receita" ? "venda" : "compra"} {fmtData(item.data_competencia)}
-            </span>
-          )}
-          {(item.tipo_documento || item.numero_documento) && (
-            <span className="text-xs bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded-full font-medium">
-              📄 {TIPOS_DOCUMENTO.find(t => t.value === item.tipo_documento)?.label ?? "Documento"}{item.numero_documento ? ` ${item.numero_documento}` : ""}
-            </span>
-          )}
-          {item.tipo === "despesa" && (
-            item.entra_tcmp2
-              ? <span className="text-xs text-blue-600">✅ TCMP²</span>
-              : <span className="text-xs text-red-500">🚫 Fora TCMP²</span>
-          )}
-          {item.frequencia && item.frequencia !== "unico" && (
-            <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full">
-              🔁 {FREQUENCIAS.find(f => f.value === item.frequencia)?.label ?? item.frequencia}
-              {item.parcela_atual && item.numero_parcelas ? ` (${item.parcela_atual}/${item.numero_parcelas})` : ""}
-            </span>
-          )}
-          {isPago ? (
-            <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 border border-green-200 px-1.5 py-0.5 rounded-full font-medium">
-              ✅ pago {fmtData(item.data_pagamento)}
-            </span>
-          ) : hasVenc ? (
-            <span className="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded-full font-medium">
-              🕐 vence {fmtData(item.data_vencimento)}
-            </span>
-          ) : null}
+            {!isPago && (
+              <button onClick={handleMarcarPago} disabled={markingPago} title="Marcar como pago hoje"
+                className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[11px] text-green-600 hover:text-green-800 hover:bg-green-50 border border-green-200 rounded-lg px-2 py-1">
+                {markingPago ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckSquare className="w-3 h-3" />}
+                Pago
+              </button>
+            )}
+            <button onClick={abrirEdicao} title="Editar"
+              className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg p-1.5">
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+            <div className="text-gray-300 group-hover:text-gray-500 transition-colors">
+              {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </div>
+          </div>
         </div>
+
+        {/* Accordion de detalhe */}
+        {expanded && (
+          <div className="border-t border-gray-100 bg-gray-50/60 px-4 py-3 space-y-3">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
+              {item.data_vencimento && (
+                <div className="flex items-center gap-1.5 text-gray-600">
+                  <Calendar className="w-3 h-3 text-gray-400" />
+                  <span className="text-gray-400">Vencimento</span>
+                  <span className="font-medium">{fmtDataLonga(item.data_vencimento)}</span>
+                </div>
+              )}
+              {item.data_pagamento && (
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle className="w-3 h-3 text-green-500" />
+                  <span className="text-gray-400">Pago em</span>
+                  <span className="font-medium text-green-700">{fmtDataLonga(item.data_pagamento)}</span>
+                </div>
+              )}
+              {item.data_competencia && (
+                <div className="flex items-center gap-1.5 text-gray-600">
+                  <DollarSign className="w-3 h-3 text-gray-400" />
+                  <span className="text-gray-400">{item.tipo === "receita" ? "Venda" : "Compra"}</span>
+                  <span className="font-medium">{fmtDataLonga(item.data_competencia)}</span>
+                </div>
+              )}
+              {item.numero_documento && (
+                <div className="flex items-center gap-1.5 text-gray-600">
+                  <FileText className="w-3 h-3 text-gray-400" />
+                  <span className="text-gray-400">{TIPOS_DOCUMENTO.find(t => t.value === item.tipo_documento)?.label ?? "Doc"}</span>
+                  <span className="font-medium">{item.numero_documento}</span>
+                </div>
+              )}
+              {item.recorrencia_id && (
+                <div className="flex items-center gap-1.5 text-gray-600 col-span-2">
+                  <RotateCcw className="w-3 h-3 text-purple-400" />
+                  <span className="text-gray-400">Série</span>
+                  <span className="font-medium text-purple-700">
+                    {FREQUENCIAS.find(f => f.value === item.frequencia)?.label}
+                    {item.parcela_atual && item.numero_parcelas ? ` — parcela ${item.parcela_atual} de ${item.numero_parcelas}` : ""}
+                  </span>
+                </div>
+              )}
+              {item.anexo_url && (
+                <div className="flex items-center gap-1.5 col-span-2">
+                  <Paperclip className="w-3 h-3 text-blue-400" />
+                  <a href={item.anexo_url} target="_blank" rel="noreferrer"
+                     className="text-blue-600 hover:underline truncate text-xs">{item.anexo_nome || "Ver anexo"}</a>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 pt-0.5">
+              <Button size="sm" variant="outline" onClick={abrirEdicao}
+                className="border-blue-200 text-blue-700 hover:bg-blue-50 h-7 text-xs">
+                <Pencil className="w-3.5 h-3.5 mr-1" /> Editar
+              </Button>
+              {!isPago ? (
+                <Button size="sm" variant="outline" onClick={handleMarcarPago} disabled={markingPago}
+                  className="border-green-200 text-green-700 hover:bg-green-50 h-7 text-xs">
+                  {markingPago ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <CheckSquare className="w-3.5 h-3.5 mr-1" />}
+                  Marcar como pago
+                </Button>
+              ) : (
+                <Button size="sm" variant="outline" onClick={handleDesfazerPago} disabled={saving}
+                  className="border-amber-200 text-amber-700 hover:bg-amber-50 h-7 text-xs">
+                  <RotateCcw className="w-3.5 h-3.5 mr-1" /> Desfazer pagamento
+                </Button>
+              )}
+              <div className="ml-auto">
+                {!confirmDelete ? (
+                  <button onClick={e => { e.stopPropagation(); setConfirmDelete(true); }}
+                    className="text-[11px] text-gray-400 hover:text-red-500 flex items-center gap-1 px-2 py-1 rounded hover:bg-red-50 transition-colors">
+                    <Trash2 className="w-3 h-3" /> Excluir
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-2 py-1">
+                    <span className="text-[11px] text-red-700 font-medium">Confirmar exclusão?</span>
+                    <button onClick={handleDelete} disabled={deleting}
+                      className="text-[11px] font-bold text-red-600 hover:text-red-800">
+                      {deleting ? <Loader2 className="w-3 h-3 animate-spin" /> : "Sim"}
+                    </button>
+                    <button onClick={e => { e.stopPropagation(); setConfirmDelete(false); }}
+                      className="text-[11px] text-gray-500 hover:text-gray-700">Não</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-      {/* S3-T3.3: ícone de clipe quando há anexo */}
-      {item.anexo_url && (
-        <a
-          href={item.anexo_url}
-          target="_blank"
-          rel="noreferrer"
-          title={item.anexo_nome || 'Ver anexo'}
-          onClick={e => e.stopPropagation()}
-          className="flex-shrink-0 text-blue-400 hover:text-blue-600 transition-colors"
-        >
-          <Paperclip className="w-3.5 h-3.5" />
-        </a>
-      )}
-      <span className={`font-bold text-sm flex-shrink-0 ${item.tipo === "receita" ? "text-green-600" : "text-red-600"}`}>
-        {item.tipo === "receita" ? "+" : "-"} {formatCurrency(item.valor)}
-      </span>
-      {/* hint de edição visível no hover */}
-      <span className="opacity-0 group-hover:opacity-60 text-xs text-gray-400 flex-shrink-0 transition-opacity">✏️</span>
-      <button
-        onClick={handleDelete}
-        disabled={deleting}
-        className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all flex-shrink-0"
-      >
-        {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-      </button>
-    </div>
+
+      {/* Dialog de edição */}
+      <Dialog open={editing} onOpenChange={open => { if (!open) setEditing(false); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Pencil className="w-4 h-4 text-blue-500" />
+              Editar Lançamento
+              <Badge className={`ml-auto ${item.tipo === "receita" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                {item.tipo === "receita" ? "💰 Receita" : "📉 Despesa"}
+              </Badge>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-1">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Categoria</label>
+                <select className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  value={catKey} onChange={e => { setCatKey(e.target.value); setSubcat(""); }}>
+                  {Object.entries(categorias).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Subcategoria</label>
+                <SubcategoriaSelector categoria={catKey} workshopId={item.workshop_id}
+                  value={subcat} onChange={setSubcat} placeholder="Selecione ou crie..." />
+              </div>
+            </div>
+            {catKey && item.tipo === "despesa" && (
+              <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-lg ${catSelecionada?.entra_tcmp2 ? "bg-blue-100 text-blue-700" : "bg-orange-50 text-orange-700"}`}>
+                {catSelecionada?.entra_tcmp2
+                  ? <><CheckCircle className="w-3 h-3" /> <strong>ENTRA</strong> no TCMP²</>
+                  : <><AlertCircle className="w-3 h-3" /> <strong>NÃO ENTRA</strong> no TCMP²</>}
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Descrição *</label>
+                <input className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  value={descricao} onChange={e => setDescricao(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Valor (R$) *</label>
+                <input className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 text-right font-mono"
+                  value={valor} onChange={e => setValor(e.target.value)} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Vencimento</label>
+                <input type="date" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  value={dataVencimento} onChange={e => setDataVencimento(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Pago em</label>
+                <input type="date" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-green-300"
+                  value={dataPagamento} onChange={e => setDataPagamento(e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">Recorrência</label>
+              <select className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+                value={frequencia} onChange={e => setFrequencia(e.target.value)}>
+                {FREQUENCIAS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+              </select>
+              {item.recorrencia_id && (
+                <p className="text-xs text-amber-600 mt-1">⚠️ Parte de uma recorrência — alteração afeta só este item.</p>
+              )}
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+              {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              Salvar alterações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -869,28 +737,21 @@ function PainelAnalise({ lancamentos, tecnicosCount, horasMes }) {
   const receitas = lancamentos.filter(l => l.tipo === "receita");
   const despesas = lancamentos.filter(l => l.tipo === "despesa");
 
-  const totalReceita = receitas.reduce((s, l) => s + l.valor, 0);
-  const totalTcmp2 = despesas.filter(l => l.entra_tcmp2).reduce((s, l) => s + l.valor, 0);
-  // Custos financeiros/investimento (não TCMP², exceto pecas_estoque que vai em linha própria)
+  const totalReceita  = receitas.reduce((s, l) => s + l.valor, 0);
+  const totalTcmp2    = despesas.filter(l => l.entra_tcmp2).reduce((s, l) => s + l.valor, 0);
   const totalNaoTcmp2 = despesas.filter(l => !l.entra_tcmp2 && l.categoria !== "pecas_estoque").reduce((s, l) => s + l.valor, 0);
-  // Peças para estoque são registradas separadamente (não duplicar em totalNaoTcmp2)
-  const custoPecas = despesas.filter(l => l.categoria === "pecas_estoque").reduce((s, l) => s + l.valor, 0);
-
-  const receitaPecas = receitas.filter(l => l.categoria === "pecas_aplicadas").reduce((s, l) => s + l.valor, 0);
+  const custoPecas    = despesas.filter(l => l.categoria === "pecas_estoque").reduce((s, l) => s + l.valor, 0);
+  const receitaPecas  = receitas.filter(l => l.categoria === "pecas_aplicadas").reduce((s, l) => s + l.valor, 0);
   const receitaServicos = receitas.filter(l => l.categoria === "servicos").reduce((s, l) => s + l.valor, 0);
-  const receitaOutras = receitas.filter(l => l.categoria === "outras").reduce((s, l) => s + l.valor, 0);
 
-  const lucro = totalReceita - totalTcmp2 - totalNaoTcmp2 - custoPecas;
+  const lucro      = totalReceita - totalTcmp2 - totalNaoTcmp2 - custoPecas;
   const margemLucro = totalReceita > 0 ? (lucro / totalReceita) * 100 : 0;
   const totalHoras = (tecnicosCount || 1) * (horasMes || 219);
-  const tcmp2 = totalHoras > 0 ? totalTcmp2 / totalHoras : 0;
-  // R70/I30 = (Receita de Serviços + Outras) / Receita Total
-  // I30 = Receita de Peças Aplicadas (produtos). R70 = tudo que não é peça.
-  const r70 = totalReceita > 0 ? ((totalReceita - receitaPecas) / totalReceita) * 100 : 0;
+  const tcmp2      = totalHoras > 0 ? totalTcmp2 / totalHoras : 0;
+  const r70        = totalReceita > 0 ? ((totalReceita - receitaPecas) / totalReceita) * 100 : 0;
 
   return (
     <div className="space-y-4">
-      {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-3 text-white">
           <p className="text-xs opacity-75">Receita Total</p>
@@ -913,11 +774,8 @@ function PainelAnalise({ lancamentos, tecnicosCount, horasMes }) {
         </div>
       </div>
 
-      {/* Waterfall - Demonstrativo de Resultado Expandido */}
       <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-2">
         <p className="text-sm font-semibold text-gray-700 mb-3">Demonstrativo de Resultado</p>
-        
-        {/* RECEITAS */}
         <div className="space-y-1">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Receitas</p>
           {receitas.filter(l => l.categoria === "pecas_aplicadas").length > 0 && (
@@ -939,37 +797,24 @@ function PainelAnalise({ lancamentos, tecnicosCount, horasMes }) {
             </div>
           )}
         </div>
-
-        {/* DESPESAS POR CATEGORIA */}
         <div className="space-y-1 mt-3">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Despesas por Categoria</p>
-          
-          {/* Agrupar despesas por categoria */}
           {(() => {
-            const categoriasDespesas = despesas.reduce((acc, d) => {
-              if (!acc[d.categoria]) {
-                acc[d.categoria] = { label: CATEGORIAS_DESPESA[d.categoria]?.label ?? d.categoria, valor: 0, entra_tcmp2: d.entra_tcmp2 };
-              }
+            const catsDespesas = despesas.reduce((acc, d) => {
+              if (!acc[d.categoria]) acc[d.categoria] = { label: CATEGORIAS_DESPESA[d.categoria]?.label ?? d.categoria, valor: 0, entra_tcmp2: d.entra_tcmp2 };
               acc[d.categoria].valor += d.valor;
               return acc;
             }, {});
-
-            const ordemCategorias = ["operacional", "pessoas", "marketing", "manutencao", "terceirizados", "administrativo", "tecnologia", "juridico", "financeiro", "pecas_estoque"];
-            
-            return ordemCategorias
-              .filter(cat => categoriasDespesas[cat] && categoriasDespesas[cat].valor > 0)
-              .map((cat, i) => (
-                <div key={cat} className={`flex items-center justify-between text-sm py-1 pl-2 border-l-2 ${categoriasDespesas[cat].entra_tcmp2 ? "border-blue-500" : "border-orange-500"}`}>
-                  <span className="text-gray-600">{categoriasDespesas[cat].label}</span>
-                  <span className={`font-semibold ${categoriasDespesas[cat].entra_tcmp2 ? "text-blue-700" : "text-orange-700"}`}>
-                    - {formatCurrency(categoriasDespesas[cat].valor)}
-                  </span>
+            return ["operacional","pessoas","marketing","manutencao","terceirizados","administrativo","tecnologia","juridico","financeiro","pecas_estoque"]
+              .filter(cat => catsDespesas[cat] && catsDespesas[cat].valor > 0)
+              .map(cat => (
+                <div key={cat} className={`flex items-center justify-between text-sm py-1 pl-2 border-l-2 ${catsDespesas[cat].entra_tcmp2 ? "border-blue-500" : "border-orange-500"}`}>
+                  <span className="text-gray-600">{catsDespesas[cat].label}</span>
+                  <span className={`font-semibold ${catsDespesas[cat].entra_tcmp2 ? "text-blue-700" : "text-orange-700"}`}>- {formatCurrency(catsDespesas[cat].valor)}</span>
                 </div>
               ));
           })()}
         </div>
-
-        {/* TOTALIZADORES */}
         <div className="space-y-1 mt-3 pt-3 border-t border-gray-200">
           <div className="flex items-center justify-between text-sm py-1">
             <span className="text-gray-600 font-medium">Total TCMP²</span>
@@ -984,17 +829,14 @@ function PainelAnalise({ lancamentos, tecnicosCount, horasMes }) {
             <span className="font-semibold text-purple-700">- {formatCurrency(custoPecas)}</span>
           </div>
         </div>
-
-        {/* LUCRO LÍQUIDO */}
         <div className="flex items-center justify-between pt-3 border-t-2 border-gray-300 mt-2">
-          <span className="font-bold text-gray-800">= Lucro Liquido</span>
+          <span className="font-bold text-gray-800">= Lucro Líquido</span>
           <span className={lucro >= 0 ? "font-bold text-lg text-emerald-700" : "font-bold text-lg text-red-700"}>
             {formatCurrency(lucro)} ({margemLucro.toFixed(1)}%)
           </span>
         </div>
       </div>
 
-      {/* Mix Receita */}
       {totalReceita > 0 && (
         <div className="bg-white border border-gray-200 rounded-xl p-4">
           <p className="text-xs font-semibold text-gray-500 mb-2">Mix de Receita</p>
@@ -1017,79 +859,62 @@ function PainelAnalise({ lancamentos, tecnicosCount, horasMes }) {
 // ─── COMPONENTE PRINCIPAL ─────────────────────────────────────────────────────
 export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMes, onConsolidar }) {
   const queryClient = useQueryClient();
-  const [showForm, setShowForm] = useState(null); // 'receita' | 'despesa' | null
+  const [showForm, setShowForm] = useState(null);
   const [showTransferencia, setShowTransferencia] = useState(false);
-  const [abaAtiva, setAbaAtiva] = useState("todos"); // todos | receitas | despesas | analise
-  const [periodo, setPeriodo] = useState("mensal"); // mensal | anual
-  
-  // Extrair mês do parâmetro (formato YYYY-MM)
+  const [abaAtiva, setAbaAtiva] = useState("todos");
+  const [periodo, setPeriodo] = useState("mensal");
+
   const mesAtual = mes ? mes.split('-')[1] : "01";
   const anoAtual = mes ? parseInt(mes.split('-')[0]) : new Date().getFullYear();
-
-  // ano do seletor anual — sincroniza com anoAtual sempre que o prop mes mudar
   const [ano, setAno] = useState(anoAtual);
-  useEffect(() => {
-    setAno(anoAtual);
-  }, [anoAtual]);
+  useEffect(() => { setAno(anoAtual); }, [anoAtual]);
 
-  // Query para dados anuais
   const { data: dadosAnuais, isLoading: isLoadingAnual } = useQuery({
     queryKey: ["dre-anual", workshopId, ano],
     queryFn: () => base44.functions.invoke('getDREDataAnual', { workshop_id: workshopId, ano: String(ano) }),
     enabled: periodo === "anual" && !!workshopId && !!ano
   });
 
-  // Fontes de dinheiro do mês — usadas para habilitar/desabilitar o botão de transferência
   const { data: fontesDinheiro } = useFontesDinheiro(workshopId, mes);
-  // Total de contas distintas: cada banco, cada máquina e caixa (se > 0) contam como 1
   const totalContas = (fontesDinheiro?.bancos?.length ?? 0)
     + (fontesDinheiro?.maquinas_cartao?.length ?? 0)
     + ((fontesDinheiro?.caixa ?? 0) > 0 ? 1 : 0);
   const podeTransferir = totalContas >= 2;
 
-  // Query para dados mensais (padrão)
   const { data: lancamentos = [], isLoading, refetch } = useQuery({
     queryKey: ["dre-lancamentos", workshopId, mes],
     queryFn: () => base44.entities.DRELancamento.filter({ workshop_id: workshopId, mes }, "-created_date", 200),
     enabled: periodo === "mensal" && !!workshopId && !!mes
   });
 
-  // Real-time: atualizar quando novo DRELancamento é criado/deletado
   useEffect(() => {
     if (!workshopId) return;
-
     const unsubscribe = base44.entities.DRELancamento.subscribe((event) => {
       if (event.data?.workshop_id !== workshopId) return;
       if (event.type !== 'create' && event.type !== 'delete' && event.type !== 'update') return;
-
       const eventoMes = event.data?.mes || "";
-      if (periodo === "mensal" && eventoMes === mes) {
-        refetch();
-      } else if (periodo === "anual" && eventoMes.startsWith(String(ano))) {
-        queryClient.invalidateQueries({ queryKey: ["dre-anual", workshopId, ano] });
-      }
+      if (periodo === "mensal" && eventoMes === mes) refetch();
+      else if (periodo === "anual" && eventoMes.startsWith(String(ano))) queryClient.invalidateQueries({ queryKey: ["dre-anual", workshopId, ano] });
     });
-
     return unsubscribe;
   }, [workshopId, mes, ano, periodo, refetch, queryClient]);
 
   const refresh = () => refetch();
 
-  // Totais para consolidação
   const totaisConsolidados = useMemo(() => {
     const receitas = lancamentos.filter(l => l.tipo === "receita");
     const despesas = lancamentos.filter(l => l.tipo === "despesa");
     return {
       revenue: {
         parts_applied: receitas.filter(l => l.categoria === "pecas_aplicadas").reduce((s, l) => s + l.valor, 0),
-        services: receitas.filter(l => l.categoria === "servicos").reduce((s, l) => s + l.valor, 0),
-        other: receitas.filter(l => l.categoria === "outras").reduce((s, l) => s + l.valor, 0),
+        services:      receitas.filter(l => l.categoria === "servicos").reduce((s, l) => s + l.valor, 0),
+        other:         receitas.filter(l => l.categoria === "outras").reduce((s, l) => s + l.valor, 0),
       },
       costs_tcmp2: {
         operational: despesas.filter(l => l.categoria === "operacional").reduce((s, l) => s + l.valor, 0),
-        people: despesas.filter(l => l.categoria === "pessoas" && l.subcategoria !== "Pró-labore sócios").reduce((s, l) => s + l.valor, 0),
-        prolabore: despesas.filter(l => l.subcategoria === "Pró-labore sócios").reduce((s, l) => s + l.valor, 0),
-        marketing: despesas.filter(l => l.categoria === "marketing").reduce((s, l) => s + l.valor, 0),
+        people:      despesas.filter(l => l.categoria === "pessoas" && l.subcategoria !== "Pró-labore sócios").reduce((s, l) => s + l.valor, 0),
+        prolabore:   despesas.filter(l => l.subcategoria === "Pró-labore sócios").reduce((s, l) => s + l.valor, 0),
+        marketing:   despesas.filter(l => l.categoria === "marketing").reduce((s, l) => s + l.valor, 0),
         maintenance: despesas.filter(l => l.categoria === "manutencao").reduce((s, l) => s + l.valor, 0),
         third_party: despesas.filter(l => l.categoria === "terceirizados").reduce((s, l) => s + l.valor, 0),
         administrative: despesas.filter(l => l.categoria === "administrativo").reduce((s, l) => s + l.valor, 0),
@@ -1098,27 +923,22 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
         financing: despesas.filter(l => l.categoria === "financeiro" && l.subcategoria === "Financiamento (veículo/imóvel)").reduce((s, l) => s + l.valor, 0),
         consortium: despesas.filter(l => l.subcategoria === "Consórcio").reduce((s, l) => s + l.valor, 0),
         equipment_installments: despesas.filter(l => l.subcategoria === "Parcelamento de equipamento").reduce((s, l) => s + l.valor, 0),
-        // parts_invoices NOT mapped here — lives in parts_cost to avoid double-counting
         parts_invoices: 0,
         legal_processes: despesas.filter(l => l.subcategoria === "Processos judiciais").reduce((s, l) => s + l.valor, 0),
         land_purchase: despesas.filter(l => l.subcategoria === "Compra de imóvel/terreno").reduce((s, l) => s + l.valor, 0),
-        investments: despesas.filter(l => l.categoria === "financeiro" && !["Financiamento (veículo/imóvel)", "Consórcio", "Parcelamento de equipamento", "Processos judiciais", "Compra de imóvel/terreno"].includes(l.subcategoria)).reduce((s, l) => s + l.valor, 0),
+        investments: despesas.filter(l => l.categoria === "financeiro" && !["Financiamento (veículo/imóvel)","Consórcio","Parcelamento de equipamento","Processos judiciais","Compra de imóvel/terreno"].includes(l.subcategoria)).reduce((s, l) => s + l.valor, 0),
       },
       parts_cost: {
-        parts_applied_cost: 0, // não lançado aqui — usuário preenche manualmente na aba Peças
+        parts_applied_cost: 0,
         parts_stock_purchase: despesas.filter(l => l.categoria === "pecas_estoque").reduce((s, l) => s + l.valor, 0),
       }
     };
   }, [lancamentos]);
 
-  // Agrupar por categoria
   const grupos = useMemo(() => {
-    const filtrados = abaAtiva === "receitas"
-      ? lancamentos.filter(l => l.tipo === "receita")
-      : abaAtiva === "despesas"
-        ? lancamentos.filter(l => l.tipo === "despesa")
-        : lancamentos;
-
+    const filtrados = abaAtiva === "receitas" ? lancamentos.filter(l => l.tipo === "receita")
+      : abaAtiva === "despesas" ? lancamentos.filter(l => l.tipo === "despesa")
+      : lancamentos;
     return filtrados.reduce((acc, item) => {
       const key = item.tipo + "_" + item.categoria;
       if (!acc[key]) {
@@ -1143,7 +963,6 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
 
   return (
     <div className="space-y-4">
-      {/* Banner explicativo */}
       <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl p-3">
         <BarChart3 className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
         <p className="text-xs text-blue-800">
@@ -1151,12 +970,9 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
         </p>
       </div>
 
-      {/* Filtro de Período */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <FiltroPeriodo
-          mes={mesAtual}
-          ano={anoAtual}
-          periodo={periodo}
+          mes={mesAtual} ano={anoAtual} periodo={periodo}
           onMesChange={(novoMes) => {
             const novaData = `${anoAtual}-${novoMes}`;
             window.dispatchEvent(new CustomEvent('dre-mudar-mes', { detail: { mes: novaData } }));
@@ -1164,98 +980,68 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
           onAnoChange={(novoAno) => {
             const novoAnoInt = parseInt(novoAno);
             setAno(novoAnoInt);
-            // No modo mensal: recompõe o mes completo com o novo ano e propaga ao pai
-            if (periodo === "mensal") {
-              const novaData = `${novoAnoInt}-${mesAtual}`;
-              window.dispatchEvent(new CustomEvent('dre-mudar-mes', { detail: { mes: novaData } }));
-            }
+            if (periodo === "mensal") window.dispatchEvent(new CustomEvent('dre-mudar-mes', { detail: { mes: `${novoAnoInt}-${mesAtual}` } }));
           }}
           onPeriodoChange={(novoPeriodo) => setPeriodo(novoPeriodo)}
         />
       </div>
 
-      {/* VISÃO ANUAL */}
       {periodo === "anual" ? (
         <div className="space-y-6">
           {isLoadingAnual ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-            </div>
+            <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>
           ) : (dadosAnuais?.data ?? dadosAnuais)?.total_anual ? (
             <>
-              {/* KPIs Anuais */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card className="bg-gradient-to-br from-green-500 to-emerald-600 text-white">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-xs opacity-75">Receita Total Anual</CardTitle>
-                  </CardHeader>
+                  <CardHeader className="pb-2"><CardTitle className="text-xs opacity-75">Receita Total Anual</CardTitle></CardHeader>
                   <CardContent>
                     <p className="text-2xl font-bold">{formatCurrency((dadosAnuais?.data ?? dadosAnuais).total_anual.receitas)}</p>
                     <p className="text-xs opacity-80 mt-1">Média mensal: {formatCurrency((dadosAnuais?.data ?? dadosAnuais).media_mensal.receitas)}</p>
                   </CardContent>
                 </Card>
-
                 <Card className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-xs opacity-75">Despesas Totais</CardTitle>
-                  </CardHeader>
+                  <CardHeader className="pb-2"><CardTitle className="text-xs opacity-75">Despesas Totais</CardTitle></CardHeader>
                   <CardContent>
                     <p className="text-2xl font-bold">{formatCurrency((dadosAnuais?.data ?? dadosAnuais).total_anual.despesas)}</p>
                     <p className="text-xs opacity-80 mt-1">Média mensal: {formatCurrency((dadosAnuais?.data ?? dadosAnuais).media_mensal.despesas)}</p>
                   </CardContent>
                 </Card>
-
                 <Card className={`bg-gradient-to-br ${(dadosAnuais?.data ?? dadosAnuais).total_anual.lucro >= 0 ? "from-emerald-500 to-teal-600" : "from-red-500 to-rose-600"} text-white`}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-xs opacity-75">Lucro Anual</CardTitle>
-                  </CardHeader>
+                  <CardHeader className="pb-2"><CardTitle className="text-xs opacity-75">Lucro Anual</CardTitle></CardHeader>
                   <CardContent>
                     <p className="text-2xl font-bold">{formatCurrency((dadosAnuais?.data ?? dadosAnuais).total_anual.lucro)}</p>
                     <p className="text-xs opacity-80 mt-1">Margem: {(dadosAnuais?.data ?? dadosAnuais).total_anual.margem.toFixed(1)}%</p>
                   </CardContent>
                 </Card>
-
                 <Card className="bg-gradient-to-br from-purple-500 to-pink-600 text-white">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-xs opacity-75">Total Lançamentos</CardTitle>
-                  </CardHeader>
+                  <CardHeader className="pb-2"><CardTitle className="text-xs opacity-75">Total Lançamentos</CardTitle></CardHeader>
                   <CardContent>
                     <p className="text-2xl font-bold">{(dadosAnuais?.data ?? dadosAnuais).total_lancamentos}</p>
                     <p className="text-xs opacity-80 mt-1">em {(dadosAnuais?.data ?? dadosAnuais).meses.filter(m => m.receitas > 0 || m.despesas > 0).length} meses</p>
                   </CardContent>
                 </Card>
               </div>
-
-              {/* Gráfico Mensal */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">📊 Evolução Mensal - {ano}</CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle className="text-sm">📊 Evolução Mensal - {ano}</CardTitle></CardHeader>
                 <CardContent>
                   <div className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={(dadosAnuais?.data ?? dadosAnuais).meses}>
                         <XAxis dataKey="mes_nome" tick={{ fontSize: 11 }} />
                         <YAxis tickFormatter={(v) => `R$ ${(v/1000).toFixed(0)}k`} tick={{ fontSize: 10 }} />
-                        <Tooltip 
-                          formatter={(value) => formatCurrency(value)}
-                          contentStyle={{ fontSize: '12px' }}
-                        />
+                        <Tooltip formatter={(value) => formatCurrency(value)} contentStyle={{ fontSize: '12px' }} />
                         <Legend />
-                        <Bar dataKey="receitas" name="Receitas" fill="#10b981" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="despesas" name="Despesas" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="lucro" name="Lucro" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="receitas" name="Receitas" fill="#10b981" radius={[4,4,0,0]} />
+                        <Bar dataKey="despesas" name="Despesas" fill="#ef4444" radius={[4,4,0,0]} />
+                        <Bar dataKey="lucro"    name="Lucro"    fill="#3b82f6" radius={[4,4,0,0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Tabela por Categoria */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">📋 Totais por Categoria - {ano}</CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle className="text-sm">📋 Totais por Categoria - {ano}</CardTitle></CardHeader>
                 <CardContent>
                   <div className="space-y-2">
                     {(dadosAnuais?.data ?? dadosAnuais).categorias.map((cat) => (
@@ -1264,9 +1050,7 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
                           <Badge variant="outline" className={cat.tipo === "receita" ? "border-green-300 text-green-700" : "border-red-300 text-red-700"}>
                             {cat.tipo === "receita" ? "💰" : "📉"} {cat.label}
                           </Badge>
-                          {!cat.entra_tcmp2 && cat.tipo === "despesa" && (
-                            <span className="text-xs text-orange-600">🚫 Fora TCMP²</span>
-                          )}
+                          {!cat.entra_tcmp2 && cat.tipo === "despesa" && <span className="text-xs text-orange-600">🚫 Fora TCMP²</span>}
                         </div>
                         <span className={`font-bold ${cat.tipo === "receita" ? "text-green-700" : "text-red-700"}`}>
                           {cat.tipo === "receita" ? "+" : "-"} {formatCurrency(cat.total)}
@@ -1280,32 +1064,25 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
           ) : null}
         </div>
       ) : (
-        /* VISÃO MENSAL (EXISTENTE) */
         <div className="space-y-4">
-          {/* Sub-abas internas */}
           <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
             {[
-              { key: "todos", label: "📋 Todos" },
+              { key: "todos",    label: "📋 Todos" },
               { key: "receitas", label: "💰 Receitas (" + formatCurrency(totalReceitas) + ")" },
               { key: "despesas", label: "📉 Despesas (" + formatCurrency(totalDespesas) + ")" },
-              { key: "analise", label: "📊 Análise" }
+              { key: "analise",  label: "📊 Análise" },
             ].map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setAbaAtiva(tab.key)}
-                className={"flex-1 text-xs py-1.5 px-2 rounded-md transition-all font-medium " + (abaAtiva === tab.key ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700")}
-              >
+              <button key={tab.key} onClick={() => setAbaAtiva(tab.key)}
+                className={"flex-1 text-xs py-1.5 px-2 rounded-md transition-all font-medium " + (abaAtiva === tab.key ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700")}>
                 {tab.label}
               </button>
             ))}
           </div>
 
-          {/* Aba de Análise */}
           {abaAtiva === "analise" ? (
             <PainelAnalise lancamentos={lancamentos} tecnicosCount={tecnicosCount} horasMes={horasMes} />
           ) : (
             <>
-              {/* Botões de ação */}
               <div className="flex items-center gap-2 flex-wrap">
                 {(abaAtiva === "todos" || abaAtiva === "receitas") && (
                   <Button size="sm" variant="outline" className="border-green-300 text-green-700 hover:bg-green-50"
@@ -1319,83 +1096,37 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
                     <ArrowDownCircle className="w-4 h-4 mr-1" /> + Despesa
                   </Button>
                 )}
-
-                {/* Botão Transferência — desabilitado se menos de 2 contas cadastradas */}
-                <div
-                  className="relative group"
-                  title={!podeTransferir
-                    ? `Cadastre pelo menos 2 contas no Saldo Inicial do DFC para habilitar (atual: ${totalContas} conta${totalContas === 1 ? '' : 's'})`
-                    : undefined}
-                >
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className={`border-blue-300 transition-all ${
-                      podeTransferir
-                        ? 'text-blue-700 hover:bg-blue-50 cursor-pointer'
-                        : 'text-blue-300 border-blue-200 opacity-50 cursor-not-allowed'
-                    }`}
-                    onClick={() => podeTransferir && setShowTransferencia(true)}
-                    disabled={false} /* desabilitado visualmente via classe, não via prop — para o tooltip funcionar no hover */
-                  >
-                    <ArrowLeftRight className="w-4 h-4 mr-1" />
-                    Transferir entre Contas
+                <div className="relative group"
+                  title={!podeTransferir ? `Cadastre pelo menos 2 contas no Saldo Inicial do DFC (atual: ${totalContas})` : undefined}>
+                  <Button size="sm" variant="outline"
+                    className={`border-blue-300 transition-all ${podeTransferir ? 'text-blue-700 hover:bg-blue-50 cursor-pointer' : 'text-blue-300 border-blue-200 opacity-50 cursor-not-allowed'}`}
+                    onClick={() => podeTransferir && setShowTransferencia(true)} disabled={false}>
+                    <ArrowLeftRight className="w-4 h-4 mr-1" /> Transferir entre Contas
                   </Button>
-
-                  {/* Tooltip custom — só aparece quando desabilitado */}
                   {!podeTransferir && (
-                    <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50
-                      w-64 rounded-lg bg-gray-900 text-white text-xs px-3 py-2 shadow-lg
-                      opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                    <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 w-64 rounded-lg bg-gray-900 text-white text-xs px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                       <p className="font-semibold mb-0.5">Contas insuficientes</p>
-                      <p>
-                        Para transferir entre contas é necessário ter pelo menos
-                        <strong> 2 contas</strong> cadastradas no Saldo Inicial do DFC
-                        (bancos, máquinas de cartão ou caixa).
-                      </p>
-                      {totalContas === 1 && (
-                        <p className="mt-1 text-gray-300">
-                          Você tem <strong>1 conta</strong> cadastrada.
-                          Adicione mais uma no DFC → Saldo Inicial.
-                        </p>
-                      )}
-                      {totalContas === 0 && (
-                        <p className="mt-1 text-gray-300">
-                          Nenhuma conta cadastrada ainda.
-                          Configure o Saldo Inicial no DFC primeiro.
-                        </p>
-                      )}
-                      {/* Setinha do tooltip */}
-                      <div className="absolute top-full left-1/2 -translate-x-1/2
-                        border-4 border-transparent border-t-gray-900" />
+                      <p>Cadastre pelo menos <strong>2 contas</strong> no Saldo Inicial do DFC para habilitar.</p>
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
                     </div>
                   )}
                 </div>
                 <div className="ml-auto flex gap-2">
-                  <Button size="sm" variant="outline" onClick={refresh}>
-                    <RefreshCw className="w-4 h-4" />
-                  </Button>
+                  <Button size="sm" variant="outline" onClick={refresh}><RefreshCw className="w-4 h-4" /></Button>
                   {lancamentos.length > 0 && onConsolidar && (
-                    <Button size="sm" className="bg-green-600 hover:bg-green-700"
-                      onClick={() => onConsolidar(totaisConsolidados)}>
+                    <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => onConsolidar(totaisConsolidados)}>
                       <TrendingUp className="w-4 h-4 mr-1" /> Consolidar no DRE
                     </Button>
                   )}
                 </div>
               </div>
 
-              {/* Formulário */}
               {showForm && (
-                <FormLancamento
-                  tipo={showForm}
-                  workshopId={workshopId}
-                  mes={mes}
+                <FormLancamento tipo={showForm} workshopId={workshopId} mes={mes}
                   onSuccess={() => { refresh(); setShowForm(null); }}
-                  onCancel={() => setShowForm(null)}
-                />
+                  onCancel={() => setShowForm(null)} />
               )}
 
-              {/* Lista de lançamentos */}
               {Object.keys(grupos).length === 0 ? (
                 <div className="text-center py-12 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
                   <Plus className="w-10 h-10 mx-auto mb-2 opacity-30" />
@@ -1405,39 +1136,26 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
               ) : (
                 <div className="space-y-4">
                   {Object.entries(grupos).map(([key, grupo]) => (
-                    <GrupoCategoria
-                      key={key}
-                      catKey={grupo.catKey}
-                      label={grupo.label}
-                      itens={grupo.itens}
-                      tipo={grupo.tipo}
-                      onDelete={refresh}
-                      onSaved={refresh}
-                    />
+                    <GrupoCategoria key={key} catKey={grupo.catKey} label={grupo.label}
+                      itens={grupo.itens} tipo={grupo.tipo} onDelete={refresh} onSaved={refresh} />
                   ))}
                 </div>
               )}
             </>
           )}
 
-          {/* Legenda TCMP² */}
           {abaAtiva !== "analise" && lancamentos.some(l => l.tipo === "despesa") && (
             <div className="flex gap-4 text-xs text-gray-500 pt-2 border-t border-gray-100">
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block" /> Entra no TCMP²</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-400 inline-block" /> Fora do TCMP²</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-orange-400 inline-block" /> Fora do TCMP²</span>
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-green-400 inline-block" /> Receita</span>
             </div>
           )}
         </div>
       )}
 
-      {/* Modal de transferência — reutiliza o componente do DFC, fora do bloco mensal para sempre montar */}
-      <ModalTransferenciaContas
-        aberto={showTransferencia}
-        onFechar={() => setShowTransferencia(false)}
-        workshopId={workshopId}
-        onSucesso={() => setShowTransferencia(false)}
-      />
+      <ModalTransferenciaContas aberto={showTransferencia} onFechar={() => setShowTransferencia(false)}
+        workshopId={workshopId} onSucesso={() => setShowTransferencia(false)} />
     </div>
   );
 }
