@@ -121,7 +121,30 @@ Deno.serve(async (req) => {
       // DFCs podem não existir — continua
     }
 
-    // 3. Deleta a LiquidacaoFinanceira
+    // 3. Desconcilia a BankTransaction vinculada (se existir).
+    // Sem isto, a transação bancária ficaria com status 'conciliado' e
+    // liquidacao_financeira_id apontando para um registro deletado — dado corrompido.
+    // Executado ANTES de deletar a LiquidacaoFinanceira para que o filtro funcione.
+    try {
+      const bankTxs = await base44.entities.BankTransaction.filter(
+        { liquidacao_financeira_id: liquidacao_id },
+        '-data_operacao',
+        1
+      );
+      const bankTx = bankTxs?.[0];
+      if (bankTx) {
+        await base44.entities.BankTransaction.update(bankTx.id, {
+          status_conciliacao: 'pendente',
+          liquidacao_financeira_id: null,
+          data_conciliacao: null,
+          conciliado_por: null,
+        });
+      }
+    } catch (_) {
+      // BankTransaction pode não existir (liquidação não conciliada) — continua
+    }
+
+    // 3.1. Deleta a LiquidacaoFinanceira
     await base44.entities.LiquidacaoFinanceira.delete(liquidacao_id);
 
     // 3.5. Reverte o saldo da fonte (banco / máquina / caixa) que foi alterado no pagamento.
