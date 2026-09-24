@@ -223,8 +223,9 @@ Deno.serve(async (req) => {
       success: true,
       message: 'Liquidação desfeita com sucesso',
       conta_status: novoStatus,
-      valor_pago: Math.max(0, novoValorPago),
-      valor_aberto: Math.max(0, novoValorAberto),
+      valor_pago: novoValorPago,
+      valor_aberto: novoValorAberto,
+      conciliacao_revertida: !!(liquidacao.conciliado), // sinaliza ao frontend para invalidar bank-transactions
     });
 
   } catch (error) {
