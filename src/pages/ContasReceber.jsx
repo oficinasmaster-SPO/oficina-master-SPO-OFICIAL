@@ -28,8 +28,9 @@ import ModalEstornoLiquidacao from "@/components/dfc/ModalEstornoLiquidacao";
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('pt-BR') : '—';
 
-// S1-T1.2: Modal de estorno para Contas a Receber
-function ModalEstornoReceber({ aberto, onFechar, conta, onSuccess }) {
+// ModalEstornoReceber removido — substituído por ModalEstornoLiquidacao (componente compartilhado)
+// eslint-disable-next-line no-unused-vars
+function _ModalEstornoReceber_REMOVIDO({ aberto, onFechar, conta, onSuccess }) {
   const [motivo, setMotivo] = useState("");
   const [estornando, setEstornando] = useState(false);
   const [liquidacoes, setLiquidacoes] = useState([]);
