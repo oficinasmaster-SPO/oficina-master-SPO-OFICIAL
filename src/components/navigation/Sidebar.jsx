@@ -245,6 +245,22 @@ export default function Sidebar({ user, unreadCount, isOpen, onClose }) {
     setExpandedGroups([]);
   }, [location.pathname]);
 
+  // Recolhimento automático em rotas de conteúdo largo (ex: DRETCMP2).
+  // Estratégia B: ao ENTRAR na rota a sidebar recolhe e a preferência global
+  // ('sidebar-collapsed') passa a ser "recolhida" — ao sair ela permanece assim
+  // até o usuário expandir manualmente. O efeito depende SÓ de pathname:
+  // se o usuário expandir manualmente dentro da página, nada o recolhe de novo.
+  const WIDE_CONTENT_ROUTES = ['/dretcmp2'];
+  useEffect(() => {
+    const path = location.pathname.toLowerCase();
+    if (!WIDE_CONTENT_ROUTES.some((route) => path === route || path.startsWith(route + '/'))) return;
+    try {
+      localStorage.setItem('sidebar-collapsed', 'true');
+    } catch {}
+    setIsCollapsed(true);
+    window.dispatchEvent(new CustomEvent('sidebar-toggle'));
+  }, [location.pathname]);
+
   // isAcelerador e isInternal agora vêm do useUserType() — fonte canônica user_type
   // Removido: effectiveRole === 'acelerador' || user?.role === 'admin' (padrão legado)
 
