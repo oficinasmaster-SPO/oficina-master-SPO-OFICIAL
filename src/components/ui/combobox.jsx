@@ -266,11 +266,10 @@ export default function Combobox({
           "transition-[opacity,transform,max-height] duration-200 ease-out",
           open
             ? "opacity-100 visible scale-100 translate-y-0"
-            : "opacity-0 invisible scale-[0.98] pointer-events-none"
+            : `opacity-0 invisible scale-[0.98] ${direction === "up" ? "translate-y-0.5" : "-translate-y-0.5"} pointer-events-none`
         )}
         style={{ maxHeight: open ? maxHeight : 0 }}
       >
-        {open && <span className="hidden" />}
         <CommandPrimitive.List 
           className="overflow-y-auto overflow-x-hidden p-1"
           style={{ maxHeight }} 
