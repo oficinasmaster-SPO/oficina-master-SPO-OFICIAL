@@ -429,7 +429,7 @@ function SecaoFluxo({ titulo, icone, cor, itens, fluxo, onAddManual, onDelete, o
         <div>
               <p className="text-xs font-semibold text-green-600 uppercase mb-1">Entradas</p>
               {entradas.map((item, i) =>
-          <LinhaItem key={item.id || i} item={item} onDelete={onDelete} onEdit={onEdit} onMarcarPagamento={onMarcarPagamento} />
+          <LinhaItem key={item.id || i} item={item} onDelete={onDelete} onEdit={onEdit} onMarcarPagamento={onMarcarPagamento} onEstornar={onEstornar} />
           )}
             </div>
         }
@@ -437,7 +437,7 @@ function SecaoFluxo({ titulo, icone, cor, itens, fluxo, onAddManual, onDelete, o
         <div>
               <p className="text-xs font-semibold text-red-600 uppercase mb-1">Saídas</p>
               {saidas.map((item, i) =>
-          <LinhaItem key={item.id || i} item={item} onDelete={onDelete} onEdit={onEdit} onMarcarPagamento={onMarcarPagamento} />
+          <LinhaItem key={item.id || i} item={item} onDelete={onDelete} onEdit={onEdit} onMarcarPagamento={onMarcarPagamento} onEstornar={onEstornar} />
           )}
             </div>
         }
