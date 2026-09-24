@@ -52,7 +52,10 @@ function WaterfallTooltip({ active, payload }) {
 }
 
 // ─── Gráfico Waterfall ─────────────────────────────────────────────
-function GraficoWaterfall({ saldoInicial, fluxoOp, fluxoInv, fluxoFin, saldoFinal }) {
+// FLICKER FIX (Etapa 2): memo + dados memoizados — o gráfico não é reconstruído
+// nem re-animado quando o DFC re-renderiza (ex: abrir/fechar modal)
+const GraficoWaterfall = React.memo(function GraficoWaterfall({ saldoInicial, fluxoOp, fluxoInv, fluxoFin, saldoFinal }) {
+  const dados = useMemo(() => {
   const barras = [
   { label: "Saldo Inicial", valor: saldoInicial, tipo: "saldo" },
   { label: "Operacional", valor: fluxoOp, tipo: fluxoOp >= 0 ? "positivo" : "negativo" },
@@ -62,7 +65,7 @@ function GraficoWaterfall({ saldoInicial, fluxoOp, fluxoInv, fluxoFin, saldoFina
 
 
   let acumulado = 0;
-  const dados = barras.map((b, i) => {
+  return barras.map((b, i) => {
     if (i === 0 || i === barras.length - 1) {
       // Saldo inicial e final: barra começa do zero, altura é o valor absoluto
       const altura = Math.abs(b.valor);
@@ -75,6 +78,7 @@ function GraficoWaterfall({ saldoInicial, fluxoOp, fluxoInv, fluxoFin, saldoFina
     acumulado += b.valor;
     return { ...b, base, altura, saldoApos: acumulado };
   });
+  }, [saldoInicial, fluxoOp, fluxoInv, fluxoFin]);
 
   const cores = { positivo: "#10b981", negativo: "#ef4444", saldo: "#3b82f6" };
 
@@ -96,7 +100,7 @@ function GraficoWaterfall({ saldoInicial, fluxoOp, fluxoInv, fluxoFin, saldoFina
       </ResponsiveContainer>
     </div>);
 
-}
+});
 
 // ─── Modal CRUD lançamento manual ─────────────────────────────────
 function ModalLancamento({ aberto, onFechar, onSalvar, isSaving, lancamentoEdicao, grupoInicial }) {
@@ -329,7 +333,8 @@ function ModalMarcarPagamento({ item, onFechar, onSalvo }) {
 }
 
 // ─── Linha de item ─────────────────────────────────────────────────
-function LinhaItem({ item, onDelete, onEdit, onMarcarPagamento, onEstornar }) {
+// FLICKER FIX (Etapa 2): memo — abrir/fechar modal não repinta as linhas da lista
+const LinhaItem = React.memo(function LinhaItem({ item, onDelete, onEdit, onMarcarPagamento, onEstornar }) {
   const handleRowClick = () => {
     if (item.origem !== "manual" && item.id) {
       onMarcarPagamento(item);
@@ -391,7 +396,7 @@ function LinhaItem({ item, onDelete, onEdit, onMarcarPagamento, onEstornar }) {
         )}
       </div>
     </div>);
-}
+});
 
 // ─── Seção colapsável ──────────────────────────────────────────────
 function SecaoFluxo({ titulo, icone, cor, itens, fluxo, onAddManual, onDelete, onEdit, onMarcarPagamento, onEstornar }) {
@@ -784,11 +789,19 @@ export default function DFCTab({ workshopId, mes }) {
   const saldoFinal = saldoInicial + fluxoOp + fluxoInv + fluxoFin;
 
   // ── Handlers ──────────────────────────────────────────────────
-  const abrirModal = (grupo, item = null) => {
+  // FLICKER FIX (Etapa 2): callbacks estáveis — LinhaItem (memo) não recebe
+  // referências novas quando o DFC re-renderiza (ex: ao abrir/fechar modais)
+  const abrirModal = useCallback((grupo, item = null) => {
     setGrupoModal(grupo);
     setLancamentoEdicao(item);
     setModalAberto(true);
-  };
+  }, []);
+  const handleEstornarConta = useCallback((conta, tipo) => {
+    setContaParaEstornarDFC({ conta, tipo });
+  }, []);
+  const editarOperacional = useCallback((item) => abrirModal("operacional", item), [abrirModal]);
+  const editarInvestimento = useCallback((item) => abrirModal("investimento", item), [abrirModal]);
+  const editarFinanciamento = useCallback((item) => abrirModal("financiamento", item), [abrirModal]);
 
   const handleSalvarModal = (form) => {
     if (lancamentoEdicao?.id) {
@@ -810,7 +823,8 @@ export default function DFCTab({ workshopId, mes }) {
     }
   };
 
-  const handleDelete = (item) => {if (item.id) deletarMutation.mutate(item.id);};
+  const deletarMutate = deletarMutation.mutate; // mutate é estável entre renders (React Query)
+  const handleDelete = useCallback((item) => {if (item.id) deletarMutate(item.id);}, [deletarMutate]);
 
   const isLoading = isDRELoading || isManuaisLoading;
 
@@ -1075,9 +1089,9 @@ export default function DFCTab({ workshopId, mes }) {
               fluxo={fluxoOp}
               onAddManual={() => abrirModal("operacional")}
               onDelete={handleDelete}
-              onEdit={(item) => abrirModal("operacional", item)}
+              onEdit={editarOperacional}
               onMarcarPagamento={setItemPagamento}
-              onEstornar={(conta, tipo) => setContaParaEstornarDFC({ conta, tipo })} />
+              onEstornar={handleEstornarConta} />
             
       <SecaoFluxo
               titulo="Investimento"
@@ -1087,9 +1101,9 @@ export default function DFCTab({ workshopId, mes }) {
               fluxo={fluxoInv}
               onAddManual={() => abrirModal("investimento")}
               onDelete={handleDelete}
-              onEdit={(item) => abrirModal("investimento", item)}
+              onEdit={editarInvestimento}
               onMarcarPagamento={setItemPagamento}
-              onEstornar={(conta, tipo) => setContaParaEstornarDFC({ conta, tipo })} />
+              onEstornar={handleEstornarConta} />
             
       <SecaoFluxo
               titulo="Financiamento"
@@ -1099,9 +1113,9 @@ export default function DFCTab({ workshopId, mes }) {
               fluxo={fluxoFin}
               onAddManual={() => abrirModal("financiamento")}
               onDelete={handleDelete}
-              onEdit={(item) => abrirModal("financiamento", item)}
+              onEdit={editarFinanciamento}
               onMarcarPagamento={setItemPagamento}
-              onEstornar={(conta, tipo) => setContaParaEstornarDFC({ conta, tipo })} />
+              onEstornar={handleEstornarConta} />
 
       {/* Composição do saldo — resumo compacto */}
       <div className={`rounded-xl border-2 px-4 py-3 flex flex-wrap gap-3 items-center justify-between text-xs ${saldoFinal >= 0 ? "border-emerald-300 bg-emerald-50" : "border-red-300 bg-red-50"}`}>
@@ -1145,7 +1159,11 @@ export default function DFCTab({ workshopId, mes }) {
         
 
       {/* Modal liquidação DRE — abre ModalRegistrarPagamento ou ModalRegistrarRecebimento */}
+      {/* FLICKER FIX: item._conta já vem da query → modal abre direto, sem Dialog de
+          loading intermediário. O fechamento animado é feito pelo próprio modal
+          (handleFechar); o onSalvo apenas invalida as queries. */}
       <ModalLiquidacaoDRE
+          key={itemPagamento?.id || 'fechado'}
           item={itemPagamento}
           workshopId={workshopId}
           onFechar={() => setItemPagamento(null)}
@@ -1154,7 +1172,6 @@ export default function DFCTab({ workshopId, mes }) {
             queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId, mes] });
             queryClient.invalidateQueries({ queryKey: ["contas-receber", workshopId] });
             queryClient.invalidateQueries({ queryKey: ["contas-pagar", workshopId] });
-            setItemPagamento(null);
           }} />
         
 

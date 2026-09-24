@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Loader2, AlertCircle } from "lucide-react";
@@ -6,76 +6,81 @@ import ModalRegistrarRecebimento from "@/components/financeiro/ModalRegistrarRec
 import ModalRegistrarPagamentoConta from "@/components/financeiro/ModalRegistrarPagamentoConta";
 
 /**
- * ModalLiquidacaoDRE — "ponte" entre um DRELancamento e os modais shared de liquidação.
- * 
- * Ao clicar num item do DFC:
- * - Busca a ContaReceber ou ContaPagar vinculada pelo dre_lancamento_id
- * - Abre o modal shared correto (ModalRegistrarRecebimento ou ModalRegistrarPagamentoConta)
- * - Se não houver conta vinculada, mostra aviso simples
+ * ModalLiquidacaoDRE — ponte entre um DRELancamento do DFC e os modais shared.
+ *
+ * FLICKER FIX (Etapa 1): a query do DFC já cruza ContaReceber/ContaPagar e entrega
+ * a conta vinculada em `item._conta`. Quando presente, o modal shared correto abre
+ * DIRETO — sem o Dialog "Buscando conta vinculada..." intermediário (causa do duplo
+ * flash de overlay no clique).
+ *
+ * Fallback (item sem `_conta` — dados antigos): busca a conta mantendo UM único
+ * Dialog aberto; o conteúdo troca dentro dele (spinner → aviso), sem remontagem.
+ *
+ * Fechamento: `handleFechar` baixa `aberto` (Radix toca a animação de saída) e só
+ * depois desmonta via onFechar do pai — uma única transição ao fechar.
  */
+const EXIT_ANIM_MS = 200;
+
 export default function ModalLiquidacaoDRE({ item, workshopId, onFechar, onSalvo }) {
-  const [loading, setLoading] = useState(false);
-  const [contaVinculada, setContaVinculada] = useState(null);
-  const [semConta, setSemConta] = useState(false);
+  const [fallback, setFallback] = useState(null); // null | "buscando" | "sem_conta" | { conta }
+  const [fechando, setFechando] = useState(false);
 
   const isDespesa = item?.tipo === "saida";
   const mes = item?.mes;
+  const aberto = !!item && !fechando;
 
+  // Caminho rápido: `_conta` presente → nada a buscar.
+  // Fallback: busca única por item, com cancelamento ao trocar de item.
   useEffect(() => {
-    if (!item?.id) return;
-
-    setLoading(true);
-    setContaVinculada(null);
-    setSemConta(false);
-
-    const buscarConta = async () => {
+    if (!item?.id || item._conta) return;
+    let cancelado = false;
+    const buscar = async () => {
       try {
-        if (isDespesa) {
-          const contas = await base44.entities.ContaPagar.filter({ dre_lancamento_id: item.id });
-          if (contas?.length > 0) setContaVinculada(contas[0]);
-          else setSemConta(true);
-        } else {
-          const contas = await base44.entities.ContaReceber.filter({ dre_lancamento_id: item.id });
-          if (contas?.length > 0) setContaVinculada(contas[0]);
-          else setSemConta(true);
-        }
+        const entity = item.tipo === "saida" ? base44.entities.ContaPagar : base44.entities.ContaReceber;
+        const contas = await entity.filter({ dre_lancamento_id: item.id });
+        if (cancelado) return;
+        setFallback(contas?.length > 0 ? { conta: contas[0] } : "sem_conta");
       } catch {
-        setSemConta(true);
-      } finally {
-        setLoading(false);
+        if (!cancelado) setFallback("sem_conta");
       }
     };
+    setFallback("buscando");
+    buscar();
+    return () => { cancelado = true; };
+  }, [item?.id, item?._conta]);
 
-    buscarConta();
-  }, [item?.id]);
+  // Fecha com a animação de saída do Dialog e só depois desmonta no pai.
+  const handleFechar = useCallback(() => {
+    setFechando(true);
+    setTimeout(() => {
+      setFechando(false);
+      onFechar?.();
+    }, EXIT_ANIM_MS);
+  }, [onFechar]);
+
+  const handleSuccess = useCallback(() => {
+    onSalvo?.();
+  }, [onSalvo]);
 
   if (!item) return null;
 
-  const handleSuccess = () => {
-    onSalvo?.();
-    onFechar();
-  };
+  const conta = item._conta || (typeof fallback === "object" ? fallback.conta : null);
 
-  // ── Enquanto carrega ──
-  if (loading) {
-    return (
-      <Dialog open={true} onOpenChange={onFechar}>
-        <DialogContent className="max-w-sm">
-          <div className="flex items-center justify-center py-12 gap-3">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-            <span className="text-sm text-gray-500">Buscando conta vinculada...</span>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
+  // ── Com conta (caminho comum): abre o modal shared direto ──
+  if (conta) {
+    const propsShared = { aberto, onFechar: handleFechar, conta, workshopId, mes, onSuccess: handleSuccess };
+    return isDespesa ?
+    <ModalRegistrarPagamentoConta {...propsShared} /> :
+
+    <ModalRegistrarRecebimento {...propsShared} />;
   }
 
-  // ── Sem conta vinculada ──
-  if (semConta) {
-    return (
-      <Dialog open={true} onOpenChange={onFechar}>
-        <DialogContent className="max-w-sm">
-          <div className="p-6 space-y-3">
+  // ── Sem conta / fallback: UM único Dialog — o conteúdo troca dentro dele ──
+  return (
+    <Dialog open={aberto} onOpenChange={(open) => { if (!open) handleFechar(); }}>
+      <DialogContent className="max-w-sm">
+        {fallback === "sem_conta" ?
+        <div className="p-6 space-y-3">
             <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
               <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <div>
@@ -93,37 +98,14 @@ export default function ModalLiquidacaoDRE({ item, workshopId, onFechar, onSalvo
               </p>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+        :
 
-  // ── Com conta vinculada: delega para o modal shared correto ──
-  if (contaVinculada) {
-    if (isDespesa) {
-      return (
-        <ModalRegistrarPagamentoConta
-          aberto={true}
-          onFechar={onFechar}
-          conta={contaVinculada}
-          workshopId={workshopId}
-          mes={mes}
-          onSuccess={handleSuccess}
-        />
-      );
-    } else {
-      return (
-        <ModalRegistrarRecebimento
-          aberto={true}
-          onFechar={onFechar}
-          conta={contaVinculada}
-          workshopId={workshopId}
-          mes={mes}
-          onSuccess={handleSuccess}
-        />
-      );
-    }
-  }
-
-  return null;
+        <div className="flex items-center justify-center py-12 gap-3">
+            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            <span className="text-sm text-gray-500">Buscando conta vinculada...</span>
+          </div>
+        }
+      </DialogContent>
+    </Dialog>
+  );
 }

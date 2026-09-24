@@ -75,6 +75,11 @@ export function mapDREtoDFC(lancamentos = []) {
         data_vencimento: dataVencimento,
         data_pagamento:  dataPagamento,
         status_conta:    statusConta,
+        // FLICKER FIX: propaga a conta vinculada (cruzada na query do DFC) e o mês —
+        // usados por ModalLiquidacaoDRE (abre o modal direto, sem re-buscar) e pelo estorno
+        _conta: l._conta || null,
+        _tipo_conta: l._tipo_conta || null,
+        mes: l.mes,
       };
     }
 
@@ -104,6 +109,10 @@ export function mapDREtoDFC(lancamentos = []) {
       data_vencimento: dataVencimento,
       data_pagamento:  dataPagamento,
       status_conta:    statusConta,
+      // FLICKER FIX: propaga a conta vinculada (cruzada na query do DFC) e o mês
+      _conta: l._conta || null,
+      _tipo_conta: l._tipo_conta || null,
+      mes: l.mes,
     };
   });
 }
