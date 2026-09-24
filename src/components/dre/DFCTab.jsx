@@ -1034,7 +1034,11 @@ export default function DFCTab({ workshopId, mes }) {
           workshopId={workshopId}
           onSuccess={() => {
             setLiquidacaoParaEstornar(null);
+            // BUG-1 FIX: invalida todas as queries afetadas pelo estorno
             queryClient.invalidateQueries({ queryKey: ["dfc-liquidacoes-mes", workshopId, mes] });
+            queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc", workshopId, mes] });
+            queryClient.invalidateQueries({ queryKey: ["contas-receber", workshopId] });
+            queryClient.invalidateQueries({ queryKey: ["contas-pagar", workshopId] });
           }}
         />
       )}
