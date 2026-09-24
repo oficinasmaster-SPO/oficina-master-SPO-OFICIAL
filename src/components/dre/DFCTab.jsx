@@ -560,8 +560,10 @@ export default function DFCTab({ workshopId, mes }) {
   const [itemPagamento, setItemPagamento] = useState(null);
   const [view, setView] = useState("grupos"); // "grupos" | "projecao"
   const [modalSaldoDetalhadoAberto, setModalSaldoDetalhadoAberto] = useState(false);
-  // Frente 1 — estorno de baixa pelo DFC
+  // Frente 1 — estorno de baixa pelo DFC (seção Baixas do Mês)
   const [liquidacaoParaEstornar, setLiquidacaoParaEstornar] = useState(null);
+  // Estorno direto das linhas Operacional/Investimento/Financiamento
+  const [contaParaEstornarDFC, setContaParaEstornarDFC] = useState(null); // { conta, tipo }
   const [periodo, setPeriodo] = useState("mensal"); // mensal | anual
   const [showContasTab, setShowContasTab] = useState(false);
 
