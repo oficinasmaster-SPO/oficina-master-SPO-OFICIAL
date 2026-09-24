@@ -1006,6 +1006,7 @@ export default function DFCTab({ workshopId, mes }) {
               })}
             </div>
           )}
+          </div>
         )}
       </div>
 
