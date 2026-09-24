@@ -98,7 +98,9 @@ export default function ModalEstornoLiquidacao({
       toast.success("✅ Estorno realizado com sucesso!");
 
       // Invalida queries — sempre DRE + DFC + contas
-      queryClient.invalidateQueries({ queryKey: ["dre-lancamentos"] });
+      // BUG-2 FIX: inclui 'dre-lancamentos-dfc' (key do DFCTab, diferente de 'dre-lancamentos' do DREAvancadoTab)
+      queryClient.invalidateQueries({ queryKey: ["dre-lancamentos"] });         // DREAvancadoTab
+      queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc"] });     // DFCTab
       queryClient.invalidateQueries({ queryKey: ["dfc-manuais"] });
       queryClient.invalidateQueries({ queryKey: ["dfc-saldo"] });
       queryClient.invalidateQueries({ queryKey: ["dfc-liquidacoes-mes"] });
