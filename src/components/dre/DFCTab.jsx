@@ -329,13 +329,16 @@ function ModalMarcarPagamento({ item, onFechar, onSalvo }) {
 }
 
 // ─── Linha de item ─────────────────────────────────────────────────
-function LinhaItem({ item, onDelete, onEdit, onMarcarPagamento }) {
+function LinhaItem({ item, onDelete, onEdit, onMarcarPagamento, onEstornar }) {
   const handleRowClick = () => {
-    // Apenas itens do DRE (com ID) abrem o modal de pagamento ao clicar na linha
     if (item.origem !== "manual" && item.id) {
       onMarcarPagamento(item);
     }
   };
+
+  // Item tem baixa registrada se tem data_pagamento E conta vinculada com status pago/parcial
+  const temBaixa = !!(item.data_pagamento && item._conta &&
+    (item.status_conta === "pago" || item.status_conta === "parcial"));
 
   return (
     <div
@@ -358,27 +361,36 @@ function LinhaItem({ item, onDelete, onEdit, onMarcarPagamento }) {
         <span className={`text-sm font-semibold mr-2 ${item.tipo === "entrada" ? "text-green-700" : "text-red-600"}`}>
           {item.tipo === "entrada" ? "+" : "-"}{fmt(item.valor)}
         </span>
-        {item.origem === "manual" ?
-        <>
+        {item.origem === "manual" ? (
+          <>
             <button
-            onClick={(e) => {e.stopPropagation();onEdit(item);}}
-            className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-blue-500 p-0.5">
-            
+              onClick={(e) => { e.stopPropagation(); onEdit(item); }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-blue-500 p-0.5">
               <Pencil className="w-3.5 h-3.5" />
             </button>
             <button
-            onClick={(e) => {e.stopPropagation();onDelete(item);}}
-            className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500 p-0.5">
-            
+              onClick={(e) => { e.stopPropagation(); onDelete(item); }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500 p-0.5">
               <Trash2 className="w-3.5 h-3.5" />
             </button>
-          </> :
-
-        <span className="opacity-0 group-hover:opacity-60 text-xs text-gray-400 transition-opacity">📅</span>
-        }
+          </>
+        ) : (
+          <div className="flex items-center gap-1">
+            {/* Botão de estorno — visível apenas quando há baixa registrada */}
+            {temBaixa && onEstornar && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onEstornar(item._conta, item._tipo_conta); }}
+                title="Estornar baixa"
+                className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 text-[11px] text-orange-500 hover:text-orange-700 hover:bg-orange-50 rounded px-1.5 py-0.5">
+                <RotateCcw className="w-3 h-3" />
+                Estornar
+              </button>
+            )}
+            <span className="opacity-0 group-hover:opacity-60 text-xs text-gray-400 transition-opacity">📅</span>
+          </div>
+        )}
       </div>
     </div>);
-
 }
 
 // ─── Seção colapsável ──────────────────────────────────────────────
