@@ -1009,6 +1009,22 @@ export default function DFCTab({ workshopId, mes }) {
         </div>
       </div>
 
+      {/* Modal de estorno — modo Conta: disparado pelas linhas Operacional/Investimento/Financiamento */}
+      {contaParaEstornarDFC && (
+        <ModalEstornoLiquidacao
+          aberto={!!contaParaEstornarDFC}
+          onFechar={() => setContaParaEstornarDFC(null)}
+          conta={contaParaEstornarDFC.conta}
+          tipo={contaParaEstornarDFC.tipo}
+          workshopId={workshopId}
+          onSuccess={() => {
+            setContaParaEstornarDFC(null);
+            queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc", workshopId, mes] });
+            queryClient.invalidateQueries({ queryKey: ["dfc-liquidacoes-mes", workshopId, mes] });
+          }}
+        />
+      )}
+
       {/* Modal de estorno — modo DFC: liquidacão já conhecida, sem seleção */}
       {liquidacaoParaEstornar && (
         <ModalEstornoLiquidacao
