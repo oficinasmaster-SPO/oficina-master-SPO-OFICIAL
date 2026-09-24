@@ -453,12 +453,8 @@ function LancamentoRow({ item, onDelete, onSaved }) {
   const isVencido = hasVenc && !isPago && item.data_vencimento < hoje;
 
   const barColor   = item.tipo === "receita" ? "bg-green-400" : item.entra_tcmp2 ? "bg-blue-400" : "bg-orange-400";
-  const cardBorder = isVencido
-    ? expanded
-      ? "border-red-300 bg-red-50/40"   // vencida + expandida: mantém vermelho
-      : "border-red-200 bg-red-50/30"
-    : expanded
-    ? "border-blue-200 bg-blue-50/20"
+  const cardBorder = isVencido ? "border-red-200 bg-red-50/30"
+    : expanded ? "border-blue-200 bg-blue-50/20"
     : "border-gray-200 bg-white";
 
   return (
@@ -631,7 +627,7 @@ function LancamentoRow({ item, onDelete, onSaved }) {
       {/* Dialog de edição */}
       <Dialog open={editing} onOpenChange={open => { if (!open) setEditing(false); }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+          <DialogHeader className="border-b border-gray-100 pb-3 mb-2">
             <DialogTitle className="flex items-center gap-2 text-base">
               <Pencil className="w-4 h-4 text-blue-500" />
               Editar Lançamento
@@ -644,10 +640,13 @@ function LancamentoRow({ item, onDelete, onSaved }) {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Categoria</label>
-                <select className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
-                  value={catKey} onChange={e => { setCatKey(e.target.value); setSubcat(""); }}>
-                  {Object.entries(categorias).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                </select>
+                <Combobox
+                  className="w-full"
+                  options={Object.entries(categorias).map(([k, v]) => ({ label: v.label, value: k }))}
+                  value={catKey}
+                  onChange={v => { setCatKey(v); setSubcat(""); }}
+                  placeholder="Selecione a categoria"
+                />
               </div>
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">Subcategoria</label>
@@ -688,16 +687,19 @@ function LancamentoRow({ item, onDelete, onSaved }) {
             </div>
             <div>
               <label className="text-xs text-gray-500 mb-1 block">Recorrência</label>
-              <select className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
-                value={frequencia} onChange={e => setFrequencia(e.target.value)}>
-                {FREQUENCIAS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
-              </select>
+              <Combobox
+                className="w-full"
+                options={FREQUENCIAS}
+                value={frequencia}
+                onChange={setFrequencia}
+                placeholder="Selecione a recorrência"
+              />
               {item.recorrencia_id && (
                 <p className="text-xs text-amber-600 mt-1">⚠️ Parte de uma recorrência — alteração afeta só este item.</p>
               )}
             </div>
           </div>
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 justify-end border-t border-gray-100 pt-3 mt-2">
             <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}>Cancelar</Button>
             <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
               {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
