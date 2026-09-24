@@ -57,41 +57,8 @@ function useFontesDinheiro(workshopId, mes) {
   });
 }
 
-async function atualizarSaldoFonte(workshopId, mes, fonteKey, valor, operacao, queryClient) {
-  try {
-    const records = await base44.entities.DFCLancamento.filter(
-      { workshop_id: workshopId, mes, grupo: "saldo_inicial" }, "-created_date", 1
-    );
-    const registro = records?.[0];
-    if (!registro) return;
-    const detalhes = {
-      bancos: registro.detalhes?.bancos || [],
-      maquinas_cartao: registro.detalhes?.maquinas_cartao || [],
-      caixa: registro.detalhes?.caixa || 0,
-    };
-    const [tipo, id] = fonteKey.split(":");
-    const delta = operacao === "soma" ? valor : -valor;
-    if (tipo === "banco") {
-      detalhes.bancos = detalhes.bancos.map(b =>
-        b.id === id ? { ...b, saldo: Math.max(0, (b.saldo || 0) + delta) } : b
-      );
-    } else if (tipo === "maquina") {
-      detalhes.maquinas_cartao = detalhes.maquinas_cartao.map(m =>
-        m.id === id ? { ...m, saldo: Math.max(0, (m.saldo || 0) + delta) } : m
-      );
-    } else if (tipo === "caixa") {
-      detalhes.caixa = Math.max(0, detalhes.caixa + delta);
-    }
-    const novoTotal = detalhes.bancos.reduce((s, b) => s + (b.saldo || 0), 0)
-      + detalhes.maquinas_cartao.reduce((s, m) => s + (m.saldo || 0), 0)
-      + detalhes.caixa;
-    await base44.entities.DFCLancamento.update(registro.id, { detalhes, valor: novoTotal, saldo_inicial: novoTotal });
-    queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes", workshopId, mes] });
-    queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
-  } catch (e) {
-    console.warn("Não foi possível atualizar saldo inicial:", e.message);
-  }
-}
+// D1: atualizarSaldoFonte removida — lógica migrada para o backend (registrarLiquidacao).
+// Mantê-la aqui causava duplicação e risco de double-write no saldo.
 
 /**
  * Modal para registrar pagamento de ContaPagar.
