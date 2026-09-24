@@ -588,7 +588,10 @@ export default function DFCTab({ workshopId, mes }) {
           status_conta: conta.status,
           data_pagamento: conta.status === "pago" || conta.status === "parcial" ?
           dataPagamento :
-          d.data_pagamento
+          d.data_pagamento,
+          // Propaga a conta vinculada para permitir estorno direto na LinhaItem
+          _conta: conta,
+          _tipo_conta: contaR ? "receber" : "pagar",
         };
       });
     },
