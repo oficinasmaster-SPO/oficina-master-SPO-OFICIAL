@@ -1053,7 +1053,8 @@ export default function DFCTab({ workshopId, mes }) {
               onAddManual={() => abrirModal("operacional")}
               onDelete={handleDelete}
               onEdit={(item) => abrirModal("operacional", item)}
-              onMarcarPagamento={setItemPagamento} />
+              onMarcarPagamento={setItemPagamento}
+              onEstornar={(conta, tipo) => setContaParaEstornarDFC({ conta, tipo })} />
             
       <SecaoFluxo
               titulo="Investimento"
@@ -1064,7 +1065,8 @@ export default function DFCTab({ workshopId, mes }) {
               onAddManual={() => abrirModal("investimento")}
               onDelete={handleDelete}
               onEdit={(item) => abrirModal("investimento", item)}
-              onMarcarPagamento={setItemPagamento} />
+              onMarcarPagamento={setItemPagamento}
+              onEstornar={(conta, tipo) => setContaParaEstornarDFC({ conta, tipo })} />
             
       <SecaoFluxo
               titulo="Financiamento"
@@ -1075,7 +1077,8 @@ export default function DFCTab({ workshopId, mes }) {
               onAddManual={() => abrirModal("financiamento")}
               onDelete={handleDelete}
               onEdit={(item) => abrirModal("financiamento", item)}
-              onMarcarPagamento={setItemPagamento} />
+              onMarcarPagamento={setItemPagamento}
+              onEstornar={(conta, tipo) => setContaParaEstornarDFC({ conta, tipo })} />
 
       {/* Composição do saldo — resumo compacto */}
       <div className={`rounded-xl border-2 px-4 py-3 flex flex-wrap gap-3 items-center justify-between text-xs ${saldoFinal >= 0 ? "border-emerald-300 bg-emerald-50" : "border-red-300 bg-red-50"}`}>
