@@ -26,8 +26,9 @@ import {
 import { useWorkshopContext } from "@/components/hooks/useWorkshopContext";
 import ModalRegistrarPagamentoConta from "@/components/financeiro/ModalRegistrarPagamentoConta";
 import HistoricoAlteracoes from "@/components/financeiro/HistoricoAlteracoes";
+import ModalEstornoLiquidacao from "@/components/dfc/ModalEstornoLiquidacao";
 
-// S1-T1.2: Modal de estorno reutilizável
+// S1-T1.2: Modal de estorno migrado para componente compartilhado ModalEstornoLiquidacao — removido daqui
 function ModalEstorno({ aberto, onFechar, conta, workshopId, onSuccess }) {
   const [motivo, setMotivo] = useState("");
   const [estornando, setEstornando] = useState(false);
