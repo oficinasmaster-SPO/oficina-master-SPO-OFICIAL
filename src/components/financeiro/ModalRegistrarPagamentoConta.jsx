@@ -10,6 +10,7 @@ import { InputMoeda } from "@/components/ui/InputMoeda";
 import { Loader2, Building2, AlertCircle, CreditCard, Calendar, DollarSign, Minus, Plus, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import useFontesDinheiro from "@/components/dfc/useFontesDinheiro";
+import useModalScrollLock from "@/hooks/useModalScrollLock";
 
 const fmt = (v) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
 
@@ -23,6 +24,9 @@ const fmt = (v) => new Intl.NumberFormat("pt-BR", { style: "currency", currency:
  */
 export default function ModalRegistrarPagamentoConta({ aberto, onFechar, conta, workshopId, mes, onSuccess }) {
   const queryClient = useQueryClient();
+  // Anti layout-shift: trava o scroll de fundo (<html>) e anula a compensação de
+  // largura do react-remove-scroll — a página por trás não desliza ao abrir o modal
+  useModalScrollLock(aberto);
   const [valor, setValor] = useState(0);
   const [formaPagamento, setFormaPagamento] = useState("pix");
   const [dataLiquidacao, setDataLiquidacao] = useState(new Date().toISOString().split("T")[0]);

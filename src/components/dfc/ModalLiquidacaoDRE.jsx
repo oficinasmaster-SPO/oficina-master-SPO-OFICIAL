@@ -4,6 +4,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Loader2, AlertCircle } from "lucide-react";
 import ModalRegistrarRecebimento from "@/components/financeiro/ModalRegistrarRecebimento";
 import ModalRegistrarPagamentoConta from "@/components/financeiro/ModalRegistrarPagamentoConta";
+import useModalScrollLock from "@/hooks/useModalScrollLock";
 
 /**
  * ModalLiquidacaoDRE — ponte entre um DRELancamento do DFC e os modais shared.
@@ -28,6 +29,10 @@ export default function ModalLiquidacaoDRE({ item, workshopId, onFechar, onSalvo
   const isDespesa = item?.tipo === "saida";
   const mes = item?.mes;
   const aberto = !!item && !fechando;
+
+  // Anti layout-shift: trava o scroll de fundo enquanto o modal estiver aberto —
+  // cobre o Dialog de fallback (spinner/aviso) desta ponte
+  useModalScrollLock(aberto);
 
   // Caminho rápido: `_conta` presente → nada a buscar.
   // Fallback: busca única por item, com cancelamento ao trocar de item.
