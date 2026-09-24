@@ -548,6 +548,8 @@ export default function DFCTab({ workshopId, mes }) {
   const [itemPagamento, setItemPagamento] = useState(null);
   const [view, setView] = useState("grupos"); // "grupos" | "projecao"
   const [modalSaldoDetalhadoAberto, setModalSaldoDetalhadoAberto] = useState(false);
+  // Frente 1 — estorno de baixa pelo DFC
+  const [liquidacaoParaEstornar, setLiquidacaoParaEstornar] = useState(null);
   const [periodo, setPeriodo] = useState("mensal"); // mensal | anual
   const [showContasTab, setShowContasTab] = useState(false);
 
