@@ -564,6 +564,8 @@ export default function DFCTab({ workshopId, mes }) {
   const [liquidacaoParaEstornar, setLiquidacaoParaEstornar] = useState(null);
   // Estorno direto das linhas Operacional/Investimento/Financiamento
   const [contaParaEstornarDFC, setContaParaEstornarDFC] = useState(null); // { conta, tipo }
+  // BUG-3 FIX: controle de abertura da seção Baixas do Mês via estado React (não DOM)
+  const [baixasMesAberta, setBaixasMesAberta] = useState(true);
   const [periodo, setPeriodo] = useState("mensal"); // mensal | anual
   const [showContasTab, setShowContasTab] = useState(false);
 
