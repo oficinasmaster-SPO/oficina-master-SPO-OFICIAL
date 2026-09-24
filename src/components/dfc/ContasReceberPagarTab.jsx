@@ -1,541 +1,319 @@
-import React, { useState, useEffect } from "react";
+/**
+ * ContasReceberPagarTab — Carteira de Contas a Receber e a Pagar.
+ *
+ * Correções aplicadas nesta reescrita:
+ *   #1  Botão Estornar acessível — ListaContas recebe onEstornar; contas pagas aparecem.
+ *   #2  Código morto removido — ModalRegistrarRecebimento_LEGACY_UNUSED,
+ *       ModalRegistrarPagamento_LEGACY_UNUSED e atualizarSaldoFonte deletados (~250 linhas).
+ *   #4  Ordenação de urgência — queries usam "data_vencimento" (ascendente); vencidas primeiro.
+ *   #5  Vencidas destacadas — badge vermelho "⚠️ Vencida" quando status===aberto e data passada.
+ *   #6  Contas sem vencimento visíveis — filtro de data removido da query; filtro client-side
+ *       inclui contas sem data_vencimento.
+ *   #7  Período sincronizado com o prop `mes` — estado local de mês/ano derivado do prop,
+ *       não independente; mudança no DFC reflete aqui automaticamente.
+ *   #8  staleTime 0 → 30 000 ms — handleSuccess invalida explicitamente; staleTime 0
+ *       forçava re-fetch desnecessário a cada render.
+ *  #10  Estado de erro visível — isError + botão Tentar Novamente em vez de lista vazia silenciosa.
+ */
+
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { InputMoeda } from "@/components/ui/InputMoeda";
-import { Loader2, DollarSign, CreditCard, CheckCircle, AlertCircle, RotateCcw } from "lucide-react";
+import { Loader2, DollarSign, CreditCard, CheckCircle, AlertCircle, RotateCcw, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import FiltroPeriodo from "../dre/FiltroPeriodo";
 import ModalRegistrarRecebimentoShared from "@/components/financeiro/ModalRegistrarRecebimento";
 import ModalRegistrarPagamentoContaShared from "@/components/financeiro/ModalRegistrarPagamentoConta";
-import { Textarea } from "@/components/ui/textarea";
-import SeletorFonte from "@/components/dfc/SeletorFonte";
 import ModalEstornoLiquidacao from "@/components/dfc/ModalEstornoLiquidacao";
 
-// Hook para buscar as fontes de dinheiro do saldo inicial
-// Busca o registro mais recente de saldo_inicial da oficina (independente do mês filtrado)
-function useFontesDinheiro(workshopId, mes) {
-  return useQuery({
-    queryKey: ["saldo-inicial-fontes", workshopId, mes],
-    queryFn: async () => {
-      if (!workshopId) return { bancos: [], maquinas_cartao: [], caixa: 0 };
+// ─────────────────────────────────────────────────────────────────────────────
+// Utilitários
+// ─────────────────────────────────────────────────────────────────────────────
 
-      // 1. Tenta o mês exato passado
-      if (mes) {
-        const records = await base44.entities.DFCLancamento.filter({
-          workshop_id: workshopId,
-          mes,
-          grupo: "saldo_inicial",
-        }, "-created_date", 1);
-        if (records?.[0]?.detalhes) {
-          const detalhes = records[0].detalhes;
-          const temFontes = (detalhes.bancos?.length > 0) || (detalhes.maquinas_cartao?.length > 0) || (detalhes.caixa > 0);
-          if (temFontes) {
-            return {
-              bancos: detalhes.bancos || [],
-              maquinas_cartao: detalhes.maquinas_cartao || [],
-              caixa: detalhes.caixa || 0,
-            };
-          }
-        }
-      }
+const fmt = (v) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
 
-      // 2. Fallback: busca o registro de saldo_inicial mais recente da oficina (qualquer mês)
-      const allRecords = await base44.entities.DFCLancamento.filter({
-        workshop_id: workshopId,
-        grupo: "saldo_inicial",
-      }, "-created_date", 5);
+const hoje = new Date().toISOString().split("T")[0];
 
-      // Procura o primeiro que tenha bancos ou máquinas cadastradas
-      for (const rec of (allRecords || [])) {
-        const d = rec.detalhes;
-        if (d && ((d.bancos?.length > 0) || (d.maquinas_cartao?.length > 0) || (d.caixa > 0))) {
-          return {
-            bancos: d.bancos || [],
-            maquinas_cartao: d.maquinas_cartao || [],
-            caixa: d.caixa || 0,
-          };
-        }
-      }
-
-      return { bancos: [], maquinas_cartao: [], caixa: 0 };
-    },
-    enabled: !!workshopId,
-    staleTime: 0,
-  });
-}
-
-const fmt = (v) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
-
-// ── Função auxiliar: atualiza saldo da fonte no saldo inicial ────
-// (mantida aqui pois é usada pelos modais compartilhados via prop onSuccess + invalidate)
-
-// ── Modal Registrar Recebimento ───────────────────────────
-function ModalRegistrarRecebimento_LEGACY_UNUSED({ aberto, onFechar, conta, workshopId, mes, onSuccess }) {
-  const queryClient = useQueryClient();
-  const [valor, setValor] = useState("");
-  const [formaPagamento, setFormaPagamento] = useState("pix");
-  const [dataLiquidacao, setDataLiquidacao] = useState(new Date().toISOString().split("T")[0]);
-  const [fonteDestino, setFonteDestino] = useState("");
-  const [desconto, setDesconto] = useState(0);
-  const [juros, setJuros] = useState(0);
-  const [multa, setMulta] = useState(0);
-  const [saving, setSaving] = useState(false);
-
-  const { data: fontes } = useFontesDinheiro(workshopId, mes);
-
-  useEffect(() => {
-    if (aberto) {
-      setValor(String(conta?.valor_aberto || 0));
-      setDataLiquidacao(new Date().toISOString().split("T")[0]);
-      setFonteDestino("");
-      setDesconto(0);
-      setJuros(0);
-      setMulta(0);
-    }
-  }, [aberto, conta]);
-
-  const handleSalvar = async () => {
-    setSaving(true);
-    try {
-      const valorLiquidacao = parseFloat(valor) || 0;
-      await base44.functions.invoke("registrarLiquidacao", {
-        workshop_id: workshopId,
-        conta_receber_id: conta.id,
-        tipo: "recebimento",
-        valor_liquidacao: valorLiquidacao,
-        forma_pagamento: formaPagamento,
-        data_liquidacao: dataLiquidacao,
-        desconto_concedido: desconto,
-        juros_recebido: juros,
-        multa_recebida: multa,
-      });
-
-      // Atualizar saldo inicial: SOMA na fonte de destino
-      if (fonteDestino && mes) {
-        await atualizarSaldoFonte(workshopId, mes, fonteDestino, valorLiquidacao, "soma", queryClient);
-      }
-
-      toast.success("Recebimento registrado!");
-      onSuccess();
-      onFechar();
-    } catch (error) {
-      toast.error("Erro ao registrar recebimento: " + (error.message || "Erro desconhecido"));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const valorLiquido = (parseFloat(valor) || 0) + juros + multa - desconto;
-
+/** Retorna true quando a conta está aberta e a data de vencimento já passou. */
+function isVencida(conta) {
   return (
-    <Dialog open={aberto} onOpenChange={onFechar}>
-      <DialogContent className="max-w-md max-h-[80vh] flex flex-col p-4">
-        <DialogHeader className="pb-2">
-          <DialogTitle className="text-lg">💰 Registrar Recebimento</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-2 py-0 overflow-y-auto flex-1">
-          <div>
-            <Label className="text-xs">Cliente</Label>
-            <p className="text-sm font-medium text-gray-900">{conta?.cliente_nome || "—"}</p>
-          </div>
-          <div>
-            <Label className="text-xs">Valor Aberto</Label>
-            <p className="text-base font-bold text-green-600">{fmt(conta?.valor_aberto)}</p>
-          </div>
-          <div>
-            <Label className="text-xs">Data de Recebimento</Label>
-            <Input type="date" value={dataLiquidacao} onChange={(e) => setDataLiquidacao(e.target.value)} className="mt-0.5 text-sm" />
-          </div>
-          <div>
-            <Label className="text-xs">Valor Recebido (R$)</Label>
-            <InputMoeda value={parseFloat(valor) || 0} onChange={(e) => setValor(e.target.value)} className="text-right text-sm" />
-          </div>
-          <div>
-            <Label className="text-xs">Forma de Pagamento</Label>
-            <Select value={formaPagamento} onValueChange={setFormaPagamento}>
-              <SelectTrigger className="text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pix">PIX</SelectItem>
-                <SelectItem value="ted">TED</SelectItem>
-                <SelectItem value="boleto">Boleto</SelectItem>
-                <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
-                <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
-                <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                <SelectItem value="cheque">Cheque</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <SeletorFonte
-            fontes={fontes}
-            fonteSelecionada={fonteDestino}
-            onChange={setFonteDestino}
-            label="Onde vai entrar o dinheiro?"
-          />
-          <div className="grid grid-cols-3 gap-1">
-            <div>
-              <Label className="text-xs">Desconto</Label>
-              <InputMoeda value={desconto} onChange={(e) => setDesconto(parseFloat(e.target.value) || 0)} className="text-right text-xs" />
-            </div>
-            <div>
-              <Label className="text-xs">Juros</Label>
-              <InputMoeda value={juros} onChange={(e) => setJuros(parseFloat(e.target.value) || 0)} className="text-right text-xs" />
-            </div>
-            <div>
-              <Label className="text-xs">Multa</Label>
-              <InputMoeda value={multa} onChange={(e) => setMulta(parseFloat(e.target.value) || 0)} className="text-right text-xs" />
-            </div>
-          </div>
-          <div className="p-2 bg-green-50 rounded border border-green-200">
-            <p className="text-xs text-green-700">Valor Líquido</p>
-            <p className="text-lg font-bold text-green-900">{fmt(valorLiquido)}</p>
-          </div>
-        </div>
-        <DialogFooter className="gap-2 pt-2 mt-auto">
-          <Button variant="outline" size="sm" onClick={onFechar}>Cancelar</Button>
-          <Button size="sm" onClick={handleSalvar} disabled={saving || !valor}>
-            {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-            Confirmar Recebimento
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    conta.status === "aberto" &&
+    !!conta.data_vencimento &&
+    conta.data_vencimento < hoje
   );
 }
 
-// ── Modal Registrar Pagamento ───────────────────────────
-function ModalRegistrarPagamento_LEGACY_UNUSED({ aberto, onFechar, conta, workshopId, mes, onSuccess }) {
-  const queryClient = useQueryClient();
-  const [valor, setValor] = useState("");
-  const [formaPagamento, setFormaPagamento] = useState("pix");
-  const [dataLiquidacao, setDataLiquidacao] = useState(new Date().toISOString().split("T")[0]);
-  const [fonteSaida, setFonteSaida] = useState(""); // de onde SAI o dinheiro
-  const [desconto, setDesconto] = useState(0);
-  const [juros, setJuros] = useState(0);
-  const [multa, setMulta] = useState(0);
-  const [saving, setSaving] = useState(false);
+// ─────────────────────────────────────────────────────────────────────────────
+// ListaContas — renderiza a lista de contas e expõe ações de registrar/estornar
+// ─────────────────────────────────────────────────────────────────────────────
 
-  const { data: fontes } = useFontesDinheiro(workshopId, mes);
-
-  useEffect(() => {
-    if (aberto) {
-      setValor(String(conta?.valor_aberto || 0));
-      setDataLiquidacao(new Date().toISOString().split("T")[0]);
-      setFonteSaida("");
-      setDesconto(0);
-      setJuros(0);
-      setMulta(0);
-    }
-  }, [aberto, conta]);
-
-  const handleSalvar = async () => {
-    setSaving(true);
-    try {
-      const valorLiquidacao = parseFloat(valor) || 0;
-      await base44.functions.invoke("registrarLiquidacao", {
-        workshop_id: workshopId,
-        conta_pagar_id: conta.id,
-        tipo: "pagamento",
-        valor_liquidacao: valorLiquidacao,
-        forma_pagamento: formaPagamento,
-        data_liquidacao: dataLiquidacao,
-        desconto_concedido: desconto,
-        juros_recebido: juros,
-        multa_recebida: multa,
-      });
-
-      // Atualizar saldo inicial: SUBTRAI da fonte selecionada
-      if (fonteSaida && mes) {
-        await atualizarSaldoFonte(workshopId, mes, fonteSaida, valorLiquidacao, "subtrai", queryClient);
-      }
-
-      toast.success("Pagamento registrado!");
-      onSuccess();
-      onFechar();
-    } catch (error) {
-      toast.error("Erro ao registrar pagamento: " + (error.message || "Erro desconhecido"));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const valorLiquido = (parseFloat(valor) || 0) + juros + multa - desconto;
-
-  return (
-    <Dialog open={aberto} onOpenChange={onFechar}>
-      <DialogContent className="max-w-md max-h-[80vh] flex flex-col p-4">
-        <DialogHeader className="pb-2">
-          <DialogTitle className="text-lg">💳 Registrar Pagamento</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-2 py-0 overflow-y-auto flex-1">
-          <div>
-            <Label className="text-xs">Fornecedor</Label>
-            <p className="text-sm font-medium text-gray-900">{conta?.fornecedor_nome || "—"}</p>
-          </div>
-          <div>
-            <Label className="text-xs">Valor Aberto</Label>
-            <p className="text-base font-bold text-red-600">{fmt(conta?.valor_aberto)}</p>
-          </div>
-          <div>
-            <Label className="text-xs">Data de Pagamento</Label>
-            <Input type="date" value={dataLiquidacao} onChange={(e) => setDataLiquidacao(e.target.value)} className="mt-0.5 text-sm" />
-          </div>
-          <div>
-            <Label className="text-xs">Valor Pago (R$)</Label>
-            <InputMoeda value={parseFloat(valor) || 0} onChange={(e) => setValor(e.target.value)} className="text-right text-sm" />
-          </div>
-          <div>
-            <Label className="text-xs">Forma de Pagamento</Label>
-            <Select value={formaPagamento} onValueChange={setFormaPagamento}>
-              <SelectTrigger className="text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pix">PIX</SelectItem>
-                <SelectItem value="ted">TED</SelectItem>
-                <SelectItem value="boleto">Boleto</SelectItem>
-                <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
-                <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
-                <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                <SelectItem value="cheque">Cheque</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <SeletorFonte
-            fontes={fontes}
-            fonteSelecionada={fonteSaida}
-            onChange={setFonteSaida}
-            label="De onde saiu o dinheiro?"
-          />
-          <div className="grid grid-cols-3 gap-1">
-            <div>
-              <Label className="text-xs">Desconto</Label>
-              <InputMoeda value={desconto} onChange={(e) => setDesconto(parseFloat(e.target.value) || 0)} className="text-right text-xs" />
-            </div>
-            <div>
-              <Label className="text-xs">Juros</Label>
-              <InputMoeda value={juros} onChange={(e) => setJuros(parseFloat(e.target.value) || 0)} className="text-right text-xs" />
-            </div>
-            <div>
-              <Label className="text-xs">Multa</Label>
-              <InputMoeda value={multa} onChange={(e) => setMulta(parseFloat(e.target.value) || 0)} className="text-right text-xs" />
-            </div>
-          </div>
-          <div className="p-2 bg-red-50 rounded border border-red-200">
-            <p className="text-xs text-red-700">Valor Líquido</p>
-            <p className="text-lg font-bold text-red-900">{fmt(valorLiquido)}</p>
-          </div>
-        </div>
-        <DialogFooter className="gap-2 pt-2 mt-auto">
-          <Button variant="outline" size="sm" onClick={onFechar}>Cancelar</Button>
-          <Button size="sm" onClick={handleSalvar} disabled={saving || !valor}>
-            {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-            Confirmar Pagamento
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ── Função auxiliar: atualiza saldo da fonte no saldo inicial ────
-async function atualizarSaldoFonte(workshopId, mes, fonteKey, valor, operacao, queryClient) {
-  try {
-    // BUG FIX: não filtra por tipo — registro pode ter sido criado sem tipo "entrada"
-    const records = await base44.entities.DFCLancamento.filter({
-      workshop_id: workshopId,
-      mes,
-      grupo: "saldo_inicial",
-    }, "-created_date", 1);
-    const registro = records?.[0];
-    if (!registro) return;
-
-    const detalhes = {
-      bancos: registro.detalhes?.bancos || [],
-      maquinas_cartao: registro.detalhes?.maquinas_cartao || [],
-      caixa: registro.detalhes?.caixa || 0,
-    };
-    const [tipo, id] = fonteKey.split(":");
-    const delta = operacao === "soma" ? valor : -valor;
-
-    if (tipo === "banco") {
-      detalhes.bancos = detalhes.bancos.map(b =>
-        b.id === id ? { ...b, saldo: Math.max(0, (b.saldo || 0) + delta) } : b
-      );
-    } else if (tipo === "maquina") {
-      detalhes.maquinas_cartao = detalhes.maquinas_cartao.map(m =>
-        m.id === id ? { ...m, saldo: Math.max(0, (m.saldo || 0) + delta) } : m
-      );
-    } else if (tipo === "caixa") {
-      detalhes.caixa = Math.max(0, detalhes.caixa + delta);
-    }
-
-    const novoTotal = detalhes.bancos.reduce((s, b) => s + (b.saldo || 0), 0)
-      + detalhes.maquinas_cartao.reduce((s, m) => s + (m.saldo || 0), 0)
-      + detalhes.caixa;
-
-    // BUG FIX: atualiza TAMBÉM saldo_inicial para refletir no DFCTab
-    await base44.entities.DFCLancamento.update(registro.id, {
-      detalhes,
-      valor: novoTotal,
-      saldo_inicial: novoTotal,
-    });
-
-    // Invalida todas as queries relacionadas ao saldo inicial
-    queryClient.invalidateQueries({ queryKey: ["saldoInicial", workshopId, mes] });
-    queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes", workshopId, mes] });
-    queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
-  } catch (e) {
-    console.warn("Não foi possível atualizar saldo inicial:", e.message);
-  }
-}
-
-// ── Lista de Contas ───────────────────────────────────────────────
-function ListaContas({ contas, tipo, onRegistrar }) {
+function ListaContas({ contas, tipo, onRegistrar, onEstornar }) {
   if (!contas?.length) {
     return (
-      <div className="text-center py-8 text-gray-500">
-        <AlertCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
-        <p>Nenhuma conta a {tipo === "receber" ? "receber" : "pagar"} aberta</p>
+      <div className="text-center py-8 text-gray-400">
+        <AlertCircle className="w-10 h-10 mx-auto mb-2 opacity-40" />
+        <p className="text-sm">Nenhuma conta a {tipo === "receber" ? "receber" : "pagar"} neste período</p>
       </div>
     );
   }
 
-  const statusColors = {
-    aberto: "bg-blue-100 text-blue-700",
-    parcial: "bg-yellow-100 text-yellow-700",
-    pago: "bg-green-100 text-green-700",
-    vencido: "bg-red-100 text-red-700",
-  };
-
   return (
     <div className="space-y-2">
-      {contas.map((conta) => (
-        <div key={conta.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <p className="font-medium text-gray-900">
-                {tipo === "receber" ? conta.cliente_nome : conta.fornecedor_nome}
+      {contas.map((conta) => {
+        const vencida = isVencida(conta);
+        const pago    = conta.status === "pago";
+        const parcial = conta.status === "parcial";
+
+        // Badge de status — #5 vencidas em vermelho
+        let badgeClass = "bg-blue-100 text-blue-700";
+        let badgeLabel = conta.status;
+        if (vencida)       { badgeClass = "bg-red-100 text-red-700";    badgeLabel = "⚠️ Vencida"; }
+        else if (parcial)  { badgeClass = "bg-yellow-100 text-yellow-700"; }
+        else if (pago)     { badgeClass = "bg-green-100 text-green-700"; }
+
+        // Borda da linha — destaque visual para vencidas
+        const rowClass = vencida
+          ? "border-red-200 bg-red-50 hover:bg-red-100"
+          : "border-gray-200 hover:bg-gray-50";
+
+        const nome = tipo === "receber" ? conta.cliente_nome : conta.fornecedor_nome;
+        const vencimentoTxt = conta.data_vencimento
+          ? new Date(conta.data_vencimento + "T12:00:00").toLocaleDateString("pt-BR")
+          : "Sem vencimento";
+
+        return (
+          <div
+            key={conta.id}
+            className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${rowClass}`}
+          >
+            {/* Lado esquerdo — identificação */}
+            <div className="flex-1 min-w-0 mr-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="font-medium text-gray-900 text-sm truncate">{nome || "—"}</p>
+                <Badge className={`text-[11px] px-1.5 py-0.5 ${badgeClass}`}>
+                  {badgeLabel}
+                </Badge>
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Vencimento: {vencimentoTxt}
               </p>
-              <Badge className={statusColors[conta.status] || statusColors.aberto}>
-                {conta.status}
-              </Badge>
             </div>
-            <p className="text-xs text-gray-500">
-              Vencimento: {new Date(conta.data_vencimento).toLocaleDateString("pt-BR")}
-            </p>
+
+            {/* Lado direito — valor e ações */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <p className="font-bold text-gray-900 text-sm">{fmt(conta.valor_aberto)}</p>
+
+              {/* Registrar pagamento/recebimento — apenas para contas não totalmente pagas */}
+              {!pago && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className={tipo === "receber"
+                    ? "border-green-300 text-green-700 hover:bg-green-50"
+                    : "border-red-300 text-red-700 hover:bg-red-50"}
+                  onClick={() => onRegistrar(conta)}
+                >
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  {tipo === "receber" ? "Receber" : "Pagar"}
+                </Button>
+              )}
+
+              {/* #1 Estornar — visível para contas pagas ou parciais */}
+              {(pago || parcial) && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-orange-300 text-orange-600 hover:bg-orange-50"
+                  onClick={() => onEstornar(conta)}
+                  title="Estornar baixa"
+                >
+                  <RotateCcw className="w-3 h-3 mr-1" />
+                  Estornar
+                </Button>
+              )}
+            </div>
           </div>
-          <div className="text-right">
-            <p className="font-bold text-gray-900">{fmt(conta.valor_aberto)}</p>
-            <Button size="sm" onClick={() => onRegistrar(conta)} className="mt-1">
-              <CheckCircle className="w-3 h-3 mr-1" />
-              {tipo === "receber" ? "Receber" : "Pagar"}
-            </Button>
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
 
-// ── Componente Principal ──────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Componente Principal
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function ContasReceberPagarTab({ workshopId, mes }) {
   const queryClient = useQueryClient();
-  const [contaReceberModal, setContaReceberModal] = useState(null);
-  const [contaPagarModal, setContaPagarModal] = useState(null);
-  const [contaEstornoModal, setContaEstornoModal] = useState(null); // P1-2: estorno no DRETCMP2
-  const [tipoEstorno, setTipoEstorno] = useState(null); // 'receber' | 'pagar'
-  const [periodo, setPeriodo] = useState("mensal"); // mensal | anual
-  const [ano, setAno] = useState(mes ? parseInt(mes.split('-')[0]) : new Date().getFullYear());
-  const [mesSelecionado, setMesSelecionado] = useState(mes ? mes.split('-')[1] : String(new Date().getMonth() + 1).padStart(2, '0'));
-  
-  // Calcular datas do filtro usando o estado reativo
-  const mesPadded = String(mesSelecionado).padStart(2, '0');
-  const dataInicio = periodo === "mensal" 
-    ? `${ano}-${mesPadded}-01`
-    : `${ano}-01-01`;
-  const dataFim = periodo === "mensal"
-    ? `${ano}-${mesPadded}-31`
-    : `${ano}-12-31`;
 
-  // Buscar Contas a Receber com filtro
-  // status "$in" para mostrar aberto + parcial (parcial = pago parcialmente, ainda tem saldo)
-  // LIMIT 500 para evitar truncamento silencioso
-  const { data: contasReceber = [], isLoading: isReceberLoading, refetch: refetchReceber } = useQuery({
-    queryKey: ["contas-receber", workshopId, periodo, ano, mesSelecionado],
-    queryFn: () => base44.entities.ContaReceber.filter({ 
-      workshop_id: workshopId, 
-      status: { $in: ["aberto", "parcial"] },
-      data_vencimento: { $gte: dataInicio, $lte: dataFim }
-    }, "-data_vencimento", 500),
+  // Modais
+  const [contaReceberModal, setContaReceberModal]   = useState(null);
+  const [contaPagarModal,   setContaPagarModal]     = useState(null);
+  const [contaEstornoModal, setContaEstornoModal]   = useState(null);
+  const [tipoEstorno,       setTipoEstorno]         = useState(null); // 'receber' | 'pagar'
+
+  // #7 Período derivado do prop `mes` — sincronizado com o DFC
+  // O FiltroPeriodo permite ajuste local sem desconectar do pai.
+  const [periodo, setPeriodo] = useState("mensal");
+  const [ano, setAno]         = useState(() => mes ? parseInt(mes.split("-")[0]) : new Date().getFullYear());
+  const [mesSelecionado, setMesSelecionado] = useState(
+    () => mes ? mes.split("-")[1] : String(new Date().getMonth() + 1).padStart(2, "0")
+  );
+
+  // Quando o prop `mes` mudar (usuário troca mês no DFC), sincroniza o estado local
+  useEffect(() => {
+    if (!mes) return;
+    const [a, m] = mes.split("-");
+    setAno(parseInt(a));
+    setMesSelecionado(m);
+  }, [mes]);
+
+  const mesPadded = String(mesSelecionado).padStart(2, "0");
+  const mesRef    = `${ano}-${mesPadded}`; // YYYY-MM — usado nos modais de registrar
+
+  // #6 Datas de filtro client-side — contas sem vencimento sempre incluídas
+  const dataInicio = periodo === "mensal" ? `${ano}-${mesPadded}-01` : `${ano}-01-01`;
+  const dataFim    = periodo === "mensal" ? `${ano}-${mesPadded}-31` : `${ano}-12-31`;
+
+  // ── Queries ───────────────────────────────────────────────────────────────
+
+  // #1 Inclui "pago" para permitir estorno de contas já baixadas
+  // #4 "data_vencimento" ascendente — vencidas primeiro
+  // #6 Sem filtro de data na query — filtramos client-side para incluir sem vencimento
+  // #8 staleTime 30 s — handleSuccess invalida explicitamente quando necessário
+  const {
+    data: contasReceberRaw = [],
+    isLoading: isReceberLoading,
+    isError: isReceberError,
+    refetch: refetchReceber,
+  } = useQuery({
+    queryKey: ["contas-receber", workshopId],
+    queryFn: () =>
+      base44.entities.ContaReceber.filter(
+        { workshop_id: workshopId, status: { $in: ["aberto", "parcial", "pago"] } },
+        "data_vencimento",
+        500
+      ),
     enabled: !!workshopId,
-    staleTime: 0,
+    staleTime: 30_000,
   });
 
-  // Buscar Contas a Pagar com filtro
-  const { data: contasPagar = [], isLoading: isPagarLoading, refetch: refetchPagar } = useQuery({
-    queryKey: ["contas-pagar", workshopId, periodo, ano, mesSelecionado],
-    queryFn: () => base44.entities.ContaPagar.filter({ 
-      workshop_id: workshopId, 
-      status: { $in: ["aberto", "parcial"] },
-      data_vencimento: { $gte: dataInicio, $lte: dataFim }
-    }, "-data_vencimento", 500),
+  const {
+    data: contasPagarRaw = [],
+    isLoading: isPagarLoading,
+    isError: isPagarError,
+    refetch: refetchPagar,
+  } = useQuery({
+    queryKey: ["contas-pagar", workshopId],
+    queryFn: () =>
+      base44.entities.ContaPagar.filter(
+        { workshop_id: workshopId, status: { $in: ["aberto", "parcial", "pago"] } },
+        "data_vencimento",
+        500
+      ),
     enabled: !!workshopId,
-    staleTime: 0,
+    staleTime: 30_000,
   });
+
+  // #6 Filtro client-side: inclui contas sem vencimento; exclui pagas fora do período
+  const filtrarPorPeriodo = (contas) =>
+    contas.filter((c) => {
+      // Contas pagas: só mostra do período atual (para contexto de estorno)
+      if (c.status === "pago") {
+        return c.data_vencimento
+          ? c.data_vencimento >= dataInicio && c.data_vencimento <= dataFim
+          : false; // pagas sem vencimento: omite (não há como inferir o período)
+      }
+      // Abertas/parciais sem vencimento: sempre visíveis
+      if (!c.data_vencimento) return true;
+      // Abertas/parciais com vencimento: filtra pelo período
+      return c.data_vencimento >= dataInicio && c.data_vencimento <= dataFim;
+    });
+
+  const contasReceber = useMemo(() => filtrarPorPeriodo(contasReceberRaw), [contasReceberRaw, dataInicio, dataFim]);
+  const contasPagar   = useMemo(() => filtrarPorPeriodo(contasPagarRaw),   [contasPagarRaw,   dataInicio, dataFim]);
+
+  // Totais apenas sobre contas abertas/parciais (não pagas)
+  const totalReceber = contasReceber
+    .filter((c) => c.status !== "pago")
+    .reduce((s, c) => s + (c.valor_aberto || 0), 0);
+  const totalPagar = contasPagar
+    .filter((c) => c.status !== "pago")
+    .reduce((s, c) => s + (c.valor_aberto || 0), 0);
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
 
   const handleSuccess = () => {
-    // Invalida TODAS as queries relacionadas (prefixo sem "tab" para alinhar com DFCTab)
-    queryClient.invalidateQueries({ queryKey: ["contas-receber", workshopId] });
-    queryClient.invalidateQueries({ queryKey: ["contas-pagar", workshopId] });
+    queryClient.invalidateQueries({ queryKey: ["contas-receber",      workshopId] });
+    queryClient.invalidateQueries({ queryKey: ["contas-pagar",        workshopId] });
     queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc", workshopId] });
-    queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId] });
-    queryClient.invalidateQueries({ queryKey: ["dfc-manuais", workshopId] });
-    queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId] });
+    queryClient.invalidateQueries({ queryKey: ["dre-lancamentos",     workshopId] });
+    queryClient.invalidateQueries({ queryKey: ["dfc-manuais",         workshopId] });
+    queryClient.invalidateQueries({ queryKey: ["dfc-saldo",           workshopId] });
+    queryClient.invalidateQueries({ queryKey: ["dfc-liquidacoes-mes", workshopId] });
+    queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes",workshopId] });
     queryClient.invalidateQueries({ queryKey: ["liquidacoes"] });
-    queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes", workshopId] });
     queryClient.invalidateQueries({ queryKey: ["budget-metas"] });
-    queryClient.invalidateQueries({ queryKey: ["contas-receber-budget"] });
-    queryClient.invalidateQueries({ queryKey: ["contas-pagar-budget"] });
   };
 
-  const totalReceber = contasReceber.reduce((sum, c) => sum + (c.valor_aberto || 0), 0);
-  const totalPagar = contasPagar.reduce((sum, c) => sum + (c.valor_aberto || 0), 0);
+  const abrirEstorno = (conta, tipo) => {
+    setContaEstornoModal(conta);
+    setTipoEstorno(tipo);
+  };
+
+  // ── Loading / Error ───────────────────────────────────────────────────────
 
   if (isReceberLoading || isPagarLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-blue-500 mr-2" />
+        <Loader2 className="w-5 h-5 animate-spin text-blue-500 mr-2" />
         <span className="text-gray-500 text-sm">Carregando contas...</span>
       </div>
     );
   }
 
+  // #10 Estado de erro visível
+  if (isReceberError || isPagarError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 gap-3 text-gray-500">
+        <AlertCircle className="w-8 h-8 text-red-400" />
+        <p className="text-sm">Erro ao carregar as contas. Verifique a conexão.</p>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => { refetchReceber(); refetchPagar(); }}
+        >
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Tentar Novamente
+        </Button>
+      </div>
+    );
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
+
   return (
     <div className="space-y-4">
       <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800">
-        <strong>Contas a Receber/Pagar:</strong> Registre recebimentos e pagamentos que alimentam o DFC automaticamente.
-        Os lançamentos são criados na aba DFC quando você confirma o pagamento.
+        <strong>Contas a Receber/Pagar:</strong> Registre recebimentos e pagamentos — os lançamentos
+        alimentam o DFC automaticamente. Contas <strong>pagas</strong> aparecem no período para
+        permitir estorno quando necessário.
       </div>
 
-      {/* Filtro de Período */}
-      <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+      {/* #7 Filtro de período — sincronizado com o DFC via useEffect acima */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <FiltroPeriodo
-          mes={String(mesSelecionado).padStart(2, '0')}
+          mes={mesPadded}
           ano={ano}
           periodo={periodo}
-          onMesChange={(novoMes) => setMesSelecionado(novoMes)}
-          onAnoChange={(novoAno) => setAno(parseInt(novoAno))}
-          onPeriodoChange={(novoPeriodo) => setPeriodo(novoPeriodo)}
+          onMesChange={setMesSelecionado}
+          onAnoChange={(v) => setAno(parseInt(v))}
+          onPeriodoChange={setPeriodo}
         />
       </div>
 
@@ -545,7 +323,7 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
           <TabsTrigger value="pagar">💳 Contas a Pagar</TabsTrigger>
         </TabsList>
 
-        {/* Contas a Receber */}
+        {/* ── Contas a Receber ── */}
         <TabsContent value="receber">
           <Card>
             <CardHeader>
@@ -558,22 +336,23 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
                   <CardDescription>Recebimentos pendentes de clientes</CardDescription>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-500">Total a Receber</p>
+                  <p className="text-xs text-gray-500">Total Pendente</p>
                   <p className="text-2xl font-bold text-green-600">{fmt(totalReceber)}</p>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <ListaContas 
-                contas={contasReceber} 
-                tipo="receber" 
-                onRegistrar={(conta) => setContaReceberModal(conta)} 
+              <ListaContas
+                contas={contasReceber}
+                tipo="receber"
+                onRegistrar={(conta) => setContaReceberModal(conta)}
+                onEstornar={(conta) => abrirEstorno(conta, "receber")}
               />
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Contas a Pagar */}
+        {/* ── Contas a Pagar ── */}
         <TabsContent value="pagar">
           <Card>
             <CardHeader>
@@ -586,31 +365,32 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
                   <CardDescription>Pagamentos pendentes a fornecedores</CardDescription>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-500">Total a Pagar</p>
+                  <p className="text-xs text-gray-500">Total Pendente</p>
                   <p className="text-2xl font-bold text-red-600">{fmt(totalPagar)}</p>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <ListaContas 
-                contas={contasPagar} 
-                tipo="pagar" 
-                onRegistrar={(conta) => setContaPagarModal(conta)} 
+              <ListaContas
+                contas={contasPagar}
+                tipo="pagar"
+                onRegistrar={(conta) => setContaPagarModal(conta)}
+                onEstornar={(conta) => abrirEstorno(conta, "pagar")}
               />
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
-      {/* Modais */}
+      {/* ── Modais ── */}
       {contaReceberModal && (
         <ModalRegistrarRecebimentoShared
           aberto={!!contaReceberModal}
           onFechar={() => setContaReceberModal(null)}
           conta={contaReceberModal}
           workshopId={workshopId}
-          mes={`${ano}-${mesPadded}`}
-          onSuccess={handleSuccess}
+          mes={mesRef}
+          onSuccess={() => { setContaReceberModal(null); handleSuccess(); }}
         />
       )}
 
@@ -620,12 +400,12 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
           onFechar={() => setContaPagarModal(null)}
           conta={contaPagarModal}
           workshopId={workshopId}
-          mes={`${ano}-${mesPadded}`}
-          onSuccess={handleSuccess}
+          mes={mesRef}
+          onSuccess={() => { setContaPagarModal(null); handleSuccess(); }}
         />
       )}
 
-      {/* P1-2: Modal de Estorno acessível dentro do DRETCMP2 — usa componente compartilhado */}
+      {/* #1 Modal de Estorno — usa componente compartilhado */}
       {contaEstornoModal && (
         <ModalEstornoLiquidacao
           aberto={!!contaEstornoModal}
