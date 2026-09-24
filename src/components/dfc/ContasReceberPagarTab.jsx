@@ -11,7 +11,7 @@
  *       inclui contas sem data_vencimento.
  *   #7  Período sincronizado com o prop `mes` — estado local de mês/ano derivado do prop,
  *       não independente; mudança no DFC reflete aqui automaticamente.
- *   #8  staleTime 0 → 30 000 ms — handleSuccess invalida explicitamente; staleTime 0
+ *   #8  staleTime 0 → 60 000 ms — handleSuccess invalida explicitamente; staleTime 0
  *       forçava re-fetch desnecessário a cada render.
  *  #10  Estado de erro visível — isError + botão Tentar Novamente em vez de lista vazia silenciosa.
  */
@@ -242,7 +242,7 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
   // #1 Inclui "pago" para permitir estorno de contas já baixadas
   // #4 "data_vencimento" ascendente — vencidas primeiro
   // #6 Sem filtro de data na query — filtramos client-side para incluir sem vencimento
-  // #8 staleTime 30 s — handleSuccess invalida explicitamente quando necessário
+  // C2: staleTime 60 s — handleSuccess invalida explicitamente quando necessário
   const {
     data: contasReceberRaw = [],
     isLoading: isReceberLoading,
