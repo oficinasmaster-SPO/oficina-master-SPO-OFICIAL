@@ -565,12 +565,8 @@ export default function DFCTab({ workshopId, mes }) {
   const [itemPagamento, setItemPagamento] = useState(null);
   const [view, setView] = useState("grupos"); // "grupos" | "projecao"
   const [modalSaldoDetalhadoAberto, setModalSaldoDetalhadoAberto] = useState(false);
-  // Frente 1 — estorno de baixa pelo DFC (seção Baixas do Mês)
-  const [liquidacaoParaEstornar, setLiquidacaoParaEstornar] = useState(null);
   // Estorno direto das linhas Operacional/Investimento/Financiamento
   const [contaParaEstornarDFC, setContaParaEstornarDFC] = useState(null); // { conta, tipo }
-  // BUG-3 FIX: controle de abertura da seção Baixas do Mês via estado React (não DOM)
-  const [baixasMesAberta, setBaixasMesAberta] = useState(true);
   const [periodo, setPeriodo] = useState("mensal"); // mensal | anual
   const [showContasTab, setShowContasTab] = useState(false);
 
@@ -665,28 +661,6 @@ export default function DFCTab({ workshopId, mes }) {
     queryKey: ["dfc-saldo", workshopId, mes],
     queryFn: () => base44.entities.DFCLancamento.filter({ workshop_id: workshopId, mes, grupo: "saldo_inicial" }),
     enabled: !!workshopId && !!mes
-  });
-
-  // ── Frente 1: Liquidacões do mês (baixas conciliadas e não conciliadas) ———————————
-  // Filtro por intervalo de data em BRT (UTC-3): dia 1 às 03:00 UTC → dia 1 do mês seguinte às 02:59 UTC
-  const { data: liquidacoesMes = [], isLoading: isLoadingLiquidacoes } = useQuery({
-    queryKey: ["dfc-liquidacoes-mes", workshopId, mes],
-    queryFn: async () => {
-      if (!workshopId || !mes) return [];
-      const [anoStr, mesStr] = mes.split("-");
-      const ano = parseInt(anoStr), mesIdx = parseInt(mesStr);
-      const anoFim = mesIdx === 12 ? ano + 1 : ano;
-      const mesFimStr = String(mesIdx === 12 ? 1 : mesIdx + 1).padStart(2, "0");
-      const dataInicio = `${mes}-01T03:00:00.000Z`;
-      const dataFim    = `${anoFim}-${mesFimStr}-01T02:59:59.999Z`;
-      return base44.entities.LiquidacaoFinanceira.filter(
-        { workshop_id: workshopId, data_liquidacao: { $gte: dataInicio, $lte: dataFim } },
-        "-data_liquidacao",
-        100
-      );
-    },
-    enabled: !!workshopId && !!mes,
-    staleTime: 30_000,
   });
 
   // ── DFC Anual ──
@@ -931,99 +905,6 @@ export default function DFCTab({ workshopId, mes }) {
       {/* Transferências entre contas — sempre visível, independente da view selecionada */}
       <TransferenciasEntreContas workshopId={workshopId} mes={mes} />
 
-      {/* ── Frente 1: Baixas do Mês — ponto de entrada para estorno direto pelo DFC ── */}
-      <div className="rounded-xl border border-orange-200 bg-white overflow-hidden">
-        <div
-          className="flex items-center justify-between px-4 py-3 bg-orange-50 cursor-pointer select-none"
-          onClick={() => setBaixasMesAberta(a => !a)}
-        >
-          <div className="flex items-center gap-2">
-            <RotateCcw className="w-4 h-4 text-orange-600" />
-            <span className="text-sm font-semibold text-orange-800">Baixas do Mês</span>
-            {!isLoadingLiquidacoes && (
-              <span className="text-xs text-orange-600 bg-orange-100 rounded-full px-2 py-0.5">
-                {liquidacoesMes.length} baixa{liquidacoesMes.length !== 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
-          <span className="text-xs text-orange-500">{baixasMesAberta ? "recolher ▲" : "expandir ▼"}</span>
-        </div>
-
-        {baixasMesAberta && (
-          <div>
-          {isLoadingLiquidacoes ? (
-            <div className="flex items-center gap-2 text-sm text-gray-500 px-4 py-4">
-              <Loader2 className="w-4 h-4 animate-spin" /> Carregando baixas...
-            </div>
-          ) : liquidacoesMes.length === 0 ? (
-            <p className="text-sm text-gray-500 italic px-4 py-4">Nenhuma baixa registrada neste mês.</p>
-          ) : (
-            <div className="divide-y divide-gray-100">
-              {liquidacoesMes.map((liq) => {
-                const isRecebimento = liq.tipo === "recebimento";
-                const valorFmt = fmt(liq.valor_liquidacao);
-                const dataFmt  = liq.data_liquidacao
-                  ? new Date(liq.data_liquidacao).toLocaleDateString("pt-BR")
-                  : "—";
-                const formaMap = {
-                  pix: "PIX", ted: "TED", boleto: "Boleto",
-                  cartao_credito: "Cartão Crédito", cartao_debito: "Cartão Débito",
-                  dinheiro: "Dinheiro", cheque: "Cheque",
-                };
-                const formaFmt = formaMap[liq.forma_pagamento] || liq.forma_pagamento || "—";
-
-                return (
-                  <div
-                    key={liq.id}
-                    className="group flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                        isRecebimento ? "bg-green-500" : "bg-red-500"
-                      }`} />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-800 truncate">
-                          {isRecebimento ? "Recebimento" : "Pagamento"}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {formaFmt} · {dataFmt}
-                        </p>
-                      </div>
-                      {liq.conciliado && (
-                        <span className="flex-shrink-0 text-xs bg-green-100 text-green-700 border border-green-300 rounded-full px-2 py-0.5">
-                          Conciliada
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <span className={`text-sm font-bold ${
-                        isRecebimento ? "text-green-600" : "text-red-600"
-                      }`}>
-                        {isRecebimento ? "+" : "-"}{valorFmt}
-                      </span>
-                      {/* Botão de estorno — chama ModalEstornoLiquidacao no modo DFC */}
-                      <button
-                        type="button"
-                        onClick={() => setLiquidacaoParaEstornar(liq)}
-                        title={liq.conciliado
-                          ? "Estornar (baixa conciliada — a transação bancária voltará para pendente)"
-                          : "Estornar esta baixa"}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-xs text-orange-600 hover:text-orange-800 hover:bg-orange-50 rounded-md px-2 py-1"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        Estornar
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          </div>
-        )}
-      </div>
-
       {/* Modal de estorno — modo Conta: disparado pelas linhas Operacional/Investimento/Financiamento */}
       {contaParaEstornarDFC && (
         <ModalEstornoLiquidacao
@@ -1035,25 +916,6 @@ export default function DFCTab({ workshopId, mes }) {
           onSuccess={() => {
             setContaParaEstornarDFC(null);
             queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc", workshopId, mes] });
-            queryClient.invalidateQueries({ queryKey: ["dfc-liquidacoes-mes", workshopId, mes] });
-          }}
-        />
-      )}
-
-      {/* Modal de estorno — modo DFC: liquidacão já conhecida, sem seleção */}
-      {liquidacaoParaEstornar && (
-        <ModalEstornoLiquidacao
-          aberto={!!liquidacaoParaEstornar}
-          onFechar={() => setLiquidacaoParaEstornar(null)}
-          liquidacao={liquidacaoParaEstornar}
-          workshopId={workshopId}
-          onSuccess={() => {
-            setLiquidacaoParaEstornar(null);
-            // BUG-1 FIX: invalida todas as queries afetadas pelo estorno
-            queryClient.invalidateQueries({ queryKey: ["dfc-liquidacoes-mes", workshopId, mes] });
-            queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc", workshopId, mes] });
-            queryClient.invalidateQueries({ queryKey: ["contas-receber", workshopId] });
-            queryClient.invalidateQueries({ queryKey: ["contas-pagar", workshopId] });
           }}
         />
       )}
