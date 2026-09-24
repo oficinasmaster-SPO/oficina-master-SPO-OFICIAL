@@ -288,8 +288,9 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
       return c.data_vencimento >= dataInicio && c.data_vencimento <= dataFim;
     });
 
-  const contasReceber = useMemo(() => filtrarPorPeriodo(contasReceberRaw), [contasReceberRaw, dataInicio, dataFim]);
-  const contasPagar   = useMemo(() => filtrarPorPeriodo(contasPagarRaw),   [contasPagarRaw,   dataInicio, dataFim]);
+  // B1 — Filtra por período client-side E ordena por urgência (vencidas → a vencer → sem data → pagas)
+  const contasReceber = useMemo(() => ordenarPorUrgencia(filtrarPorPeriodo(contasReceberRaw)), [contasReceberRaw, dataInicio, dataFim]);
+  const contasPagar   = useMemo(() => ordenarPorUrgencia(filtrarPorPeriodo(contasPagarRaw)),   [contasPagarRaw,   dataInicio, dataFim]);
 
   // Totais apenas sobre contas abertas/parciais (não pagas)
   const totalReceber = contasReceber
