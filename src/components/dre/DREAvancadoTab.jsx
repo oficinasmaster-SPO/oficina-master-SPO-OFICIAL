@@ -453,8 +453,12 @@ function LancamentoRow({ item, onDelete, onSaved }) {
   const isVencido = hasVenc && !isPago && item.data_vencimento < hoje;
 
   const barColor   = item.tipo === "receita" ? "bg-green-400" : item.entra_tcmp2 ? "bg-blue-400" : "bg-orange-400";
-  const cardBorder = isVencido ? "border-red-200 bg-red-50/30"
-    : expanded ? "border-blue-200 bg-blue-50/20"
+  const cardBorder = isVencido
+    ? expanded
+      ? "border-red-300 bg-red-50/40"   // vencida + expandida: mantém vermelho
+      : "border-red-200 bg-red-50/30"
+    : expanded
+    ? "border-blue-200 bg-blue-50/20"
     : "border-gray-200 bg-white";
 
   return (
