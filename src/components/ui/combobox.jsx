@@ -26,7 +26,8 @@ export default function Combobox({
   
   // Layout & Comportamento
   lazyRender = false,
-  maxHeight = 250, 
+  maxHeight = 250,
+  direction = "down", // "down" (padrão) | "up" — abre a lista para cima (útil em campos próximos do rodapé)
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -255,17 +256,21 @@ export default function Combobox({
 
       <div
         className={cn(
-          "absolute top-full left-0 z-20 w-full bg-popover text-popover-foreground overflow-hidden",
-          // Borda superior 0 (border-t-0) cola perfeitamente na borda do input.
-          // shadow-lg dá aquela sombra de menu nativo do Mac flutuando sobre a tela.
-          "border border-t-0 border-input rounded-b-md shadow-lg",
-          "origin-top transition-[opacity,transform,max-height] duration-200 ease-out",
+          "absolute left-0 z-20 w-full bg-popover text-popover-foreground overflow-hidden",
+          // A borda "colada" no input fica no lado de onde a lista surge:
+          // para baixo (padrão) a borda superior é removida; para cima, a inferior.
+          direction === "up"
+            ? "bottom-full border border-b-0 border-input rounded-t-md shadow-lg"
+            : "top-full border border-t-0 border-input rounded-b-md shadow-lg",
+          direction === "up" ? "origin-bottom" : "origin-top",
+          "transition-[opacity,transform,max-height] duration-200 ease-out",
           open
             ? "opacity-100 visible scale-100 translate-y-0"
-            : "opacity-0 invisible scale-[0.98] -translate-y-0.5 pointer-events-none"
+            : "opacity-0 invisible scale-[0.98] pointer-events-none"
         )}
         style={{ maxHeight: open ? maxHeight : 0 }}
       >
+        {open && <span className="hidden" />}
         <CommandPrimitive.List 
           className="overflow-y-auto overflow-x-hidden p-1"
           style={{ maxHeight }} 

@@ -712,28 +712,100 @@ function LancamentoRow({ item, onDelete, onSaved }) {
   );
 }
 
-// ─── SEÇÃO AGRUPADA POR CATEGORIA ────────────────────────────────────────────
+// ─── SEÇÃO AGRUPADA POR CATEGORIA — Sprint B ───────────────────────────────────
+// Cabeçalho rico: total bruto + subtotais pago/pendente + badge de vencidos
 function GrupoCategoria({ catKey, label, itens, tipo, onDelete, onSaved }) {
   const [expanded, setExpanded] = useState(true);
+
+  // ── Totalizadores calculados sobre os itens do grupo ───────────────────
+  const hoje  = new Date().toISOString().split("T")[0];
   const total = itens.reduce((s, i) => s + i.valor, 0);
 
+  const totalPago = itens
+    .filter(i => !!i.data_pagamento)
+    .reduce((s, i) => s + i.valor, 0);
+
+  const totalPendente = itens
+    .filter(i => !i.data_pagamento)
+    .reduce((s, i) => s + i.valor, 0);
+
+  const qtdVencidos = itens.filter(
+    i => !i.data_pagamento && !!i.data_vencimento && i.data_vencimento < hoje
+  ).length;
+
+  const temPagos    = totalPago    > 0;
+  const temPendente = totalPendente > 0;
+
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
+      {/* ── Cabeçalho do grupo ── */}
       <button
-        className="w-full flex items-center justify-between py-1.5 px-1 hover:bg-gray-50 rounded transition-colors"
+        className="w-full flex items-center justify-between py-2 px-2 hover:bg-gray-50 rounded-lg transition-colors group"
         onClick={() => setExpanded(!expanded)}
       >
-        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{label}</span>
-        <div className="flex items-center gap-2">
-          <span className={`text-xs font-bold ${tipo === "receita" ? "text-green-700" : "text-red-700"}`}>
+        {/* Esquerda: label + badge vencidos */}
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider truncate">
+            {label}
+          </span>
+          <span className="text-[11px] text-gray-400">
+            {itens.length} {itens.length === 1 ? "item" : "itens"}
+          </span>
+          {qtdVencidos > 0 && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-red-100 text-red-700 border border-red-200 px-1.5 py-0.5 rounded-full">
+              ⚠️ {qtdVencidos} vencido{qtdVencidos > 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+
+        {/* Direita: subtotais + total bruto + chevron */}
+        <div className="flex items-center gap-3 flex-shrink-0 ml-3">
+          {/* Subtotais pago/pendente — visíveis quando há mix */}
+          {temPagos && temPendente && (
+            <div className="hidden sm:flex items-center gap-2 text-[11px]">
+              <span className="text-green-600 font-medium">
+                ✅ {formatCurrency(totalPago)}
+              </span>
+              <span className="text-gray-300">|</span>
+              <span className="text-amber-600 font-medium">
+                ⏳ {formatCurrency(totalPendente)}
+              </span>
+            </div>
+          )}
+          {/* Só pagos */}
+          {temPagos && !temPendente && (
+            <span className="hidden sm:inline text-[11px] text-green-600 font-medium">
+              ✅ tudo pago
+            </span>
+          )}
+          {/* Só pendentes */}
+          {!temPagos && temPendente && qtdVencidos > 0 && (
+            <span className="hidden sm:inline text-[11px] text-red-600 font-medium">
+              tudo vencido
+            </span>
+          )}
+
+          {/* Total bruto */}
+          <span className={`text-xs font-bold ${
+            tipo === "receita" ? "text-green-700" : "text-red-700"
+          }`}>
             {formatCurrency(total)}
           </span>
-          {expanded ? <ChevronUp className="w-3 h-3 text-gray-400" /> : <ChevronDown className="w-3 h-3 text-gray-400" />}
+
+          {expanded
+            ? <ChevronUp className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-600 transition-colors" />
+            : <ChevronDown className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-600 transition-colors" />}
         </div>
       </button>
-      {expanded && itens.map(item => (
-        <LancamentoRow key={item.id} item={item} onDelete={onDelete} onSaved={onSaved} />
-      ))}
+
+      {/* ── Lista de lançamentos ── */}
+      {expanded && (
+        <div className="space-y-1.5 pl-1">
+          {itens.map(item => (
+            <LancamentoRow key={item.id} item={item} onDelete={onDelete} onSaved={onSaved} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
