@@ -257,7 +257,7 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
         500
       ),
     enabled: !!workshopId,
-    staleTime: 30_000,
+    staleTime: 60_000,
   });
 
   const {
@@ -274,7 +274,7 @@ export default function ContasReceberPagarTab({ workshopId, mes }) {
         500
       ),
     enabled: !!workshopId,
-    staleTime: 30_000,
+    staleTime: 60_000,
   });
 
   // #6 Filtro client-side: inclui contas sem vencimento; exclui pagas fora do período
