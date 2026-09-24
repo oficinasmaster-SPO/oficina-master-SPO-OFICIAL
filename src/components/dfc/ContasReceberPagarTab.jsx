@@ -118,13 +118,16 @@ function ListaContas({ contas, tipo, onRegistrar, onEstornar }) {
         const vencida = isVencida(conta);
         const pago    = conta.status === "pago";
         const parcial = conta.status === "parcial";
+        const dias    = vencida ? diasDeAtraso(conta) : 0;
 
-        // Badge de status — #5 vencidas em vermelho
+        // B2 — Badge com dias de atraso
         let badgeClass = "bg-blue-100 text-blue-700";
         let badgeLabel = conta.status;
-        if (vencida)       { badgeClass = "bg-red-100 text-red-700";    badgeLabel = "⚠️ Vencida"; }
-        else if (parcial)  { badgeClass = "bg-yellow-100 text-yellow-700"; }
-        else if (pago)     { badgeClass = "bg-green-100 text-green-700"; }
+        if (vencida) {
+          badgeClass = "bg-red-100 text-red-700";
+          badgeLabel = dias > 0 ? `Vencida · ${dias} dia${dias !== 1 ? "s" : ""}` : "⚠️ Vencida";
+        } else if (parcial) { badgeClass = "bg-yellow-100 text-yellow-700"; }
+        else if (pago)      { badgeClass = "bg-green-100 text-green-700"; }
 
         // Borda da linha — destaque visual para vencidas
         const rowClass = vencida
