@@ -464,7 +464,7 @@ function LancamentoRow({ item, onDelete, onSaved }) {
 
         {/* Linha principal — clique expande/recolhe */}
         <div className="flex items-center gap-3 pl-4 pr-3 py-3 cursor-pointer group select-none"
-             onClick={() => setExpanded(v => !v)}>
+             onClick={() => { setExpanded(v => !v); setConfirmDelete(false); }}>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-900 truncate">{item.descricao}</p>
             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
