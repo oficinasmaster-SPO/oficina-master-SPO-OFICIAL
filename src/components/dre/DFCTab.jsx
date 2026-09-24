@@ -921,10 +921,7 @@ export default function DFCTab({ workshopId, mes }) {
       <div className="rounded-xl border border-orange-200 bg-white overflow-hidden">
         <div
           className="flex items-center justify-between px-4 py-3 bg-orange-50 cursor-pointer select-none"
-          onClick={() => {
-            const el = document.getElementById("dfc-baixas-mes");
-            if (el) el.classList.toggle("hidden");
-          }}
+          onClick={() => setBaixasMesAberta(a => !a)}
         >
           <div className="flex items-center gap-2">
             <RotateCcw className="w-4 h-4 text-orange-600" />
