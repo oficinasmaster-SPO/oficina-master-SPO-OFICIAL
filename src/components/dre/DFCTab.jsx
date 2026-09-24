@@ -932,10 +932,10 @@ export default function DFCTab({ workshopId, mes }) {
               </span>
             )}
           </div>
-          <span className="text-xs text-orange-500">clique para expandir / recolher</span>
+          <span className="text-xs text-orange-500">{baixasMesAberta ? "recolher ▲" : "expandir ▼"}</span>
         </div>
 
-        <div id="dfc-baixas-mes">
+        {baixasMesAberta && (
           {isLoadingLiquidacoes ? (
             <div className="flex items-center gap-2 text-sm text-gray-500 px-4 py-4">
               <Loader2 className="w-4 h-4 animate-spin" /> Carregando baixas...
