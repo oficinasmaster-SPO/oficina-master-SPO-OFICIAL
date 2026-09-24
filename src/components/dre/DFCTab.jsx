@@ -1005,7 +1005,7 @@ export default function DFCTab({ workshopId, mes }) {
               })}
             </div>
           )}
-        </div>
+        )}
       </div>
 
       {/* Modal de estorno — modo Conta: disparado pelas linhas Operacional/Investimento/Financiamento */}
