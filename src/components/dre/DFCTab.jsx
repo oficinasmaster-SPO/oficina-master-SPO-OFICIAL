@@ -898,6 +898,114 @@ export default function DFCTab({ workshopId, mes }) {
       {/* Transferências entre contas — sempre visível, independente da view selecionada */}
       <TransferenciasEntreContas workshopId={workshopId} mes={mes} />
 
+      {/* ── Frente 1: Baixas do Mês — ponto de entrada para estorno direto pelo DFC ── */}
+      <div className="rounded-xl border border-orange-200 bg-white overflow-hidden">
+        <div
+          className="flex items-center justify-between px-4 py-3 bg-orange-50 cursor-pointer select-none"
+          onClick={() => {
+            const el = document.getElementById("dfc-baixas-mes");
+            if (el) el.classList.toggle("hidden");
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <RotateCcw className="w-4 h-4 text-orange-600" />
+            <span className="text-sm font-semibold text-orange-800">Baixas do Mês</span>
+            {!isLoadingLiquidacoes && (
+              <span className="text-xs text-orange-600 bg-orange-100 rounded-full px-2 py-0.5">
+                {liquidacoesMes.length} baixa{liquidacoesMes.length !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+          <span className="text-xs text-orange-500">clique para expandir / recolher</span>
+        </div>
+
+        <div id="dfc-baixas-mes">
+          {isLoadingLiquidacoes ? (
+            <div className="flex items-center gap-2 text-sm text-gray-500 px-4 py-4">
+              <Loader2 className="w-4 h-4 animate-spin" /> Carregando baixas...
+            </div>
+          ) : liquidacoesMes.length === 0 ? (
+            <p className="text-sm text-gray-500 italic px-4 py-4">Nenhuma baixa registrada neste mês.</p>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {liquidacoesMes.map((liq) => {
+                const isRecebimento = liq.tipo === "recebimento";
+                const valorFmt = fmt(liq.valor_liquidacao);
+                const dataFmt  = liq.data_liquidacao
+                  ? new Date(liq.data_liquidacao).toLocaleDateString("pt-BR")
+                  : "—";
+                const formaMap = {
+                  pix: "PIX", ted: "TED", boleto: "Boleto",
+                  cartao_credito: "Cartão Crédito", cartao_debito: "Cartão Débito",
+                  dinheiro: "Dinheiro", cheque: "Cheque",
+                };
+                const formaFmt = formaMap[liq.forma_pagamento] || liq.forma_pagamento || "—";
+
+                return (
+                  <div
+                    key={liq.id}
+                    className="group flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                        isRecebimento ? "bg-green-500" : "bg-red-500"
+                      }`} />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">
+                          {isRecebimento ? "Recebimento" : "Pagamento"}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {formaFmt} · {dataFmt}
+                        </p>
+                      </div>
+                      {liq.conciliado && (
+                        <span className="flex-shrink-0 text-xs bg-green-100 text-green-700 border border-green-300 rounded-full px-2 py-0.5">
+                          Conciliada
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <span className={`text-sm font-bold ${
+                        isRecebimento ? "text-green-600" : "text-red-600"
+                      }`}>
+                        {isRecebimento ? "+" : "-"}{valorFmt}
+                      </span>
+                      {/* Botão de estorno — chama ModalEstornoLiquidacao no modo DFC */}
+                      <button
+                        type="button"
+                        onClick={() => setLiquidacaoParaEstornar(liq)}
+                        title={liq.conciliado
+                          ? "Estornar (baixa conciliada — a transação bancária voltará para pendente)"
+                          : "Estornar esta baixa"}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-xs text-orange-600 hover:text-orange-800 hover:bg-orange-50 rounded-md px-2 py-1"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        Estornar
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Modal de estorno — modo DFC: liquidacão já conhecida, sem seleção */}
+      {liquidacaoParaEstornar && (
+        <ModalEstornoLiquidacao
+          aberto={!!liquidacaoParaEstornar}
+          onFechar={() => setLiquidacaoParaEstornar(null)}
+          liquidacao={liquidacaoParaEstornar}
+          workshopId={workshopId}
+          onSuccess={() => {
+            setLiquidacaoParaEstornar(null);
+            queryClient.invalidateQueries({ queryKey: ["dfc-liquidacoes-mes", workshopId, mes] });
+          }}
+        />
+      )}
+
       {/* Tabs de view */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
           <button
