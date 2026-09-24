@@ -394,7 +394,7 @@ function LinhaItem({ item, onDelete, onEdit, onMarcarPagamento, onEstornar }) {
 }
 
 // ─── Seção colapsável ──────────────────────────────────────────────
-function SecaoFluxo({ titulo, icone, cor, itens, fluxo, onAddManual, onDelete, onEdit, onMarcarPagamento }) {
+function SecaoFluxo({ titulo, icone, cor, itens, fluxo, onAddManual, onDelete, onEdit, onMarcarPagamento, onEstornar }) {
   const [aberta, setAberta] = useState(true);
 
   // Ordenar por data_vencimento (sem data vai para o fim)
