@@ -28,19 +28,7 @@ import ModalRegistrarPagamentoConta from "@/components/financeiro/ModalRegistrar
 import HistoricoAlteracoes from "@/components/financeiro/HistoricoAlteracoes";
 import ModalEstornoLiquidacao from "@/components/dfc/ModalEstornoLiquidacao";
 
-// ModalEstorno removido — substituído por ModalEstornoLiquidacao (componente compartilhado)
-// eslint-disable-next-line no-unused-vars
-function _ModalEstorno_REMOVIDO({ aberto, onFechar, conta, workshopId, onSuccess }) {
-  const [motivo, setMotivo] = useState("");
-  const [estornando, setEstornando] = useState(false);
-  const [liquidacoes, setLiquidacoes] = useState([]);
-  const [liquidacaoSelecionada, setLiquidacaoSelecionada] = useState(null);
-  const [carregando, setCarregando] = useState(false);
-
-  React.useEffect(() => {
-    if (!aberto || !conta?.id) return;
-    setMotivo("");
-    setLiquidacaoSelecionada(null);
+export default function ContasPagar() {
     setCarregando(true);
     base44.entities.LiquidacaoFinanceira
       .filter({ conta_pagar_id: conta.id }, '-data_liquidacao', 20)
