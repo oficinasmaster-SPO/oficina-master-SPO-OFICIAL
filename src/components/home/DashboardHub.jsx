@@ -48,6 +48,7 @@ import { useAdminMode } from "@/components/hooks/useAdminMode";
 import { toBrazilDate, formatDateBR } from "@/utils/timezone";
 import SprintAtivaWidget from "./SprintAtivaWidget";
 import useDisplayName from "@/hooks/useDisplayName";
+import { PHASE_INFO } from "@/components/lib/phaseConstants";
 
 export default function DashboardHub({ user, workshop: propWorkshop }) {
   const { workshop: contextWorkshop, isAdminMode } = useWorkshopContext();
@@ -293,12 +294,10 @@ export default function DashboardHub({ user, workshop: propWorkshop }) {
     4: "from-green-500 to-emerald-500"
   };
 
-  const phaseLabels = {
-    1: "Sobrevivência",
-    2: "Crescimento",
-    3: "Organização",
-    4: "Consolidação"
-  };
+  // Sprint 2 / A2: nomes oficiais das fases (fonte única: phaseConstants)
+  const phaseLabels = Object.fromEntries(
+    Object.entries(PHASE_INFO).map(([n, info]) => [n, info.name])
+  );
 
   const quickActions = [
     {
