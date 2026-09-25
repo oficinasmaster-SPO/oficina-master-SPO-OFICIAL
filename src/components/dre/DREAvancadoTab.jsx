@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { formatCurrency } from "@/components/utils/formatters";
 import { toast } from "sonner";
+import { hojeLocal, parseValorBR, valorParaInputBR } from "@/components/utils/dataValor";
 import SubcategoriaSelector from "./SubcategoriaSelector";
 import FiltroPeriodo from "./FiltroPeriodo";
 import ConfiguracaoRecorrencia from "./ConfiguracaoRecorrencia";
@@ -140,8 +141,8 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
   const handleSave = async () => {
     if (!catKey || !valor || !descricao) { toast.error("Preencha todos os campos obrigatórios"); return; }
     if (!subcat) { toast.error("Selecione uma subcategoria"); return; }
-    const valorLimpo = String(valor).replace(/\./g, "").replace(",", ".");
-    const valorNum = parseFloat(valorLimpo);
+    // QA-DRE-02: parse que distingue milhar de decimal ("33.83" não vira 3383)
+    const valorNum = parseValorBR(valor);
     if (isNaN(valorNum) || valorNum <= 0) { toast.error("Informe um valor maior que zero"); return; }
     setSaving(true);
     try {
@@ -370,7 +371,7 @@ function LancamentoRow({ item, onDelete, onSaved }) {
   const [catKey,         setCatKey]         = useState(item.categoria);
   const [subcat,         setSubcat]         = useState(item.subcategoria || "");
   const [descricao,      setDescricao]      = useState(item.descricao || "");
-  const [valor,          setValor]          = useState(String(item.valor));
+  const [valor,          setValor]          = useState(valorParaInputBR(item.valor));
   const [dataVencimento, setDataVencimento] = useState(item.data_vencimento || "");
   const [dataPagamento,  setDataPagamento]  = useState(item.data_pagamento  || "");
   const [frequencia,     setFrequencia]     = useState(item.frequencia || "unico");
@@ -382,7 +383,7 @@ function LancamentoRow({ item, onDelete, onSaved }) {
     setCatKey(item.categoria);
     setSubcat(item.subcategoria || "");
     setDescricao(item.descricao || "");
-    setValor(String(item.valor));
+    setValor(valorParaInputBR(item.valor));
     setDataVencimento(item.data_vencimento || "");
     setDataPagamento(item.data_pagamento   || "");
     setFrequencia(item.frequencia || "unico");
@@ -392,7 +393,7 @@ function LancamentoRow({ item, onDelete, onSaved }) {
   const handleMarcarPago = async (e) => {
     e.stopPropagation();
     if (item.data_pagamento) return;
-    const hoje = new Date().toISOString().split("T")[0];
+    const hoje = hojeLocal();
     setMarkingPago(true);
     try {
       await base44.entities.DRELancamento.update(item.id, { data_pagamento: hoje });
@@ -425,7 +426,8 @@ function LancamentoRow({ item, onDelete, onSaved }) {
   };
 
   const handleSave = async () => {
-    const valorNum = parseFloat(String(valor).replace(/\./g, "").replace(",", "."));
+    // QA-DRE-01: antes, String(33.83) = "33.83" virava 3383 ao salvar sem alterar o campo
+    const valorNum = parseValorBR(valor);
     if (!catKey || !descricao || isNaN(valorNum) || valorNum <= 0) { toast.error("Preencha todos os campos corretamente"); return; }
     setSaving(true);
     try {
@@ -449,7 +451,7 @@ function LancamentoRow({ item, onDelete, onSaved }) {
 
   const isPago    = !!item.data_pagamento;
   const hasVenc   = !!item.data_vencimento;
-  const hoje      = new Date().toISOString().split("T")[0];
+  const hoje      = hojeLocal();
   const isVencido = hasVenc && !isPago && item.data_vencimento < hoje;
 
   const barColor   = item.tipo === "receita" ? "bg-green-400" : item.entra_tcmp2 ? "bg-blue-400" : "bg-orange-400";
@@ -718,11 +720,15 @@ function LancamentoRow({ item, onDelete, onSaved }) {
 
 // ─── SEÇÃO AGRUPADA POR CATEGORIA — Sprint B ───────────────────────────────────
 // Cabeçalho rico: total bruto + subtotais pago/pendente + badge de vencidos
+// PERF-DRE-01: linha memoizada — digitar na busca ou abrir um modal não repinta os 200+ cards.
+// Funciona porque o React Query preserva a referência dos itens que não mudaram.
+const LancamentoRowMemo = React.memo(LancamentoRow);
+
 function GrupoCategoria({ catKey, label, itens, tipo, onDelete, onSaved }) {
   const [expanded, setExpanded] = useState(true);
 
   // Totalizadores calculados no render — hoje recalculado para não ficar stale
-  const hoje = new Date().toISOString().split("T")[0];
+  const hoje = hojeLocal();
   const total = itens.reduce((s, i) => s + i.valor, 0);
 
   const totalPago = itens
@@ -798,7 +804,7 @@ function GrupoCategoria({ catKey, label, itens, tipo, onDelete, onSaved }) {
       {expanded && (
         <div className="space-y-1.5 pl-1">
           {itens.map(item => (
-            <LancamentoRow key={item.id} item={item} onDelete={onDelete} onSaved={onSaved} />
+            <LancamentoRowMemo key={item.id} item={item} onDelete={onDelete} onSaved={onSaved} />
           ))}
         </div>
       )}
@@ -958,11 +964,23 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
     + ((fontesDinheiro?.caixa ?? 0) > 0 ? 1 : 0);
   const podeTransferir = totalContas >= 2;
 
-  const { data: lancamentos = [], isLoading, refetch } = useQuery({
+  const { data: lancamentos = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["dre-lancamentos", workshopId, mes],
-    queryFn: () => base44.entities.DRELancamento.filter({ workshop_id: workshopId, mes }, "-created_date", 200),
-    enabled: periodo === "mensal" && !!workshopId && !!mes
+    // QA-DRE-03: limite 200 → 1000. Acima de 200 lançamentos no mês os mais antigos sumiam
+    // da lista e dos totais do "Consolidar no DRE" sem nenhum aviso.
+    queryFn: () => base44.entities.DRELancamento.filter({ workshop_id: workshopId, mes }, "-created_date", 1000),
+    enabled: periodo === "mensal" && !!workshopId && !!mes,
+    // PERF-DRE-02: sem refetch a cada foco de janela — subscribe + eventos já mantêm a lista atual
+    staleTime: 30_000,
   });
+
+  // PERF-DRE-03: um único refetch para gatilhos em sequência (onSaved + subscribe disparavam 2 buscas por ação)
+  const refetchTimer = useRef(null);
+  const refresh = useCallback(() => {
+    clearTimeout(refetchTimer.current);
+    refetchTimer.current = setTimeout(() => refetch(), 250);
+  }, [refetch]);
+  useEffect(() => () => clearTimeout(refetchTimer.current), []);
 
   useEffect(() => {
     if (!workshopId) return;
@@ -970,13 +988,11 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
       if (event.data?.workshop_id !== workshopId) return;
       if (event.type !== 'create' && event.type !== 'delete' && event.type !== 'update') return;
       const eventoMes = event.data?.mes || "";
-      if (periodo === "mensal" && eventoMes === mes) refetch();
+      if (periodo === "mensal" && eventoMes === mes) refresh();
       else if (periodo === "anual" && eventoMes.startsWith(String(ano))) queryClient.invalidateQueries({ queryKey: ["dre-anual", workshopId, ano] });
     });
     return unsubscribe;
-  }, [workshopId, mes, ano, periodo, refetch, queryClient]);
-
-  const refresh = () => refetch();
+  }, [workshopId, mes, ano, periodo, refresh, queryClient]);
 
   const totaisConsolidados = useMemo(() => {
     const receitas = lancamentos.filter(l => l.tipo === "receita");
@@ -1013,7 +1029,7 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
   }, [lancamentos]);
 
   const grupos = useMemo(() => {
-    const hoje = new Date().toISOString().split("T")[0];
+    const hoje = hojeLocal();
     const termo = busca.trim().toLowerCase();
 
     // 1° passo: filtro por aba (tipo)
@@ -1053,7 +1069,7 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
 
   // Contadores para os chips de status (calculados sobre os lançamentos da aba ativa, sem filtro de texto)
   const contadores = useMemo(() => {
-    const hoje = new Date().toISOString().split("T")[0];
+    const hoje = hojeLocal();
     const base = abaAtiva === "receitas" ? lancamentos.filter(l => l.tipo === "receita")
       : abaAtiva === "despesas" ? lancamentos.filter(l => l.tipo === "despesa")
       : lancamentos;
@@ -1172,6 +1188,20 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
             </div>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // QA-DRE-04: falha de rede não pode aparecer como "Nenhum lançamento ainda"
+  if (isError && periodo === "mensal") {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 gap-3 border-2 border-dashed border-red-200 rounded-xl bg-red-50/40">
+        <AlertCircle className="w-8 h-8 text-red-500" />
+        <p className="text-sm font-medium text-red-700">Falha ao carregar os lançamentos.</p>
+        <p className="text-xs text-gray-500">Verifique a conexão e tente novamente.</p>
+        <Button size="sm" variant="outline" onClick={() => refetch()}>
+          <RefreshCw className="w-4 h-4 mr-1" /> Tentar novamente
+        </Button>
       </div>
     );
   }
