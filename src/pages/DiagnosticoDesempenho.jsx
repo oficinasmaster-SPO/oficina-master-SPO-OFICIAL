@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Loader2, User, Award, Brain, History } from "lucide-react";
-import { technicalCriteria, emotionalCriteria, calculateClassification } from "../components/performance/PerformanceCriteria";
+import { technicalCriteria, emotionalCriteria } from "../components/performance/PerformanceCriteria";
 import { toast } from "sonner";
 import TrackingWrapper from "@/components/shared/TrackingWrapper";
 import EvaluationGate from "@/components/evaluations/EvaluationGate";
@@ -82,33 +82,20 @@ export default function DiagnosticoDesempenho() {
     setSubmitting(true);
 
     try {
-      const techValues = Object.values(technicalScores);
-      const emoValues = Object.values(emotionalScores);
-      
-      const technicalAvg = techValues.reduce((a, b) => a + b, 0) / techValues.length;
-      const emotionalAvg = emoValues.reduce((a, b) => a + b, 0) / emoValues.length;
-      
-      const { classification, recommendation } = calculateClassification(technicalAvg, emotionalAvg);
-
-      const diagnostic = await base44.entities.PerformanceMatrixDiagnostic.create({
+      // Sprint 1 / C3: gravação, permissão e classificação feitas no servidor
+      const response = await base44.functions.invoke('submitPerformanceEvaluation', {
         employee_id: selectedEmployee,
-        evaluator_id: user.id,
-        workshop_id: workshop?.id || null,
         technical_scores: technicalScores,
-        emotional_scores: emotionalScores,
-        technical_average: Number(technicalAvg.toFixed(2)),
-        emotional_average: Number(emotionalAvg.toFixed(2)),
-        classification: classification,
-        recommendation: recommendation,
-        evaluation_type: (currentUserEmployee && currentUserEmployee.id === selectedEmployee) ? 'self' : 'manager',
-        completed: true
+        emotional_scores: emotionalScores
       });
+      if (response?.data?.error) throw new Error(response.data.error);
+      if (!response?.data?.id) throw new Error("ID da avaliação não retornado");
 
       toast.success("Diagnóstico de desempenho concluído!");
-      navigate(createPageUrl("ResultadoDesempenho") + `?id=${diagnostic.id}`);
+      navigate(createPageUrl("ResultadoDesempenho") + `?id=${response.data.id}`);
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao salvar diagnóstico");
+      toast.error(error?.response?.data?.error || error?.message || "Erro ao salvar diagnóstico");
     } finally {
       setSubmitting(false);
     }
