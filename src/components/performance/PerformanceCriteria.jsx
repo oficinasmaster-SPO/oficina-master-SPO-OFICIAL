@@ -80,7 +80,9 @@ export const classificationRules = {
     recommendation: "O colaborador está em fase de desenvolvimento. Mantenha acompanhamento regular, estabeleça metas claras e ofereça suporte para evolução tanto técnica quanto comportamental."
   },
   reconhecimento: {
-    condition: (tech, emo) => (tech >= 7.0 && tech < 9.0) && (emo >= 7.0 && emo < 9.0),
+    // Ambos ≥ 7, exceto quando ambos ≥ 9 (Investimento). Cobre também 9+/7-8,9 e 7-8,9/9+,
+    // que antes não tinham regra e caíam no fallback "Observação".
+    condition: (tech, emo) => tech >= 7.0 && emo >= 7.0 && !(tech >= 9.0 && emo >= 9.0),
     title: "Reconhecimento",
     color: "green",
     description: "Desempenho satisfatório, atende expectativas",
