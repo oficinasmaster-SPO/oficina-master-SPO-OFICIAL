@@ -12,7 +12,11 @@ import { Loader2, ArrowLeftRight, Calendar, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 const fmt = (v) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
-const hoje = () => new Date().toISOString().split("T")[0];
+// Data local — toISOString() usa UTC e vira o dia seguinte depois das 21h no Brasil
+const hoje = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
 
 /**
  * Modal de Transferência entre Contas (DFC).
