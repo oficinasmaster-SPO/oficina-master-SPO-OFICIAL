@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 import { questions, getQuestionsInDisplayOrder } from "../components/diagnostic/Questions";
-import { PHASE_LETTER_TO_NUMBER, TIE_BREAK_PRIORITY } from "../components/lib/phaseConstants";
+import { computePhaseResult } from "../components/lib/phaseConstants";
 import { toast } from "sonner";
 import DynamicHelpSystem from "@/components/help/DynamicHelpSystem";
 import TrackingWrapper from "@/components/shared/TrackingWrapper";
@@ -87,30 +87,19 @@ export default function Questionario() {
     try {
       const user = await base44.auth.me();
       
-      // Passo 1: Contar letras
-      const letterCounts = { A: 0, B: 0, C: 0, D: 0 };
-      Object.values(answers).forEach(letter => {
-        letterCounts[letter]++;
-      });
-      
-      // Passo 2: Encontrar a contagem máxima
-      const maxCount = Math.max(...Object.values(letterCounts));
-      
-      // Passo 3: Identificar todas as letras empatadas
-      const tiedLetters = Object.keys(letterCounts).filter(letter => letterCounts[letter] === maxCount);
-      
-      // Passo 4: Desempate por PRIORIDADE DE SEVERIDADE (D > A > C > B)
-      const dominantLetter = tiedLetters.sort((a, b) => 
-        TIE_BREAK_PRIORITY.indexOf(a) - TIE_BREAK_PRIORITY.indexOf(b)
-      )[0];
-      
-      // Passo 5: Mapear para fase (A=F1, B=F2, C=F3, D=F4)
-      const phase = PHASE_LETTER_TO_NUMBER[dominantLetter];
-      
       const answersArray = Object.entries(answers).map(([id, letter]) => ({
         question_id: parseInt(id),
         selected_option: letter
       }));
+
+      // Fase de cada resposta vem da alternativa escolhida (option.phase), não da letra.
+      // Desempate por severidade: F1 > F2 > F3 > F4.
+      // dominant_letter / letter_distribution ficam na letra canônica da fase (A=F1..D=F4).
+      const {
+        dominantPhase: phase,
+        dominantLetter,
+        letterDistribution: letterCounts
+      } = computePhaseResult(questions, answersArray);
       
       console.log("Enviando diagnóstico:", { workshop_id: workshop.id, answers: answersArray, phase, dominantLetter, letterCounts });
       
