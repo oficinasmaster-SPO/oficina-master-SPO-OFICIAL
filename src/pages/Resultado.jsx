@@ -9,7 +9,8 @@ import { Loader2, TrendingUp, Users, BarChart3, Rocket, ArrowRight, PieChart as 
 import { toast } from "sonner";
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { PHASE_LETTER_TO_NUMBER, getPhaseInfo } from "../components/lib/phaseConstants";
+import { computePhaseResult, getPhaseInfo } from "../components/lib/phaseConstants";
+import { questions as phaseQuestions } from "../components/diagnostic/Questions";
 import ExecutiveSummary from "../components/resultado/ExecutiveSummary";
 import ActionPlanCard from "../components/diagnostics/ActionPlanCard";
 import ActionPlanDetails from "../components/diagnostics/ActionPlanDetails";
@@ -181,14 +182,8 @@ export default function Resultado() {
   };
 
   const calculatePhaseDistribution = (diag) => {
-    const phaseCounts = { 1: 0, 2: 0, 3: 0, 4: 0 };
-    
-    diag.answers.forEach(answer => {
-      const phase = PHASE_LETTER_TO_NUMBER[answer.selected_option];
-      if (phase) {
-        phaseCounts[phase]++;
-      }
-    });
+    // Fase pela alternativa escolhida (option.phase), não pela letra
+    const { phaseCounts } = computePhaseResult(phaseQuestions, diag.answers);
 
     const totalQuestions = diag.answers.length;
 
