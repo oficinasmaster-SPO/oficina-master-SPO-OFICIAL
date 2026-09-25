@@ -14,7 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { 
   Loader2, Calculator, DollarSign, TrendingUp, TrendingDown, 
   Save, ArrowLeft, Plus, FileText, Users, Clock, AlertCircle,
-  CheckCircle, XCircle, Printer, BarChart3
+  CheckCircle, XCircle, Printer, BarChart3,
+  Settings, Ban, Package, PieChart, FileSpreadsheet, Wallet, Target
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, ReferenceLine } from "recharts";
 import { formatCurrency, formatNumber } from "../components/utils/formatters";
@@ -32,6 +33,16 @@ import VencimentosCard from "@/components/dre/VencimentosCard";
 import FASE2EditorModal from "@/components/budgetcontrol/FASE2EditorModal";
 import HistoricoMetasModal from "@/components/budgetcontrol/HistoricoMetasModal";
 import FecharMesModal from "@/components/budgetcontrol/FecharMesModal";
+
+// ── Navegação principal do módulo financeiro ───────────────────────────────────────────────
+// Abas sublinhadas (padrão de sistemas financeiros), ícones monocromáticos, sem emoji.
+// O ícone da aba ativa fica azul; as demais em cinza.
+const ABA_PRINCIPAL_CLS =
+  "relative h-12 shrink-0 gap-2 rounded-none border-b-2 border-transparent bg-transparent px-4 " +
+  "text-sm font-medium text-slate-500 shadow-none transition-colors hover:text-slate-900 " +
+  "data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:text-slate-900 " +
+  "data-[state=active]:shadow-none [&>svg]:h-4 [&>svg]:w-4 [&>svg]:text-slate-400 " +
+  "data-[state=active]:[&>svg]:text-blue-600";
 
 const getCurrentMonth = () => {
   const now = new Date();
@@ -630,15 +641,21 @@ export default function DRETCMP2() {
 
         {/* Formulário DRE — 8: controlled tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-white shadow-md">
-            <TabsTrigger value="receitas">💰 Receitas</TabsTrigger>
-            <TabsTrigger value="custos_tcmp2">⚙️ Custos TCMP² (Entram)</TabsTrigger>
-            <TabsTrigger value="custos_nao_tcmp2">🚫 Custos NÃO TCMP²</TabsTrigger>
-            <TabsTrigger value="pecas">📦 Peças</TabsTrigger>
-            <TabsTrigger value="resumo">📊 Resumo DRE</TabsTrigger>
-            <TabsTrigger value="avancado">📋 DRE Avançado</TabsTrigger>
-            <TabsTrigger value="dfc">💵 DFC</TabsTrigger>
-            <TabsTrigger value="orcamento">💳 Controle Orçamentário</TabsTrigger>
+          <TabsList
+            aria-label="Módulos financeiros"
+            className="h-auto w-full justify-start gap-0 overflow-x-auto rounded-xl border border-slate-200 bg-white p-0 px-2 shadow-sm"
+          >
+            <span className="hidden md:inline px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400 shrink-0">DRE</span>
+            <TabsTrigger value="receitas" className={ABA_PRINCIPAL_CLS}><TrendingUp />Receitas</TabsTrigger>
+            <TabsTrigger value="custos_tcmp2" className={ABA_PRINCIPAL_CLS}><Settings />Custos TCMP²</TabsTrigger>
+            <TabsTrigger value="custos_nao_tcmp2" className={ABA_PRINCIPAL_CLS}><Ban />Custos fora do TCMP²</TabsTrigger>
+            <TabsTrigger value="pecas" className={ABA_PRINCIPAL_CLS}><Package />Peças</TabsTrigger>
+            <TabsTrigger value="resumo" className={ABA_PRINCIPAL_CLS}><PieChart />Resumo DRE</TabsTrigger>
+            <span aria-hidden className="mx-2 h-6 w-px shrink-0 self-center bg-slate-200" />
+            <span className="hidden md:inline px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400 shrink-0">Gestão</span>
+            <TabsTrigger value="avancado" className={ABA_PRINCIPAL_CLS}><FileSpreadsheet />DRE Avançado</TabsTrigger>
+            <TabsTrigger value="dfc" className={ABA_PRINCIPAL_CLS}><Wallet />Fluxo de Caixa</TabsTrigger>
+            <TabsTrigger value="orcamento" className={ABA_PRINCIPAL_CLS}><Target />Controle Orçamentário</TabsTrigger>
           </TabsList>
 
           {/* Receitas */}
@@ -1104,7 +1121,8 @@ export default function DRETCMP2() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  💵 DFC — Demonstrativo de Fluxo de Caixa
+                  <Wallet className="w-5 h-5 text-blue-600" />
+                  DFC — Demonstrativo de Fluxo de Caixa
                 </CardTitle>
                 <CardDescription>
                   Preencha o DRE Avançado primeiro. Os dados são importados automaticamente aqui.
@@ -1126,7 +1144,7 @@ export default function DRETCMP2() {
             <div className="space-y-6">
               {/* Header com Ações FASE 3 */}
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-bold">💳 Controle Orçamentário</h3>
+                <h3 className="text-lg font-bold flex items-center gap-2"><Target className="w-5 h-5 text-blue-600" />Controle Orçamentário</h3>
                 <div className="flex gap-2">
                   <FecharMesModal
                     workshopId={workshop.id}
