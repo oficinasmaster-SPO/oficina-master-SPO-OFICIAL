@@ -61,6 +61,83 @@ async function validateFrequency(base44, workshop_id, diagnostic_type, plan_id) 
   return { allowed: true };
 }
 
+// ─── Sprint 1 / C1: validação de acesso ao workshop (isolamento multi-tenant) ──
+// Libera: admin, usuário interno (consultoria), dono da oficina, membership ativa,
+// colaborador vinculado (não inativo) ou vínculo legado em user.workshop_id.
+// Qualquer outro caso → 403. Usa service role só para LER dados de vínculo.
+async function checkWorkshopAccess(base44, user, workshop_id) {
+  if (!workshop_id || typeof workshop_id !== 'string') {
+    return { ok: false, status: 400, error: 'workshop_id é obrigatório' };
+  }
+  const sr = base44.asServiceRole;
+  const workshop = await sr.entities.Workshop.get(workshop_id).catch(() => null);
+  if (!workshop) return { ok: false, status: 404, error: 'Oficina não encontrada' };
+
+  const isAdmin = user.role === 'admin';
+  const isInternal = user.user_type === 'internal' || user.data?.user_type === 'internal';
+  if (isAdmin || isInternal) return { ok: true, workshop };
+
+  if (workshop.owner_id === user.id) return { ok: true, workshop };
+
+  const legacyWid = user.workshop_id || user.tenant_workshop_id || user.data?.workshop_id;
+  if (legacyWid === workshop_id) return { ok: true, workshop };
+
+  const memberships = await sr.entities.TenantMembership.filter(
+    { user_id: user.id, workshop_id, status: 'active' }
+  ).catch(() => []);
+  if (memberships.length > 0) return { ok: true, workshop };
+
+  const byUserId = await sr.entities.Employee.filter({ workshop_id, user_id: user.id }).catch(() => []);
+  const byEmail = user.email
+    ? await sr.entities.Employee.filter({ workshop_id, email: user.email }).catch(() => [])
+    : [];
+  if ([...byUserId, ...byEmail].some((e) => e.status !== 'inativo')) return { ok: true, workshop };
+
+  console.warn(`[submitAppForms] ACESSO NEGADO: user ${user.id} (${user.email}) → workshop ${workshop_id}`);
+  return { ok: false, status: 403, error: 'Sem acesso a esta oficina' };
+}
+
+// ─── Sprint 1 / C2: cálculo da fase no servidor ──────────────────────────────
+// CÓPIA FIEL de src/components/diagnostic/Questions.jsx (campo option.phase) e de
+// computePhaseResult em src/components/lib/phaseConstants.jsx.
+// Qualquer alteração no mapeamento deve ser espelhada nos dois lugares.
+const PHASE_SCORING_VERSION = '2026-09-25';
+const PHASE_OPTION_MAP = {
+  1: { A: 3, B: 2, C: 4, D: 1 },  2: { A: 2, B: 4, C: 3, D: 1 },
+  3: { A: 3, B: 2, C: 1, D: 4 },  4: { A: 4, B: 1, C: 3, D: 2 },
+  5: { A: 2, B: 4, C: 3, D: 1 },  6: { A: 2, B: 4, C: 3, D: 1 },
+  7: { A: 2, B: 1, C: 3, D: 4 },  8: { A: 4, B: 3, C: 2, D: 1 },
+  9: { A: 3, B: 4, C: 2, D: 1 }, 10: { A: 1, B: 2, C: 3, D: 4 },
+  11: { A: 2, B: 1, C: 4, D: 3 }, 12: { A: 3, B: 2, C: 1, D: 4 },
+};
+const PHASE_NUMBER_TO_LETTER = { 1: 'A', 2: 'B', 3: 'C', 4: 'D' };
+const TIE_BREAK_PHASE_PRIORITY = [1, 2, 3, 4]; // mais crítico primeiro
+
+function computePhaseServer(answers) {
+  if (!Array.isArray(answers)) return { error: 'answers deve ser uma lista' };
+  const totalQuestions = Object.keys(PHASE_OPTION_MAP).length;
+  const seen = new Set();
+  const phaseCounts = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  for (const a of answers) {
+    const qid = Number(a?.question_id);
+    const letter = a?.selected_option;
+    const phase = PHASE_OPTION_MAP[qid]?.[letter];
+    if (!phase) return { error: `Resposta inválida (pergunta ${a?.question_id}, opção ${letter})` };
+    if (seen.has(qid)) return { error: `Pergunta ${qid} respondida mais de uma vez` };
+    seen.add(qid);
+    phaseCounts[phase]++;
+  }
+  if (seen.size !== totalQuestions) {
+    return { error: `Diagnóstico incompleto: ${seen.size} de ${totalQuestions} perguntas respondidas` };
+  }
+  const maxCount = Math.max(...Object.values(phaseCounts));
+  const phase = TIE_BREAK_PHASE_PRIORITY.find((p) => phaseCounts[p] === maxCount);
+  const letter_distribution = Object.fromEntries(
+    Object.entries(phaseCounts).map(([p, c]) => [PHASE_NUMBER_TO_LETTER[p], c])
+  );
+  return { phase, dominant_letter: PHASE_NUMBER_TO_LETTER[phase], letter_distribution };
+}
+
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
   
@@ -70,6 +147,13 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const { form_type, workshop_id } = body;
+
+    // ── C1: isolamento — todo workshop_id informado precisa ser acessível ──────
+    const phaseForm = form_type === 'workshop_diagnostic' || form_type === 'workshop_phase_diagnostic';
+    if (workshop_id || phaseForm) {
+      const access = await checkWorkshopAccess(base44, user, workshop_id);
+      if (!access.ok) return Response.json({ error: access.error }, { status: access.status });
+    }
 
     // ── Buscar dados do workshop para cache ───────────────────────────────────
     let workshopData = null;
@@ -169,15 +253,23 @@ Deno.serve(async (req) => {
 
     // ── DIAGNÓSTICO DE FASE DA OFICINA ────────────────────────────────────────
     if (form_type === 'workshop_diagnostic' || form_type === 'workshop_phase_diagnostic') {
-      const { answers, phase, dominant_letter, letter_distribution } = body;
-      
+      const { answers } = body;
+
+      // C2: fase calculada SOMENTE no servidor; phase/dominant_letter/letter_distribution
+      // enviados pelo navegador são ignorados.
+      const scored = computePhaseServer(answers);
+      if (scored.error) return Response.json({ error: scored.error }, { status: 400 });
+      if (body.phase && Number(body.phase) !== scored.phase) {
+        console.warn(`[submitAppForms] fase do cliente (${body.phase}) diverge do servidor (${scored.phase}) — usando servidor. v${PHASE_SCORING_VERSION}`);
+      }
+
       const diagnostic = await base44.asServiceRole.entities.Diagnostic.create({
         user_id: user.id,
-        workshop_id: workshop_id || null,
+        workshop_id,
         answers,
-        phase,
-        dominant_letter,
-        letter_distribution: letter_distribution || { A: 0, B: 0, C: 0, D: 0 },
+        phase: scored.phase,
+        dominant_letter: scored.dominant_letter,
+        letter_distribution: scored.letter_distribution,
         completed: true
       });
 
