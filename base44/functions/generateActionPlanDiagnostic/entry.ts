@@ -51,8 +51,8 @@ Deno.serve(async (req) => {
     // Mapear fase para descrição
     const phaseDescriptions = {
       1: "F1 Base - Sobrevivência e geração de caixa",
-      2: "F2 Organização - Estruturação de processos e equipe",
-      3: "F3 Tração - Crescimento e otimização",
+      2: "F2 Organização - Crescimento e estruturação",
+      3: "F3 Tração - Processos e liderança",
       4: "F4 Excelência - Consolidação e escala"
     };
 
@@ -93,7 +93,6 @@ Deno.serve(async (req) => {
 
 Baseado neste diagnóstico da oficina:
 - Fase: ${diagnostic.phase} - ${phaseDesc}
-- Letra Dominante: ${diagnostic.dominant_letter}
 - Oficina: ${workshop?.name || 'Não especificada'}
 - Faturamento: ${workshop?.monthly_revenue || 'Não informado'}
 - Colaboradores: ${workshop?.employees_count || 'Não informado'}
