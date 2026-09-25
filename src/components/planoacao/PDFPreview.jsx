@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CheckCircle2, Circle, Clock, Loader2 } from "lucide-react";
 import { questions } from "../diagnostic/Questions";
+import { PHASE_INFO } from "../lib/phaseConstants";
 
 export default function PDFPreview({ diagnostic, workshop, actions, subtasks, onClose }) {
   const [generatedText, setGeneratedText] = useState("");
@@ -61,8 +62,7 @@ Segmento: ${workshop?.segment ? workshop.segment.replace(/_/g, ' ').replace(/\b\
 
 FASE DA OFICINA
 
-Fase atual: ${diagnostic.phase}
-Letra predominante no diagnóstico: ${diagnostic.dominant_letter}
+Fase atual: Fase ${diagnostic.phase} - ${PHASE_INFO[diagnostic.phase]?.name || ""} (${PHASE_INFO[diagnostic.phase]?.title || ""})
 
 RESPOSTAS DO DIAGNÓSTICO
 
@@ -122,14 +122,10 @@ Use linguagem em 2ª pessoa, simples e direta. Formato em texto puro sem markdow
     return labels[status];
   };
 
+  // Sprint 2 / A2: nomes oficiais das fases (fonte única: phaseConstants)
   const getPhaseDescription = (phase) => {
-    const descriptions = {
-      1: "Fase de Sobrevivência e Geração de Lucro",
-      2: "Fase de Crescimento e Ampliação de Time",
-      3: "Fase de Organização, Processos e Liderança",
-      4: "Fase de Consolidação e Escala"
-    };
-    return descriptions[phase] || "";
+    const info = PHASE_INFO[phase];
+    return info ? `${info.name}: ${info.title}` : "";
   };
 
   const getSubtasksForAction = (actionId) => {
@@ -207,12 +203,6 @@ Use linguagem em 2ª pessoa, simples e direta. Formato em texto puro sem markdow
             <p className="text-gray-700 leading-relaxed">
               {getPhaseDescription(diagnostic.phase)}
             </p>
-            <div className="mt-4 flex items-center gap-2">
-              <span className="text-sm text-gray-600">Letra predominante nas respostas:</span>
-              <span className="px-3 py-1 bg-green-600 text-white rounded-full font-bold">
-                {diagnostic.dominant_letter}
-              </span>
-            </div>
           </div>
 
           {/* Conteúdo Gerado por IA */}
