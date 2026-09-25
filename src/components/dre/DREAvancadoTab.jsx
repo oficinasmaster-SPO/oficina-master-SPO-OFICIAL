@@ -198,10 +198,10 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
       <ModalCadastroFornecedor workshopId={workshopId} open={modalFornecedorOpen} onClose={() => setModalFornecedorOpen(false)} onCriado={handleFornecedorCriado} />
       <div className={`${cor.bg} border-2 border-dashed ${cor.border} rounded-xl p-4 space-y-3`}>
         <div className="flex items-center justify-between gap-2">
-          <p className={`text-sm font-semibold ${cor.title}`}>{tipo === "receita" ? "💰 Novo Lançamento de Receita" : "📋 Novo Lançamento de Despesa"}</p>
+          <p className={`text-sm font-semibold ${cor.title}`}>{tipo === "receita" ? "Novo lançamento de receita" : "Novo lançamento de despesa"}</p>
           {catKey && tipoInferido && (
             <Badge className={tipoInferido === "receita" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
-              {tipoInferido === "receita" ? "💰 Receita" : "📉 Despesa"} Detectado
+              {tipoInferido === "receita" ? "Receita" : "Despesa"} detectada
             </Badge>
           )}
         </div>
@@ -242,10 +242,13 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-xs text-gray-500 mb-1 block">Categoria *</label>
-            <select className={inputCls} value={catKey} onChange={e => { setCatKey(e.target.value); setSubcat(""); }}>
-              <option value="">Selecione...</option>
-              {Object.entries(categorias).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-            </select>
+            <Combobox
+              options={Object.entries(categorias).map(([k, v]) => ({ value: k, label: v.label }))}
+              value={catKey}
+              onChange={(v) => { setCatKey(v || ""); setSubcat(""); }}
+              placeholder="Selecione..."
+              sortOptions={false}
+            />
           </div>
           <div>
             <label className="text-xs text-gray-500 mb-1 block">Subcategoria *</label>
@@ -270,14 +273,14 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
           </div>
         </div>
         <div>
-          <label className="text-xs text-gray-500 mb-1 block">{tipo === "receita" ? "🛒 Data da Venda" : "🛒 Data da Compra"} <span className="text-gray-400">(opcional)</span></label>
+          <label className="text-xs text-gray-500 mb-1 block">{tipo === "receita" ? "Data da venda" : "Data da compra"} <span className="text-gray-400">(opcional)</span></label>
           <input type="date" className={inputCls} value={dataCompetencia} onChange={e => setDataCompetencia(e.target.value)} />
         </div>
         {tipo === "despesa" && (
           <div className="border border-gray-200 rounded-lg bg-white/70">
             <button type="button" onClick={() => setDocOpen(!docOpen)}
               className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-gray-500 hover:text-gray-700">
-              <span>📄 Documento (NF, Pedido, Fatura) <span className="text-gray-400 font-normal">(opcional)</span></span>
+              <span>Documento (NF, pedido, fatura) <span className="text-gray-400 font-normal">(opcional)</span></span>
               {docOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             </button>
             {docOpen && (
@@ -288,10 +291,13 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Tipo de Documento</label>
-                  <select className={inputCls} value={tipoDocumento} onChange={e => setTipoDocumento(e.target.value)}>
-                    <option value="">Selecione...</option>
-                    {TIPOS_DOCUMENTO.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </select>
+                  <Combobox
+                    options={TIPOS_DOCUMENTO}
+                    value={tipoDocumento}
+                    onChange={(v) => setTipoDocumento(v || "")}
+                    placeholder="Selecione..."
+                    sortOptions={false}
+                  />
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">Número do Documento</label>
@@ -322,20 +328,24 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">📅 Vencimento <span className="text-gray-400">(opcional)</span></label>
+            <label className="text-xs text-gray-500 mb-1 block">Vencimento <span className="text-gray-400">(opcional)</span></label>
             <input type="date" className={inputCls} value={dataVencimento} onChange={e => setDataVencimento(e.target.value)} />
           </div>
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">✅ Data Pagamento <span className="text-gray-400">(opcional)</span></label>
+            <label className="text-xs text-gray-500 mb-1 block">Data de pagamento <span className="text-gray-400">(opcional)</span></label>
             <input type="date" className={inputCls} value={dataPagamento} onChange={e => setDataPagamento(e.target.value)}
               disabled={frequencia !== "unico"} title={frequencia !== "unico" ? "Data de pagamento só disponível para lançamentos únicos" : ""} />
           </div>
         </div>
         <div>
-          <label className="text-xs text-gray-500 mb-1 block">🔁 Recorrência</label>
-          <select className={inputCls} value={frequencia} onChange={e => setFrequencia(e.target.value)}>
-            {FREQUENCIAS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
-          </select>
+          <label className="text-xs text-gray-500 mb-1 block">Recorrência</label>
+          <Combobox
+            options={FREQUENCIAS}
+            value={frequencia}
+            onChange={(v) => { if (v) setFrequencia(v); }}
+            placeholder="Selecione..."
+            sortOptions={false}
+          />
         </div>
         {frequencia !== "unico" && (
           <ConfiguracaoRecorrencia frequencia={frequencia} dataInicio={recorrencia.data_inicio}
@@ -680,7 +690,7 @@ function LancamentoRow({ item, onDelete, onSaved }) {
               <Pencil className="w-4 h-4 text-blue-500" />
               Editar Lançamento
               <Badge className={`ml-auto ${item.tipo === "receita" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                {item.tipo === "receita" ? "💰 Receita" : "📉 Despesa"}
+                {item.tipo === "receita" ? "Receita" : "Despesa"}
               </Badge>
             </DialogTitle>
           </DialogHeader>
@@ -692,8 +702,9 @@ function LancamentoRow({ item, onDelete, onSaved }) {
                   className="w-full"
                   options={Object.entries(categorias).map(([k, v]) => ({ label: v.label, value: k }))}
                   value={catKey}
-                  onChange={v => { setCatKey(v); setSubcat(""); }}
+                  onChange={v => { if (v && v !== catKey) { setCatKey(v); setSubcat(""); } }}
                   placeholder="Selecione a categoria"
+                  sortOptions={false}
                 />
               </div>
               <div>
@@ -735,17 +746,15 @@ function LancamentoRow({ item, onDelete, onSaved }) {
             </div>
             <div>
               <label className="text-xs text-gray-500 mb-1 block">Recorrência</label>
-              <Combobox
-                className="w-full"
-                options={FREQUENCIAS}
-                value={frequencia}
-                onChange={setFrequencia}
-                placeholder="Selecione a recorrência"
-                direction="up"
-              />
-              {item.recorrencia_id && (
-                <p className="text-xs text-amber-600 mt-1">⚠️ Parte de uma recorrência — alteração afeta só este item.</p>
-              )}
+              {/* QA-DRE-05: somente leitura — trocar a frequência aqui só mudava o rótulo, sem criar a série */}
+              <div className="flex items-center justify-between gap-2 text-sm border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 text-gray-700">
+                <span>
+                  {FREQUENCIAS.find(f => f.value === (item.frequencia || "unico"))?.label ?? item.frequencia}
+                  {item.parcela_atual && item.numero_parcelas ? ` — parcela ${item.parcela_atual} de ${item.numero_parcelas}` : ""}
+                </span>
+                <span className="text-[11px] text-gray-400">somente leitura</span>
+              </div>
+              <p className="text-[11px] text-gray-400 mt-1">Para alterar a recorrência, exclua e crie o lançamento novamente.</p>
             </div>
           </div>
           <DialogFooter className="gap-2 justify-end border-t border-gray-100 pt-3 mt-2">
@@ -806,7 +815,7 @@ function GrupoCategoria({ catKey, label, itens, tipo, onDelete, onSaved }) {
           </span>
           {qtdVencidos > 0 && (
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-red-100 text-red-700 border border-red-200 px-1.5 py-0.5 rounded-full">
-              ⚠️ {qtdVencidos} vencido{qtdVencidos > 1 ? "s" : ""}
+              {qtdVencidos} vencido{qtdVencidos > 1 ? "s" : ""}
             </span>
           )}
         </div>
@@ -816,14 +825,14 @@ function GrupoCategoria({ catKey, label, itens, tipo, onDelete, onSaved }) {
           {/* Mix pago + pendente */}
           {temPagos && temPendente && (
             <div className="hidden sm:flex items-center gap-2 text-[11px]">
-              <span className="text-green-600 font-medium">✅ {formatCurrency(totalPago)}</span>
-              <span className="text-gray-300">|</span>
-              <span className="text-amber-600 font-medium">⏳ {formatCurrency(totalPendente)}</span>
+              <span className="text-slate-400">Pago <span className="font-semibold text-emerald-700 tabular-nums">{formatCurrency(totalPago)}</span></span>
+              <span className="h-3 w-px bg-slate-200" />
+              <span className="text-slate-400">Pendente <span className="font-semibold text-amber-700 tabular-nums">{formatCurrency(totalPendente)}</span></span>
             </div>
           )}
           {/* Tudo pago */}
           {temPagos && !temPendente && (
-            <span className="hidden sm:inline text-[11px] text-green-600 font-medium">✅ tudo pago</span>
+            <span className="hidden sm:inline text-[11px] text-emerald-700 font-medium">Tudo quitado</span>
           )}
           {/* Tudo vencido */}
           {!temPagos && temPendente && qtdVencidos === itens.length && (
@@ -1353,24 +1362,23 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-            {[
-              { key: "todos",    label: "📋 Todos" },
-              { key: "receitas", label: "💰 Receitas (" + formatCurrency(totalReceitas) + ")" },
-              { key: "despesas", label: "📉 Despesas (" + formatCurrency(totalDespesas) + ")" },
-              { key: "analise",  label: "📊 Análise" },
-            ].map(tab => (
-              <button key={tab.key} onClick={() => {
-                setAbaAtiva(tab.key);
-                // C1 — reseta filtros ao trocar de aba para evitar lista vazia inesperada
-                setBusca("");
-                setFiltroStatus("todos");
-              }}
-                className={"flex-1 text-xs py-1.5 px-2 rounded-md transition-all font-medium " + (abaAtiva === tab.key ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700")}>
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          <AbasSegmentadas
+            ariaLabel="Visões do DRE Avançado"
+            largura="total"
+            valor={abaAtiva}
+            onChange={(v) => {
+              setAbaAtiva(v);
+              // C1 — reseta filtros ao trocar de aba para evitar lista vazia inesperada
+              setBusca("");
+              setFiltroStatus("todos");
+            }}
+            abas={[
+              { value: "todos",    label: "Todos",    icon: List,         detalhe: String(lancamentos.length) },
+              { value: "receitas", label: "Receitas", icon: TrendingUp,   detalhe: formatCurrency(totalReceitas), tom: "positivo" },
+              { value: "despesas", label: "Despesas", icon: TrendingDown, detalhe: formatCurrency(totalDespesas), tom: "negativo" },
+              { value: "analise",  label: "Análise",  icon: BarChart3 },
+            ]}
+          />
 
           {abaAtiva === "analise" ? (
             <PainelAnalise lancamentos={lancamentos} tecnicosCount={tecnicosCount} horasMes={horasMes} />
@@ -1451,7 +1459,7 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
                       { key: "todos",     label: "Todos",     count: contadores.todos,     cor: "gray"   },
                       { key: "pendentes", label: "Pendentes", count: contadores.pendentes, cor: "amber"  },
                       { key: "pagos",     label: "Pagos",     count: contadores.pagos,     cor: "green"  },
-                      { key: "vencidos",  label: "⚠️ Vencidos", count: contadores.vencidos,  cor: "red"    },
+                      { key: "vencidos",  label: "Vencidos", count: contadores.vencidos,  cor: "red"    },
                     ].map(({ key, label, count, cor }) => {
                       const ativo = filtroStatus === key;
                       const cores = {
