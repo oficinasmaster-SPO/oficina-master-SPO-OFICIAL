@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CheckCircle2, Circle, Clock, Loader2 } from "lucide-react";
 import { questions } from "../diagnostic/Questions";
+import { PHASE_INFO } from "../lib/phaseConstants";
 
 export default function EnhancedPDFPreview({ diagnostic, workshop, actions, subtasks, aiSuggestions }) {
   const [pdfContent, setPdfContent] = useState(null);
@@ -126,14 +127,10 @@ IMPORTANTE:
     }
   };
 
+  // Sprint 2 / A2: nomes oficiais das fases (fonte única: phaseConstants)
   const getPhaseDescription = (phase) => {
-    const descriptions = {
-      1: "Fase 1: Sobrevivência e Geração de Lucro",
-      2: "Fase 2: Crescimento e Ampliação de Time",
-      3: "Fase 3: Organização, Processos e Liderança",
-      4: "Fase 4: Consolidação e Escala"
-    };
-    return descriptions[phase] || "";
+    const info = PHASE_INFO[phase];
+    return info ? `Fase ${phase}: ${info.name} — ${info.title}` : "";
   };
 
   const getCategoryLabel = (category) => {
@@ -257,12 +254,6 @@ IMPORTANTE:
             <h2 className="text-2xl font-bold text-gray-900 mb-3">
               {getPhaseDescription(diagnostic.phase)}
             </h2>
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-sm font-semibold text-gray-700">Letra predominante:</span>
-              <span className="px-4 py-2 bg-green-600 text-white rounded-full font-bold text-lg">
-                {diagnostic.dominant_letter}
-              </span>
-            </div>
             <p className="text-sm text-gray-600">
               Data do Diagnóstico: {format(new Date(diagnostic.created_date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
             </p>
