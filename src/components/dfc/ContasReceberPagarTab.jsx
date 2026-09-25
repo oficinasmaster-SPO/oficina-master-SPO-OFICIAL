@@ -29,6 +29,7 @@ import FiltroPeriodo from "../dre/FiltroPeriodo";
 import ModalRegistrarRecebimentoShared from "@/components/financeiro/ModalRegistrarRecebimento";
 import ModalRegistrarPagamentoContaShared from "@/components/financeiro/ModalRegistrarPagamentoConta";
 import ModalEstornoLiquidacao from "@/components/dfc/ModalEstornoLiquidacao";
+import { hojeLocal } from "@/components/utils/dataValor";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Utilitários
@@ -40,7 +41,8 @@ const fmt = (v) =>
 /** Retorna a data de hoje no formato YYYY-MM-DD. Recalculada a cada chamada
  *  para não ficar stale se o usuário mantiver a aba aberta passando da meia-noite. */
 function getHoje() {
-  return new Date().toISOString().split("T")[0];
+  // Data local — toISOString() usa UTC e vira o dia seguinte depois das 21h no Brasil
+  return hojeLocal();
 }
 
 /** Retorna true quando a conta está aberta/parcial e a data de vencimento já passou. */
