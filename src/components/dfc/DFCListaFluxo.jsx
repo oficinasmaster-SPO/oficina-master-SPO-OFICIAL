@@ -15,6 +15,7 @@
  */
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { hojeLocal } from "@/components/utils/dataValor";
 import {
   ChevronDown, ChevronRight, Trash2, Pencil, RotateCcw, Search,
   X as XIcon, CheckCircle2
@@ -30,7 +31,8 @@ const fmtData = (d) => {
   return `${dia}/${m}`;
 };
 
-const hojeISO = () => new Date().toISOString().split("T")[0];
+// Data local — toISOString() usa UTC e vira o dia depois das 21h no Brasil
+const hojeISO = hojeLocal;
 
 /** Status operacional do item — mesma precedência do antigo StatusPagamento. */
 export function statusDFC(item) {
