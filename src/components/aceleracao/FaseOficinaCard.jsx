@@ -4,13 +4,18 @@ import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Activity, Lock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { PHASE_INFO } from "@/components/lib/phaseConstants";
 
-const faseLabels = {
-  1: { nome: "Fase 1 - Sobrevivência", cor: "bg-red-100 text-red-700 border-red-300" },
-  2: { nome: "Fase 2 - Estruturação", cor: "bg-yellow-100 text-yellow-700 border-yellow-300" },
-  3: { nome: "Fase 3 - Crescimento", cor: "bg-blue-100 text-blue-700 border-blue-300" },
-  4: { nome: "Fase 4 - Expansão", cor: "bg-green-100 text-green-700 border-green-300" }
+// Sprint 2 / A2: nomes oficiais das fases (fonte única: phaseConstants)
+const FASE_CORES = {
+  1: "bg-red-100 text-red-700 border-red-300",
+  2: "bg-yellow-100 text-yellow-700 border-yellow-300",
+  3: "bg-blue-100 text-blue-700 border-blue-300",
+  4: "bg-green-100 text-green-700 border-green-300"
 };
+const faseLabels = Object.fromEntries(
+  [1, 2, 3, 4].map((n) => [n, { nome: `Fase ${n} - ${PHASE_INFO[n].name}`, cor: FASE_CORES[n] }])
+);
 
 export default function FaseOficinaCard({ workshop, diagnostic }) {
   const currentMonth = new Date().toISOString().substring(0, 7);
@@ -109,9 +114,9 @@ export default function FaseOficinaCard({ workshop, diagnostic }) {
           </div>
         )}
 
-        {diagnostic?.dominant_letter && (
+        {diagnostic?.phase && PHASE_INFO[diagnostic.phase] && (
           <div className="text-sm text-gray-600">
-            <span className="font-medium">Perfil Dominante:</span> {diagnostic.dominant_letter}
+            <span className="font-medium">Foco da fase:</span> {PHASE_INFO[diagnostic.phase].title}
           </div>
         )}
       </CardContent>
