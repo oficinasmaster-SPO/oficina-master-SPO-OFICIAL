@@ -130,7 +130,7 @@ export default function Historico() {
         title: `Fase ${d.phase}`,
         date: d.created_date,
         status: d.completed ? 'concluido' : 'pendente',
-        score: d.dominant_letter,
+        score: d.phase ? `F${d.phase}` : null,
         detailsUrl: `Resultado?id=${d.id}`
       }));
 
