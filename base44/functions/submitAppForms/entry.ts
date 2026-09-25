@@ -263,6 +263,27 @@ Deno.serve(async (req) => {
         console.warn(`[submitAppForms] fase do cliente (${body.phase}) diverge do servidor (${scored.phase}) — usando servidor. v${PHASE_SCORING_VERSION}`);
       }
 
+      // A3 (Sprint 2): anti-duplicação — mesmo usuário + oficina + respostas em até 30s
+      // devolve o registro existente (idempotente) em vez de criar outro.
+      const DEDUP_WINDOW_MS = 30 * 1000;
+      const answerKey = (list) => (list || [])
+        .map((a) => `${Number(a.question_id)}:${a.selected_option}`)
+        .sort()
+        .join('|');
+      const recent = await base44.asServiceRole.entities.Diagnostic.filter(
+        { user_id: user.id, workshop_id },
+        '-created_date',
+        3
+      ).catch(() => []);
+      const dup = recent.find((d) =>
+        Date.now() - new Date(d.created_date).getTime() < DEDUP_WINDOW_MS &&
+        answerKey(d.answers) === answerKey(answers)
+      );
+      if (dup) {
+        console.warn(`[submitAppForms] envio duplicado ignorado: user ${user.id}, workshop ${workshop_id}, diagnóstico existente ${dup.id}`);
+        return Response.json({ success: true, id: dup.id, diagnostic: dup, deduplicated: true });
+      }
+
       const diagnostic = await base44.asServiceRole.entities.Diagnostic.create({
         user_id: user.id,
         workshop_id,
