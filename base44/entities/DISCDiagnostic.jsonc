@@ -1,59 +1,11 @@
 {
   "name": "DISCDiagnostic",
-  "type": "object",
   "properties": {
-    "employee_id": {
-      "type": "string",
-      "description": "ID do colaborador avaliado"
-    },
-    "candidate_id": {
-      "type": "string",
-      "description": "ID do candidato avaliado (se externo/seletivo)"
-    },
-    "candidate_name": {
-      "type": "string",
-      "description": "Nome do candidato (se externo)"
-    },
-    "evaluator_id": {
-      "type": "string",
-      "description": "ID do avaliador (opcional se autoavalia\u00e7\u00e3o)"
-    },
-    "workshop_id": {
-      "type": "string",
-      "description": "ID da oficina"
-    },
-    "company_id": {
-      "type": "string",
-      "description": "ID da empresa"
-    },
-    "consulting_firm_id": {
-      "type": "string",
-      "description": "ID da consultoria"
-    },
-    "evaluation_type": {
-      "type": "string",
-      "enum": [
-        "manager",
-        "self"
-      ],
-      "default": "manager",
-      "description": "Tipo de avalia\u00e7\u00e3o: Gestor ou Autoavalia\u00e7\u00e3o"
-    },
-    "is_leader": {
-      "type": "boolean",
-      "default": false,
-      "description": "Se \u00e9 um l\u00edder de equipe"
-    },
-    "team_name": {
-      "type": "string",
-      "description": "Nome da equipe (para compara\u00e7\u00e3o)"
-    },
     "answers": {
-      "type": "array",
+      "description": "Respostas do teste (1-4 para cada perfil)",
       "items": {
-        "type": "object",
         "properties": {
-          "question_id": {
+          "c_score": {
             "type": "integer"
           },
           "d_score": {
@@ -62,73 +14,120 @@
           "i_score": {
             "type": "integer"
           },
-          "s_score": {
+          "question_id": {
             "type": "integer"
           },
-          "c_score": {
+          "s_score": {
             "type": "integer"
           }
-        }
+        },
+        "type": "object"
       },
-      "description": "Respostas do teste (1-4 para cada perfil)"
+      "type": "array"
     },
-    "profile_scores": {
-      "type": "object",
-      "properties": {
-        "executor_d": {
-          "type": "number"
-        },
-        "comunicador_i": {
-          "type": "number"
-        },
-        "planejador_s": {
-          "type": "number"
-        },
-        "analista_c": {
-          "type": "number"
-        }
-      },
-      "description": "Percentuais finais de cada perfil"
+    "candidate_id": {
+      "description": "ID do candidato avaliado (se externo/seletivo)",
+      "type": "string"
+    },
+    "candidate_name": {
+      "description": "Nome do candidato (se externo)",
+      "type": "string"
+    },
+    "company_id": {
+      "description": "ID da empresa",
+      "type": "string"
+    },
+    "completed": {
+      "default": false,
+      "type": "boolean"
+    },
+    "consulting_firm_id": {
+      "description": "ID da consultoria",
+      "type": "string"
     },
     "dominant_profile": {
-      "type": "string",
+      "description": "Perfil predominante",
       "enum": [
         "executor_d",
         "comunicador_i",
         "planejador_s",
         "analista_c"
       ],
-      "description": "Perfil predominante"
+      "type": "string"
+    },
+    "employee_id": {
+      "description": "ID do colaborador avaliado",
+      "type": "string"
+    },
+    "evaluation_type": {
+      "default": "manager",
+      "description": "Tipo de avalia\u00e7\u00e3o: Gestor ou Autoavalia\u00e7\u00e3o",
+      "enum": [
+        "manager",
+        "self"
+      ],
+      "type": "string"
+    },
+    "evaluator_id": {
+      "description": "ID do avaliador (opcional se autoavalia\u00e7\u00e3o)",
+      "type": "string"
+    },
+    "invite_id": {
+      "description": "ID do convite (se originado de link)",
+      "type": "string"
+    },
+    "is_leader": {
+      "default": false,
+      "description": "Se \u00e9 um l\u00edder de equipe",
+      "type": "boolean"
+    },
+    "profile_scores": {
+      "description": "Percentuais finais de cada perfil",
+      "properties": {
+        "analista_c": {
+          "type": "number"
+        },
+        "comunicador_i": {
+          "type": "number"
+        },
+        "executor_d": {
+          "type": "number"
+        },
+        "planejador_s": {
+          "type": "number"
+        }
+      },
+      "type": "object"
     },
     "recommended_roles": {
-      "type": "array",
+      "description": "Fun\u00e7\u00f5es recomendadas",
       "items": {
         "type": "string"
       },
-      "description": "Fun\u00e7\u00f5es recomendadas"
-    },
-    "invite_id": {
-      "type": "string",
-      "description": "ID do convite (se originado de link)"
-    },
-    "completed": {
-      "type": "boolean",
-      "default": false
+      "type": "array"
     },
     "resultado_email_colaborador_enviado": {
-      "type": "boolean",
       "default": false,
-      "description": "Se o e-mail com o resultado foi enviado ao colaborador avaliado (trava antirreenvio)"
-    },
-    "resultado_email_lideranca_enviado": {
-      "type": "boolean",
-      "default": false,
-      "description": "Se o e-mail com o resultado foi enviado \u00e0 lideran\u00e7a da oficina (trava antirreenvio)"
+      "description": "Se o e-mail com o resultado foi enviado ao colaborador avaliado (trava antirreenvio)",
+      "type": "boolean"
     },
     "resultado_email_enviado_em": {
-      "type": "string",
+      "description": "Data/hora do \u00faltimo e-mail de resultado enviado",
       "format": "date-time",
-      "description": "Data/hora do \u00faltimo e-mail de resultado enviado"
+      "type": "string"
+    },
+    "resultado_email_lideranca_enviado": {
+      "default": false,
+      "description": "Se o e-mail com o resultado foi enviado \u00e0 lideran\u00e7a da oficina (trava antirreenvio)",
+      "type": "boolean"
+    },
+    "team_name": {
+      "description": "Nome da equipe (para compara\u00e7\u00e3o)",
+      "type": "string"
+    },
+    "workshop_id": {
+      "description": "ID da oficina",
+      "type": "string"
     }
   },
   "required": [
@@ -136,113 +135,11 @@
     "answers"
   ],
   "rls": {
-    "create": true,
-    "read": {
+    "create": {
       "$or": [
-        {
-          "created_by": "{{user.email}}"
-        },
         {
           "user_condition": {
             "role": "admin"
-          }
-        },
-        {
-          "$and": [
-            {
-              "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
-            },
-            {
-              "user_condition": {
-                "data.user_type": "internal"
-              }
-            }
-          ]
-        },
-        {
-          "$and": [
-            {
-              "data.company_id": "{{user.data.company_id}}"
-            },
-            {
-              "user_condition": {
-                "data.user_type": "internal"
-              }
-            }
-          ]
-        },
-        {
-          "data.workshop_id": "{{user.tenant_workshop_id}}"
-        },
-        {
-          "data.workshop_id": "{{user.workshop_id}}"
-        },
-        {
-          "data.workshop_id": "{{user.data.workshop_id}}"
-        },
-        {
-          "user_condition": {
-            "user_type": "internal"
-          }
-        },
-        {
-          "user_condition": {
-            "data.user_type": "internal"
-          }
-        }
-      ]
-    },
-    "update": {
-      "$or": [
-        {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "$and": [
-            {
-              "data.consulting_firm_id": "{{user.data.consulting_firm_id}}"
-            },
-            {
-              "user_condition": {
-                "data.user_type": "internal"
-              }
-            }
-          ]
-        },
-        {
-          "$and": [
-            {
-              "data.company_id": "{{user.data.company_id}}"
-            },
-            {
-              "user_condition": {
-                "data.user_type": "internal"
-              }
-            }
-          ]
-        },
-        {
-          "data.workshop_id": "{{user.tenant_workshop_id}}"
-        },
-        {
-          "data.workshop_id": "{{user.workshop_id}}"
-        },
-        {
-          "data.workshop_id": "{{user.data.workshop_id}}"
-        },
-        {
-          "user_condition": {
-            "user_type": "internal"
-          }
-        },
-        {
-          "user_condition": {
-            "data.user_type": "internal"
           }
         }
       ]
@@ -250,11 +147,46 @@
     "delete": {
       "$or": [
         {
-          "created_by": "{{user.email}}"
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.evaluator_id": "{{user.id}}"
+        },
+        {
+          "data.workshop_id": "{{user.data.workshop_id}}"
         },
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "user_type": "internal"
+          }
+        },
+        {
+          "user_condition": {
+            "data.user_type": "internal"
           }
         },
         {
@@ -280,15 +212,24 @@
               }
             }
           ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
         },
         {
-          "data.workshop_id": "{{user.tenant_workshop_id}}"
-        },
-        {
-          "data.workshop_id": "{{user.workshop_id}}"
+          "data.evaluator_id": "{{user.id}}"
         },
         {
           "data.workshop_id": "{{user.data.workshop_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
         },
         {
           "user_condition": {
@@ -302,5 +243,6 @@
         }
       ]
     }
-  }
+  },
+  "type": "object"
 }
