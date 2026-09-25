@@ -717,34 +717,8 @@ export default function DFCTab({ workshopId, mes }) {
     onError: (e) => toast.error("Erro ao remover: " + (e?.message || "tente novamente"))
   });
 
-  const salvarSaldoMutation = useMutation({
-    mutationFn: (valor) => {
-      // Quando zerado pelo campo simples, limpa também os detalhes para manter consistência
-      const detalhesLimpos = valor === 0 ? { bancos: [], maquinas_cartao: [], caixa: 0 } : undefined;
-      if (saldoInicialRecord) {
-        return base44.entities.DFCLancamento.update(saldoInicialRecord.id, {
-          saldo_inicial: valor,
-          valor: valor,
-          ...(detalhesLimpos && { detalhes: detalhesLimpos })
-        });
-      }
-      return base44.entities.DFCLancamento.create({
-        workshop_id: workshopId,
-        mes,
-        grupo: "saldo_inicial",
-        tipo: "entrada",
-        descricao: "Saldo inicial do mês",
-        valor: valor,
-        origem: "manual",
-        saldo_inicial: valor
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
-      queryClient.invalidateQueries({ queryKey: ["saldoInicial", workshopId, mes] });
-      toast.success("Saldo inicial salvo!");
-    }
-  });
+  // QA-DFC-09: salvarSaldoMutation removida — código morto. O card de saldo é somente leitura;
+  // o saldo inicial é editado exclusivamente pelo ModalSaldoInicialDetalhado.
 
   // ── Cálculos em tempo real (Fase 5) ───────────────────────────
   const dreParaDFC = useMemo(() => mapDREtoDFC(lancamentosDRE), [lancamentosDRE]);
