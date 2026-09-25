@@ -24,7 +24,7 @@ const tourSteps = [
   {
     target: "phases-section",
     title: "🎯 As 4 Fases de Evolução",
-    content: "Toda oficina passa por 4 fases: Sobrevivência, Crescimento, Organização e Consolidação. Vamos identificar em qual você está e o que fazer para evoluir.",
+    content: "Toda oficina passa por 4 fases: Base, Organização, Tração e Excelência. Vamos identificar em qual você está e o que fazer para evoluir.",
     placement: "top",
     spotlightPadding: 20
   },
