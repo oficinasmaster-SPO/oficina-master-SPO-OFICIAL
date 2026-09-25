@@ -40,7 +40,7 @@ export const PHASE_INFO = {
     name: 'Tração',
     fullName: 'F3 - Tração',
     title: 'Processos e Liderança',
-    shortTitle: 'Organização',
+    shortTitle: 'Processos',
     description: 'Sua oficina está ganhando tração! Você já tem uma equipe formada e agora precisa estabelecer processos claros, desenvolver liderança e criar indicadores para medir resultados. Foco em estruturação e eficiência.',
     color: 'from-blue-500 to-cyan-500',
     bgColor: 'bg-blue-50',
@@ -74,8 +74,43 @@ export const getPhaseInfo = (phaseNumber) => {
   return PHASE_INFO[phaseNumber] || PHASE_INFO[1];
 };
 
-// Prioridade de desempate por severidade (mais crítico primeiro)
-export const TIE_BREAK_PRIORITY = ['D', 'A', 'C', 'B'];
+// Letra canônica de cada fase (usada apenas para gravar dominant_letter / letter_distribution,
+// que no schema da entidade Diagnostic são enum A-D). A=F1, B=F2, C=F3, D=F4.
+export const PHASE_NUMBER_TO_LETTER = { 1: 'A', 2: 'B', 3: 'C', 4: 'D' };
+
+// Prioridade de desempate por severidade (mais crítico primeiro): F1 > F2 > F3 > F4
+export const TIE_BREAK_PHASE_PRIORITY = [1, 2, 3, 4];
+
+// @deprecated — desempate por letra; mantido só para compatibilidade. Use TIE_BREAK_PHASE_PRIORITY.
+export const TIE_BREAK_PRIORITY = ['A', 'B', 'C', 'D'];
+
+// Fase de uma resposta: SEMPRE pela alternativa escolhida (option.phase), nunca pela letra,
+// porque as letras são embaralhadas em cada pergunta.
+export const getAnswerPhase = (questions, questionId, letter) => {
+  const question = questions.find(q => q.id === questionId);
+  const option = question?.options?.find(o => o.letter === letter);
+  return option?.phase || null;
+};
+
+// Conta respostas por fase e define a fase dominante (com desempate por severidade).
+export const computePhaseResult = (questions, answers) => {
+  const phaseCounts = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  (answers || []).forEach(({ question_id, selected_option }) => {
+    const phase = getAnswerPhase(questions, question_id, selected_option);
+    if (phase) phaseCounts[phase]++;
+  });
+  const maxCount = Math.max(...Object.values(phaseCounts));
+  const dominantPhase = TIE_BREAK_PHASE_PRIORITY.find(p => phaseCounts[p] === maxCount);
+  const letterDistribution = Object.fromEntries(
+    Object.entries(phaseCounts).map(([p, c]) => [PHASE_NUMBER_TO_LETTER[p], c])
+  );
+  return {
+    phaseCounts,
+    dominantPhase,
+    dominantLetter: PHASE_NUMBER_TO_LETTER[dominantPhase],
+    letterDistribution
+  };
+};
 
 // Termos padronizados (UI vs Código)
 export const TERMINOLOGY = {
