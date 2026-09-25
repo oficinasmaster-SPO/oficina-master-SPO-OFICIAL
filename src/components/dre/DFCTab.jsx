@@ -9,8 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
-  ChevronDown, ChevronRight, Plus, Trash2, Pencil, Wallet, Eye,
-  TrendingUp, TrendingDown, Building2, Landmark, Loader2, AlertCircle, RefreshCw } from
+  Wallet, Building2, Landmark, Loader2, AlertCircle, RefreshCw } from
 "lucide-react";
 import { InputMoeda } from "@/components/ui/InputMoeda";
 import {
@@ -27,7 +26,6 @@ import FiltroPeriodo from "./FiltroPeriodo";
 import ContasReceberPagarTab from "../dfc/ContasReceberPagarTab";
 import ModalLiquidacaoDRE from "../dfc/ModalLiquidacaoDRE";
 import ModalEstornoLiquidacao from "../dfc/ModalEstornoLiquidacao";
-import { RotateCcw } from "lucide-react";
 import VencimentosCard from "./VencimentosCard";
 import {
   SecaoFluxoDFC, FiltrosDFC, filtrarItensDFC, contarStatusDFC, DFCSkeleton
@@ -302,7 +300,7 @@ function ModalMarcarPagamento({ item, onFechar, onSalvo }) {
 
 }
 
-// ─── Linha de item ─────────────────────────────────────────────────
+// ─── Linha de item e seção por grupo: ver ../dfc/DFCListaFluxo.jsx ─────────────────────────────────────────────────
 
 // ─── Lista por grupo: movida para ../dfc/DFCListaFluxo.jsx (SecaoFluxoDFC) ──────────────────────────────────────────────
 
