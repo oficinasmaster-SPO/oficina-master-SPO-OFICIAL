@@ -10,6 +10,7 @@ import { InputMoeda } from "@/components/ui/InputMoeda";
 import { Loader2, Building2, AlertCircle, CreditCard, Calendar, DollarSign, Minus, Plus, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import useFontesDinheiro from "@/components/dfc/useFontesDinheiro";
+import { hojeLocal } from "@/components/utils/dataValor";
 import useModalScrollLock from "@/hooks/useModalScrollLock";
 
 const fmt = (v) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
@@ -29,7 +30,7 @@ export default function ModalRegistrarPagamentoConta({ aberto, onFechar, conta, 
   useModalScrollLock(aberto);
   const [valor, setValor] = useState(0);
   const [formaPagamento, setFormaPagamento] = useState("pix");
-  const [dataLiquidacao, setDataLiquidacao] = useState(new Date().toISOString().split("T")[0]);
+  const [dataLiquidacao, setDataLiquidacao] = useState(hojeLocal());
   const [fonteSaida, setFonteSaida] = useState("");
   const [desconto, setDesconto] = useState(0);
   const [juros, setJuros] = useState(0);
@@ -40,13 +41,13 @@ export default function ModalRegistrarPagamentoConta({ aberto, onFechar, conta, 
   // de vencimento da conta (prop `mes`). O backend (registrarLiquidacao) debita o
   // saldo do mês de data_liquidacao — usar o mês de vencimento aqui fazia o modal
   // cair no fallback com saldos zerados e bloquear a baixa ("Saldo insuficiente: R$ 0").
-  const mesPagamento = (dataLiquidacao || new Date().toISOString().split("T")[0]).slice(0, 7);
+  const mesPagamento = (dataLiquidacao || hojeLocal()).slice(0, 7);
   const { data: fontes } = useFontesDinheiro(workshopId, mesPagamento);
 
   useEffect(() => {
     if (aberto && conta) {
       setValor(conta.valor_aberto || 0);
-      setDataLiquidacao(new Date().toISOString().split("T")[0]);
+      setDataLiquidacao(hojeLocal());
       setFonteSaida("");
       setDesconto(0);
       setJuros(0);
