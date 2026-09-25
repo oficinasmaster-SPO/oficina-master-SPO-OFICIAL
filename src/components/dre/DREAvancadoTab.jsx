@@ -1013,9 +1013,33 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
   }, [lancamentos]);
 
   const grupos = useMemo(() => {
-    const filtrados = abaAtiva === "receitas" ? lancamentos.filter(l => l.tipo === "receita")
+    const hoje = new Date().toISOString().split("T")[0];
+    const termo = busca.trim().toLowerCase();
+
+    // 1° passo: filtro por aba (tipo)
+    const porTipo = abaAtiva === "receitas" ? lancamentos.filter(l => l.tipo === "receita")
       : abaAtiva === "despesas" ? lancamentos.filter(l => l.tipo === "despesa")
       : lancamentos;
+
+    // 2º passo: filtro por status
+    const porStatus = porTipo.filter(l => {
+      if (filtroStatus === "pagos")     return !!l.data_pagamento;
+      if (filtroStatus === "pendentes") return !l.data_pagamento;
+      if (filtroStatus === "vencidos")  return !l.data_pagamento && !!l.data_vencimento && l.data_vencimento < hoje;
+      return true; // "todos"
+    });
+
+    // 3º passo: filtro por texto (descrição, fornecedor, cliente, subcategoria)
+    const filtrados = termo
+      ? porStatus.filter(l =>
+          (l.descricao        || "").toLowerCase().includes(termo) ||
+          (l.fornecedor_nome  || "").toLowerCase().includes(termo) ||
+          (l.cliente_nome     || "").toLowerCase().includes(termo) ||
+          (l.subcategoria     || "").toLowerCase().includes(termo)
+        )
+      : porStatus;
+
+    // 4º passo: agrupa por categoria
     return filtrados.reduce((acc, item) => {
       const key = item.tipo + "_" + item.categoria;
       if (!acc[key]) {
@@ -1025,6 +1049,20 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
       acc[key].itens.push(item);
       return acc;
     }, {});
+  }, [lancamentos, abaAtiva, busca, filtroStatus]);
+
+  // Contadores para os chips de status (calculados sobre os lançamentos da aba ativa, sem filtro de texto)
+  const contadores = useMemo(() => {
+    const hoje = new Date().toISOString().split("T")[0];
+    const base = abaAtiva === "receitas" ? lancamentos.filter(l => l.tipo === "receita")
+      : abaAtiva === "despesas" ? lancamentos.filter(l => l.tipo === "despesa")
+      : lancamentos;
+    return {
+      todos:     base.length,
+      pagos:     base.filter(l => !!l.data_pagamento).length,
+      pendentes: base.filter(l => !l.data_pagamento).length,
+      vencidos:  base.filter(l => !l.data_pagamento && !!l.data_vencimento && l.data_vencimento < hoje).length,
+    };
   }, [lancamentos, abaAtiva]);
 
   const totalReceitas = lancamentos.filter(l => l.tipo === "receita").reduce((s, l) => s + l.valor, 0);
