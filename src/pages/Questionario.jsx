@@ -83,6 +83,8 @@ export default function Questionario() {
   };
 
   const handleSubmit = async () => {
+    // A3 (Sprint 2): trava contra clique duplo — o servidor também deduplica
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       const user = await base44.auth.me();
