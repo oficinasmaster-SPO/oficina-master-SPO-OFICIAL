@@ -28,6 +28,7 @@ export default function Combobox({
   lazyRender = false,
   maxHeight = 250,
   direction = "down", // "down" (padrão) | "up" — abre a lista para cima (útil em campos próximos do rodapé)
+  sortOptions = true,  // false mantém a ordem recebida (ex.: meses em ordem cronológica)
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -69,12 +70,13 @@ export default function Combobox({
   }, [value, options, getOptionValue]);
 
   const sortedOptions = useMemo(() => {
+    if (!sortOptions) return options;
     return [...options].sort((a, b) =>
       String(getOptionLabel(a)).localeCompare(String(getOptionLabel(b)), "pt-BR", {
         sensitivity: "base",
       })
     );
-  }, [options, getOptionLabel]);
+  }, [options, getOptionLabel, sortOptions]);
 
   // CORREÇÃO 1: O Filtro inteligente!
   const filteredOptions = useMemo(() => {
