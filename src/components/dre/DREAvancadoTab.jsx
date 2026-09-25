@@ -1155,7 +1155,8 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
             <div className="h-3 w-20 bg-gray-200 rounded" />
             <div className="h-3 w-16 bg-gray-200 rounded" />
           </div>
-          <div className="border border-gray-100 rounded-xl overflow-hidden">
+          <div className="relative border border-gray-100 rounded-xl overflow-hidden">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gray-200 rounded-l-xl" />
             <div className="flex items-center gap-3 pl-4 pr-3 py-3">
               <div className="flex-1 space-y-1.5">
                 <div className="h-3.5 w-1/2 bg-gray-200 rounded" />
