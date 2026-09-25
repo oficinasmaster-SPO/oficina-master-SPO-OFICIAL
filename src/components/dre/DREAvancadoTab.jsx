@@ -1068,10 +1068,105 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
   const totalReceitas = lancamentos.filter(l => l.tipo === "receita").reduce((s, l) => s + l.valor, 0);
   const totalDespesas = lancamentos.filter(l => l.tipo === "despesa").reduce((s, l) => s + l.valor, 0);
 
+  // ── Sprint D: Skeleton de loading estruturado ────────────────────────────
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+      <div className="space-y-4 animate-pulse">
+        {/* Banner info */}
+        <div className="h-10 bg-blue-50 border border-blue-100 rounded-xl" />
+
+        {/* Barra de período */}
+        <div className="flex gap-2">
+          <div className="h-8 w-32 bg-gray-100 rounded-lg" />
+          <div className="h-8 w-20 bg-gray-100 rounded-lg" />
+          <div className="h-8 w-16 bg-gray-100 rounded-lg" />
+        </div>
+
+        {/* Abas */}
+        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+          {["w-16", "w-28", "w-28", "w-20"].map((w, i) => (
+            <div key={i} className={`${w} h-6 bg-gray-200 rounded-md flex-1`} />
+          ))}
+        </div>
+
+        {/* Botões de ação */}
+        <div className="flex gap-2">
+          <div className="h-8 w-24 bg-gray-100 rounded-lg" />
+          <div className="h-8 w-24 bg-gray-100 rounded-lg" />
+          <div className="h-8 w-36 bg-gray-100 rounded-lg" />
+        </div>
+
+        {/* Grupo 1 — 3 cards */}
+        <div className="space-y-1.5">
+          <div className="flex justify-between items-center px-2 py-2">
+            <div className="flex gap-2 items-center">
+              <div className="h-3 w-28 bg-gray-200 rounded" />
+              <div className="h-3 w-8 bg-gray-100 rounded" />
+            </div>
+            <div className="h-3 w-20 bg-gray-200 rounded" />
+          </div>
+          {["w-3/4", "w-1/2", "w-2/3"].map((w, i) => (
+            <div key={i} className="border border-gray-100 rounded-xl overflow-hidden">
+              <div className="flex items-center gap-3 pl-4 pr-3 py-3">
+                <div className="absolute left-0 w-1 h-full bg-gray-200" />
+                <div className="flex-1 space-y-1.5">
+                  <div className={`h-3.5 ${w} bg-gray-200 rounded`} />
+                  <div className="flex gap-1.5">
+                    <div className="h-2.5 w-20 bg-gray-100 rounded-full" />
+                    <div className="h-2.5 w-16 bg-gray-100 rounded-full" />
+                    <div className="h-2.5 w-14 bg-gray-100 rounded-full" />
+                  </div>
+                </div>
+                <div className="h-4 w-20 bg-gray-200 rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Grupo 2 — 2 cards */}
+        <div className="space-y-1.5">
+          <div className="flex justify-between items-center px-2 py-2">
+            <div className="flex gap-2 items-center">
+              <div className="h-3 w-24 bg-gray-200 rounded" />
+              <div className="h-3 w-8 bg-gray-100 rounded" />
+            </div>
+            <div className="h-3 w-16 bg-gray-200 rounded" />
+          </div>
+          {["w-2/3", "w-1/2"].map((w, i) => (
+            <div key={i} className="border border-gray-100 rounded-xl overflow-hidden">
+              <div className="flex items-center gap-3 pl-4 pr-3 py-3">
+                <div className="flex-1 space-y-1.5">
+                  <div className={`h-3.5 ${w} bg-gray-200 rounded`} />
+                  <div className="flex gap-1.5">
+                    <div className="h-2.5 w-16 bg-gray-100 rounded-full" />
+                    <div className="h-2.5 w-12 bg-gray-100 rounded-full" />
+                  </div>
+                </div>
+                <div className="h-4 w-16 bg-gray-200 rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Grupo 3 — 1 card */}
+        <div className="space-y-1.5">
+          <div className="flex justify-between items-center px-2 py-2">
+            <div className="h-3 w-20 bg-gray-200 rounded" />
+            <div className="h-3 w-16 bg-gray-200 rounded" />
+          </div>
+          <div className="border border-gray-100 rounded-xl overflow-hidden">
+            <div className="flex items-center gap-3 pl-4 pr-3 py-3">
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3.5 w-1/2 bg-gray-200 rounded" />
+                <div className="flex gap-1.5">
+                  <div className="h-2.5 w-14 bg-gray-100 rounded-full" />
+                  <div className="h-2.5 w-10 bg-gray-100 rounded-full" />
+                </div>
+              </div>
+              <div className="h-4 w-20 bg-gray-200 rounded" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
