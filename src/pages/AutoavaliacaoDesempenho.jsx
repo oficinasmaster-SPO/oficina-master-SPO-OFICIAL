@@ -92,34 +92,21 @@ export default function AutoavaliacaoDesempenho() {
   const handleSubmit = async () => {
     setSaving(true);
     try {
-      const techAvg = Object.values(technicalScores).reduce((a, b) => a + b, 0) / technicalCriteria.length;
-      const emotAvg = Object.values(emotionalScores).reduce((a, b) => a + b, 0) / emotionalCriteria.length;
-
-      let classification = "observacao";
-      if (techAvg < 5 && emotAvg < 5) classification = "demissao";
-      else if (techAvg < 7 && emotAvg >= 7) classification = "treinamento_tecnico";
-      else if (techAvg >= 7 && emotAvg < 7) classification = "treinamento_emocional";
-      else if (techAvg >= 8 && emotAvg >= 8) classification = "investimento";
-      else if (techAvg >= 7 && emotAvg >= 7) classification = "reconhecimento";
-
-      const diagnostic = await base44.entities.PerformanceMatrixDiagnostic.create({
+      // Sprint 1 / C3: gravação, permissão e classificação feitas no servidor
+      // (antes esta tela usava uma regra própria, divergente da matriz oficial)
+      const response = await base44.functions.invoke('submitPerformanceEvaluation', {
         employee_id: employee.id,
-        evaluator_id: user.id,
-        workshop_id: employee.workshop_id,
-        evaluation_type: 'self',
         technical_scores: technicalScores,
-        emotional_scores: emotionalScores,
-        technical_average: techAvg,
-        emotional_average: emotAvg,
-        classification,
-        completed: true
+        emotional_scores: emotionalScores
       });
+      if (response?.data?.error) throw new Error(response.data.error);
+      if (!response?.data?.id) throw new Error("ID da avaliação não retornado");
 
       toast.success("Autoavaliação concluída!");
-      navigate(createPageUrl("ResultadoDesempenho") + `?id=${diagnostic.id}`);
+      navigate(createPageUrl("ResultadoDesempenho") + `?id=${response.data.id}`);
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao salvar: " + error.message);
+      toast.error("Erro ao salvar: " + (error?.response?.data?.error || error.message));
     } finally {
       setSaving(false);
     }
