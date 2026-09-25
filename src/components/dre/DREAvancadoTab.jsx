@@ -1242,6 +1242,70 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
                   onCancel={() => setShowForm(null)} />
               )}
 
+              {/* ── Sprint C: barra de filtros + busca ────────────────────── */}
+              {lancamentos.length > 0 && (
+                <div className="flex flex-col sm:flex-row gap-2">
+                  {/* Campo de busca */}
+                  <div className="relative flex-1">
+                    <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input
+                      type="text"
+                      placeholder="Buscar por descrição, fornecedor, cliente..."
+                      value={busca}
+                      onChange={e => setBusca(e.target.value)}
+                      className="w-full text-xs pl-8 pr-8 py-2 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 placeholder:text-gray-400"
+                    />
+                    {busca && (
+                      <button
+                        onClick={() => setBusca("")}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        <XIcon className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Chips de status */}
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {[
+                      { key: "todos",     label: "Todos",     count: contadores.todos,     cor: "gray"   },
+                      { key: "pendentes", label: "Pendentes", count: contadores.pendentes, cor: "amber"  },
+                      { key: "pagos",     label: "Pagos",     count: contadores.pagos,     cor: "green"  },
+                      { key: "vencidos",  label: "⚠️ Vencidos", count: contadores.vencidos,  cor: "red"    },
+                    ].map(({ key, label, count, cor }) => {
+                      const ativo = filtroStatus === key;
+                      const cores = {
+                        gray:  { base: "border-gray-200 text-gray-600",   ativo: "bg-gray-800  border-gray-800  text-white" },
+                        amber: { base: "border-amber-200 text-amber-700", ativo: "bg-amber-500 border-amber-500 text-white" },
+                        green: { base: "border-green-200 text-green-700", ativo: "bg-green-600 border-green-600 text-white" },
+                        red:   { base: "border-red-200   text-red-700",   ativo: "bg-red-600   border-red-600   text-white" },
+                      };
+                      // Só mostra chip de vencidos quando há algum
+                      if (key === "vencidos" && count === 0 && !ativo) return null;
+                      return (
+                        <button
+                          key={key}
+                          onClick={() => setFiltroStatus(key)}
+                          className={`flex items-center gap-1 text-[11px] font-medium border rounded-full px-2.5 py-1 transition-all ${
+                            ativo ? cores[cor].ativo : cores[cor].base + " bg-white hover:bg-gray-50"
+                          }`}
+                        >
+                          {label}
+                          <span className={`text-[10px] font-bold px-1 py-0.5 rounded-full ${
+                            ativo ? "bg-white/20" : "bg-gray-100 text-gray-500"
+                          }`}>
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              )}
+
               {Object.keys(grupos).length === 0 ? (
                 <div className="text-center py-12 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
                   <Plus className="w-10 h-10 mx-auto mb-2 opacity-30" />
