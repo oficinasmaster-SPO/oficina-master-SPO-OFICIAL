@@ -1106,9 +1106,9 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
             <div className="h-3 w-20 bg-gray-200 rounded" />
           </div>
           {["w-3/4", "w-1/2", "w-2/3"].map((w, i) => (
-            <div key={i} className="border border-gray-100 rounded-xl overflow-hidden">
+            <div key={i} className="relative border border-gray-100 rounded-xl overflow-hidden">
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gray-200 rounded-l-xl" />
               <div className="flex items-center gap-3 pl-4 pr-3 py-3">
-                <div className="absolute left-0 w-1 h-full bg-gray-200" />
                 <div className="flex-1 space-y-1.5">
                   <div className={`h-3.5 ${w} bg-gray-200 rounded`} />
                   <div className="flex gap-1.5">
