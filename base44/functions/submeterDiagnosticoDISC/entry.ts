@@ -2,6 +2,30 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { waitUntil } from 'base44:runtime';
 import { validarEConverterRespostas, calcularPerfilDISC } from '../../shared/discEngine/entry.ts';
 
+// ─── Sprint 1 / C4: validação de acesso ao workshop ───────────────────────────────
+// CÓPIA FIEL de checkWorkshopAccess em functions/submitAppForms/entry.ts (manter sincronizado).
+async function checkWorkshopAccess(sr, user, workshop_id) {
+  const workshop = await sr.entities.Workshop.get(workshop_id).catch(() => null);
+  if (!workshop) return { ok: false, status: 404, error: 'Oficina não encontrada' };
+  const isAdmin = user.role === 'admin';
+  const isInternal = user.user_type === 'internal' || user.data?.user_type === 'internal';
+  if (isAdmin || isInternal) return { ok: true, workshop };
+  if (workshop.owner_id === user.id) return { ok: true, workshop };
+  const legacyWid = user.workshop_id || user.tenant_workshop_id || user.data?.workshop_id;
+  if (legacyWid === workshop_id) return { ok: true, workshop };
+  const memberships = await sr.entities.TenantMembership.filter(
+    { user_id: user.id, workshop_id, status: 'active' }
+  ).catch(() => []);
+  if (memberships.length > 0) return { ok: true, workshop };
+  const byUserId = await sr.entities.Employee.filter({ workshop_id, user_id: user.id }).catch(() => []);
+  const byEmail = user.email
+    ? await sr.entities.Employee.filter({ workshop_id, email: user.email }).catch(() => [])
+    : [];
+  if ([...byUserId, ...byEmail].some((e) => e.status !== 'inativo')) return { ok: true, workshop };
+  console.warn(`[submeterDiagnosticoDISC] ACESSO NEGADO: user ${user.id} (${user.email}) → workshop ${workshop_id}`);
+  return { ok: false, status: 403, error: 'Sem acesso a esta oficina' };
+}
+
 // Caminho único de submissão DISC autenticada (autoavaliação e diagnóstico do gestor).
 // Padrão: rank 1 = mais parecido. Conversão e cálculo vivem no motor compartilhado (shared/discEngine).
 export default async function(req) {
@@ -22,17 +46,21 @@ export default async function(req) {
 
     const { profileScores, dominant, recommendedRoles } = calcularPerfilDISC(validacao.answers);
 
-    // ── Resolução da oficina (fonte: payload ou cadastro do colaborador) ──
-    let workshopId = payload.workshop_id || null;
-    if (!workshopId) {
-      const employee = await base44.entities.Employee.get(employeeId).catch(() => null);
-      workshopId = employee?.workshop_id || null;
-    }
+    // ── Resolução da oficina: SEMPRE pelo cadastro do colaborador (Sprint 1 / C4) ──
+    // O workshop_id do payload não é mais fonte de verdade; se vier diferente, recusa.
+    const sr = base44.asServiceRole;
+    const employee = await sr.entities.Employee.get(employeeId).catch(() => null);
+    const workshopId = employee?.workshop_id || null;
     if (!workshopId) {
       return Response.json({ error: 'Oficina não resolvida para o colaborador' }, { status: 400 });
     }
+    if (payload.workshop_id && payload.workshop_id !== workshopId) {
+      return Response.json({ error: 'Colaborador não pertence à oficina informada' }, { status: 403 });
+    }
+    const access = await checkWorkshopAccess(sr, user, workshopId);
+    if (!access.ok) return Response.json({ error: access.error }, { status: access.status });
 
-    const created = await base44.entities.DISCDiagnostic.create({
+    const created = await sr.entities.DISCDiagnostic.create({
       employee_id: employeeId,
       evaluator_id: user.id,
       workshop_id: workshopId,
