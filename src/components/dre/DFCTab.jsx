@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
-  Wallet, Building2, Landmark, Loader2, AlertCircle, RefreshCw } from
+  Wallet, Building2, Landmark, Loader2, AlertCircle, RefreshCw, FileText, Layers, CalendarRange } from
 "lucide-react";
+import AbasSegmentadas from "@/components/shared/AbasSegmentadas";
 import { InputMoeda } from "@/components/ui/InputMoeda";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ReferenceLine, Legend } from
@@ -682,30 +683,17 @@ export default function DFCTab({ workshopId, mes }) {
   return (
     <div className="space-y-6">
       {/* Toggle DFC vs Contas */}
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => setShowContasTab(false)}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border-2 transition-all cursor-pointer text-xs
-            ${!showContasTab ?
-          "bg-blue-50 border-blue-400 shadow-md" :
-          "bg-white border-gray-200 hover:border-gray-300 hover:shadow"}`}>
-          <span className="text-base">💵</span>
-          <span className={`text-xs font-semibold ${!showContasTab ? "text-blue-700" : "text-gray-600"}`}>
-            Fluxo de Caixa (DFC)
-          </span>
-        </button>
-        <button
-          onClick={() => setShowContasTab(true)}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border-2 transition-all cursor-pointer
-            ${showContasTab ?
-          "bg-blue-50 border-blue-400 shadow-sm" :
-          "bg-white border-gray-200 hover:border-gray-300"}`}>
-          <span className="text-base">📋</span>
-          <span className={`text-xs font-semibold ${showContasTab ? "text-blue-700" : "text-gray-600"}`}>
-            Contas a Receber/Pagar
-          </span>
-        </button>
-      </div>
+      <AbasSegmentadas
+        ariaLabel="Seções do fluxo de caixa"
+        largura="total"
+        className="mb-4"
+        valor={showContasTab ? "contas" : "dfc"}
+        onChange={(v) => setShowContasTab(v === "contas")}
+        abas={[
+          { value: "dfc",    label: "Fluxo de Caixa (DFC)",         icon: Wallet },
+          { value: "contas", label: "Contas a Receber e a Pagar",   icon: FileText },
+        ]}
+      />
 
       {/* VIEW: CONTAS */}
       {showContasTab &&
@@ -793,20 +781,16 @@ export default function DFCTab({ workshopId, mes }) {
       )}
 
       {/* Tabs de view */}
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
-          <button
-              onClick={() => setView("grupos")}
-              className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${view === "grupos" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}>
-                
-            🗂️ Por Grupo
-          </button>
-          <button
-              onClick={() => setView("projecao")}
-              className={`text-xs px-3 py-2 rounded-md font-medium transition-all ${view === "projecao" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}>
-                
-            📅 Projeção
-          </button>
-        </div>
+      <AbasSegmentadas
+        ariaLabel="Visualização do fluxo de caixa"
+        tamanho="sm"
+        valor={view}
+        onChange={setView}
+        abas={[
+          { value: "grupos",   label: "Por grupo", icon: Layers },
+          { value: "projecao", label: "Projeção",  icon: CalendarRange },
+        ]}
+      />
 
       {/* VIEW: PROJEÇÃO */}
       {view === "projecao" &&
@@ -892,7 +876,7 @@ export default function DFCTab({ workshopId, mes }) {
       {/* Gráfico Waterfall */}
       <Card className="border border-gray-200">
         <CardContent className="pt-4">
-          <p className="text-sm font-semibold text-gray-700 mb-3">📊 Waterfall — Composição do Saldo</p>
+          <p className="text-sm font-semibold text-gray-700 mb-3">Composição do saldo — cascata</p>
           <GraficoWaterfall
                   saldoInicial={saldoInicial}
                   fluxoOp={fluxoOp}
