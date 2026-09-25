@@ -1307,9 +1307,27 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
 
               {Object.keys(grupos).length === 0 ? (
                 <div className="text-center py-12 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
-                  <Plus className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Nenhum lançamento ainda.</p>
-                  <p className="text-xs">Clique em "+ Receita" ou "+ Despesa" para começar.</p>
+                  {lancamentos.length === 0 ? (
+                    <>
+                      <Plus className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">Nenhum lançamento ainda.</p>
+                      <p className="text-xs">Clique em "+ Receita" ou "+ Despesa" para começar.</p>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-10 h-10 mx-auto mb-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      <p className="text-sm font-medium text-gray-500">Nenhum resultado encontrado.</p>
+                      <p className="text-xs mt-1">Tente ajustar a busca ou o filtro de status.</p>
+                      <button
+                        onClick={() => { setBusca(""); setFiltroStatus("todos"); }}
+                        className="mt-3 text-xs text-blue-600 hover:underline"
+                      >
+                        Limpar filtros
+                      </button>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">
