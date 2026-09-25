@@ -461,25 +461,34 @@ export default function DFCTab({ workshopId, mes }) {
       });
     },
     enabled: !!workshopId && !!mes,
-    staleTime: 0
+    // PERF-DFC-02: sem refetch a cada foco/remontagem — subscribe + eventos já invalidam
+    staleTime: 30_000
   });
 
   // BUG FIX #1: Real-time subscription para escutar novos lançamentos do DRE Avançado
   useEffect(() => {
     if (!workshopId || !mes) return;
 
+    // PERF-DFC-01: uma baixa dispara até 3 gatilhos (subscribe do DRE + 'dre-lancamento-criado'
+    // + 'liquidacao-registrada'). Cada refetch faz 3 requisições. Agrupa tudo em uma busca.
+    let timer = null;
+    const agendarRefetch = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => refetchDRE(), 250);
+    };
+
     const unsubscribe = base44.entities.DRELancamento.subscribe((event) => {
       if (event.data?.workshop_id === workshopId && event.data?.mes === mes) {
         if (event.type === 'create' || event.type === 'delete' || event.type === 'update') {
-          refetchDRE();
+          agendarRefetch();
         }
       }
     });
 
     // Event listener para cross-tab sync
-    const handleDREChange = () => refetchDRE();
+    const handleDREChange = () => agendarRefetch();
     const handleLiquidacao = () => {
-      refetchDRE();
+      agendarRefetch();
       queryClient.invalidateQueries({ queryKey: ["dfc-manuais", workshopId, mes] });
       queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
     };
@@ -489,6 +498,7 @@ export default function DFCTab({ workshopId, mes }) {
     window.addEventListener('recebimento-registrado', handleLiquidacao);
 
     return () => {
+      clearTimeout(timer);
       unsubscribe();
       window.removeEventListener('dre-lancamento-criado', handleDREChange);
       window.removeEventListener('liquidacao-registrada', handleLiquidacao);
