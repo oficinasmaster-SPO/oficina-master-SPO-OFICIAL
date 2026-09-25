@@ -24,14 +24,13 @@ Você é um consultor especialista em gestão de oficinas automotivas.
 DADOS DA OFICINA:
 - Nome: ${workshop.name}
 - Cidade: ${workshop.city} - ${workshop.state}
-- Fase Atual: ${phase} (1=Sobrevivência, 2=Estruturação, 3=Crescimento, 4=Expansão)
+- Fase Atual: ${phase} (1=F1 Base: Sobrevivência e Geração de Caixa, 2=F2 Organização: Crescimento e Estruturação, 3=F3 Tração: Processos e Liderança, 4=F4 Excelência: Consolidação e Escala)
 - Segmento: ${workshop.segment}
 - Faturamento Mensal: ${workshop.monthly_revenue}
 - Colaboradores: ${workshop.employees_count}
 
 DIAGNÓSTICO:
 - Fase Identificada: ${diagnostic.phase}
-- Letra Dominante: ${diagnostic.dominant_letter}
 - Respostas: ${JSON.stringify(diagnostic.answers)}
 
 TAREFA:
