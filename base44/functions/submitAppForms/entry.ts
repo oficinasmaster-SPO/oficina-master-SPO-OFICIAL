@@ -275,8 +275,9 @@ Deno.serve(async (req) => {
         '-created_date',
         3
       ).catch(() => []);
+      const toUtcMs = (s) => new Date(/[zZ]|[+-]\d{2}:?\d{2}$/.test(String(s)) ? s : `${s}Z`).getTime();
       const dup = recent.find((d) =>
-        Date.now() - new Date(d.created_date).getTime() < DEDUP_WINDOW_MS &&
+        Date.now() - toUtcMs(d.created_date) < DEDUP_WINDOW_MS &&
         answerKey(d.answers) === answerKey(answers)
       );
       if (dup) {
