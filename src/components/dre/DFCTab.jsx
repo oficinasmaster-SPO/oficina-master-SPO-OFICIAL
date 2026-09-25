@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
   ChevronDown, ChevronRight, Plus, Trash2, Pencil, Wallet, Eye,
-  TrendingUp, TrendingDown, Building2, Landmark, Loader2 } from
+  TrendingUp, TrendingDown, Building2, Landmark, Loader2, AlertCircle, RefreshCw } from
 "lucide-react";
 import { InputMoeda } from "@/components/ui/InputMoeda";
 import {
@@ -336,7 +336,8 @@ function ModalMarcarPagamento({ item, onFechar, onSalvo }) {
 // FLICKER FIX (Etapa 2): memo — abrir/fechar modal não repinta as linhas da lista
 const LinhaItem = React.memo(function LinhaItem({ item, onDelete, onEdit, onMarcarPagamento, onEstornar }) {
   const handleRowClick = () => {
-    if (item.origem !== "manual" && item.id) {
+    // QA-DFC-04: conta quitada não reabre o modal de liquidação (evita pagamento duplicado)
+    if (item.origem !== "manual" && item.id && item.status_conta !== "pago") {
       onMarcarPagamento(item);
     }
   };
@@ -580,15 +581,18 @@ export default function DFCTab({ workshopId, mes }) {
   }, [anoAtual]);
 
   // ── Buscar DRELancamentos → mapeados automaticamente (Fase 3) ──
-  const { data: lancamentosDRE = [], isLoading: isDRELoading, refetch: refetchDRE } = useQuery({
+  const { data: lancamentosDRE = [], isLoading: isDRELoading, isError: isDREError, refetch: refetchDRE } = useQuery({
     queryKey: ["dre-lancamentos-dfc", workshopId, mes],
     queryFn: async () => {
       // LIMIT 500 em todas as queries para evitar truncamento silencioso
       const dres = await base44.entities.DRELancamento.filter({ workshop_id: workshopId, mes }, "-created_date", 500);
-      // Cruzar com ContaReceber/ContaPagar para pegar data_pagamento real
+      if (!dres?.length) return [];
+      // QA-DFC-05: busca só as contas vinculadas aos lançamentos do mês (antes: 1.000 registros
+      // da oficina inteira a cada refetch, com risco de truncar contas antigas no limite de 500)
+      const ids = dres.map((d) => d.id);
       const [contasReceber, contasPagar] = await Promise.all([
-      base44.entities.ContaReceber.filter({ workshop_id: workshopId }, "-created_date", 500),
-      base44.entities.ContaPagar.filter({ workshop_id: workshopId }, "-created_date", 500)]
+      base44.entities.ContaReceber.filter({ workshop_id: workshopId, dre_lancamento_id: { $in: ids } }, "-created_date", 500),
+      base44.entities.ContaPagar.filter({ workshop_id: workshopId, dre_lancamento_id: { $in: ids } }, "-created_date", 500)]
       );
       const mapaReceber = Object.fromEntries((contasReceber || []).map((c) => [c.dre_lancamento_id, c]));
       const mapaPagar = Object.fromEntries((contasPagar || []).map((c) => [c.dre_lancamento_id, c]));
@@ -650,7 +654,7 @@ export default function DFCTab({ workshopId, mes }) {
   }, [workshopId, mes, refetchDRE]);
 
   // ── Buscar lançamentos manuais do DFC ──────────────────────────
-  const { data: manuaisDB = [], isLoading: isManuaisLoading } = useQuery({
+  const { data: manuaisDB = [], isLoading: isManuaisLoading, isError: isManuaisError, refetch: refetchManuais } = useQuery({
     queryKey: ["dfc-manuais", workshopId, mes],
     queryFn: () => base44.entities.DFCLancamento.filter({ workshop_id: workshopId, mes, origem: "manual" }),
     enabled: !!workshopId && !!mes
@@ -687,7 +691,8 @@ export default function DFCTab({ workshopId, mes }) {
       toast.success("Lançamento adicionado!");
       setModalAberto(false);
       setLancamentoEdicao(null);
-    }
+    },
+    onError: (e) => toast.error("Erro ao adicionar: " + (e?.message || "tente novamente"))
   });
 
   const editarMutation = useMutation({
@@ -698,7 +703,8 @@ export default function DFCTab({ workshopId, mes }) {
       toast.success("Lançamento atualizado!");
       setModalAberto(false);
       setLancamentoEdicao(null);
-    }
+    },
+    onError: (e) => toast.error("Erro ao atualizar: " + (e?.message || "tente novamente"))
   });
 
   const deletarMutation = useMutation({
@@ -707,7 +713,8 @@ export default function DFCTab({ workshopId, mes }) {
       queryClient.invalidateQueries({ queryKey: ["dfc-manuais", workshopId, mes] });
       queryClient.invalidateQueries({ queryKey: ["budget-metas", workshopId, mes] });
       toast.success("Lançamento removido!");
-    }
+    },
+    onError: (e) => toast.error("Erro ao remover: " + (e?.message || "tente novamente"))
   });
 
   const salvarSaldoMutation = useMutation({
@@ -798,7 +805,12 @@ export default function DFCTab({ workshopId, mes }) {
   };
 
   const deletarMutate = deletarMutation.mutate; // mutate é estável entre renders (React Query)
-  const handleDelete = useCallback((item) => {if (item.id) deletarMutate(item.id);}, [deletarMutate]);
+  // QA-DFC-07: confirmação antes de excluir lançamento manual
+  const handleDelete = useCallback((item) => {
+    if (!item.id) return;
+    if (!window.confirm(`Excluir "${item.descricao || "lançamento"}"? Esta ação não pode ser desfeita.`)) return;
+    deletarMutate(item.id);
+  }, [deletarMutate]);
 
   const isLoading = isDRELoading || isManuaisLoading;
 
@@ -809,6 +821,20 @@ export default function DFCTab({ workshopId, mes }) {
         <span className="text-gray-500 text-sm">Carregando fluxo de caixa...</span>
       </div>);
 
+  }
+
+  // QA-DFC-06: erro explícito em vez de exibir "Nenhum lançamento no DRE" (mesmo padrão da Frente C3)
+  if (periodo === "mensal" && (isDREError || isManuaisError)) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 gap-3 border-2 border-dashed border-red-200 rounded-xl bg-red-50/40">
+        <AlertCircle className="w-8 h-8 text-red-500" />
+        <p className="text-sm font-medium text-red-700">Falha ao carregar o fluxo de caixa.</p>
+        <p className="text-xs text-gray-500">Verifique a conexão e tente novamente.</p>
+        <Button size="sm" variant="outline" onClick={() => { refetchDRE(); refetchManuais(); }}>
+          <RefreshCw className="w-4 h-4 mr-1" /> Tentar novamente
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -916,6 +942,10 @@ export default function DFCTab({ workshopId, mes }) {
           onSuccess={() => {
             setContaParaEstornarDFC(null);
             queryClient.invalidateQueries({ queryKey: ["dre-lancamentos-dfc", workshopId, mes] });
+            // QA-DFC-08: desfazerLiquidacao altera o saldo das contas — card de saldo precisa refazer a leitura
+            queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
+            queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes", workshopId, mes] });
+            queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId, mes] });
           }}
         />
       )}
@@ -1034,6 +1064,9 @@ export default function DFCTab({ workshopId, mes }) {
             queryClient.invalidateQueries({ queryKey: ["dre-lancamentos", workshopId, mes] });
             queryClient.invalidateQueries({ queryKey: ["contas-receber", workshopId] });
             queryClient.invalidateQueries({ queryKey: ["contas-pagar", workshopId] });
+            // QA-DFC-08: registrarLiquidacao altera o saldo da fonte selecionada
+            queryClient.invalidateQueries({ queryKey: ["dfc-saldo", workshopId, mes] });
+            queryClient.invalidateQueries({ queryKey: ["saldo-inicial-fontes", workshopId, mes] });
           }} />
         
 
