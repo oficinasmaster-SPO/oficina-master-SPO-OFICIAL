@@ -937,6 +937,9 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
   const [showTransferencia, setShowTransferencia] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState("todos");
   const [periodo, setPeriodo] = useState("mensal");
+  // Sprint C — filtros client-side
+  const [busca, setBusca] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState("todos"); // todos | pendentes | pagos | vencidos
 
   const mesAtual = mes ? mes.split('-')[1] : "01";
   const anoAtual = mes ? parseInt(mes.split('-')[0]) : new Date().getFullYear();
