@@ -9,8 +9,10 @@ import {
   CheckCircle, AlertCircle, BarChart3, TrendingUp, TrendingDown,
   ChevronDown, ChevronUp, Loader2, RefreshCw, UserPlus, Building2,
   Paperclip, X as XIcon, ArrowLeftRight,
-  Pencil, CheckSquare, Calendar, DollarSign, FileText, RotateCcw
+  Pencil, CheckSquare, Calendar, DollarSign, FileText, RotateCcw,
+  User, ShoppingCart, List
 } from "lucide-react";
+import AbasSegmentadas from "@/components/shared/AbasSegmentadas";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { formatCurrency } from "@/components/utils/formatters";
 import { toast } from "sonner";
@@ -357,6 +359,30 @@ function FormLancamento({ tipo, workshopId, mes, onSuccess, onCancel }) {
 //   expanded      — accordion de detalhe (clique na linha)
 //   editing       — Dialog de edição (botão Editar)
 //   confirmDelete — confirmação inline de exclusão
+// ─── Metadados da linha (padrão visual) ──────────────────────────────────────────
+// Separador vertical entre itens de metadado
+const Sep = () => <span aria-hidden className="h-3 w-px bg-slate-200 shrink-0" />;
+
+// Ícone + rótulo + data/valor (ex.: "Venda 16/09")
+function MetaData({ icone: Icone, rotulo, valor, cls = "text-slate-600" }) {
+  return (
+    <span className={`inline-flex items-center gap-1 whitespace-nowrap ${cls}`}>
+      <Icone className="w-3 h-3 text-slate-400 shrink-0" />
+      <span className="text-slate-400">{rotulo}</span>
+      <span className="font-medium tabular-nums">{valor}</span>
+    </span>
+  );
+}
+
+// Etiqueta discreta (TCMP², recorrência)
+function Tag({ children, cls }) {
+  return (
+    <span className={`inline-flex items-center rounded border px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide ${cls}`}>
+      {children}
+    </span>
+  );
+}
+
 function LancamentoRow({ item, onDelete, onSaved }) {
   const [expanded,      setExpanded]      = useState(false);
   const [editing,       setEditing]       = useState(false);
@@ -454,6 +480,20 @@ function LancamentoRow({ item, onDelete, onSaved }) {
   const hoje      = hojeLocal();
   const isVencido = hasVenc && !isPago && item.data_vencimento < hoje;
 
+  // Status em uma pílula única (coluna fixa, alinhada)
+  const diasAtraso = isVencido
+    ? Math.max(1, Math.round((new Date(hoje + "T12:00:00") - new Date(item.data_vencimento + "T12:00:00")) / 86400000))
+    : 0;
+  const statusUI = isPago
+    ? { texto: item.tipo === "receita" ? "Recebido" : "Pago", cls: "bg-emerald-50 text-emerald-700 ring-emerald-200" }
+    : isVencido
+    ? { texto: `Vencido · ${diasAtraso}d`, cls: "bg-red-50 text-red-700 ring-red-200" }
+    : hasVenc
+    ? { texto: "A vencer", cls: "bg-amber-50 text-amber-700 ring-amber-200" }
+    : { texto: "Em aberto", cls: "bg-slate-50 text-slate-600 ring-slate-200" };
+  const contraparte = item.tipo === "receita" ? item.cliente_nome : item.fornecedor_nome;
+  const freqLabel = FREQUENCIAS.find(f => f.value === item.frequencia)?.label ?? item.frequencia;
+
   const barColor   = item.tipo === "receita" ? "bg-green-400" : item.entra_tcmp2 ? "bg-blue-400" : "bg-orange-400";
   const cardBorder = isVencido ? "border-red-200 bg-red-50/30"
     : expanded ? "border-blue-200 bg-blue-50/20"
@@ -464,75 +504,78 @@ function LancamentoRow({ item, onDelete, onSaved }) {
       <div className={`relative border rounded-xl overflow-hidden shadow-sm transition-all duration-150 ${cardBorder}`}>
         <div className={`absolute left-0 top-0 bottom-0 w-1 ${barColor}`} />
 
-        {/* Linha principal — clique expande/recolhe */}
-        <div className="flex items-center gap-3 pl-4 pr-3 py-3 cursor-pointer group select-none"
+        {/* Linha principal — clique abre o detalhe (Editar, Marcar pago e Excluir ficam no detalhe) */}
+        <div className="flex items-center gap-4 pl-4 pr-3 py-3 cursor-pointer select-none hover:bg-slate-50/60 transition-colors"
              onClick={() => { setExpanded(v => !v); setConfirmDelete(false); }}>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">{item.descricao}</p>
-            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-              <span className="text-[11px] text-gray-400">{cat?.label ?? item.categoria}</span>
-              {item.subcategoria && <span className="text-[11px] text-gray-400">· {item.subcategoria}</span>}
-              {item.tipo === "receita" && item.cliente_nome && (
-                <span className="inline-flex items-center gap-1 text-[11px] bg-green-50 text-green-700 border border-green-200 px-1.5 py-0.5 rounded-full">👤 {item.cliente_nome}</span>
-              )}
-              {item.tipo === "despesa" && item.fornecedor_nome && (
-                <span className="inline-flex items-center gap-1 text-[11px] bg-gray-100 text-gray-600 border border-gray-200 px-1.5 py-0.5 rounded-full">🏪 {item.fornecedor_nome}</span>
-              )}
-              {item.data_competencia && (
-                <span className="text-[11px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full">
-                  {item.tipo === "receita" ? "venda" : "compra"} {fmtData(item.data_competencia)}
-                </span>
-              )}
-              {(item.tipo_documento || item.numero_documento) && (
-                <span className="text-[11px] bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.5 rounded-full">
-                  📄 {TIPOS_DOCUMENTO.find(t => t.value === item.tipo_documento)?.label ?? "Doc"}{item.numero_documento ? ` ${item.numero_documento}` : ""}
-                </span>
-              )}
-              {item.tipo === "despesa" && (
-                item.entra_tcmp2
-                  ? <span className="text-[11px] text-blue-600">✅ TCMP²</span>
-                  : <span className="text-[11px] text-orange-500">🚫 Fora TCMP²</span>
-              )}
-              {item.frequencia && item.frequencia !== "unico" && (
-                <span className="text-[11px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full">
-                  🔁 {FREQUENCIAS.find(f => f.value === item.frequencia)?.label ?? item.frequencia}
-                  {item.parcela_atual && item.numero_parcelas ? ` (${item.parcela_atual}/${item.numero_parcelas})` : ""}
-                </span>
-              )}
-              {isPago ? (
-                <span className="inline-flex items-center gap-1 text-[11px] bg-green-100 text-green-700 border border-green-200 px-1.5 py-0.5 rounded-full font-medium">✅ pago {fmtData(item.data_pagamento)}</span>
-              ) : isVencido ? (
-                <span className="inline-flex items-center gap-1 text-[11px] bg-red-100 text-red-700 border border-red-200 px-1.5 py-0.5 rounded-full font-medium">⚠️ venceu {fmtData(item.data_vencimento)}</span>
-              ) : hasVenc ? (
-                <span className="inline-flex items-center gap-1 text-[11px] bg-amber-100 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded-full font-medium">🕐 vence {fmtData(item.data_vencimento)}</span>
-              ) : null}
+            <div className="flex items-center gap-2 min-w-0">
+              <p className="text-sm font-semibold text-slate-900 truncate">{item.descricao}</p>
               {item.anexo_url && (
                 <a href={item.anexo_url} target="_blank" rel="noreferrer"
                    onClick={e => e.stopPropagation()} title={item.anexo_nome || "Ver anexo"}
-                   className="text-blue-400 hover:text-blue-600"><Paperclip className="w-3 h-3" /></a>
+                   className="shrink-0 text-slate-400 hover:text-blue-600"><Paperclip className="w-3.5 h-3.5" /></a>
+              )}
+            </div>
+            <div className="mt-1 flex items-center flex-wrap gap-x-2.5 gap-y-1 text-[11px] text-slate-500">
+              <span className="truncate max-w-[18rem]">
+                {cat?.label ?? item.categoria}
+                {item.subcategoria && <span className="text-slate-400"> / {item.subcategoria}</span>}
+              </span>
+              {contraparte && (
+                <>
+                  <Sep />
+                  <span className="inline-flex items-center gap-1 font-medium text-slate-700 max-w-[16rem]" title={contraparte}>
+                    {item.tipo === "receita"
+                      ? <User className="w-3 h-3 text-slate-400 shrink-0" />
+                      : <Building2 className="w-3 h-3 text-slate-400 shrink-0" />}
+                    <span className="truncate">{contraparte}</span>
+                  </span>
+                </>
+              )}
+              {item.data_competencia && (
+                <><Sep /><MetaData icone={ShoppingCart} rotulo={item.tipo === "receita" ? "Venda" : "Compra"} valor={fmtData(item.data_competencia)} /></>
+              )}
+              {item.data_vencimento && (
+                <><Sep /><MetaData icone={Calendar} rotulo="Venc." valor={fmtData(item.data_vencimento)}
+                  cls={isVencido ? "text-red-600" : "text-slate-600"} /></>
+              )}
+              {item.data_pagamento && (
+                <><Sep /><MetaData icone={CheckCircle} rotulo={item.tipo === "receita" ? "Recebido" : "Pago"}
+                  valor={fmtData(item.data_pagamento)} cls="text-emerald-700" /></>
+              )}
+              {item.numero_documento && (
+                <><Sep /><MetaData icone={FileText}
+                  rotulo={TIPOS_DOCUMENTO.find(t => t.value === item.tipo_documento)?.label ?? "Doc."}
+                  valor={item.numero_documento} /></>
+              )}
+              {item.tipo === "despesa" && (
+                item.entra_tcmp2
+                  ? <Tag cls="border-blue-200 bg-blue-50 text-blue-700">TCMP²</Tag>
+                  : <Tag cls="border-slate-200 bg-slate-50 text-slate-500">Fora do TCMP²</Tag>
+              )}
+              {item.frequencia && item.frequencia !== "unico" && (
+                <Tag cls="border-violet-200 bg-violet-50 text-violet-700">
+                  {freqLabel}{item.parcela_atual && item.numero_parcelas ? ` ${item.parcela_atual}/${item.numero_parcelas}` : ""}
+                </Tag>
               )}
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <span className={`text-sm font-bold ${item.tipo === "receita" ? "text-green-600" : "text-red-600"}`}>
-              {item.tipo === "receita" ? "+" : "-"} {formatCurrency(item.valor)}
-            </span>
-            {!isPago && (
-              <button onClick={handleMarcarPago} disabled={markingPago} title="Marcar como pago hoje"
-                className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[11px] text-green-600 hover:text-green-800 hover:bg-green-50 border border-green-200 rounded-lg px-2 py-1">
-                {markingPago ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckSquare className="w-3 h-3" />}
-                Pago
-              </button>
-            )}
-            <button onClick={abrirEdicao} title="Editar"
-              className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg p-1.5">
-              <Pencil className="w-3.5 h-3.5" />
-            </button>
-            <div className="text-gray-300 group-hover:text-gray-500 transition-colors">
-              {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </div>
-          </div>
+          {/* Status — coluna fixa */}
+          <span className={`hidden sm:inline-flex w-28 shrink-0 items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${statusUI.cls}`}>
+            {statusUI.texto}
+          </span>
+
+          {/* Valor — coluna fixa, dígitos tabulares */}
+          <span className={`w-32 shrink-0 text-right tabular-nums text-sm font-bold whitespace-nowrap ${
+            item.tipo === "receita" ? "text-emerald-700" : "text-red-600"
+          }`}>
+            {item.tipo === "receita" ? "+ " : "− "}{formatCurrency(item.valor)}
+          </span>
+
+          {expanded
+            ? <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" />
+            : <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />}
         </div>
 
         {/* Accordion de detalhe */}
