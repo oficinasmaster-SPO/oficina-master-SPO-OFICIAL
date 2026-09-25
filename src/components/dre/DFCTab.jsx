@@ -29,6 +29,9 @@ import ModalLiquidacaoDRE from "../dfc/ModalLiquidacaoDRE";
 import ModalEstornoLiquidacao from "../dfc/ModalEstornoLiquidacao";
 import { RotateCcw } from "lucide-react";
 import VencimentosCard from "./VencimentosCard";
+import {
+  SecaoFluxoDFC, FiltrosDFC, filtrarItensDFC, contarStatusDFC, DFCSkeleton
+} from "../dfc/DFCListaFluxo";
 
 // ─── Formatação ────────────────────────────────────────────────────
 const fmt = (v) =>
@@ -570,6 +573,10 @@ export default function DFCTab({ workshopId, mes }) {
   const [contaParaEstornarDFC, setContaParaEstornarDFC] = useState(null); // { conta, tipo }
   const [periodo, setPeriodo] = useState("mensal"); // mensal | anual
   const [showContasTab, setShowContasTab] = useState(false);
+  // UI/UX BPO — filtros client-side da visão "Por Grupo"
+  const [buscaDFC, setBuscaDFC] = useState("");
+  const [statusDFCFiltro, setStatusDFCFiltro] = useState("todos"); // todos | pendentes | vencidos | pagos
+  const [tipoDFC, setTipoDFC] = useState("todos");                 // todos | entrada | saida
 
   const mesAtual = mes ? mes.split('-')[1] : "01";
   const anoAtual = mes ? parseInt(mes.split('-')[0]) : new Date().getFullYear();
@@ -743,6 +750,25 @@ export default function DFCTab({ workshopId, mes }) {
   const fluxoFin = useMemo(() => calcFluxo(itensPorGrupo.financiamento), [itensPorGrupo.financiamento]);
   const saldoFinal = saldoInicial + fluxoOp + fluxoInv + fluxoFin;
 
+  // ── Filtros da lista (somente exibição — totais e composição usam todos os itens) ──
+  const filtroAtivo = !!buscaDFC.trim() || statusDFCFiltro !== "todos" || tipoDFC !== "todos";
+  const filtrosDFC = useMemo(
+    () => ({ busca: buscaDFC, status: statusDFCFiltro, tipo: tipoDFC }),
+    [buscaDFC, statusDFCFiltro, tipoDFC]
+  );
+  const itensFiltrados = useMemo(() => ({
+    operacional:   filtrarItensDFC(itensPorGrupo.operacional, filtrosDFC),
+    investimento:  filtrarItensDFC(itensPorGrupo.investimento, filtrosDFC),
+    financiamento: filtrarItensDFC(itensPorGrupo.financiamento, filtrosDFC),
+  }), [itensPorGrupo, filtrosDFC]);
+  // Contadores dos chips: respeitam o filtro de tipo, mas não a busca
+  const contadoresDFC = useMemo(() => {
+    const base = [...itensPorGrupo.operacional, ...itensPorGrupo.investimento, ...itensPorGrupo.financiamento]
+      .filter((i) => tipoDFC === "todos" || i.tipo === tipoDFC);
+    return contarStatusDFC(base);
+  }, [itensPorGrupo, tipoDFC]);
+  const limparFiltrosDFC = () => { setBuscaDFC(""); setStatusDFCFiltro("todos"); setTipoDFC("todos"); };
+
   // ── Handlers ──────────────────────────────────────────────────
   // FLICKER FIX (Etapa 2): callbacks estáveis — LinhaItem (memo) não recebe
   // referências novas quando o DFC re-renderiza (ex: ao abrir/fechar modais)
@@ -789,12 +815,7 @@ export default function DFCTab({ workshopId, mes }) {
   const isLoading = isDRELoading || isManuaisLoading;
 
   if (isLoading && periodo === "mensal") {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-blue-500 mr-2" />
-        <span className="text-gray-500 text-sm">Carregando fluxo de caixa...</span>
-      </div>);
-
+    return <DFCSkeleton />;
   }
 
   // QA-DFC-06: erro explícito em vez de exibir "Nenhum lançamento no DRE" (mesmo padrão da Frente C3)
@@ -947,11 +968,20 @@ export default function DFCTab({ workshopId, mes }) {
 
       {/* VIEW: POR GRUPO — 3 Seções colapsáveis */}
       {view === "grupos" && <>
-      <SecaoFluxo
+      <FiltrosDFC
+              busca={buscaDFC} setBusca={setBuscaDFC}
+              status={statusDFCFiltro} setStatus={setStatusDFCFiltro}
+              tipo={tipoDFC} setTipo={setTipoDFC}
+              contadores={contadoresDFC}
+              ativo={filtroAtivo}
+              onLimpar={limparFiltrosDFC} />
+      <SecaoFluxoDFC
               titulo="Operacional"
               icone={<Wallet className="w-4 h-4" />}
               cor={{ border: "border-green-200", header: "bg-green-50 text-green-800" }}
-              itens={itensPorGrupo.operacional}
+              itens={itensFiltrados.operacional}
+              itensTodos={itensPorGrupo.operacional}
+              filtroAtivo={filtroAtivo}
               fluxo={fluxoOp}
               onAddManual={() => abrirModal("operacional")}
               onDelete={handleDelete}
@@ -959,11 +989,13 @@ export default function DFCTab({ workshopId, mes }) {
               onMarcarPagamento={setItemPagamento}
               onEstornar={handleEstornarConta} />
             
-      <SecaoFluxo
+      <SecaoFluxoDFC
               titulo="Investimento"
               icone={<Building2 className="w-4 h-4" />}
               cor={{ border: "border-blue-200", header: "bg-blue-50 text-blue-800" }}
-              itens={itensPorGrupo.investimento}
+              itens={itensFiltrados.investimento}
+              itensTodos={itensPorGrupo.investimento}
+              filtroAtivo={filtroAtivo}
               fluxo={fluxoInv}
               onAddManual={() => abrirModal("investimento")}
               onDelete={handleDelete}
@@ -971,11 +1003,13 @@ export default function DFCTab({ workshopId, mes }) {
               onMarcarPagamento={setItemPagamento}
               onEstornar={handleEstornarConta} />
             
-      <SecaoFluxo
+      <SecaoFluxoDFC
               titulo="Financiamento"
               icone={<Landmark className="w-4 h-4" />}
               cor={{ border: "border-purple-200", header: "bg-purple-50 text-purple-800" }}
-              itens={itensPorGrupo.financiamento}
+              itens={itensFiltrados.financiamento}
+              itensTodos={itensPorGrupo.financiamento}
+              filtroAtivo={filtroAtivo}
               fluxo={fluxoFin}
               onAddManual={() => abrirModal("financiamento")}
               onDelete={handleDelete}
@@ -983,14 +1017,29 @@ export default function DFCTab({ workshopId, mes }) {
               onMarcarPagamento={setItemPagamento}
               onEstornar={handleEstornarConta} />
 
-      {/* Composição do saldo — resumo compacto */}
-      <div className={`rounded-xl border-2 px-4 py-3 flex flex-wrap gap-3 items-center justify-between text-xs ${saldoFinal >= 0 ? "border-emerald-300 bg-emerald-50" : "border-red-300 bg-red-50"}`}>
-        <span className="font-semibold text-gray-700">Composição:</span>
-        <span className="text-gray-600">{fmt(saldoInicial)} <span className="text-gray-400">(inicial)</span></span>
-        <span className={fluxoOp >= 0 ? "text-emerald-700" : "text-red-600"}>{fluxoOp >= 0 ? "+" : ""}{fmt(fluxoOp)} <span className="text-gray-400">(op)</span></span>
-        <span className={fluxoInv >= 0 ? "text-emerald-700" : "text-red-600"}>{fluxoInv >= 0 ? "+" : ""}{fmt(fluxoInv)} <span className="text-gray-400">(inv)</span></span>
-        <span className={fluxoFin >= 0 ? "text-emerald-700" : "text-red-600"}>{fluxoFin >= 0 ? "+" : ""}{fmt(fluxoFin)} <span className="text-gray-400">(fin)</span></span>
-        <span className={`font-bold text-sm ml-auto ${saldoFinal >= 0 ? "text-emerald-700" : "text-red-700"}`}>= {fmt(saldoFinal)}</span>
+      {/* Composição do saldo — grade alinhada (rótulo em cima, valor em baixo, dígitos tabulares) */}
+      <div className={`rounded-xl border shadow-sm overflow-hidden grid grid-cols-2 sm:grid-cols-5 ${saldoFinal >= 0 ? "border-emerald-200 bg-emerald-50/50" : "border-red-200 bg-red-50/50"}`}>
+        {[
+          { label: "Saldo inicial", valor: saldoInicial, sinal: false },
+          { label: "Operacional",   valor: fluxoOp,      sinal: true  },
+          { label: "Investimento",  valor: fluxoInv,     sinal: true  },
+          { label: "Financiamento", valor: fluxoFin,     sinal: true  },
+        ].map((c) => (
+          <div key={c.label} className="px-4 py-3 border-b sm:border-b-0 sm:border-r border-gray-200/70 text-right">
+            <p className="text-[10px] uppercase tracking-wider text-gray-400">{c.label}</p>
+            <p className={`text-sm font-semibold tabular-nums whitespace-nowrap ${
+              !c.sinal ? "text-gray-700" : c.valor >= 0 ? "text-emerald-700" : "text-red-600"
+            }`}>
+              {c.sinal ? (c.valor >= 0 ? "+ " : "− ") : ""}{fmt(c.sinal ? Math.abs(c.valor) : c.valor)}
+            </p>
+          </div>
+        ))}
+        <div className="px-4 py-3 text-right col-span-2 sm:col-span-1 bg-white/60">
+          <p className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Saldo final</p>
+          <p className={`text-base font-bold tabular-nums whitespace-nowrap ${saldoFinal >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+            {fmt(saldoFinal)}
+          </p>
+        </div>
       </div>
 
       {/* Gráfico Waterfall */}
