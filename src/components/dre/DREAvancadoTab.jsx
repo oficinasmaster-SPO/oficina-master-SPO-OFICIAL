@@ -1152,7 +1152,10 @@ export default function DREAvancadoTab({ workshopId, mes, tecnicosCount, horasMe
         {/* Grupo 3 — 1 card */}
         <div className="space-y-1.5">
           <div className="flex justify-between items-center px-2 py-2">
-            <div className="h-3 w-20 bg-gray-200 rounded" />
+            <div className="flex gap-2 items-center">
+              <div className="h-3 w-20 bg-gray-200 rounded" />
+              <div className="h-3 w-6 bg-gray-100 rounded" />
+            </div>
             <div className="h-3 w-16 bg-gray-200 rounded" />
           </div>
           <div className="relative border border-gray-100 rounded-xl overflow-hidden">
