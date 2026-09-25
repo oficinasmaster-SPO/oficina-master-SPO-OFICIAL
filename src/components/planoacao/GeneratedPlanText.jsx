@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles, RefreshCw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { questions } from "../diagnostic/Questions";
+import { PHASE_INFO } from "../lib/phaseConstants";
 
 export default function GeneratedPlanText({ diagnostic, workshop, actions, subtasks }) {
   const [generatedText, setGeneratedText] = useState("");
@@ -62,8 +63,7 @@ Segmento: ${workshop?.segment ? workshop.segment.replace(/_/g, ' ').replace(/\b\
 
 FASE DA OFICINA
 
-Fase atual: ${diagnostic.phase}
-Letra predominante no diagnóstico: ${diagnostic.dominant_letter}
+Fase atual: Fase ${diagnostic.phase} - ${PHASE_INFO[diagnostic.phase]?.name || ""} (${PHASE_INFO[diagnostic.phase]?.title || ""})
 
 RESPOSTAS DO DIAGNÓSTICO
 (cada item contém id da pergunta, texto da pergunta, alternativa marcada e significado resumido)
