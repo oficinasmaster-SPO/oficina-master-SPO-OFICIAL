@@ -1,149 +1,148 @@
 {
   "name": "Diagnostic",
-  "type": "object",
   "properties": {
-    "workshop_id": {
-      "type": "string",
-      "description": "ID da oficina"
-    },
-    "user_id": {
-      "type": "string",
-      "description": "ID do usu\u00e1rio que respondeu"
-    },
     "answers": {
-      "type": "array",
+      "description": "Respostas do diagn\u00f3stico com justificativas",
       "items": {
-        "type": "object",
         "properties": {
+          "justificativa_audio_url": {
+            "description": "URL do \u00e1udio de justificativa (opcional)",
+            "type": "string"
+          },
+          "justificativa_texto": {
+            "description": "Justificativa obrigat\u00f3ria do usu\u00e1rio",
+            "type": "string"
+          },
+          "observacoes": {
+            "description": "Observa\u00e7\u00f5es adicionais opcionais",
+            "type": "string"
+          },
           "question_id": {
             "type": "integer"
           },
           "selected_option": {
-            "type": "string",
             "enum": [
               "A",
               "B",
               "C",
               "D"
-            ]
-          },
-          "justificativa_texto": {
-            "type": "string",
-            "description": "Justificativa obrigat\u00f3ria do usu\u00e1rio"
-          },
-          "justificativa_audio_url": {
-            "type": "string",
-            "description": "URL do \u00e1udio de justificativa (opcional)"
-          },
-          "observacoes": {
-            "type": "string",
-            "description": "Observa\u00e7\u00f5es adicionais opcionais"
+            ],
+            "type": "string"
           }
+        },
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "completed": {
+      "default": false,
+      "description": "Diagn\u00f3stico completo",
+      "type": "boolean"
+    },
+    "decisions_deliberations": {
+      "description": "Se\u00e7\u00e3o '03 Decis\u00f5es/Delibera\u00e7\u00f5es' da ATA",
+      "properties": {
+        "agreed_priorities": {
+          "description": "Prioridades acordadas com o cliente",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "constraints_identified": {
+          "description": "Limita\u00e7\u00f5es/restri\u00e7\u00f5es identificadas",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "next_meeting_date": {
+          "format": "date",
+          "type": "string"
         }
       },
-      "description": "Respostas do diagn\u00f3stico com justificativas"
-    },
-    "phase": {
-      "type": "integer",
-      "enum": [
-        1,
-        2,
-        3,
-        4
-      ],
-      "description": "Fase identificada"
+      "type": "object"
     },
     "dominant_letter": {
-      "type": "string",
+      "description": "Letra predominante",
       "enum": [
         "A",
         "B",
         "C",
         "D"
       ],
-      "description": "Letra predominante"
+      "type": "string"
+    },
+    "implementation_checklist_ids": {
+      "description": "IDs das tarefas criadas no DiagnosticActionPlan",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "justifications_completed": {
+      "default": false,
+      "description": "Indica se todas as justificativas foram preenchidas",
+      "type": "boolean"
     },
     "letter_distribution": {
-      "type": "object",
       "description": "Distribui\u00e7\u00e3o de letras para an\u00e1lise secund\u00e1ria",
       "properties": {
         "A": {
-          "type": "integer",
-          "default": 0
+          "default": 0,
+          "type": "integer"
         },
         "B": {
-          "type": "integer",
-          "default": 0
+          "default": 0,
+          "type": "integer"
         },
         "C": {
-          "type": "integer",
-          "default": 0
+          "default": 0,
+          "type": "integer"
         },
         "D": {
-          "type": "integer",
-          "default": 0
+          "default": 0,
+          "type": "integer"
         }
-      }
+      },
+      "type": "object"
+    },
+    "phase": {
+      "description": "Fase identificada",
+      "enum": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "type": "integer"
     },
     "result_summary": {
-      "type": "object",
       "description": "Se\u00e7\u00e3o '02 Resultados' da ATA",
       "properties": {
+        "critical_findings": {
+          "description": "3-5 descobertas cr\u00edticas",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "executive_summary": {
           "type": "string"
         },
         "phase_distribution_text": {
           "type": "string"
-        },
-        "critical_findings": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "3-5 descobertas cr\u00edticas"
         }
-      }
-    },
-    "decisions_deliberations": {
-      "type": "object",
-      "description": "Se\u00e7\u00e3o '03 Decis\u00f5es/Delibera\u00e7\u00f5es' da ATA",
-      "properties": {
-        "agreed_priorities": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Prioridades acordadas com o cliente"
-        },
-        "constraints_identified": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Limita\u00e7\u00f5es/restri\u00e7\u00f5es identificadas"
-        },
-        "next_meeting_date": {
-          "type": "string",
-          "format": "date"
-        }
-      }
-    },
-    "implementation_checklist_ids": {
-      "type": "array",
-      "items": {
-        "type": "string"
       },
-      "description": "IDs das tarefas criadas no DiagnosticActionPlan"
+      "type": "object"
     },
-    "justifications_completed": {
-      "type": "boolean",
-      "default": false,
-      "description": "Indica se todas as justificativas foram preenchidas"
+    "user_id": {
+      "description": "ID do usu\u00e1rio que respondeu",
+      "type": "string"
     },
-    "completed": {
-      "type": "boolean",
-      "default": false,
-      "description": "Diagn\u00f3stico completo"
+    "workshop_id": {
+      "description": "ID da oficina",
+      "type": "string"
     }
   },
   "required": [
@@ -154,17 +153,14 @@
     "create": {
       "$or": [
         {
-          "data.user_id": "{{user.id}}"
-        },
-        {
-          "data.workshop_id": "{{user.tenant_workshop_id}}"
-        },
-        {
-          "data.workshop_id": "{{user.workshop_id}}"
-        },
-        {
-          "data.workshop_id": "{{user.data.workshop_id}}"
-        },
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
         {
           "user_condition": {
             "role": "admin"
@@ -243,25 +239,7 @@
           }
         }
       ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "user_type": "internal"
-          }
-        },
-        {
-          "user_condition": {
-            "data.user_type": "internal"
-          }
-        }
-      ]
     }
-  }
+  },
+  "type": "object"
 }
